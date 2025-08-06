@@ -29,10 +29,13 @@ export default function Header({ className = '' }: HeaderProps) {
                         <Link href={route('events')} className="text-white hover:text-cyan-400 transition-colors">
                             Eventos
                         </Link>
-                        <Link href="/my-tickets" className="text-white hover:text-cyan-400 transition-colors">
-                            Mis Tickets
-                        </Link>
-                        <Link href="/help" className="text-white hover:text-cyan-400 transition-colors">
+                        {auth.user && (
+                            <Link href={route('my-tickets')} className="text-white hover:text-cyan-400 transition-colors">
+                                Mis Tickets
+                            </Link>
+                        )}
+
+                        <Link href={route('help')} className="text-white hover:text-cyan-400 transition-colors">
                             Ayuda
                         </Link>
                         {auth.user ? (
