@@ -6,6 +6,8 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Enums\UserRole;
+use Illuminate\Support\Facades\DB;
+use App\Models\Person;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,20 +16,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        try {
+            DB::beginTransaction();
 
-        User::create([
-            'name' => 'Admin User',
+            $person = Person::create([
+                'name' => 'Juan',
+                'last_name' => 'Gimenez',
+                'dni' => '12345678',
+            ]);
+
+            User::create([
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'role' => UserRole::ADMIN,
-        ]);
+            'person_id' => $person->id,
+            ]);
 
-        User::create([
-            'name' => 'Organizer User',
-            'email' => 'organizer@example.com',
-            'password' => bcrypt('password'),
-            'role' => UserRole::ORGANIZER,
-        ]);
+            $person = Person::create([
+                'name' => 'Federico',
+                'last_name' => 'Perez',
+                'dni' => '87654321',
+            ]);
+
+            User::create([
+                'email' => 'organizer@example.com',
+                'password' => bcrypt('password'),
+                'role' => UserRole::ORGANIZER,
+                'person_id' => $person->id,
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }
