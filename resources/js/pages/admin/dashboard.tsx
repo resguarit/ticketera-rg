@@ -38,7 +38,7 @@ const dashboardStats = [
         change: "+12%",
         changeType: "positive",
         icon: Users,
-        color: "from-blue-500 to-cyan-500",
+        color: "bg-blue-500",
         description: "Usuarios registrados este mes"
     },
     {
@@ -47,7 +47,7 @@ const dashboardStats = [
         change: "+8%",
         changeType: "positive",
         icon: Calendar,
-        color: "from-purple-500 to-pink-500",
+        color: "bg-purple-500",
         description: "Eventos programados"
     },
     {
@@ -56,7 +56,7 @@ const dashboardStats = [
         change: "+15%",
         changeType: "positive",
         icon: DollarSign,
-        color: "from-green-500 to-emerald-500",
+        color: "bg-green-500",
         description: "Ingresos este mes"
     },
     {
@@ -65,7 +65,7 @@ const dashboardStats = [
         change: "+23%",
         changeType: "positive",
         icon: Ticket,
-        color: "from-orange-500 to-red-500",
+        color: "bg-orange-500",
         description: "Tickets vendidos hoy"
     }
 ];
@@ -187,16 +187,32 @@ export default function AdminDashboard({ auth }: any) {
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
-            active: { label: "Activo", color: "bg-green-500" },
-            pending: { label: "Pendiente", color: "bg-yellow-500" },
-            draft: { label: "Borrador", color: "bg-gray-500" },
-            suspended: { label: "Suspendido", color: "bg-red-500" }
+            active: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
+            pending: { label: "Pendiente", color: "bg-yellow-500 hover:bg-yellow-600" },
+            draft: { label: "Borrador", color: "bg-gray-500 hover:bg-gray-600" },
+            suspended: { label: "Suspendido", color: "bg-red-500 hover:bg-red-600" }
         };
         
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
         
         return (
             <Badge className={`${config.color} text-white border-0`}>
+                {config.label}
+            </Badge>
+        );
+    };
+
+    const getRoleBadge = (role: string) => {
+        const roleConfig = {
+            admin: { label: "Administrador", color: "bg-purple-500" },
+            organizer: { label: "Organizador", color: "bg-blue-500" },
+            client: { label: "Cliente", color: "bg-gray-500" }
+        };
+        
+        const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.client;
+        
+        return (
+            <Badge className={`${config.color} text-white border-0 text-xs`}>
                 {config.label}
             </Badge>
         );
@@ -214,15 +230,15 @@ export default function AdminDashboard({ auth }: any) {
         <>
             <Head title="Panel de Administración - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-2">
+                            <h1 className="text-4xl font-bold text-black mb-2">
                                 Panel de Administración
                             </h1>
-                            <p className="text-white/80 text-lg">
+                            <p className="text-gray-600 text-lg">
                                 Bienvenido, {auth.user.name} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
@@ -234,10 +250,10 @@ export default function AdminDashboard({ auth }: any) {
                         
                         <div className="flex items-center space-x-4">
                             <Select value={timeRange} onValueChange={setTimeRange}>
-                                <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className="w-40 bg-white border-gray-300 text-black">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white border-gray-300">
                                     <SelectItem value="1d">Último día</SelectItem>
                                     <SelectItem value="7d">Últimos 7 días</SelectItem>
                                     <SelectItem value="30d">Últimos 30 días</SelectItem>
@@ -245,7 +261,7 @@ export default function AdminDashboard({ auth }: any) {
                                 </SelectContent>
                             </Select>
                             
-                            <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white">
+                            <Button className="bg-black text-white hover:bg-gray-800">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Acciones Rápidas
                             </Button>
@@ -255,19 +271,19 @@ export default function AdminDashboard({ auth }: any) {
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {dashboardStats.map((stat, index) => (
-                            <Card key={index} className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <Card key={index} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}>
+                                        <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
                                             <stat.icon className="w-6 h-6 text-white" />
                                         </div>
                                         <Badge className={`${stat.changeType === 'positive' ? 'bg-green-500' : 'bg-red-500'} text-white border-0`}>
                                             {stat.change}
                                         </Badge>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-1">{stat.value}</h3>
-                                    <p className="text-white/80 text-sm font-medium mb-1">{stat.title}</p>
-                                    <p className="text-white/60 text-xs">{stat.description}</p>
+                                    <h3 className="text-2xl font-bold text-black mb-1">{stat.value}</h3>
+                                    <p className="text-gray-700 text-sm font-medium mb-1">{stat.title}</p>
+                                    <p className="text-gray-500 text-xs">{stat.description}</p>
                                 </CardContent>
                             </Card>
                         ))}
@@ -278,42 +294,42 @@ export default function AdminDashboard({ auth }: any) {
                         {/* Left Column - Events & Users */}
                         <div className="lg:col-span-2 space-y-8">
                             {/* Recent Events */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                <CardHeader>
+                            <Card className="bg-white border-gray-200 shadow-lg">
+                                <CardHeader className="border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-white flex items-center space-x-3">
-                                            <Calendar className="w-6 h-6 text-cyan-400" />
+                                        <CardTitle className="text-black flex items-center space-x-3">
+                                            <Calendar className="w-6 h-6 text-blue-500" />
                                             <span>Eventos Recientes</span>
                                         </CardTitle>
                                         <div className="flex items-center space-x-2">
-                                            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-100">
                                                 <Filter className="w-4 h-4" />
                                             </Button>
                                             <Link href="/admin/events">
-                                                <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
+                                                <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
                                                     Ver todos
                                                 </Button>
                                             </Link>
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6">
                                     <div className="space-y-4">
                                         {recentEvents.map((event) => (
-                                            <div key={event.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                                            <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex-1">
                                                     <div className="flex items-center space-x-3 mb-2">
-                                                        <h4 className="text-white font-semibold">{event.name}</h4>
+                                                        <h4 className="text-black font-semibold">{event.name}</h4>
                                                         {getStatusBadge(event.status)}
                                                     </div>
-                                                    <p className="text-white/60 text-sm mb-2">
+                                                    <p className="text-gray-600 text-sm mb-2">
                                                         Por: {event.organizer} • {new Date(event.date).toLocaleDateString('es-ES')}
                                                     </p>
                                                     <div className="flex items-center space-x-4 text-sm">
-                                                        <span className="text-white/80">
+                                                        <span className="text-gray-700">
                                                             Tickets: {event.tickets_sold}/{event.total_tickets}
                                                         </span>
-                                                        <span className="text-green-400">
+                                                        <span className="text-green-600 font-medium">
                                                             ${event.revenue.toLocaleString()}
                                                         </span>
                                                     </div>
@@ -322,7 +338,7 @@ export default function AdminDashboard({ auth }: any) {
                                                         className="mt-2 h-2"
                                                     />
                                                 </div>
-                                                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                                                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
                                                     <MoreVertical className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -332,24 +348,24 @@ export default function AdminDashboard({ auth }: any) {
                             </Card>
 
                             {/* Recent Users */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                <CardHeader>
+                            <Card className="bg-white border-gray-200 shadow-lg">
+                                <CardHeader className="border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-white flex items-center space-x-3">
-                                            <Users className="w-6 h-6 text-purple-400" />
+                                        <CardTitle className="text-black flex items-center space-x-3">
+                                            <Users className="w-6 h-6 text-purple-500" />
                                             <span>Usuarios Recientes</span>
                                         </CardTitle>
                                         <Link href="/admin/users">
-                                            <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300">
+                                            <Button variant="ghost" size="sm" className="text-purple-500 hover:text-purple-600 hover:bg-purple-50">
                                                 Ver todos
                                             </Button>
                                         </Link>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6">
                                     <div className="space-y-3">
                                         {recentUsers.map((user) => (
-                                            <div key={user.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                                            <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                                                         <span className="text-white font-semibold text-sm">
@@ -357,22 +373,20 @@ export default function AdminDashboard({ auth }: any) {
                                                         </span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-white font-medium">{user.name}</h4>
-                                                        <p className="text-white/60 text-sm">{user.email}</p>
+                                                        <h4 className="text-black font-medium">{user.name}</h4>
+                                                        <p className="text-gray-600 text-sm">{user.email}</p>
                                                         <div className="flex items-center space-x-2 mt-1">
-                                                            <Badge className="bg-blue-500 text-white border-0 text-xs">
-                                                                {user.role}
-                                                            </Badge>
+                                                            {getRoleBadge(user.role)}
                                                             {getStatusBadge(user.status)}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-white/60 text-sm">
+                                                    <p className="text-gray-600 text-sm">
                                                         {new Date(user.joined).toLocaleDateString('es-ES')}
                                                     </p>
                                                     {user.purchases !== undefined && (
-                                                        <p className="text-white/80 text-xs">
+                                                        <p className="text-gray-700 text-xs">
                                                             {user.purchases} compras
                                                         </p>
                                                     )}
@@ -387,38 +401,38 @@ export default function AdminDashboard({ auth }: any) {
                         {/* Right Column - Alerts & Quick Actions */}
                         <div className="space-y-8">
                             {/* System Status */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                <CardHeader>
-                                    <CardTitle className="text-white flex items-center space-x-3">
-                                        <Activity className="w-6 h-6 text-green-400" />
+                            <Card className="bg-white border-gray-200 shadow-lg">
+                                <CardHeader className="border-b border-gray-200">
+                                    <CardTitle className="text-black flex items-center space-x-3">
+                                        <Activity className="w-6 h-6 text-green-500" />
                                         <span>Estado del Sistema</span>
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+                                <CardContent className="p-6 space-y-4">
+                                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                                         <div className="flex items-center space-x-2">
-                                            <CheckCircle className="w-5 h-5 text-green-400" />
-                                            <span className="text-white font-medium">Servidores</span>
+                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                            <span className="text-gray-700 font-medium">Servidores</span>
                                         </div>
                                         <Badge className="bg-green-500 text-white border-0">
                                             Operativo
                                         </Badge>
                                     </div>
                                     
-                                    <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+                                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                                         <div className="flex items-center space-x-2">
-                                            <CheckCircle className="w-5 h-5 text-green-400" />
-                                            <span className="text-white font-medium">Base de Datos</span>
+                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                            <span className="text-gray-700 font-medium">Base de Datos</span>
                                         </div>
                                         <Badge className="bg-green-500 text-white border-0">
                                             Operativo
                                         </Badge>
                                     </div>
                                     
-                                    <div className="flex items-center justify-between p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
+                                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                                         <div className="flex items-center space-x-2">
-                                            <AlertTriangle className="w-5 h-5 text-yellow-400" />
-                                            <span className="text-white font-medium">CDN</span>
+                                            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                                            <span className="text-gray-700 font-medium">CDN</span>
                                         </div>
                                         <Badge className="bg-yellow-500 text-white border-0">
                                             Lento
@@ -428,23 +442,23 @@ export default function AdminDashboard({ auth }: any) {
                             </Card>
 
                             {/* System Alerts */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                <CardHeader>
-                                    <CardTitle className="text-white flex items-center space-x-3">
-                                        <AlertTriangle className="w-6 h-6 text-orange-400" />
+                            <Card className="bg-white border-gray-200 shadow-lg">
+                                <CardHeader className="border-b border-gray-200">
+                                    <CardTitle className="text-black flex items-center space-x-3">
+                                        <AlertTriangle className="w-6 h-6 text-orange-500" />
                                         <span>Alertas del Sistema</span>
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6">
                                     <div className="space-y-3">
                                         {systemAlerts.map((alert) => (
-                                            <div key={alert.id} className="p-3 bg-white/5 rounded-lg border-l-4 border-orange-500">
+                                            <div key={alert.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-orange-500">
                                                 <div className="flex items-start space-x-3">
                                                     {getAlertIcon(alert.type)}
                                                     <div className="flex-1">
-                                                        <h4 className="text-white font-medium text-sm">{alert.title}</h4>
-                                                        <p className="text-white/60 text-xs mt-1">{alert.message}</p>
-                                                        <p className="text-white/40 text-xs mt-2">{alert.time}</p>
+                                                        <h4 className="text-black font-medium text-sm">{alert.title}</h4>
+                                                        <p className="text-gray-600 text-xs mt-1">{alert.message}</p>
+                                                        <p className="text-gray-500 text-xs mt-2">{alert.time}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -454,38 +468,48 @@ export default function AdminDashboard({ auth }: any) {
                             </Card>
 
                             {/* Quick Actions */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                                <CardHeader>
-                                    <CardTitle className="text-white flex items-center space-x-3">
-                                        <Settings className="w-6 h-6 text-cyan-400" />
+                            <Card className="bg-white border-gray-200 shadow-lg">
+                                <CardHeader className="border-b border-gray-200">
+                                    <CardTitle className="text-black flex items-center space-x-3">
+                                        <Settings className="w-6 h-6 text-gray-600" />
                                         <span>Acciones Rápidas</span>
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white justify-start">
-                                        <UserCheck className="w-4 h-4 mr-2" />
-                                        Gestionar Usuarios
-                                    </Button>
+                                <CardContent className="p-6 space-y-3">
+                                    <Link href="/admin/users">
+                                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white justify-start">
+                                            <UserCheck className="w-4 h-4 mr-2" />
+                                            Gestionar Usuarios
+                                        </Button>
+                                    </Link>
                                     
-                                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white justify-start">
-                                        <Building className="w-4 h-4 mr-2" />
-                                        Gestionar Organizadores
-                                    </Button>
+                                    <Link href="/admin/organizers">
+                                        <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white justify-start">
+                                            <Building className="w-4 h-4 mr-2" />
+                                            Gestionar Organizadores
+                                        </Button>
+                                    </Link>
                                     
-                                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white justify-start">
-                                        <Calendar className="w-4 h-4 mr-2" />
-                                        Revisar Eventos
-                                    </Button>
+                                    <Link href="/admin/events">
+                                        <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white justify-start">
+                                            <Calendar className="w-4 h-4 mr-2" />
+                                            Revisar Eventos
+                                        </Button>
+                                    </Link>
                                     
-                                    <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white justify-start">
-                                        <BarChart3 className="w-4 h-4 mr-2" />
-                                        Ver Reportes
-                                    </Button>
+                                    <Link href="/admin/reports">
+                                        <Button className="w-full bg-green-500 hover:bg-green-600 text-white justify-start">
+                                            <BarChart3 className="w-4 h-4 mr-2" />
+                                            Ver Reportes
+                                        </Button>
+                                    </Link>
                                     
-                                    <Button className="w-full bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white justify-start">
-                                        <Settings className="w-4 h-4 mr-2" />
-                                        Configuración
-                                    </Button>
+                                    <Link href="/admin/settings">
+                                        <Button className="w-full bg-gray-500 hover:bg-gray-600 text-white justify-start">
+                                            <Settings className="w-4 h-4 mr-2" />
+                                            Configuración
+                                        </Button>
+                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>
