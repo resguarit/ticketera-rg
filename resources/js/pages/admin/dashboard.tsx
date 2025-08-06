@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
-export default function Dashboard({ auth }) {
+export default function Dashboard({ auth }: any) {
     return (
         <>
             <Head title="Admin Dashboard" />
@@ -12,7 +12,7 @@ export default function Dashboard({ auth }) {
                         <div className="p-6 text-gray-900">
                             ¡Bienvenido al Panel de Administración, {auth.user.name}!
                         </div>
-                    </div>
+                    </div> 
                 </div>
             </div>
         </>
@@ -20,4 +20,4 @@ export default function Dashboard({ auth }) {
 }
 
 // Asignamos el Layout de Administrador
-Dashboard.layout = page => <AppLayout children={page} />;
+Dashboard.layout = (page: any) => <AppLayout children={page} />;

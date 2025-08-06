@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
-export default function Dashboard({ auth, organizer }) {
+export default function Dashboard({ auth, organizer }: { auth: any; organizer: any }) {
     return (
         <>
             <Head title="Organizer Dashboard" />
@@ -21,4 +21,4 @@ export default function Dashboard({ auth, organizer }) {
 }
 
 // Asignamos el Layout de Organizador
-Dashboard.layout = page => <AppLayout children={page} />;
+Dashboard.layout = (page: any) => <AppLayout children={page} />;

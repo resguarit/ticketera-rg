@@ -19,7 +19,7 @@ class DashboardController extends Controller
             'id' => 1,
         ];
 
-        return Inertia::render('organizer/Dashboard', [
+        return Inertia::render('organizer/dashboard', [
             'organizer' => $organizerData, 
         ]);
     }
