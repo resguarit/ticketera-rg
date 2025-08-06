@@ -26,6 +26,10 @@ Route::middleware('auth')->get('/my-tickets', function () {
     return Inertia::render('user/mytickets');
 })->name('my-tickets');
 
+Route::middleware('auth')->get('/my-account', function () {
+    return Inertia::render('user/myaccount');
+})->name('my-account');
+
 
 /*--------------------Rutas publicas-----------------------*/ 
 
