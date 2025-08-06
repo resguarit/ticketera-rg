@@ -19,7 +19,6 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
 });
 
-
 /*-------Rutas protegidas para usuarios autenticados----------*/ 
 
 Route::middleware('auth')->get('/my-tickets', function () {
@@ -60,6 +59,8 @@ Route::get('/checkout/{eventId}', function ($eventId) {
         'eventId' => $eventId
     ]);
 })->name('checkout.confirm');
+
+
 
 
 
