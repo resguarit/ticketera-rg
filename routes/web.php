@@ -51,6 +51,16 @@ Route::get('/events/{eventId}', function ($eventId) {
     ]);
 })->name('event.detail');
 
+Route::get('/checkout/success', function () {
+    return Inertia::render('public/checkoutsuccess');
+})->name('checkout.success');
+
+Route::get('/checkout/{eventId}', function ($eventId) {
+    return Inertia::render('public/checkoutconfirm', [
+        'eventId' => $eventId
+    ]);
+})->name('checkout.confirm');
+
 
 
 require __DIR__.'/settings.php';

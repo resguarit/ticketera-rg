@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Header from '@/components/header';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react'; // ← Agregar router aquí
 
 // Mock data - normalmente esto vendría del backend
 const eventData = {
@@ -84,11 +84,11 @@ export default function EventDetail({ eventId }: EventDetailProps) {
 
     const handlePurchase = () => {
         setIsLoading(true);
-        // Simulate API call
+        // Simulate redirection to checkout
         setTimeout(() => {
             setIsLoading(false);
-            // Redirect to payment or show success
-        }, 2000);
+            router.visit(route('checkout.confirm', eventId || 1));
+        }, 1000);
     };
 
     return (
