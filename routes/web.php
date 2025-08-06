@@ -20,7 +20,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/events', function () {
-    return Inertia::render('events');
+    return Inertia::render('public/events');
 })->name('events');
 
 
