@@ -9,9 +9,44 @@ use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardCont
 /*-------Rutas protegidas para administradores----------*/ 
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
-    // ... otras rutas de admin
+    
+    Route::get('/events', function () {
+        return Inertia::render('admin/events');
+    })->name('events');
+    
+    Route::get('/events/create', function () {
+        return Inertia::render('admin/events/create');
+    })->name('events.create');
+    
+    Route::get('/events/{eventId}/edit', function ($eventId) {
+        return Inertia::render('admin/events/edit', [
+            'eventId' => $eventId
+        ]);
+    })->name('events.edit');
+
+    Route::get('/users', function () {
+        return Inertia::render('admin/users');
+    })->name('users');
+    
+    // Gestión de organizadores
+    Route::get('/organizers', function () {
+        return Inertia::render('admin/organizers');
+    })->name('organizers');
+    
+    // Reportes
+    Route::get('/reports', function () {
+        return Inertia::render('admin/reports');
+    })->name('reports');
+    
+    // Configuración
+    Route::get('/settings', function () {
+        return Inertia::render('admin/settings');
+    })->name('settings');
 });
+
+
 
 /*-------Rutas protegidas para orgenizadores----------*/ 
 
