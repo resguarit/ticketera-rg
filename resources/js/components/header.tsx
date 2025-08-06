@@ -26,7 +26,7 @@ export default function Header({ className = '' }: HeaderProps) {
                         </h1>
                     </div>
                     <nav className="hidden md:flex items-center space-x-6">
-                        <Link href="/events" className="text-white hover:text-cyan-400 transition-colors">
+                        <Link href={route('events')} className="text-white hover:text-cyan-400 transition-colors">
                             Eventos
                         </Link>
                         <Link href="/my-tickets" className="text-white hover:text-cyan-400 transition-colors">

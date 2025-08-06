@@ -16,14 +16,13 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
 });
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('public/home');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-});
+Route::get('/events', function () {
+    return Inertia::render('events');
+})->name('events');
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

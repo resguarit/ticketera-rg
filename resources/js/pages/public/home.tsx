@@ -13,7 +13,7 @@ import Header from '@/components/header';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Home',
-        href: '/dashboard',
+        href: '/',
     },
 ];
 
@@ -128,7 +128,7 @@ const categories = [
     { id: "deportes", label: "Deportes", icon: Trophy, color: "from-blue-500 to-cyan-500" },
 ];
 
-export default function Dashboard() {
+export default function Home() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
