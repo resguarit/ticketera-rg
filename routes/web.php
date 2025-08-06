@@ -17,7 +17,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('events');
     
     Route::get('/events/create', function () {
-        return Inertia::render('admin/events/create');
+        return Inertia::render('admin/createevent');
     })->name('events.create');
     
     Route::get('/events/{eventId}/edit', function ($eventId) {
