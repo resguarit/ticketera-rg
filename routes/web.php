@@ -41,6 +41,12 @@ Route::get('/help', function () {
     return Inertia::render('public/help');
 })->name('help');
 
+Route::get('/events/{eventId}', function ($eventId) {
+    return Inertia::render('public/eventdetail', [
+        'eventId' => $eventId
+    ]);
+})->name('event.detail');
+
 
 
 require __DIR__.'/settings.php';
