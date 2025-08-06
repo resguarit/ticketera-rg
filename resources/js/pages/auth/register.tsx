@@ -11,6 +11,8 @@ import AuthLayout from '@/layouts/auth-layout';
 
 type RegisterForm = {
     name: string;
+    last_name: string;
+    dni: string;
     email: string;
     password: string;
     password_confirmation: string;
@@ -19,6 +21,8 @@ type RegisterForm = {
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
         name: '',
+        last_name: '',
+        dni: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -36,21 +40,57 @@ export default function Register() {
             <Head title="Register" />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
+                    <div className='flex gap-2 '>
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input
+                                id="name"
+                                type="text"
+                                required
+                                autoFocus
+                                tabIndex={1}
+                                autoComplete="name"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                disabled={processing}
+                                placeholder="First name"
+                            />
+                            <InputError message={errors.name} className="mt-2" />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="last_name">Last Name</Label>
+                            <Input
+                                id="name"
+                                type="text"
+                                required
+                                autoFocus
+                                tabIndex={1}
+                                autoComplete="name"
+                                value={data.last_name}
+                                onChange={(e) => setData('last_name', e.target.value)}
+                                disabled={processing}
+                                placeholder="Last name"
+                            />
+                            <InputError message={errors.last_name} className="mt-2" />
+                        </div>
+                    </div>
+
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="dni">DNI</Label>
                         <Input
-                            id="name"
+                            id="dni"
                             type="text"
                             required
-                            autoFocus
                             tabIndex={1}
-                            autoComplete="name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
+                            autoComplete="dni"
+                            value={data.dni}
+                            onChange={(e) => setData('dni', e.target.value)}
                             disabled={processing}
-                            placeholder="Full name"
+                            placeholder="DNI"
                         />
-                        <InputError message={errors.name} className="mt-2" />
+                        <InputError message={errors.dni} />
+
                     </div>
 
                     <div className="grid gap-2">
