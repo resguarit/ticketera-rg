@@ -27,7 +27,7 @@ const faqCategories = [
         id: "tickets",
         title: "Compra de Tickets",
         icon: Ticket,
-        color: "from-cyan-500 to-blue-500",
+        color: "primary",
         faqs: [
             {
                 question: "¿Cómo puedo comprar tickets?",
@@ -54,7 +54,7 @@ const faqCategories = [
         id: "payment",
         title: "Pagos y Facturación",
         icon: CreditCard,
-        color: "from-purple-500 to-pink-500",
+        color: "red-500",
         faqs: [
             {
                 question: "¿Qué métodos de pago aceptan?",
@@ -77,7 +77,7 @@ const faqCategories = [
         id: "events",
         title: "Eventos",
         icon: Users,
-        color: "from-orange-500 to-red-500",
+        color: "orange-500",
         faqs: [
             {
                 question: "¿Qué pasa si se cancela un evento?",
@@ -100,7 +100,7 @@ const faqCategories = [
         id: "account",
         title: "Cuenta y Perfil",
         icon: Shield,
-        color: "from-green-500 to-emerald-500",
+        color: "green-500",
         faqs: [
             {
                 question: "¿Cómo creo una cuenta?",
@@ -126,7 +126,7 @@ const contactOptions = [
         title: "Chat en Vivo",
         description: "Habla con nuestro equipo de soporte",
         icon: MessageCircle,
-        color: "from-cyan-500 to-blue-500",
+        color: "primary",
         available: "24/7",
         action: "Iniciar Chat",
     },
@@ -134,7 +134,7 @@ const contactOptions = [
         title: "Teléfono",
         description: "Llámanos para soporte inmediato",
         icon: Phone,
-        color: "from-purple-500 to-pink-500",
+        color: "green-500",
         available: "Lun-Vie 9:00-18:00",
         action: "+54 11 1234-5678",
     },
@@ -142,7 +142,7 @@ const contactOptions = [
         title: "Email",
         description: "Envíanos un mensaje detallado",
         icon: Mail,
-        color: "from-orange-500 to-red-500",
+        color: "red-500",
         available: "Respuesta en 24hs",
         action: "soporte@ticketmax.com",
     },
@@ -185,20 +185,17 @@ export default function Help() {
         <>
             <Head title="Centro de Ayuda - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200  to-secondary">
                 {/* Header */}
                 <Header />
 
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 py-6">
                     {/* Page Header */}
-                    <div className="text-center mb-12">
-                        <div className="w-20 h-20 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <HelpCircle className="w-10 h-10 text-white" />
-                        </div>
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-4">
+                    <div className="text-center mb-8">
+                        <h2 className="text-5xl font-bold text-foreground mb-4">
                             Centro de Ayuda
-                        </h1>
-                        <p className="text-white/80 text-lg max-w-2xl mx-auto">
+                        </h2>
+                        <p className="text-foreground text-lg max-w-2xl mx-auto">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
                     </div>
@@ -206,12 +203,12 @@ export default function Help() {
                     {/* Search */}
                     <div className="max-w-2xl mx-auto mb-12">
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <Input
                                 placeholder="Buscar en preguntas frecuentes..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-12 py-4 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
+                                className=" py-4 text-lg pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md"
                             />
                         </div>
                     </div>
@@ -221,19 +218,19 @@ export default function Help() {
                         {contactOptions.map((option, index) => (
                             <Card
                                 key={index}
-                                className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all duration-300"
+                                className="bg-white text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300"
                             >
                                 <CardContent className="p-6 text-center">
                                     <div
-                                        className={`w-16 h-16 bg-gradient-to-r ${option.color} rounded-full flex items-center justify-center mx-auto mb-4`}
+                                        className={`w-16 h-16 bg-gradient-to-r bg-${option.color} rounded-full flex items-center justify-center mx-auto mb-4`}
                                     >
                                         <option.icon className="w-8 h-8 text-white" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">{option.title}</h3>
-                                    <p className="text-white/80 mb-3">{option.description}</p>
-                                    <Badge className="mb-4 bg-white/20 text-white border-0">{option.available}</Badge>
+                                    <h3 className="text-xl font-bold text-foreground mb-2">{option.title}</h3>
+                                    <p className="text-foreground/80 mb-3">{option.description}</p>
+                                    <Badge className="mb-4 bg-white/20 text-foreground border-0">{option.available}</Badge>
                                     <div>
-                                        <Button className={`bg-gradient-to-r ${option.color} hover:opacity-90 text-white w-full`}>
+                                        <Button className={`bg-gradient-to-r bg-${option.color} hover:opacity-90 text-white w-full`}>
                                             {option.action}
                                         </Button>
                                     </div>
@@ -246,22 +243,21 @@ export default function Help() {
                         {/* FAQ Section */}
                         <div className="lg:col-span-2">
                             <div className="flex items-center space-x-3 mb-6">
-                                <BookOpen className="w-6 h-6 text-cyan-400" />
-                                <h2 className="text-3xl font-bold text-white">Preguntas Frecuentes</h2>
+                                <BookOpen className="w-6 h-6 text-primary" />
+                                <h2 className="text-3xl text-foreground">Preguntas Frecuentes</h2>
                             </div>
 
                             <div className="space-y-6">
                                 {filteredFAQs.map((category) => (
-                                    <Card key={category.id} className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card key={category.id} className="bg-white">
                                         <CardHeader>
-                                            <CardTitle className="flex items-center space-x-3 text-white">
+                                            <CardTitle className="flex items-center space-x-3 text-foreground">
                                                 <div
-                                                    className={`w-10 h-10 bg-gradient-to-r ${category.color} rounded-lg flex items-center justify-center`}
+                                                    className={`w-10 h-10 bg-gradient-to-r bg-${category.color} rounded-lg flex items-center justify-center`}
                                                 >
                                                     <category.icon className="w-5 h-5 text-white" />
                                                 </div>
                                                 <span>{category.title}</span>
-                                                <Badge className="bg-white/20 text-white border-0">{category.faqs.length}</Badge>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-2">
@@ -275,15 +271,15 @@ export default function Help() {
                                                             onClick={() => toggleItem(itemId)}
                                                             className="flex items-center justify-between w-full p-4 text-left bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
                                                         >
-                                                            <span className="text-white font-medium">{faq.question}</span>
+                                                            <span className="text-foreground font-medium">{faq.question}</span>
                                                             {isOpen ? (
-                                                                <ChevronDown className="w-5 h-5 text-white/60" />
+                                                                <ChevronDown className="w-5 h-5 text-foreground" />
                                                             ) : (
-                                                                <ChevronRight className="w-5 h-5 text-white/60" />
+                                                                <ChevronRight className="w-5 h-5 text-foreground" />
                                                             )}
                                                         </CollapsibleTrigger>
                                                         <CollapsibleContent className="px-4 pb-4">
-                                                            <p className="text-white/80 leading-relaxed">{faq.answer}</p>
+                                                            <p className="text-foreground leading-relaxed">{faq.answer}</p>
                                                         </CollapsibleContent>
                                                     </Collapsible>
                                                 );
@@ -296,9 +292,9 @@ export default function Help() {
                             {searchTerm && filteredFAQs.length === 0 && (
                                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
                                     <CardContent className="p-12 text-center">
-                                        <Search className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                        <h3 className="text-xl font-semibold text-white mb-2">No se encontraron resultados</h3>
-                                        <p className="text-white/60 mb-6">No encontramos preguntas que coincidan con "{searchTerm}"</p>
+                                        <Search className="w-16 h-16 text-foreground/80 mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-foreground mb-2">No se encontraron resultados</h3>
+                                        <p className="text-foreground/60 mb-6">No encontramos preguntas que coincidan con "{searchTerm}"</p>
                                         <Button
                                             onClick={() => setSearchTerm("")}
                                             className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white"
@@ -312,10 +308,10 @@ export default function Help() {
 
                         {/* Contact Form */}
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-6">¿No encontraste lo que buscas?</h2>
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <h2 className="text-2xl font-bold text-foreground mb-8">¿No encontraste lo que buscas?</h2>
+                            <Card className="bg-white">
                                 <CardHeader>
-                                    <CardTitle className="text-white">Contáctanos</CardTitle>
+                                    <CardTitle className="text-foreground">Contáctanos</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -324,7 +320,7 @@ export default function Help() {
                                                 placeholder="Tu nombre"
                                                 value={contactForm.name}
                                                 onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                className="bg-white border-gray-200 shadow-md border text-foreground placeholder:text-foreground/60"
                                                 required
                                             />
                                         </div>
@@ -334,7 +330,7 @@ export default function Help() {
                                                 placeholder="Tu email"
                                                 value={contactForm.email}
                                                 onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                className="bg-white border-gray-200 shadow-md border text-foreground placeholder:text-foreground/60"
                                                 required
                                             />
                                         </div>
@@ -343,7 +339,7 @@ export default function Help() {
                                                 placeholder="Asunto"
                                                 value={contactForm.subject}
                                                 onChange={(e) => setContactForm((prev) => ({ ...prev, subject: e.target.value }))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                className="bg-white border-gray-200 shadow-md border text-foreground placeholder:text-foreground/60"
                                                 required
                                             />
                                         </div>
@@ -352,13 +348,13 @@ export default function Help() {
                                                 placeholder="Describe tu consulta..."
                                                 value={contactForm.message}
                                                 onChange={(e) => setContactForm((prev) => ({ ...prev, message: e.target.value }))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60 min-h-[120px]"
+                                                className="bg-white border-gray-200 shadow-md border text-foreground placeholder:text-foreground/60 min-h-[120px]"
                                                 required
                                             />
                                         </div>
                                         <Button
                                             type="submit"
-                                            className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white"
+                                            className="w-full bg-primary hover:bg-primary-hover text-white"
                                         >
                                             Enviar Mensaje
                                         </Button>
@@ -367,21 +363,21 @@ export default function Help() {
                             </Card>
 
                             {/* Quick Links */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20 mt-6">
+                            <Card className="bg-white mt-6">
                                 <CardHeader>
-                                    <CardTitle className="text-white">Enlaces Útiles</CardTitle>
+                                    <CardTitle className="text-foreground">Enlaces Útiles</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    <Link href="/terms" className="block text-white/80 hover:text-cyan-400 transition-colors">
+                                    <Link href="/terms" className="block text-foreground/80 hover:text-primary transition-colors">
                                         Términos y Condiciones
                                     </Link>
-                                    <Link href="/privacy" className="block text-white/80 hover:text-cyan-400 transition-colors">
+                                    <Link href="/privacy" className="block text-foreground/80 hover:text-primary transition-colors">
                                         Política de Privacidad
                                     </Link>
-                                    <Link href="/refunds" className="block text-white/80 hover:text-cyan-400 transition-colors">
+                                    <Link href="/refunds" className="block text-foreground/80 hover:text-primary transition-colors">
                                         Política de Reembolsos
                                     </Link>
-                                    <Link href="/accessibility" className="block text-white/80 hover:text-cyan-400 transition-colors">
+                                    <Link href="/accessibility" className="block text-foreground/80 hover:text-primary transition-colors">
                                         Accesibilidad
                                     </Link>
                                 </CardContent>
