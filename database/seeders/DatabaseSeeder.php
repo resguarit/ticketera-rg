@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +18,7 @@ class DatabaseSeeder extends Seeder
         try {
             DB::beginTransaction();
 
+            // Crear personas y usuarios base
             $person = Person::create([
                 'name' => 'Juan',
                 'last_name' => 'Gimenez',
@@ -26,10 +26,10 @@ class DatabaseSeeder extends Seeder
             ]);
 
             User::create([
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            'role' => UserRole::ADMIN,
-            'person_id' => $person->id,
+                'email' => 'admin@example.com',
+                'password' => bcrypt('password'),
+                'role' => UserRole::ADMIN,
+                'person_id' => $person->id,
             ]);
 
             $person = Person::create([
@@ -43,6 +43,17 @@ class DatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'role' => UserRole::ORGANIZER,
                 'person_id' => $person->id,
+            ]);
+
+            // Ejecutar seeders de las tablas principales
+            $this->call([
+                CategorySeeder::class,
+                VenueSeeder::class,
+                SectorSeeder::class,
+                OrganizerSeeder::class,
+                EventSeeder::class,
+                EventFunctionSeeder::class,
+                TicketTypeSeeder::class,
             ]);
 
             DB::commit();
