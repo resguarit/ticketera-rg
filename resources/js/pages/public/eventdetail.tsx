@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Header from '@/components/header';
-import { Head, Link, router } from '@inertiajs/react'; // ← Agregar router aquí
+import { Head, Link, router } from '@inertiajs/react';
 
 // Mock data - normalmente esto vendría del backend
 const eventData = {
@@ -95,7 +95,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
         <>
             <Head title={`${eventData.title} - TicketMax`} />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 {/* Header */}
                 <Header />
 
@@ -103,7 +103,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                     {/* Back Button */}
                     <div className="mb-6">
                         <Link href={route('events')}>
-                            <Button variant="ghost" size="sm" className="text-white hover:text-cyan-400">
+                            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver a Eventos
                             </Button>
@@ -114,7 +114,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                         {/* Event Details */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Hero Image */}
-                            <div className="relative h-80 rounded-2xl overflow-hidden">
+                            <div className="relative h-80 rounded-2xl overflow-hidden shadow-lg">
                                 <img 
                                     src={eventData.image} 
                                     alt={eventData.title} 
@@ -122,7 +122,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 <div className="absolute bottom-6 left-6">
-                                    <Badge className="mb-2 bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0">
+                                    <Badge className="mb-2 bg-primary text-white border-0">
                                         {eventData.category.toUpperCase()}
                                     </Badge>
                                     <h1 className="text-4xl font-bold text-white mb-2">{eventData.title}</h1>
@@ -137,44 +137,44 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                             </div>
 
                             {/* Event Info */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <Card className="bg-white border-gray-200 shadow-lg">
                                 <CardHeader>
-                                    <CardTitle className="text-white text-2xl">Información del Evento</CardTitle>
+                                    <CardTitle className="text-foreground text-2xl">Información del Evento</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <p className="text-white/80 leading-relaxed">{eventData.description}</p>
+                                    <p className="text-foreground/80 leading-relaxed">{eventData.description}</p>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="flex items-center space-x-3 text-white/80">
-                                            <Calendar className="w-5 h-5 text-cyan-400" />
+                                        <div className="flex items-center space-x-3 text-foreground/80">
+                                            <Calendar className="w-5 h-5 text-primary" />
                                             <div>
-                                                <p className="font-semibold text-white">Fecha</p>
+                                                <p className="font-semibold text-foreground">Fecha</p>
                                                 <p>{eventData.date}</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center space-x-3 text-white/80">
-                                            <Clock className="w-5 h-5 text-purple-400" />
+                                        <div className="flex items-center space-x-3 text-foreground/80">
+                                            <Clock className="w-5 h-5 text-purple-500" />
                                             <div>
-                                                <p className="font-semibold text-white">Hora</p>
+                                                <p className="font-semibold text-foreground">Hora</p>
                                                 <p>{eventData.time}</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center space-x-3 text-white/80">
-                                            <MapPin className="w-5 h-5 text-pink-400" />
+                                        <div className="flex items-center space-x-3 text-foreground/80">
+                                            <MapPin className="w-5 h-5 text-pink-500" />
                                             <div>
-                                                <p className="font-semibold text-white">Ubicación</p>
+                                                <p className="font-semibold text-foreground">Ubicación</p>
                                                 <p>
                                                     {eventData.location}, {eventData.city}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center space-x-3 text-white/80">
-                                            <Users className="w-5 h-5 text-orange-400" />
+                                        <div className="flex items-center space-x-3 text-foreground/80">
+                                            <Users className="w-5 h-5 text-orange-500" />
                                             <div>
-                                                <p className="font-semibold text-white">Restricción</p>
+                                                <p className="font-semibold text-foreground">Restricción</p>
                                                 <p>{eventData.ageRestriction}</p>
                                             </div>
                                         </div>
@@ -185,25 +185,25 @@ export default function EventDetail({ eventId }: EventDetailProps) {
 
                         {/* Ticket Selection */}
                         <div className="space-y-6">
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20 sticky top-24">
+                            <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
                                 <CardHeader>
-                                    <CardTitle className="text-white text-xl">Seleccionar Entradas</CardTitle>
+                                    <CardTitle className="text-foreground text-xl">Seleccionar Entradas</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {eventData.ticketTypes.map((ticket) => (
                                         <div
                                             key={ticket.id}
-                                            className={`p-4 rounded-xl bg-gradient-to-r ${ticket.color} bg-opacity-20 border border-white/20`}
+                                            className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
                                         >
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <h4 className="font-bold text-white text-lg">{ticket.name}</h4>
-                                                    <p className="text-white/80 text-sm">{ticket.description}</p>
-                                                    <p className="text-white/60 text-xs mt-1">{ticket.available} disponibles</p>
+                                                    <h4 className="font-bold text-foreground text-lg">{ticket.name}</h4>
+                                                    <p className="text-foreground/80 text-sm">{ticket.description}</p>
+                                                    <p className="text-foreground/60 text-xs mt-1">{ticket.available} disponibles</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-2xl font-bold text-white">${ticket.price.toLocaleString()}</p>
-                                                    <p className="text-white/60 text-sm">ARS</p>
+                                                    <p className="text-2xl font-bold text-foreground">${ticket.price.toLocaleString()}</p>
+                                                    <p className="text-foreground/60 text-sm">ARS</p>
                                                 </div>
                                             </div>
 
@@ -214,11 +214,11 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                                                         variant="outline"
                                                         onClick={() => updateTicketQuantity(ticket.id, -1)}
                                                         disabled={!selectedTickets[ticket.id]}
-                                                        className="w-8 h-8 p-0 border-white/30 text-white hover:bg-white/20"
+                                                        className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
                                                     >
                                                         <Minus className="w-4 h-4" />
                                                     </Button>
-                                                    <span className="text-white font-semibold w-8 text-center">
+                                                    <span className="text-foreground font-semibold w-8 text-center">
                                                         {selectedTickets[ticket.id] || 0}
                                                     </span>
                                                     <Button
@@ -226,7 +226,7 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                                                         variant="outline"
                                                         onClick={() => updateTicketQuantity(ticket.id, 1)}
                                                         disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                        className="w-8 h-8 p-0 border-white/30 text-white hover:bg-white/20"
+                                                        className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
                                                     >
                                                         <Plus className="w-4 h-4" />
                                                     </Button>
@@ -237,20 +237,20 @@ export default function EventDetail({ eventId }: EventDetailProps) {
 
                                     {getTotalTickets() > 0 && (
                                         <>
-                                            <Separator className="bg-white/20" />
+                                            <Separator className="bg-gray-200" />
                                             <div className="space-y-3">
-                                                <div className="flex justify-between text-white">
+                                                <div className="flex justify-between text-foreground">
                                                     <span>Total de entradas:</span>
                                                     <span className="font-semibold">{getTotalTickets()}</span>
                                                 </div>
-                                                <div className="flex justify-between text-white text-xl font-bold">
+                                                <div className="flex justify-between text-foreground text-xl font-bold">
                                                     <span>Total:</span>
                                                     <span>${getTotalPrice().toLocaleString()} ARS</span>
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
                                                     disabled={isLoading}
-                                                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white py-3 text-lg font-semibold rounded-xl transform hover:scale-105 transition-all duration-200"
+                                                    className="w-full bg-primary hover:bg-primary-hover text-white py-3 text-lg font-semibold rounded-xl transform hover:scale-105 transition-all duration-200"
                                                 >
                                                     {isLoading ? (
                                                         <div className="flex items-center space-x-2">

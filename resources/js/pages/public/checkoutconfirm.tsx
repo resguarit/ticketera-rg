@@ -170,14 +170,14 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
         <>
             <Head title="Confirmar Compra - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
                     {/* Back Button */}
                     <div className="mb-6">
                         <Link href={route('event.detail', eventId || mockEventData.id)}>
-                            <Button variant="ghost" size="sm" className="text-white hover:text-cyan-400">
+                            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver al Evento
                             </Button>
@@ -192,8 +192,8 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                     <div
                                         className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
                                             step <= currentStep
-                                                ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-                                                : "bg-white/20 text-white/60"
+                                                ? "bg-primary text-white"
+                                                : "bg-gray-300 text-gray-600"
                                         }`}
                                     >
                                         {step < currentStep ? <Check className="w-5 h-5" /> : step}
@@ -201,17 +201,17 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                     {step < 3 && (
                                         <div
                                             className={`w-16 h-1 mx-2 transition-all duration-300 ${
-                                                step < currentStep ? "bg-gradient-to-r from-cyan-500 to-purple-500" : "bg-white/20"
+                                                step < currentStep ? "bg-primary" : "bg-gray-300"
                                             }`}
                                         />
                                     )}
                                 </div>
                             ))}
                         </div>
-                        <div className="flex justify-center space-x-8 text-sm text-white/80">
-                            <span className={currentStep >= 1 ? "text-cyan-400" : ""}>Información</span>
-                            <span className={currentStep >= 2 ? "text-cyan-400" : ""}>Pago</span>
-                            <span className={currentStep >= 3 ? "text-cyan-400" : ""}>Confirmación</span>
+                        <div className="flex justify-center space-x-8 text-sm text-foreground/80">
+                            <span className={currentStep >= 1 ? "text-primary font-semibold" : ""}>Información</span>
+                            <span className={currentStep >= 2 ? "text-primary font-semibold" : ""}>Pago</span>
+                            <span className={currentStep >= 3 ? "text-primary font-semibold" : ""}>Confirmación</span>
                         </div>
                     </div>
 
@@ -219,10 +219,10 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Event Summary */}
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <Card className="bg-white border-gray-200 shadow-lg">
                                 <CardHeader>
-                                    <CardTitle className="text-white flex items-center space-x-3">
-                                        <Ticket className="w-6 h-6 text-cyan-400" />
+                                    <CardTitle className="text-foreground flex items-center space-x-3">
+                                        <Ticket className="w-6 h-6 text-primary" />
                                         <span>Resumen del Evento</span>
                                     </CardTitle>
                                 </CardHeader>
@@ -236,16 +236,16 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-white mb-2">{mockEventData.title}</h3>
-                                            <div className="flex items-center space-x-4 text-white/80 text-sm">
+                                            <h3 className="text-lg font-bold text-foreground mb-2">{mockEventData.title}</h3>
+                                            <div className="flex items-center space-x-4 text-foreground/80 text-sm">
                                                 <div className="flex items-center space-x-1">
-                                                    <Calendar className="w-4 h-4" />
+                                                    <Calendar className="w-4 h-4 text-primary" />
                                                     <span>
                                                         {mockEventData.date} • {mockEventData.time}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center space-x-1">
-                                                    <MapPin className="w-4 h-4" />
+                                                    <MapPin className="w-4 h-4 text-pink-500" />
                                                     <span>
                                                         {mockEventData.location}, {mockEventData.city}
                                                     </span>
@@ -258,36 +258,36 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                             {/* Step 1: Billing Information */}
                             {currentStep === 1 && (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                <Card className="bg-white border-gray-200 shadow-lg">
                                     <CardHeader>
-                                        <CardTitle className="text-white text-xl">Información de Facturación</CardTitle>
-                                        <p className="text-white/80">Completa tus datos para la facturación</p>
+                                        <CardTitle className="text-foreground text-xl">Información de Facturación</CardTitle>
+                                        <p className="text-foreground/80">Completa tus datos para la facturación</p>
                                     </CardHeader>
                                     <CardContent>
                                         <form className="space-y-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="firstName" className="text-white">
+                                                    <Label htmlFor="firstName" className="text-foreground">
                                                         Nombre *
                                                     </Label>
                                                     <Input
                                                         id="firstName"
                                                         value={billingInfo.firstName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, firstName: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="Tu nombre"
                                                         required
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="lastName" className="text-white">
+                                                    <Label htmlFor="lastName" className="text-foreground">
                                                         Apellido *
                                                     </Label>
                                                     <Input
                                                         id="lastName"
                                                         value={billingInfo.lastName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, lastName: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="Tu apellido"
                                                         required
                                                     />
@@ -296,7 +296,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="email" className="text-white">
+                                                    <Label htmlFor="email" className="text-foreground">
                                                         Email *
                                                     </Label>
                                                     <Input
@@ -304,20 +304,20 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                         type="email"
                                                         value={billingInfo.email}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, email: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="tu@email.com"
                                                         required
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="phone" className="text-white">
+                                                    <Label htmlFor="phone" className="text-foreground">
                                                         Teléfono *
                                                     </Label>
                                                     <Input
                                                         id="phone"
                                                         value={billingInfo.phone}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, phone: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="+54 11 1234-5678"
                                                         required
                                                     />
@@ -326,17 +326,17 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="documentType" className="text-white">
+                                                    <Label htmlFor="documentType" className="text-foreground">
                                                         Tipo de Documento *
                                                     </Label>
                                                     <Select
                                                         value={billingInfo.documentType}
                                                         onValueChange={(value) => setBillingInfo((prev) => ({ ...prev, documentType: value }))}
                                                     >
-                                                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                                        <SelectTrigger className="bg-white border-gray-300 text-foreground">
                                                             <SelectValue />
                                                         </SelectTrigger>
-                                                        <SelectContent>
+                                                        <SelectContent className="bg-white border-gray-300">
                                                             <SelectItem value="DNI">DNI</SelectItem>
                                                             <SelectItem value="Pasaporte">Pasaporte</SelectItem>
                                                             <SelectItem value="Cedula">Cédula</SelectItem>
@@ -344,14 +344,14 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                     </Select>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="documentNumber" className="text-white">
+                                                    <Label htmlFor="documentNumber" className="text-foreground">
                                                         Número de Documento *
                                                     </Label>
                                                     <Input
                                                         id="documentNumber"
                                                         value={billingInfo.documentNumber}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="12345678"
                                                         required
                                                     />
@@ -364,10 +364,10 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                             {/* Step 2: Payment Method */}
                             {currentStep === 2 && (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                <Card className="bg-white border-gray-200 shadow-lg">
                                     <CardHeader>
-                                        <CardTitle className="text-white text-xl">Método de Pago</CardTitle>
-                                        <p className="text-white/80">Selecciona tu método de pago preferido</p>
+                                        <CardTitle className="text-foreground text-xl">Método de Pago</CardTitle>
+                                        <p className="text-foreground/80">Selecciona tu método de pago preferido</p>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         <RadioGroup
@@ -375,7 +375,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                             onValueChange={(value) => setPaymentInfo((prev) => ({ ...prev, method: value }))}
                                         >
                                             {paymentMethods.map((method) => (
-                                                <div key={method.id} className="flex items-center space-x-3 p-4 bg-white/5 rounded-lg">
+                                                <div key={method.id} className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                                     <RadioGroupItem value={method.id} id={method.id} />
                                                     <div
                                                         className={`w-10 h-10 bg-gradient-to-r ${method.color} rounded-lg flex items-center justify-center`}
@@ -383,33 +383,33 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                         <method.icon className="w-5 h-5 text-white" />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <Label htmlFor={method.id} className="text-white font-medium cursor-pointer">
+                                                        <Label htmlFor={method.id} className="text-foreground font-medium cursor-pointer">
                                                             {method.name}
                                                         </Label>
-                                                        <p className="text-white/60 text-sm">{method.description}</p>
+                                                        <p className="text-foreground/60 text-sm">{method.description}</p>
                                                     </div>
                                                 </div>
                                             ))}
                                         </RadioGroup>
 
                                         {(paymentInfo.method === "credit" || paymentInfo.method === "debit") && (
-                                            <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="cardName" className="text-white">
+                                                    <Label htmlFor="cardName" className="text-foreground">
                                                         Nombre en la Tarjeta *
                                                     </Label>
                                                     <Input
                                                         id="cardName"
                                                         value={paymentInfo.cardName}
                                                         onChange={(e) => setPaymentInfo((prev) => ({ ...prev, cardName: e.target.value }))}
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="Nombre como aparece en la tarjeta"
                                                         required
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="cardNumber" className="text-white">
+                                                    <Label htmlFor="cardNumber" className="text-foreground">
                                                         Número de Tarjeta *
                                                     </Label>
                                                     <Input
@@ -418,7 +418,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                         onChange={(e) =>
                                                             setPaymentInfo((prev) => ({ ...prev, cardNumber: formatCardNumber(e.target.value) }))
                                                         }
-                                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                         placeholder="1234 5678 9012 3456"
                                                         maxLength={19}
                                                         required
@@ -427,7 +427,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="expiryDate" className="text-white">
+                                                        <Label htmlFor="expiryDate" className="text-foreground">
                                                             Fecha de Vencimiento *
                                                         </Label>
                                                         <Input
@@ -436,14 +436,14 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                             onChange={(e) =>
                                                                 setPaymentInfo((prev) => ({ ...prev, expiryDate: formatExpiryDate(e.target.value) }))
                                                             }
-                                                            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                             placeholder="MM/AA"
                                                             maxLength={5}
                                                             required
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="cvv" className="text-white">
+                                                        <Label htmlFor="cvv" className="text-foreground">
                                                             CVV *
                                                         </Label>
                                                         <div className="relative">
@@ -452,7 +452,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                                 type={showCVV ? "text" : "password"}
                                                                 value={paymentInfo.cvv}
                                                                 onChange={(e) => setPaymentInfo((prev) => ({ ...prev, cvv: e.target.value }))}
-                                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60 pr-10"
+                                                                className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 pr-10"
                                                                 placeholder="123"
                                                                 maxLength={4}
                                                                 required
@@ -460,7 +460,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowCVV(!showCVV)}
-                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
+                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
                                                             >
                                                                 {showCVV ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                                             </button>
@@ -475,10 +475,10 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                             {/* Step 3: Confirmation */}
                             {currentStep === 3 && (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                <Card className="bg-white border-gray-200 shadow-lg">
                                     <CardHeader>
-                                        <CardTitle className="text-white text-xl">Confirmación de Compra</CardTitle>
-                                        <p className="text-white/80">Revisa tu información antes de confirmar</p>
+                                        <CardTitle className="text-foreground text-xl">Confirmación de Compra</CardTitle>
+                                        <p className="text-foreground/80">Revisa tu información antes de confirmar</p>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         <div className="space-y-4">
@@ -488,9 +488,9 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                     checked={agreements.terms}
                                                     onCheckedChange={(checked) => setAgreements((prev) => ({ ...prev, terms: checked as boolean }))}
                                                 />
-                                                <Label htmlFor="terms" className="text-white text-sm">
+                                                <Label htmlFor="terms" className="text-foreground text-sm">
                                                     Acepto los{" "}
-                                                    <Link href='/terms' className="text-cyan-400 hover:text-cyan-300 underline">
+                                                    <Link href='/terms' className="text-primary hover:text-primary-hover underline">
                                                         términos y condiciones
                                                     </Link>{" "}
                                                     *
@@ -505,9 +505,9 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                         setAgreements((prev) => ({ ...prev, privacy: checked as boolean }))
                                                     }
                                                 />
-                                                <Label htmlFor="privacy" className="text-white text-sm">
+                                                <Label htmlFor="privacy" className="text-foreground text-sm">
                                                     Acepto la{" "}
-                                                    <Link href='/privacy' className="text-cyan-400 hover:text-cyan-300 underline">
+                                                    <Link href='/privacy' className="text-primary hover:text-primary-hover underline">
                                                         política de privacidad
                                                     </Link>{" "}
                                                     *
@@ -522,18 +522,18 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                                         setAgreements((prev) => ({ ...prev, marketing: checked as boolean }))
                                                     }
                                                 />
-                                                <Label htmlFor="marketing" className="text-white text-sm">
+                                                <Label htmlFor="marketing" className="text-foreground text-sm">
                                                     Quiero recibir ofertas y promociones por email
                                                 </Label>
                                             </div>
                                         </div>
 
-                                        <div className="bg-white/5 rounded-lg p-4">
-                                            <div className="flex items-center space-x-2 text-cyan-400 mb-2">
+                                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                            <div className="flex items-center space-x-2 text-primary mb-2">
                                                 <AlertCircle className="w-5 h-5" />
                                                 <span className="font-semibold">Información Importante</span>
                                             </div>
-                                            <ul className="text-white/80 text-sm space-y-1">
+                                            <ul className="text-foreground/80 text-sm space-y-1">
                                                 <li>• Los tickets serán enviados a tu email después del pago</li>
                                                 <li>• Puedes cancelar hasta 24 horas antes del evento</li>
                                                 <li>• Los tickets son intransferibles sin autorización</li>
@@ -549,7 +549,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                 <Button
                                     onClick={handlePrevStep}
                                     variant="outline"
-                                    className="border-white/30 text-white hover:bg-white/20 bg-transparent"
+                                    className="border-gray-300 text-foreground hover:bg-gray-50"
                                     disabled={currentStep === 1}
                                 >
                                     Anterior
@@ -558,7 +558,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                 {currentStep < 3 ? (
                                     <Button
                                         onClick={handleNextStep}
-                                        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8"
+                                        className="bg-primary hover:bg-primary-hover text-white px-8"
                                     >
                                         Siguiente
                                     </Button>
@@ -566,7 +566,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                     <Button
                                         onClick={handleSubmitPayment}
                                         disabled={isLoading || !agreements.terms || !agreements.privacy}
-                                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8"
+                                        className="bg-green-500 hover:bg-green-600 text-white px-8"
                                     >
                                         {isLoading ? (
                                             <div className="flex items-center space-x-2">
@@ -586,52 +586,52 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20 sticky top-24">
+                            <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
                                 <CardHeader>
-                                    <CardTitle className="text-white flex items-center space-x-2">
-                                        <Users className="w-5 h-5 text-cyan-400" />
+                                    <CardTitle className="text-foreground flex items-center space-x-2">
+                                        <Users className="w-5 h-5 text-primary" />
                                         <span>Resumen de Compra</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {mockEventData.selectedTickets.map((ticket) => (
-                                        <div key={ticket.id} className="flex justify-between items-start p-3 bg-white/5 rounded-lg">
+                                        <div key={ticket.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex-1">
-                                                <h4 className="text-white font-semibold">{ticket.type}</h4>
-                                                <p className="text-white/60 text-sm">{ticket.description}</p>
-                                                <p className="text-white/80 text-sm">Cantidad: {ticket.quantity}</p>
+                                                <h4 className="text-foreground font-semibold">{ticket.type}</h4>
+                                                <p className="text-foreground/60 text-sm">{ticket.description}</p>
+                                                <p className="text-foreground/80 text-sm">Cantidad: {ticket.quantity}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-white font-bold">${(ticket.price * ticket.quantity).toLocaleString()}</p>
-                                                <p className="text-white/60 text-sm">${ticket.price.toLocaleString()} c/u</p>
+                                                <p className="text-foreground font-bold">${(ticket.price * ticket.quantity).toLocaleString()}</p>
+                                                <p className="text-foreground/60 text-sm">${ticket.price.toLocaleString()} c/u</p>
                                             </div>
                                         </div>
                                     ))}
 
-                                    <Separator className="bg-white/20" />
+                                    <Separator className="bg-gray-200" />
 
                                     <div className="space-y-2">
-                                        <div className="flex justify-between text-white/80">
+                                        <div className="flex justify-between text-foreground/80">
                                             <span>Subtotal ({getTotalTickets()} tickets)</span>
                                             <span>${getTotalPrice().toLocaleString()}</span>
                                         </div>
-                                        <div className="flex justify-between text-white/80">
+                                        <div className="flex justify-between text-foreground/80">
                                             <span>Cargo por servicio</span>
                                             <span>${getServiceFee().toLocaleString()}</span>
                                         </div>
-                                        <Separator className="bg-white/20" />
-                                        <div className="flex justify-between text-white text-xl font-bold">
+                                        <Separator className="bg-gray-200" />
+                                        <div className="flex justify-between text-foreground text-xl font-bold">
                                             <span>Total</span>
                                             <span>${getFinalTotal().toLocaleString()} ARS</span>
                                         </div>
                                     </div>
 
-                                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg p-3 border border-green-500/30">
-                                        <div className="flex items-center space-x-2 text-green-400 mb-1">
+                                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                                        <div className="flex items-center space-x-2 text-green-600 mb-1">
                                             <Shield className="w-4 h-4" />
                                             <span className="text-sm font-semibold">Compra Protegida</span>
                                         </div>
-                                        <p className="text-white/80 text-xs">
+                                        <p className="text-foreground/80 text-xs">
                                             Tu compra está protegida por nuestra garantía de satisfacción
                                         </p>
                                     </div>
