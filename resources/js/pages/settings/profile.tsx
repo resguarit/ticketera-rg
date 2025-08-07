@@ -20,16 +20,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type ProfileForm = {
-    name: string;
     email: string;
+    person: {
+        name: string;
+        last_name: string;
+        dni: string;
+        phone?: string | null;
+    };
 };
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        name: auth.user.person.name,
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
         email: auth.user.email,
+        person: {
+            name: auth.user.person.name,
+            last_name: auth.user.person.last_name,
+            dni: auth.user.person.dni,
+            phone: auth.user.person.phone,
+        },
     });
 
     const submit: FormEventHandler = (e) => {
@@ -46,25 +56,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall title="Profile information" description="Update your name and email address" />
+                    <HeadingSmall title="Profile information" description="Update your email address and your personal information" />
 
                     <form onSubmit={submit} className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
-
-                            <Input
-                                id="name"
-                                className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                required
-                                autoComplete="name"
-                                placeholder="Full name"
-                            />
-
-                            <InputError className="mt-2" message={errors.name} />
-                        </div>
-
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email address</Label>
 
@@ -80,6 +74,74 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             />
 
                             <InputError className="mt-2" message={errors.email} />
+                        </div>
+
+                        <div className='flex gap-2 justify-between'>
+                            <div className="grid gap-2 w-1/2">
+                                <Label htmlFor="name">Name</Label>
+
+                                <Input
+                                    id="name"
+                                    className="mt-1 block w-full"
+                                    value={data.person.name}
+                                    onChange={(e) => setData('person', { ...data.person, name: e.target.value })}
+                                    required
+                                    autoComplete="name"
+                                    placeholder="First name"
+                                />
+
+                                <InputError className="mt-2" message={errors['person.name']} />
+                            </div>
+
+                            <div className="grid gap-2 w-1/2">
+                                <Label htmlFor="lastName">Last Name</Label>
+
+                                <Input
+                                    id="lastName"
+                                    className="mt-1 block w-full"
+                                    value={data.person.last_name}
+                                    onChange={(e) => setData('person', { ...data.person, last_name: e.target.value })}
+                                    required
+                                    autoComplete="last-name"
+                                    placeholder="Last name"
+                                />
+
+                                <InputError className="mt-2" message={errors['person.last_name']} />
+                            </div>
+                        </div>
+
+                        <div className='flex gap-2 justify-between'>
+                            <div className="grid gap-2 w-1/2">
+                                <Label htmlFor="dni">DNI</Label>
+
+                                <Input
+                                    id="dni"
+                                    type="text"
+                                    className="mt-1 block w-full"
+                                    value={data.person.dni}
+                                    onChange={(e) => setData('person', { ...data.person, dni: e.target.value })}
+                                    required
+                                    autoComplete="dni"
+                                    placeholder="DNI"
+                                />
+
+                                <InputError className="mt-2" message={errors['person.dni']} />
+                            </div>
+                            <div className="grid gap-2 w-1/2">
+                                <Label htmlFor="phone">Phone</Label>
+
+                                <Input
+                                    id="phone"
+                                    type="text"
+                                    className="mt-1 block w-full"
+                                    value={data.person.phone || ''}
+                                    onChange={(e) => setData('person', { ...data.person, phone: e.target.value })}
+                                    autoComplete="tel"
+                                    placeholder="Phone number"
+                                />
+
+                                <InputError className="mt-2" message={errors['person.phone']} />
+                            </div>
                         </div>
 
                         {mustVerifyEmail && auth.user.email_verified_at === null && (
