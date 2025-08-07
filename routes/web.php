@@ -9,6 +9,9 @@ use App\Http\Controllers\Organizer\CategoryController;
 use App\Http\Controllers\Organizer\VenueController;
 use App\Http\Controllers\Organizer\SectorController;
 
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\EventController as PublicEventController;
+
 /*-------Rutas protegidas para administradores----------*/ 
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -49,9 +52,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('settings');
 });
 
-
-
-/*-------Rutas protegidas para orgenizadores----------*/ 
+/*-------Rutas protegidas para organizadores----------*/ 
 
 Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
@@ -80,25 +81,19 @@ Route::middleware('auth')->get('/my-account', function () {
 })->name('my-account');
 
 
-/*--------------------Rutas publicas-----------------------*/ 
+/*--------------------Rutas públicas-----------------------*/ 
 
-Route::get('/', function () {
-    return Inertia::render('public/home');
-})->name('home');
+// Página principal - conectada al HomeController
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/events', function () {
-    return Inertia::render('public/events');
-})->name('events');
+// Páginas de eventos - conectadas al EventController
+Route::get('/events', [PublicEventController::class, 'index'])->name('events');
+Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
 
+// Otras rutas públicas que mantienen closures por ahora
 Route::get('/help', function () {
     return Inertia::render('public/help');
 })->name('help');
-
-Route::get('/events/{eventId}', function ($eventId) {
-    return Inertia::render('public/eventdetail', [
-        'eventId' => $eventId
-    ]);
-})->name('event.detail');
 
 Route::get('/checkout/success', function () {
     return Inertia::render('public/checkoutsuccess');
@@ -109,10 +104,6 @@ Route::get('/checkout/{eventId}', function ($eventId) {
         'eventId' => $eventId
     ]);
 })->name('checkout.confirm');
-
-
-
-
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
