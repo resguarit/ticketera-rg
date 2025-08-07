@@ -123,9 +123,9 @@ const events = [
 ];
 
 const categories = [
-    { id: "música", label: "Música", icon: Music, color: "from-purple-500 to-pink-500" },
-    { id: "teatro", label: "Teatro", icon: Theater, color: "from-orange-500 to-red-500" },
-    { id: "deportes", label: "Deportes", icon: Trophy, color: "from-blue-500 to-cyan-500" },
+    { id: "música", label: "Música", icon: Music, color: "primary" },
+    { id: "teatro", label: "Teatro", icon: Theater, color: "primary" },
+    { id: "deportes", label: "Deportes", icon: Trophy, color: "primary" },
 ];
 
 export default function Home() {
@@ -151,16 +151,16 @@ export default function Home() {
 
     const getCategoryColor = (category: string) => {
         const cat = categories.find((c) => c.id === category);
-        return cat ? cat.color : "from-purple-500 to-pink-500";
+        return cat ? cat.color : "from-blue-500 to-blue-500";
     };
 
     return (
         <>
             <Header className="" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 ">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200  to-secondary ">
                 {/* Hero Banner */}
-                <section className="relative h-[500px] overflow-hidden">
+                <section className="relative h-[400px] overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
                     <img
                         src={featuredEvents[currentSlide].image}
@@ -170,13 +170,13 @@ export default function Home() {
                     <div className="absolute inset-0 z-20 flex items-center">
                         <div className="container mx-auto px-4">
                             <div className="max-w-2xl">
-                                <Badge className="mb-4 bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0">
+                                <Badge className="mb-4 rounded-sm bg-primary text-white border-0">
                                     Evento Destacado
                                 </Badge>
-                                <h2 className="text-5xl font-bold text-white mb-4 leading-tight">
+                                <h2 className="text-5xl mb-4 text-white">
                                     {featuredEvents[currentSlide].title}
                                 </h2>
-                                <div className="flex items-center space-x-4 text-white/80 mb-6">
+                                <div className="flex items-center space-x-4 text-white mb-6">
                                     <div className="flex items-center space-x-2">
                                         <Calendar className="w-5 h-5" />
                                         <span>{featuredEvents[currentSlide].date}</span>
@@ -187,9 +187,9 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <Link href={`/events/${featuredEvents[currentSlide].id}`}>
-                                    <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-3 text-lg font-semibold rounded-full transform hover:scale-105 transition-all duration-200">
+                                    <button className="bg-primary hover:bg-primary-hover text-white px-6 py-2 text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
                                         Comprar Entradas
-                                    </Button>
+                                    </button>
                                 </Link>
                             </div>
                         </div>
@@ -211,20 +211,20 @@ export default function Home() {
 
                 {/* Search and Filters */}
                 <section className="container mx-auto px-4 py-8">
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+                    <div className="rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 <Input
                                     placeholder="Buscar eventos..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
+                                    className="pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md"
                                 />
                             </div>
 
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
                                     <SelectValue placeholder="Categoría" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -238,7 +238,7 @@ export default function Home() {
                             </Select>
 
                             <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
                                     <SelectValue placeholder="Ciudad" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -250,7 +250,7 @@ export default function Home() {
                                 </SelectContent>
                             </Select>
 
-                            <Button className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white">
+                            <Button className="bg-primary hover: text-white">
                                 <Filter className="w-4 h-4 mr-2" />
                                 Filtrar
                             </Button>
@@ -260,23 +260,23 @@ export default function Home() {
 
                 {/* Events Grid */}
                 <section className="container mx-auto px-4 pb-12">
-                    <h3 className="text-3xl font-bold text-white mb-8">Próximos Eventos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <h2 className="text-3xl  text-foreground mb-8">Próximos Eventos</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredEvents.map((event) => {
                             const IconComponent = getCategoryIcon(event.category);
                             return (
                                 <Card
                                     key={event.id}
-                                    className="bg-white/10 backdrop-blur-md border-white/20 overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
+                                    className="bg-white pt-4 py-0 gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
                                 >
                                     <div className="relative">
                                         <img
                                             src={event.image}
                                             alt={event.title}
-                                            className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                                            className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                         />
                                         <div
-                                            className={`absolute top-4 left-4 p-2 rounded-full bg-gradient-to-r ${getCategoryColor(event.category)}`}
+                                            className={`absolute top-4 left-4 p-2 rounded-full  bg-${getCategoryColor(event.category)}`}
                                         >
                                             <IconComponent className="w-4 h-4 text-white" />
                                         </div>
@@ -285,16 +285,16 @@ export default function Home() {
                                             <span className="text-white text-sm">{event.rating}</span>
                                         </div>
                                     </div>
-                                    <CardContent className="p-6">
-                                        <h4 className="text-xl font-bold text-white mb-2 line-clamp-2">{event.title}</h4>
+                                    <CardContent className=" px-6 pb-4">
+                                        <h4 className="text-xl font-bold text-foreground mb-2 line-clamp-2">{event.title}</h4>
                                         <div className="space-y-2 mb-4">
-                                            <div className="flex items-center text-white/80">
+                                            <div className="flex items-center text-foreground/80">
                                                 <Calendar className="w-4 h-4 mr-2" />
                                                 <span className="text-sm">
                                                     {event.date} • {event.time}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center text-white/80">
+                                            <div className="flex items-center text-foreground/80">
                                                 <MapPin className="w-4 h-4 mr-2" />
                                                 <span className="text-sm">
                                                     {event.location}, {event.city}
@@ -303,11 +303,11 @@ export default function Home() {
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <span className="text-2xl font-bold text-white">${event.price.toLocaleString()}</span>
-                                                <span className="text-white/60 text-sm ml-1">ARS</span>
+                                                <span className="text-2xl font-bold text-foreground">${event.price.toLocaleString()}</span>
+                                                <span className="text-foreground/60 text-sm ml-1">ARS</span>
                                             </div>
                                             <Link href={`/events/${event.id}`}>
-                                                <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white rounded-full px-6">
+                                                <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
                                                     Comprar
                                                 </Button>
                                             </Link>
