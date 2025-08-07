@@ -67,8 +67,8 @@ export default function MyAccount() {
     const [isLoading, setIsLoading] = useState(false);
 
     const [personalInfo, setPersonalInfo] = useState({
-        firstName: auth.user?.name?.split(" ")[0] || "",
-        lastName: auth.user?.name?.split(" ").slice(1).join(" ") || "",
+        firstName: auth.user?.person?.name || "",
+        lastName: auth.user?.person?.last_name || "",
         email: auth.user?.email || "",
         phone: "",
         birthDate: "",
@@ -171,7 +171,7 @@ export default function MyAccount() {
                                             <Camera className="w-4 h-4 text-white" />
                                         </button>
                                     </div>
-                                    <h3 className="text-xl font-bold text-foreground">{auth.user.name}</h3>
+                                    <h3 className="text-xl font-bold text-foreground">{auth.user.person.name}</h3>
                                     <p className="text-foreground/60 text-sm">{auth.user.email}</p>
                                     <Badge className="bg-green-500 text-white border-0 mt-2">
                                         Cuenta Verificada
@@ -444,7 +444,7 @@ export default function MyAccount() {
                                                     </div>
                                                     <Switch
                                                         checked={securityInfo.twoFactorEnabled}
-                                                        onCheckedChange={(checked) =>
+                                                        onCheckedChange={(checked: boolean) =>
                                                             setSecurityInfo((prev) => ({ ...prev, twoFactorEnabled: checked }))
                                                         }
                                                     />
@@ -505,7 +505,7 @@ export default function MyAccount() {
                                                     </div>
                                                     <Switch
                                                         checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
-                                                        onCheckedChange={(checked) =>
+                                                        onCheckedChange={(checked: boolean) =>
                                                             setNotificationSettings((prev) => ({ ...prev, [setting.key]: checked }))
                                                         }
                                                     />

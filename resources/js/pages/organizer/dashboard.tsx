@@ -10,7 +10,7 @@ export default function Dashboard({ auth, organizer }: { auth: any; organizer: a
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            ¡Bienvenido a tu panel, {auth.user.name}!
+                            ¡Bienvenido a tu panel, {auth.user.person.name}!
                             {organizer && <p className="mt-2">Gestionando como: <strong>{organizer.name}</strong></p>}
                         </div>
                     </div>
