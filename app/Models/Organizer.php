@@ -29,7 +29,7 @@ class Organizer extends Model
         'decidir_secret_key_test',
     ];
 
-    public function eventos(): HasMany
+    public function events(): HasMany
     {
         return $this->hasMany(Event::class);
     }

@@ -30,11 +30,6 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        Log::info('Profile update request received', [
-            'user_id' => $request->user()->id,
-            'data' => $request->all(),
-        ]);
-
         $user = $request->user();
         $validated = $request->validated();
 
