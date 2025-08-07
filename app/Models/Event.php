@@ -16,11 +16,17 @@ class Event extends Model
 
     protected $fillable = [
         'organizer_id',
+        'category_id',
         'venue_id',
         'name',
         'description',
         'banner_url',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function organizer(): BelongsTo
     {
