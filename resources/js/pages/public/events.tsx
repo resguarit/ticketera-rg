@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Star, Grid, List } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Star, Grid, List, BringToFront } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,9 +110,9 @@ const allEvents = [
 ];
 
 const categories = [
-    { id: "música", label: "Música", icon: Music, color: "from-purple-500 to-pink-500" },
-    { id: "teatro", label: "Teatro", icon: Theater, color: "from-orange-500 to-red-500" },
-    { id: "deportes", label: "Deportes", icon: Trophy, color: "from-blue-500 to-cyan-500" },
+    { id: "música", label: "Música", icon: Music, color: "primary" },
+    { id: "teatro", label: "Teatro", icon: Theater, color: "primary" },
+    { id: "deportes", label: "Deportes", icon: Trophy, color: "primary" },
 ];
 
 export default function Events() {
@@ -152,43 +152,43 @@ export default function Events() {
 
     const getCategoryColor = (category: string) => {
         const cat = categories.find((c) => c.id === category);
-        return cat ? cat.color : "from-purple-500 to-pink-500";
+        return cat ? cat.color : "primary";
     };
 
     return (
         <>
             <Head title="Eventos - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200  to-secondary">
                 {/* Header */}
                 <Header />
 
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 py-4">
                     {/* Page Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-4">
+                        <h2 className="text-5xl font-bold text-foreground mb-4">
                             Todos los Eventos
-                        </h1>
-                        <p className="text-white/80 text-lg max-w-2xl mx-auto">
+                        </h2>
+                        <p className="text-foreground text-lg max-w-2xl mx-auto">
                             Descubre los mejores eventos de música, teatro y deportes en tu ciudad
                         </p>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-8">
+                    <div className="mb-8">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 <Input
                                     placeholder="Buscar eventos..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
+                                    className="pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md"
                                 />
                             </div>
 
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className=" bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
                                     <SelectValue placeholder="Categoría" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -202,7 +202,7 @@ export default function Events() {
                             </Select>
 
                             <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
                                     <SelectValue placeholder="Ciudad" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -215,7 +215,7 @@ export default function Events() {
                             </Select>
 
                             <Select value={sortBy} onValueChange={setSortBy}>
-                                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
                                     <SelectValue placeholder="Ordenar por" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -226,27 +226,23 @@ export default function Events() {
                                 </SelectContent>
                             </Select>
 
-                            <div className="flex space-x-2">
-                                <Button
-                                    variant={viewMode === "grid" ? "default" : "outline"}
-                                    size="sm"
+                            <div className="flex space-x-4">
+                                <button
                                     onClick={() => setViewMode("grid")}
-                                    className="flex-1"
+                                    className={` ${viewMode === "grid" ? "bg-primary hover:bg-primary-hover text-white" : "bg-white text-primary hover:scale-110"} flex py-2 w-full text-center items-center justify-center shadow-md rounded-md`}
                                 >
                                     <Grid className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant={viewMode === "list" ? "default" : "outline"}
-                                    size="sm"
+                                </button>
+                                <button
                                     onClick={() => setViewMode("list")}
-                                    className="flex-1"
+                                    className={` ${viewMode === "list" ? "bg-primary hover:bg-primary-hover text-white" : "bg-white text-primary hover:scale-110"} flex py-2 w-full text-center items-center justify-center shadow-md rounded-md`}
                                 >
                                     <List className="w-4 h-4" />
-                                </Button>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-white/80">
+                        <div className="flex items-center justify-between text-foreground">
                             <span>{filteredEvents.length} eventos encontrados</span>
                             <div className="flex space-x-2">
                                 {categories.map((category) => (
@@ -255,12 +251,21 @@ export default function Events() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setSelectedCategory(category.id)}
-                                        className={`text-white hover:bg-white/20 ${selectedCategory === category.id ? "bg-white/20" : ""}`}
+                                        className={`text-foreground hover:bg-primary hover:text-white ${selectedCategory === category.id ? "bg-primary text-white" : ""}`}
                                     >
                                         <category.icon className="w-4 h-4 mr-2" />
                                         {category.label}
                                     </Button>
                                 ))}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedCategory(null)}
+                                        className={`text-foreground hover:bg-primary hover:text-white ${selectedCategory === null ? "bg-primary text-white" : ""}`}
+                                    >
+                                        <BringToFront className="w-4 h-4 mr-2"/>
+                                        Todas
+                                    </Button>
                             </div>
                         </div>
                     </div>
@@ -274,21 +279,21 @@ export default function Events() {
                                     return (
                                         <Card
                                             key={event.id}
-                                            className="bg-white/10 backdrop-blur-md border-white/20 overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
+                                            className="bg-white pt-4 py-0 gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
                                         >
                                             <div className="relative">
                                                 <img
                                                     src={event.image}
                                                     alt={event.title}
-                                                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                                                    className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                                 />
                                                 {event.featured && (
-                                                    <Badge className="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
+                                                    <Badge className="absolute top-4 left-4 bg-primary text-white border-0">
                                                         Destacado
                                                     </Badge>
                                                 )}
                                                 <div
-                                                    className={`absolute top-4 right-4 p-2 rounded-full bg-gradient-to-r ${getCategoryColor(event.category)}`}
+                                                    className={`absolute top-4 right-4 p-2 rounded-full bg-gradient-to-r bg-${getCategoryColor(event.category)}`}
                                                 >
                                                     <IconComponent className="w-4 h-4 text-white" />
                                                 </div>
@@ -298,15 +303,15 @@ export default function Events() {
                                                 </div>
                                             </div>
                                             <CardContent className="p-6">
-                                                <h4 className="text-xl font-bold text-white mb-2 line-clamp-2">{event.title}</h4>
+                                                <h4 className="text-xl font-bold text-foreground mb-2 line-clamp-2">{event.title}</h4>
                                                 <div className="space-y-2 mb-4">
-                                                    <div className="flex items-center text-white/80">
+                                                    <div className="flex items-center text-foreground/80">
                                                         <Calendar className="w-4 h-4 mr-2" />
                                                         <span className="text-sm">
                                                             {event.date} • {event.time}
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center text-white/80">
+                                                    <div className="flex items-center text-foreground/80">
                                                         <MapPin className="w-4 h-4 mr-2" />
                                                         <span className="text-sm">
                                                             {event.location}, {event.city}
@@ -315,11 +320,11 @@ export default function Events() {
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <span className="text-2xl font-bold text-white">${event.price.toLocaleString()}</span>
-                                                        <span className="text-white/60 text-sm ml-1">ARS</span>
+                                                        <span className="text-2xl font-bold text-foreground">${event.price.toLocaleString()}</span>
+                                                        <span className="text-foreground/60 text-sm ml-1">ARS</span>
                                                     </div>
                                                     <Link href={`/events/${event.id}`}>
-                                                        <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white rounded-full px-6">
+                                                        <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
                                                             Ver Más
                                                         </Button>
                                                     </Link>
@@ -338,7 +343,7 @@ export default function Events() {
                                     return (
                                         <Card
                                             key={event.id}
-                                            className="bg-white/10 backdrop-blur-md border-white/20 overflow-hidden hover:bg-white/15 transition-all duration-300"
+                                            className="bg-white overflow-hidden text-foreground  hover:transform hover:scale-105 transition-all duration-300"
                                         >
                                             <CardContent className="p-6">
                                                 <div className="flex items-center space-x-6">
@@ -358,8 +363,8 @@ export default function Events() {
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-start justify-between">
                                                             <div>
-                                                                <h4 className="text-xl font-bold text-white mb-1">{event.title}</h4>
-                                                                <div className="flex items-center space-x-4 text-white/80 text-sm mb-2">
+                                                                <h4 className="text-xl font-bold text-foreground mb-1">{event.title}</h4>
+                                                                <div className="flex items-center space-x-4 text-foreground/80 text-sm mb-2">
                                                                     <div className="flex items-center space-x-1">
                                                                         <Calendar className="w-4 h-4" />
                                                                         <span>
@@ -379,14 +384,14 @@ export default function Events() {
                                                                 </div>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-2xl font-bold text-white">${event.price.toLocaleString()}</div>
-                                                                <div className="text-white/60 text-sm">ARS</div>
+                                                                <div className="text-2xl font-bold text-foreground">${event.price.toLocaleString()}</div>
+                                                                <div className="text-foreground/60 text-sm">ARS</div>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <Link href={`/events/${event.id}`}>
-                                                        <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white rounded-full px-6">
+                                                        <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
                                                             Ver Detalles
                                                         </Button>
                                                     </Link>
