@@ -178,8 +178,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todas las ciudades</SelectItem>
-                                    {cities.map((city) => (
-                                        <SelectItem key={city} value={city}>
+                                    {cities.filter(city => city).map((city) => (
+                                        <SelectItem key={city} value={city!}>
                                             {city}
                                         </SelectItem>
                                     ))}

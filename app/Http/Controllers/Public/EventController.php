@@ -14,10 +14,7 @@ class EventController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Event::with(['venue', 'category', 'organizer', 'functions.ticketTypes'])
-            ->whereHas('functions', function($query) {
-                $query->where('start_time', '>=', now());
-            });
+        $query = Event::with(['venue', 'category', 'organizer', 'functions.ticketTypes']);
 
         // Filtros
         if ($request->filled('search')) {
@@ -45,23 +42,26 @@ class EventController extends Controller
 
         $events = $query->get()->map(function($event) {
             $firstFunction = $event->functions->first();
-            $minPrice = $event->functions
-                ->flatMap(fn($func) => $func->ticketTypes)
-                ->where('quantity_sold', '<', 'quantity')
-                ->min('price');
+            $minPrice = 0;
+            
+            // Obtener precio mínimo si hay funciones y tickets
+            if ($event->functions->isNotEmpty()) {
+                $allTickets = $event->functions->flatMap(fn($func) => $func->ticketTypes ?? collect());
+                $minPrice = $allTickets->where('quantity_sold', '<', 'quantity')->min('price') ?? 0;
+            }
             
             return [
                 'id' => $event->id,
                 'title' => $event->name,
                 'image' => $event->banner_url ?: "/placeholder.svg?height=300&width=400",
-                'date' => $firstFunction?->start_time?->format('d M Y'),
-                'time' => $firstFunction?->start_time?->format('H:i'),
+                'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
+                'time' => $firstFunction?->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
                 'city' => $this->extractCity($event->venue->address),
                 'category' => strtolower($event->category->name),
-                'price' => $minPrice ?: 0,
+                'price' => $minPrice,
                 'rating' => 4.5 + (rand(0, 8) / 10),
-                'featured' => false, // Puedes agregar un campo featured a la tabla events
+                'featured' => false,
             ];
         });
 
@@ -75,13 +75,18 @@ class EventController extends Controller
             ];
         });
 
+        // Ciudades únicas para el filtro
+        $cities = $events->pluck('city')->unique()->filter()->values();
+
         return Inertia::render('public/events', [
             'events' => $events,
             'categories' => $categories,
+            'cities' => $cities,
             'filters' => [
                 'search' => $request->get('search', ''),
                 'category' => $request->get('category', 'all'),
                 'city' => $request->get('city', 'all'),
+                'sortBy' => $request->get('sortBy', 'date'),
             ]
         ]);
     }
@@ -95,8 +100,8 @@ class EventController extends Controller
             'title' => $event->name,
             'description' => $event->description,
             'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
-            'date' => $event->functions->first()?->start_time?->format('d M Y'),
-            'time' => $event->functions->first()?->start_time?->format('H:i'),
+            'date' => $event->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
+            'time' => $event->functions->first()?->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
             'city' => $this->extractCity($event->venue->address),
             'category' => strtolower($event->category->name),
