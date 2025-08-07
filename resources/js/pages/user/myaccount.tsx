@@ -19,43 +19,43 @@ const sidebarItems = [
         id: "personal",
         label: "Información Personal",
         icon: User,
-        color: "from-cyan-500 to-blue-500",
+        color: "bg-foreground",
     },
     {
         id: "security",
         label: "Contraseña y Seguridad",
         icon: Lock,
-        color: "from-purple-500 to-pink-500",
+        color: "bg-foreground",
     },
     {
         id: "privacy",
         label: "Privacidad",
         icon: Shield,
-        color: "from-green-500 to-emerald-500",
+        color: "bg-foreground",
     },
     {
         id: "notifications",
         label: "Notificaciones",
         icon: Bell,
-        color: "from-orange-500 to-red-500",
+        color: "bg-foreground",
     },
     {
         id: "payment",
         label: "Métodos de Pago",
         icon: CreditCard,
-        color: "from-indigo-500 to-purple-500",
+        color: "bg-foreground",
     },
     {
         id: "sessions",
         label: "Sesiones Activas",
         icon: Monitor,
-        color: "from-teal-500 to-cyan-500",
+        color: "bg-foreground",
     },
     {
         id: "help",
         label: "Ayuda y Soporte",
         icon: HelpCircle,
-        color: "from-pink-500 to-rose-500",
+        color: "bg-foreground",
     },
 ];
 
@@ -101,13 +101,16 @@ export default function MyAccount() {
         return (
             <>
                 <Head title="Mi Cuenta - TicketMax" />
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                     <Header />
                     <div className="container mx-auto px-4 py-16 text-center">
-                        <h1 className="text-3xl font-bold text-white mb-4">Acceso Requerido</h1>
-                        <p className="text-white/80 mb-8">Necesitas iniciar sesión para acceder a tu cuenta</p>
+                        <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                            <User className="w-12 h-12 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-foreground mb-4">Acceso Requerido</h1>
+                        <p className="text-foreground/80 mb-8">Necesitas iniciar sesión para acceder a tu cuenta</p>
                         <Link href={route('login')}>
-                            <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white">
+                            <Button className="bg-primary hover:bg-primary-hover text-white">
                                 Iniciar Sesión
                             </Button>
                         </Link>
@@ -151,26 +154,26 @@ export default function MyAccount() {
         <>
             <Head title="Mi Cuenta - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Sidebar */}
                         <div className="lg:col-span-1">
-                            <Card className="bg-white/10 backdrop-blur-md border-white/20 sticky top-24">
+                            <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
                                 <CardHeader className="text-center pb-4">
                                     <div className="relative w-20 h-20 mx-auto mb-4">
-                                        <div className="w-20 h-20 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center">
+                                        <div className="w-20 h-20 bg-foreground  rounded-full flex items-center justify-center">
                                             <User className="w-10 h-10 text-white" />
                                         </div>
-                                        <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                                        <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary text-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform">
                                             <Camera className="w-4 h-4 text-white" />
                                         </button>
                                     </div>
-                                    <h3 className="text-xl font-bold text-white">{auth.user.name}</h3>
-                                    <p className="text-white/60 text-sm">{auth.user.email}</p>
-                                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 mt-2">
+                                    <h3 className="text-xl font-bold text-foreground">{auth.user.name}</h3>
+                                    <p className="text-foreground/60 text-sm">{auth.user.email}</p>
+                                    <Badge className="bg-green-500 text-white border-0 mt-2">
                                         Cuenta Verificada
                                     </Badge>
                                 </CardHeader>
@@ -182,12 +185,12 @@ export default function MyAccount() {
                                                 onClick={() => setActiveTab(item.id)}
                                                 className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${
                                                     activeTab === item.id
-                                                        ? "bg-gradient-to-r from-white/20 to-white/10 border-r-2 border-cyan-400 text-white"
-                                                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                                                        ? "bg-foreground text-white border-r-2 border-primary"
+                                                        : "text-foreground/80 hover:bg-gray-50 hover:text-foreground"
                                                 }`}
                                             >
                                                 <div
-                                                    className={`w-8 h-8 rounded-lg bg-gradient-to-r ${item.color} flex items-center justify-center`}
+                                                    className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}
                                                 >
                                                     <item.icon className="w-4 h-4 text-white" />
                                                 </div>
@@ -204,21 +207,21 @@ export default function MyAccount() {
                             <Tabs value={activeTab} onValueChange={setActiveTab}>
                                 {/* Personal Information */}
                                 <TabsContent value="personal">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardHeader>
-                                            <CardTitle className="text-2xl font-bold text-white flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                                            <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                <div className="w-10 h-10 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
                                                     <User className="w-5 h-5 text-white" />
                                                 </div>
                                                 <span>Información Personal</span>
                                             </CardTitle>
-                                            <p className="text-white/80">Actualiza tu información personal y de contacto</p>
+                                            <p className="text-foreground/80">Actualiza tu información personal y de contacto</p>
                                         </CardHeader>
                                         <CardContent>
                                             <form onSubmit={handleSavePersonalInfo} className="space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="firstName" className="text-white font-medium">
+                                                        <Label htmlFor="firstName" className="text-foreground font-medium">
                                                             Nombre
                                                         </Label>
                                                         <Input
@@ -227,14 +230,14 @@ export default function MyAccount() {
                                                             onChange={(e) =>
                                                                 setPersonalInfo((prev) => ({ ...prev, firstName: e.target.value }))
                                                             }
-                                                            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                             placeholder="Tu nombre"
                                                         />
-                                                        <p className="text-white/60 text-sm">Nombre como figura en tu documento</p>
+                                                        <p className="text-foreground/60 text-sm">Nombre como figura en tu documento</p>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="lastName" className="text-white font-medium">
+                                                        <Label htmlFor="lastName" className="text-foreground font-medium">
                                                             Apellido
                                                         </Label>
                                                         <Input
@@ -243,54 +246,54 @@ export default function MyAccount() {
                                                             onChange={(e) =>
                                                                 setPersonalInfo((prev) => ({ ...prev, lastName: e.target.value }))
                                                             }
-                                                            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                             placeholder="Tu apellido"
                                                         />
-                                                        <p className="text-white/60 text-sm">Apellido como figura en tu documento</p>
+                                                        <p className="text-foreground/60 text-sm">Apellido como figura en tu documento</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="email" className="text-white font-medium">
+                                                    <Label htmlFor="email" className="text-foreground font-medium">
                                                         E-Mail
                                                     </Label>
                                                     <div className="relative">
-                                                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                         <Input
                                                             id="email"
                                                             type="email"
                                                             value={personalInfo.email}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, email: e.target.value }))}
-                                                            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                            className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                             placeholder="tu@email.com"
                                                         />
                                                     </div>
-                                                    <p className="text-white/60 text-sm">E-mail para notificaciones y recuperación de contraseña</p>
+                                                    <p className="text-foreground/60 text-sm">E-mail para notificaciones y recuperación de contraseña</p>
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="phone" className="text-white font-medium">
+                                                        <Label htmlFor="phone" className="text-foreground font-medium">
                                                             Teléfono
                                                         </Label>
                                                         <div className="relative">
-                                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                             <Input
                                                                 id="phone"
                                                                 value={personalInfo.phone}
                                                                 onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))}
-                                                                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                                                className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                                 placeholder="+54 11 1234-5678"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="birthDate" className="text-white font-medium">
+                                                        <Label htmlFor="birthDate" className="text-foreground font-medium">
                                                             Fecha de Nacimiento
                                                         </Label>
                                                         <div className="relative">
-                                                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                             <Input
                                                                 id="birthDate"
                                                                 type="date"
@@ -298,7 +301,7 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setPersonalInfo((prev) => ({ ...prev, birthDate: e.target.value }))
                                                                 }
-                                                                className="pl-10 bg-white/10 border-white/20 text-white"
+                                                                className="pl-10 bg-white border-gray-300 text-foreground"
                                                             />
                                                         </div>
                                                     </div>
@@ -308,7 +311,7 @@ export default function MyAccount() {
                                                     <Button
                                                         type="submit"
                                                         disabled={isLoading}
-                                                        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-3 font-semibold rounded-xl"
+                                                        className="bg-primary hover:bg-primary-hover text-white px-8 py-3 font-semibold"
                                                     >
                                                         {isLoading ? (
                                                             <div className="flex items-center space-x-2">
@@ -331,10 +334,10 @@ export default function MyAccount() {
                                 {/* Security */}
                                 <TabsContent value="security">
                                     <div className="space-y-6">
-                                        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                        <Card className="bg-white border-gray-200 shadow-lg">
                                             <CardHeader>
-                                                <CardTitle className="text-2xl font-bold text-white flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
                                                         <Lock className="w-5 h-5 text-white" />
                                                     </div>
                                                     <span>Cambiar Contraseña</span>
@@ -343,11 +346,11 @@ export default function MyAccount() {
                                             <CardContent>
                                                 <form onSubmit={handleChangePassword} className="space-y-4">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="currentPassword" className="text-white font-medium">
+                                                        <Label htmlFor="currentPassword" className="text-foreground font-medium">
                                                             Contraseña Actual
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                             <Input
                                                                 id="currentPassword"
                                                                 type={showPassword ? "text" : "password"}
@@ -355,13 +358,13 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, currentPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 pr-10 bg-white/10 border-white/20 text-white"
+                                                                className="pl-10 pr-10 bg-white border-gray-300 text-foreground"
                                                                 required
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowPassword(!showPassword)}
-                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
+                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
                                                             >
                                                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                                             </button>
@@ -369,11 +372,11 @@ export default function MyAccount() {
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="newPassword" className="text-white font-medium">
+                                                        <Label htmlFor="newPassword" className="text-foreground font-medium">
                                                             Nueva Contraseña
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                             <Input
                                                                 id="newPassword"
                                                                 type={showNewPassword ? "text" : "password"}
@@ -381,13 +384,13 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, newPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 pr-10 bg-white/10 border-white/20 text-white"
+                                                                className="pl-10 pr-10 bg-white border-gray-300 text-foreground"
                                                                 required
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
+                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
                                                             >
                                                                 {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                                             </button>
@@ -395,11 +398,11 @@ export default function MyAccount() {
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="confirmPassword" className="text-white font-medium">
+                                                        <Label htmlFor="confirmPassword" className="text-foreground font-medium">
                                                             Confirmar Nueva Contraseña
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                                             <Input
                                                                 id="confirmPassword"
                                                                 type={showNewPassword ? "text" : "password"}
@@ -407,7 +410,7 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, confirmPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 bg-white/10 border-white/20 text-white"
+                                                                className="pl-10 bg-white border-gray-300 text-foreground"
                                                                 required
                                                             />
                                                         </div>
@@ -416,7 +419,7 @@ export default function MyAccount() {
                                                     <Button
                                                         type="submit"
                                                         disabled={isLoading}
-                                                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                                                        className="bg-primary hover:bg-primary-hover text-white"
                                                     >
                                                         Actualizar Contraseña
                                                     </Button>
@@ -424,18 +427,18 @@ export default function MyAccount() {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                        <Card className="bg-white border-gray-200 shadow-lg">
                                             <CardHeader>
-                                                <CardTitle className="text-xl font-bold text-white flex items-center space-x-3">
-                                                    <Shield className="w-6 h-6 text-green-400" />
+                                                <CardTitle className="text-xl font-bold text-foreground flex items-center space-x-3">
+                                                    <Shield className="w-6 h-6 text-primary" />
                                                     <span>Autenticación de Dos Factores</span>
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-white font-medium">Activar 2FA</p>
-                                                        <p className="text-white/60 text-sm">
+                                                        <p className="text-foreground font-medium">Activar 2FA</p>
+                                                        <p className="text-foreground/60 text-sm">
                                                             Agrega una capa extra de seguridad a tu cuenta
                                                         </p>
                                                     </div>
@@ -453,10 +456,10 @@ export default function MyAccount() {
 
                                 {/* Notifications */}
                                 <TabsContent value="notifications">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardHeader>
-                                            <CardTitle className="text-2xl font-bold text-white flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                                            <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                                                     <Bell className="w-5 h-5 text-white" />
                                                 </div>
                                                 <span>Preferencias de Notificaciones</span>
@@ -495,10 +498,10 @@ export default function MyAccount() {
                                                     description: "Notificaciones sobre actividad sospechosa en tu cuenta",
                                                 },
                                             ].map((setting) => (
-                                                <div key={setting.key} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                                                <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div>
-                                                        <p className="text-white font-medium">{setting.title}</p>
-                                                        <p className="text-white/60 text-sm">{setting.description}</p>
+                                                        <p className="text-foreground font-medium">{setting.title}</p>
+                                                        <p className="text-foreground/60 text-sm">{setting.description}</p>
                                                     </div>
                                                     <Switch
                                                         checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
@@ -514,43 +517,43 @@ export default function MyAccount() {
 
                                 {/* Other tabs placeholder */}
                                 <TabsContent value="privacy">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardContent className="p-12 text-center">
-                                            <Shield className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-white mb-2">Configuración de Privacidad</h3>
-                                            <p className="text-white/60">Esta sección estará disponible próximamente</p>
+                                            <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-xl font-semibold text-foreground mb-2">Configuración de Privacidad</h3>
+                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
 
                                 <TabsContent value="payment">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardContent className="p-12 text-center">
-                                            <CreditCard className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-white mb-2">Métodos de Pago</h3>
-                                            <p className="text-white/60">Esta sección estará disponible próximamente</p>
+                                            <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-xl font-semibold text-foreground mb-2">Métodos de Pago</h3>
+                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
 
                                 <TabsContent value="sessions">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardContent className="p-12 text-center">
-                                            <Monitor className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-white mb-2">Sesiones Activas</h3>
-                                            <p className="text-white/60">Esta sección estará disponible próximamente</p>
+                                            <Monitor className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-xl font-semibold text-foreground mb-2">Sesiones Activas</h3>
+                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
 
                                 <TabsContent value="help">
-                                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                    <Card className="bg-white border-gray-200 shadow-lg">
                                         <CardContent className="p-12 text-center">
-                                            <HelpCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-white mb-2">Ayuda y Soporte</h3>
-                                            <p className="text-white/60 mb-6">¿Necesitas ayuda? Visita nuestro centro de ayuda</p>
+                                            <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-xl font-semibold text-foreground mb-2">Ayuda y Soporte</h3>
+                                            <p className="text-foreground/60 mb-6">¿Necesitas ayuda? Visita nuestro centro de ayuda</p>
                                             <Link href={route('help')}>
-                                                <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white">
+                                                <Button className="bg-primary hover:bg-primary-hover text-white">
                                                     Ir al Centro de Ayuda
                                                 </Button>
                                             </Link>
