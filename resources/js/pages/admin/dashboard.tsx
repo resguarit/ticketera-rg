@@ -239,7 +239,7 @@ export default function AdminDashboard({ auth }: any) {
                                 Panel de Administración
                             </h1>
                             <p className="text-gray-600 text-lg">
-                                Bienvenido, {auth.user.name} • {currentTime.toLocaleDateString('es-ES', { 
+                                Bienvenido, {auth.user.person.name} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
                                     month: 'long', 
