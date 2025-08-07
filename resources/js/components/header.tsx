@@ -44,7 +44,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                     href={route('my-account')}
                                     className="text-white/80 hover:text-cyan-400 transition-colors cursor-pointer"
                                 >
-                                    Hola, {auth.user.name}
+                                    Hola, {auth.user.person.name}
                                 </Link>
                                 <Button
                                     onClick={handleLogout}

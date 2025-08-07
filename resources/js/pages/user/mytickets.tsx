@@ -136,7 +136,7 @@ export default function MyTickets() {
                         <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-4">
                             Mis Tickets
                         </h1>
-                        <p className="text-white/80 text-lg">Bienvenido de vuelta, {auth.user.name}. Aquí están todos tus tickets</p>
+                        <p className="text-white/80 text-lg">Bienvenido de vuelta, {auth.user.person.name}. Aquí están todos tus tickets</p>
                     </div>
 
                     {/* Stats Cards */}
