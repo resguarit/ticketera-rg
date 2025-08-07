@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -20,7 +21,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'organizer_id',
+        'person_id',
         'email',
         'password',
         'role',
@@ -48,5 +50,20 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    public function name(): string
+    {
+        return $this->person->name . ' ' . $this->person->last_name;
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Organizer::class);
     }
 }

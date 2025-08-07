@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
+use App\Models\Person;
+use Illuminate\Support\Facades\Log;
 
 class RegisteredUserController extends Controller
 {
@@ -32,20 +35,39 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'dni' => 'required|string|max:20|unique:person',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            DB::beginTransaction();
 
-        event(new Registered($user));
+            $person = Person::create([
+                'name' => $request->name,
+                'last_name' => $request->last_name,
+                'dni' => $request->dni,
+            ]);
 
-        Auth::login($user);
+            $user = User::create([
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'person_id' => $person->id,
+            ]);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+            event(new Registered($user));
+
+            DB::commit();
+
+            Auth::login($user);
+
+            return redirect()->intended();
+
+        } catch (\Exception $e) {
+            // Log registration failure
+            Log::error('Registration failed: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Registration failed.']);
+        }
     }
 }
