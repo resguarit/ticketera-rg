@@ -14,8 +14,8 @@ export default function Header({ className = '' }: HeaderProps) {
     };
 
     return (
-        <header className={`bg-white backdrop-blur-md border-b border-white/10 sticky top-0 z-50 ${className}`}>
-            <div className="container p-4">
+        <header className={`bg-white backdrop-blur-md border-b border-white/10 justify-center flex sticky top-0 z-50 w-full ${className}`}>
+            <div className="container py-4 px-0 justify-center w-full">
                 <div className="flex items-center justify-between w-full">
                     <Link href={route('home')} className="flex items-center space-x-2">
                         <div className="w-13 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -50,7 +50,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                     onClick={handleLogout}
                                     variant="outline"
                                     size="sm"
-                                    className="border-white/30 text-white font-medium hover:bg-white/20 bg-transparent"
+                                    className="bg-primary text-white hover:bg-primary-hover"
                                 >
                                     Cerrar Sesión
                                 </Button>

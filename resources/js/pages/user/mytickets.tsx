@@ -70,13 +70,13 @@ export default function MyTickets() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case "confirmed":
-                return "from-green-500 to-emerald-500";
+                return "bg-green-500";
             case "pending":
-                return "from-yellow-500 to-orange-500";
+                return "bg-yellow-500";
             case "cancelled":
-                return "from-red-500 to-pink-500";
+                return "bg-red-500";
             default:
-                return "from-gray-500 to-slate-500";
+                return "bg-gray-500";
         }
     };
 
@@ -101,18 +101,18 @@ export default function MyTickets() {
         return (
             <>
                 <Head title="Mis Tickets - TicketMax" />
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                     <Header />
 
                     <div className="container mx-auto px-4 py-16">
                         <div className="max-w-md mx-auto text-center">
-                            <div className="w-24 h-24 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Ticket className="w-12 h-12 text-white" />
                             </div>
-                            <h1 className="text-3xl font-bold text-white mb-4">Inicia Sesión</h1>
-                            <p className="text-white/80 mb-8">Para ver tus tickets necesitas iniciar sesión en tu cuenta</p>
+                            <h1 className="text-3xl font-bold text-foreground mb-4">Inicia Sesión</h1>
+                            <p className="text-foreground/80 mb-8">Para ver tus tickets necesitas iniciar sesión en tu cuenta</p>
                             <Link href={route('login')}>
-                                <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-3 text-lg">
+                                <Button className="bg-primary hover:bg-primary-hover text-white px-8 py-3 text-lg">
                                     Iniciar Sesión
                                 </Button>
                             </Link>
@@ -127,62 +127,68 @@ export default function MyTickets() {
         <>
             <Head title="Mis Tickets - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
                     {/* Page Header */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-4">
+                    <div className="text-center mb-6">
+                        <h1 className="text-5xl font-bold text-foreground mb-4">
                             Mis Tickets
                         </h1>
-                        <p className="text-white/80 text-lg">Bienvenido de vuelta, {auth.user.name}. Aquí están todos tus tickets</p>
+                        <p className="text-foreground/80 text-lg">Bienvenido de vuelta, {auth.user.name}. Aquí están todos tus tickets</p>
                     </div>
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <Card className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 backdrop-blur-md border-white/20">
-                            <CardContent className="p-6 text-center">
-                                <div className="text-3xl font-bold text-white mb-2">{upcomingTickets.length}</div>
-                                <div className="text-white/80">Próximos Eventos</div>
+                        <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+                            <CardContent className=" text-center">
+                                <div className="text-2xl font-bold text-foreground mb-2">{upcomingTickets.length}</div>
+                                <div className="text-foreground/80">Próximos Eventos</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-md border-white/20">
-                            <CardContent className="p-6 text-center">
-                                <div className="text-3xl font-bold text-white mb-2">{pastTickets.length}</div>
-                                <div className="text-white/80">Eventos Pasados</div>
+                        <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+                            <CardContent className=" text-center">
+                                <div className="text-2xl font-bold text-foreground mb-2">{pastTickets.length}</div>
+                                <div className="text-foreground/80">Eventos Pasados</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-md border-white/20">
-                            <CardContent className="p-6 text-center">
-                                <div className="text-3xl font-bold text-white mb-2">
+                        <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+                            <CardContent className=" text-center">
+                                <div className="text-2xl font-bold text-foreground mb-2">
                                     ${tickets.reduce((sum, ticket) => sum + ticket.total, 0).toLocaleString()}
                                 </div>
-                                <div className="text-white/80">Total Gastado</div>
+                                <div className="text-foreground/80">Total Gastado</div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Tickets Tabs */}
                     <Tabs defaultValue="upcoming" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-md">
-                            <TabsTrigger value="upcoming" className="data-[state=active]:bg-white/20">
+                        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 shadow-sm">
+                            <TabsTrigger 
+                                value="upcoming" 
+                                className="data-[state=active]:bg-primary data-[state=active]:text-white text-foreground"
+                            >
                                 Próximos ({upcomingTickets.length})
                             </TabsTrigger>
-                            <TabsTrigger value="past" className="data-[state=active]:bg-white/20">
+                            <TabsTrigger 
+                                value="past" 
+                                className="data-[state=active]:bg-primary data-[state=active]:text-white text-foreground"
+                            >
                                 Pasados ({pastTickets.length})
                             </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="upcoming" className="mt-6">
                             {upcomingTickets.length === 0 ? (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                <Card className="bg-white border-gray-200 shadow-lg">
                                     <CardContent className="p-12 text-center">
-                                        <Ticket className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                        <h3 className="text-xl font-semibold text-white mb-2">No tienes tickets próximos</h3>
-                                        <p className="text-white/60 mb-6">¡Explora nuestros eventos y compra tu próximo ticket!</p>
+                                        <Ticket className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-foreground mb-2">No tienes tickets próximos</h3>
+                                        <p className="text-foreground/60 mb-6">¡Explora nuestros eventos y compra tu próximo ticket!</p>
                                         <Link href={route('events')}>
-                                            <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white">
+                                            <Button className="bg-primary hover:bg-primary-hover text-white">
                                                 Explorar Eventos
                                             </Button>
                                         </Link>
@@ -193,7 +199,7 @@ export default function MyTickets() {
                                     {upcomingTickets.map((ticket) => (
                                         <Card
                                             key={ticket.id}
-                                            className="bg-white/10 backdrop-blur-md border-white/20 overflow-hidden hover:bg-white/15 transition-all duration-300"
+                                            className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                                         >
                                             <div className="flex">
                                                 <div className="relative w-32 h-32 flex-shrink-0">
@@ -205,20 +211,20 @@ export default function MyTickets() {
                                                 </div>
                                                 <div className="flex-1 p-6">
                                                     <div className="flex items-start justify-between mb-3">
-                                                        <h4 className="font-bold text-white text-lg line-clamp-2">{ticket.eventTitle}</h4>
-                                                        <Badge className={`bg-gradient-to-r ${getStatusColor(ticket.status)} text-white border-0`}>
+                                                        <h4 className="font-bold text-foreground text-lg line-clamp-2">{ticket.eventTitle}</h4>
+                                                        <Badge className={`${getStatusColor(ticket.status)} text-white border-0`}>
                                                             {getStatusText(ticket.status)}
                                                         </Badge>
                                                     </div>
 
                                                     <div className="space-y-2 mb-4">
-                                                        <div className="flex items-center text-white/80 text-sm">
+                                                        <div className="flex items-center text-foreground/80 text-sm">
                                                             <Calendar className="w-4 h-4 mr-2" />
                                                             <span>
                                                                 {ticket.date} • {ticket.time}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center text-white/80 text-sm">
+                                                        <div className="flex items-center text-foreground/80 text-sm">
                                                             <MapPin className="w-4 h-4 mr-2" />
                                                             <span>
                                                                 {ticket.location}, {ticket.city}
@@ -228,30 +234,30 @@ export default function MyTickets() {
 
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <div className="text-white font-semibold">
+                                                            <div className="text-foreground font-semibold">
                                                                 {ticket.quantity}x {ticket.ticketType}
                                                             </div>
-                                                            <div className="text-white/60 text-sm">${ticket.total.toLocaleString()} ARS</div>
+                                                            <div className="text-foreground/60 text-sm">${ticket.total.toLocaleString()} ARS</div>
                                                         </div>
                                                         <div className="flex space-x-2">
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="border-white/30 text-white hover:bg-white/20 bg-transparent"
+                                                                className="border-gray-300 text-foreground hover:bg-gray-50"
                                                             >
                                                                 <QrCode className="w-4 h-4" />
                                                             </Button>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="border-white/30 text-white hover:bg-white/20 bg-transparent"
+                                                                className="border-gray-300 text-foreground hover:bg-gray-50"
                                                             >
                                                                 <Download className="w-4 h-4" />
                                                             </Button>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="border-white/30 text-white hover:bg-white/20 bg-transparent"
+                                                                className="border-gray-300 text-foreground hover:bg-gray-50"
                                                             >
                                                                 <Share2 className="w-4 h-4" />
                                                             </Button>
@@ -267,11 +273,11 @@ export default function MyTickets() {
 
                         <TabsContent value="past" className="mt-6">
                             {pastTickets.length === 0 ? (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                                <Card className="bg-white border-gray-200 shadow-lg">
                                     <CardContent className="p-12 text-center">
-                                        <Clock className="w-16 h-16 text-white/40 mx-auto mb-4" />
-                                        <h3 className="text-xl font-semibold text-white mb-2">No tienes eventos pasados</h3>
-                                        <p className="text-white/60">Tus eventos anteriores aparecerán aquí</p>
+                                        <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-foreground mb-2">No tienes eventos pasados</h3>
+                                        <p className="text-foreground/60">Tus eventos anteriores aparecerán aquí</p>
                                     </CardContent>
                                 </Card>
                             ) : (
@@ -279,7 +285,7 @@ export default function MyTickets() {
                                     {pastTickets.map((ticket) => (
                                         <Card
                                             key={ticket.id}
-                                            className="bg-white/5 backdrop-blur-md border-white/10 overflow-hidden opacity-75"
+                                            className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-shadow opacity-75"
                                         >
                                             <CardContent className="p-6">
                                                 <div className="flex items-center space-x-6">
@@ -291,8 +297,8 @@ export default function MyTickets() {
                                                         />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <h4 className="font-bold text-white text-lg mb-2">{ticket.eventTitle}</h4>
-                                                        <div className="flex items-center space-x-4 text-white/60 text-sm">
+                                                        <h4 className="font-bold text-foreground text-lg mb-2">{ticket.eventTitle}</h4>
+                                                        <div className="flex items-center space-x-4 text-foreground/80 text-sm">
                                                             <span>{ticket.date}</span>
                                                             <span>
                                                                 {ticket.location}, {ticket.city}
@@ -303,8 +309,8 @@ export default function MyTickets() {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-white font-semibold">${ticket.total.toLocaleString()}</div>
-                                                        <div className="text-white/60 text-sm">ARS</div>
+                                                        <div className="text-foreground font-semibold">${ticket.total.toLocaleString()}</div>
+                                                        <div className="text-foreground/80 text-sm">ARS</div>
                                                     </div>
                                                 </div>
                                             </CardContent>
