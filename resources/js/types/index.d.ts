@@ -43,6 +43,7 @@ export interface User {
         name: string;
         last_name: string;
         dni: string;
+        phone?: string | null; // Optional phone field
         address?: string;
     };
     [key: string]: unknown; // This allows for additional properties...
