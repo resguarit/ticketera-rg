@@ -133,6 +133,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
 
     const handleSubmitPayment = async (e: React.FormEvent) => {
         e.preventDefault();
+        
         if (!agreements.terms || !agreements.privacy) {
             alert("Debes aceptar los términos y condiciones y la política de privacidad");
             return;
@@ -143,7 +144,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         // Enviar datos al backend incluyendo información de la función
         const formData = {
             event_id: eventId,
-            function_id: eventData.function?.id, // Agregar ID de función
+            function_id: eventData.function?.id,
             billing_info: billingInfo,
             payment_info: paymentInfo,
             selected_tickets: eventData.selectedTickets,
@@ -151,6 +152,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         };
 
         try {
+            // CAMBIAR LA RUTA AQUÍ
             router.post(route('checkout.process'), formData);
         } catch (error) {
             console.error('Error procesando el pago:', error);

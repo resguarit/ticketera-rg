@@ -54,9 +54,10 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
 
 // Rutas de checkout
-Route::get('/checkout/{event}', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
-Route::post('/checkout/process', [CheckoutController::class, 'processPayment'])->name('checkout.process');
+Route::post('/checkout/process-payment', [CheckoutController::class, 'processPayment'])->name('checkout.process');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/{event}', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
+
 
 // Otras rutas públicas que mantienen closures por ahora
 Route::get('/help', function () {

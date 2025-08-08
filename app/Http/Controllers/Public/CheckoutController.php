@@ -6,12 +6,23 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
+use App\Models\Order;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class CheckoutController extends Controller
 {
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
+
     public function confirm(Request $request, Event $event): Response
     {
         // Cargar el evento con todas sus relaciones
@@ -98,117 +109,148 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function processPayment(Request $request)
+    public function processPayment(Request $request): RedirectResponse
     {
-        // Validar datos del formulario
-        $validated = $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'billing_info' => 'required|array',
-            'billing_info.firstName' => 'required|string|max:255',
-            'billing_info.lastName' => 'required|string|max:255',
-            'billing_info.email' => 'required|email|max:255',
-            'billing_info.phone' => 'required|string|max:20',
-            'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
-            'billing_info.documentNumber' => 'required|string|max:20',
-            'payment_info' => 'required|array',
-            'payment_info.method' => 'required|string|in:credit,debit,mercadopago',
-            'selected_tickets' => 'required|array|min:1',
-            'agreements' => 'required|array',
-            'agreements.terms' => 'required|boolean|accepted',
-            'agreements.privacy' => 'required|boolean|accepted',
+        // Log de debug al inicio
+        \Log::info('=== PROCESANDO CHECKOUT ===', [
+            'url' => $request->url(),
+            'method' => $request->method(),
+            'all_data' => $request->all(),
+            'headers' => $request->headers->all()
         ]);
 
-        // Generar ID de orden único
-        $orderId = 'TM-2024-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        try {
+            $validated = $request->validate([
+                'event_id' => 'required|exists:events,id',
+                'function_id' => 'required|exists:event_functions,id',
+                'billing_info' => 'required|array',
+                'billing_info.firstName' => 'required|string|max:255',
+                'billing_info.lastName' => 'required|string|max:255',
+                'billing_info.email' => 'required|email|max:255',
+                'billing_info.phone' => 'required|string|max:20',
+                'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
+                'billing_info.documentNumber' => 'required|string|max:20',
+                'payment_info' => 'required|array',
+                'payment_info.method' => 'required|string|in:credit,debit,mercadopago',
+                'selected_tickets' => 'required|array|min:1',
+                'agreements' => 'required|array',
+                'agreements.terms' => 'required|boolean|accepted',
+                'agreements.privacy' => 'required|boolean|accepted',
+            ]);
+            
+            \Log::info('Validación exitosa');
 
-        // Aquí procesarías el pago con la pasarela correspondiente
-        // Por ahora simulamos el proceso
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Error de validación', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($e->errors());
+        }
 
-        // Almacenar datos de la compra en sesión para la página de éxito
-        session([
-            'order_id' => $orderId,
-            'event_id' => $validated['event_id'],
-            'purchase_data' => [
-                'billing_info' => $validated['billing_info'],
+        try {
+            // Calcular totales usando el servicio
+            $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets']);
+
+            // Preparar datos para crear la orden
+            $orderData = [
+                'event_id' => $validated['event_id'],
+                'function_id' => $validated['function_id'],
                 'selected_tickets' => $validated['selected_tickets'],
-                'total_amount' => $this->calculateTotal($validated['selected_tickets']),
-            ],
-            'success' => true
-        ]);
+                'total_amount' => $totals['total_amount'],
+                'payment_method' => $validated['payment_info']['method'],
+                'billing_info' => $validated['billing_info'],
+            ];
 
-        return redirect()->route('checkout.success');
+            // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
+            $order = $this->orderService->createOrder($orderData);
+
+            // Procesar el pago usando el servicio
+            $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
+
+            if ($paymentSuccessful) {
+                return redirect()->route('checkout.success', ['order' => $order->id])
+                    ->with('success', '¡Compra realizada exitosamente!');
+            } else {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Error al procesar el pago. Por favor intenta de nuevo.');
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error en checkout: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'event_id' => $validated['event_id'],
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al procesar la compra: ' . $e->getMessage());
+        }
     }
 
     public function success(Request $request): Response
     {
-        // Obtener datos de la sesión
-        $orderId = session('order_id', 'TM-2024-001234');
-        $eventId = session('event_id');
-        $purchaseData = session('purchase_data', []);
-
-        // Cargar datos reales del evento
-        $eventData = null;
-        if ($eventId) {
-            $event = Event::with(['venue', 'category', 'functions.ticketTypes'])->find($eventId);
-            if ($event) {
-                // Intentar obtener la función desde los datos de compra o usar la primera
-                $selectedFunction = $event->functions->first();
-                
-                $eventData = [
-                    'title' => $event->name,
-                    'image' => $event->banner_url ?: "/placeholder.svg?height=200&width=300",
-                    'date' => $selectedFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-                    'time' => $selectedFunction?->start_time?->format('H:i') ?? '',
-                    'location' => $event->venue->name,
-                    'city' => $this->extractCity($event->venue->address),
-                    'function' => $selectedFunction ? [
-                        'id' => $selectedFunction->id,
-                        'name' => $selectedFunction->name,
-                        'description' => $selectedFunction->description,
-                    ] : null,
-                ];
-            }
+        $orderId = $request->query('order');
+        
+        if (!$orderId) {
+            return redirect()->route('home')
+                ->with('error', 'Orden no encontrada');
         }
 
-        // Procesar tickets comprados desde los datos de sesión
-        $ticketsData = [];
-        if (!empty($purchaseData['selected_tickets'])) {
-            foreach ($purchaseData['selected_tickets'] as $ticket) {
-                $ticketsData[] = [
-                    'type' => $ticket['type'],
-                    'quantity' => $ticket['quantity'],
-                    'price' => $ticket['price'],
-                ];
-            }
-        } else {
-            // Datos de fallback
-            $ticketsData = [
-                ['type' => 'General', 'quantity' => 2, 'price' => 8500],
-                ['type' => 'VIP', 'quantity' => 1, 'price' => 15000],
-            ];
-        }
+        // Cargar la orden con todas sus relaciones
+        $order = Order::with([
+            'items.ticketType.eventFunction.event.venue',
+            'client.person'
+        ])->findOrFail($orderId);
 
-        $finalPurchaseData = [
-            'orderId' => $orderId,
-            'event' => $eventData ?: [
-                'title' => "Festival de Música Electrónica 2024",
-                'image' => "/placeholder.svg?height=200&width=300",
-                'date' => "15 Mar 2024",
-                'time' => "20:00",
-                'location' => "Estadio Nacional",
-                'city' => "Buenos Aires",
-                'function' => null,
+        // Verificar que la orden pertenezca al usuario autenticado (si está logueado)
+/*         if (Auth::check() && $order->client_id !== Auth::id()) {
+            abort(403, 'No tienes permiso para ver esta orden');
+        } */
+
+        // Obtener resumen de la orden usando el servicio
+        $orderSummary = $this->orderService->getOrderSummary($order);
+
+        // Obtener datos del evento y función
+        $firstTicket = $order->items->first();
+        $eventFunction = $firstTicket->ticketType->eventFunction;
+        $event = $eventFunction->event;
+
+        // Preparar datos para la vista
+        $purchaseData = [
+            'orderId' => $orderSummary['order_number'],
+            'event' => [
+                'title' => $event->name,
+                'image' => $event->banner_url ?: "/placeholder.svg?height=200&width=300",
+                'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
+                'time' => $eventFunction->start_time?->format('H:i') ?? '',
+                'location' => $event->venue->name,
+                'city' => $this->extractCity($event->venue->address),
+                'function' => [
+                    'id' => $eventFunction->id,
+                    'name' => $eventFunction->name,
+                    'description' => $eventFunction->description,
+                ],
             ],
-            'tickets' => $ticketsData,
-            'total' => $purchaseData['total_amount'] ?? 32000,
-            'purchaseDate' => now()->format('d/m/Y'),
+            'tickets' => $orderSummary['grouped_tickets']->map(function($ticket) {
+                return [
+                    'type' => $ticket['ticket_type_name'],
+                    'quantity' => $ticket['quantity'],
+                    'price' => $ticket['unit_price'],
+                ];
+            })->toArray(),
+            'total' => $order->total_amount,
+            'purchaseDate' => $order->order_date->format('d/m/Y'),
         ];
 
-        // Limpiar datos de sesión
-        session()->forget(['order_id', 'event_id', 'purchase_data']);
-
         return Inertia::render('public/checkoutsuccess', [
-            'purchaseData' => $finalPurchaseData
+            'purchaseData' => $purchaseData
         ]);
     }
 
@@ -227,18 +269,5 @@ class CheckoutController extends Controller
         }
         
         return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
-    }
-
-    private function calculateTotal(array $selectedTickets): int
-    {
-        $total = 0;
-        foreach ($selectedTickets as $ticket) {
-            $total += $ticket['price'] * $ticket['quantity'];
-        }
-        
-        // Agregar cargo por servicio (5%)
-        $serviceFeee = round($total * 0.05);
-        
-        return $total + $serviceFeee;
     }
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Check, Download, Share2, Calendar, MapPin, Mail, Phone } from 'lucide-react';
+import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/header';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { type SharedData } from '@/types';
 
 interface PurchaseData {
     orderId: string;
@@ -36,6 +37,9 @@ interface CheckoutSuccessProps {
 
 export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) {
     const [showConfetti, setShowConfetti] = useState(true);
+    
+    // ✅ Obtener auth usando usePage hook
+    const { auth } = usePage<SharedData>().props;
 
     useEffect(() => {
         const timer = setTimeout(() => setShowConfetti(false), 3000);
@@ -223,6 +227,38 @@ export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) 
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Account Information - Solo si se creó una cuenta nueva */}
+                        {auth.user && (
+                            <Card className="bg-blue-50 border-blue-200 shadow-lg">
+                                <CardContent className="p-6">
+                                    <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
+                                        <User className="w-5 h-5 text-blue-500" />
+                                        <span>Tu Cuenta TicketMax</span>
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <p className="text-foreground/80 text-sm">
+                                            Hemos creado una cuenta para ti para que puedas gestionar tus tickets:
+                                        </p>
+                                        <div className="bg-white p-4 rounded-lg border border-blue-200">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-foreground/60">Email:</p>
+                                                    <p className="font-semibold text-foreground">{auth.user.email}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-foreground/60">Contraseña:</p>
+                                                    <p className="font-semibold text-foreground">12345678</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-foreground/70 text-xs">
+                                            💡 Te recomendamos cambiar tu contraseña en "Mi Cuenta" por seguridad
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>
