@@ -123,11 +123,21 @@ export default function MyAccount() {
     const handleSavePersonalInfo = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        
+        try {
+            await router.patch(route('profile.update'), personalInfo, {
+                onSuccess: () => {
+                    alert('Información personal actualizada correctamente');
+                },
+                onError: (errors) => {
+                    console.error('Errores:', errors);
+                },
+                onFinish: () => setIsLoading(false)
+            });
+        } catch (error) {
+            console.error('Error:', error);
             setIsLoading(false);
-            // Aquí harías la llamada real a la API
-        }, 1000);
+        }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -136,18 +146,58 @@ export default function MyAccount() {
             alert("Las contraseñas no coinciden");
             return;
         }
+        
+        try {
+            await router.put(route('password.update'), {
+                current_password: securityInfo.currentPassword,
+                password: securityInfo.newPassword,
+                password_confirmation: securityInfo.confirmPassword,
+            }, {
+                onSuccess: () => {
+                    setSecurityInfo({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                        twoFactorEnabled: securityInfo.twoFactorEnabled,
+                    });
+                    alert("Contraseña actualizada exitosamente");
+                },
+                onError: (errors) => {
+                    console.error('Errores:', errors);
+                    alert('Error al actualizar la contraseña');
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const handleSaveNotifications = async (e: React.FormEvent) => {
+        e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        
+        try {
+            // Por ahora solo simular, ya que no hay ruta para notificaciones en settings
+            setTimeout(() => {
+                alert('Preferencias de notificaciones guardadas (simulado)');
+                setIsLoading(false);
+            }, 1000);
+            
+            // Cuando quieras agregar la funcionalidad real, descomenta esto:
+            // await router.put(route('profile.notifications'), notificationSettings, {
+            //     onSuccess: () => {
+            //         alert('Preferencias de notificaciones actualizadas');
+            //     },
+            //     onError: (errors) => {
+            //         console.error('Errores:', errors);
+            //         alert('Error al actualizar las preferencias');
+            //     },
+            //     onFinish: () => setIsLoading(false)
+            // });
+        } catch (error) {
+            console.error('Error:', error);
             setIsLoading(false);
-            setSecurityInfo((prev) => ({
-                ...prev,
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: "",
-            }));
-            alert("Contraseña actualizada exitosamente");
-        }, 1000);
+        }
     };
 
     return (
@@ -281,7 +331,8 @@ export default function MyAccount() {
                                                             <Input
                                                                 id="phone"
                                                                 value={personalInfo.phone}
-                                                                onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))}
+                                                                onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))
+                                                                }
                                                                 className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                                 placeholder="+54 11 1234-5678"
                                                             />

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Calendar, MapPin, Clock, Download, QrCode, Share2, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,63 +8,20 @@ import { Head, Link } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 
-const mockTickets = [
-    {
-        id: 1,
-        eventId: 1,
-        eventTitle: "Festival de Música Electrónica 2024",
-        eventImage: "/placeholder.svg?height=200&width=300",
-        date: "15 Mar 2024",
-        time: "20:00",
-        location: "Estadio Nacional",
-        city: "Buenos Aires",
-        ticketType: "VIP",
-        quantity: 2,
-        price: 15000,
-        total: 30000,
-        status: "confirmed",
-        qrCode: "QR123456789",
-        purchaseDate: "2024-02-15",
-    },
-    {
-        id: 2,
-        eventId: 4,
-        eventTitle: "Obra de Teatro: Romeo y Julieta",
-        eventImage: "/placeholder.svg?height=200&width=300",
-        date: "05 Abr 2024",
-        time: "21:00",
-        location: "Teatro San Martín",
-        city: "Córdoba",
-        ticketType: "General",
-        quantity: 1,
-        price: 6500,
-        total: 6500,
-        status: "confirmed",
-        qrCode: "QR987654321",
-        purchaseDate: "2024-02-20",
-    },
-    {
-        id: 3,
-        eventId: 5,
-        eventTitle: "Festival de Jazz Internacional",
-        eventImage: "/placeholder.svg?height=200&width=300",
-        date: "12 Abr 2024",
-        time: "18:00",
-        location: "Parque Centenario",
-        city: "Buenos Aires",
-        ticketType: "Premium",
-        quantity: 1,
-        price: 25000,
-        total: 25000,
-        status: "pending",
-        qrCode: "QR456789123",
-        purchaseDate: "2024-02-25",
-    },
-];
+interface TicketProps {
+    tickets: {
+        upcoming: TicketType[];
+        past: TicketType[];
+    };
+    stats: {
+        upcoming_count: number;
+        past_count: number;
+        total_spent: number;
+    };
+}
 
-export default function MyTickets() {
+export default function MyTickets({ tickets, stats }: TicketProps) {
     const { auth } = usePage<SharedData>().props;
-    const [tickets] = useState(mockTickets);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -93,8 +49,8 @@ export default function MyTickets() {
         }
     };
 
-    const upcomingTickets = tickets.filter((ticket) => new Date(ticket.date) >= new Date());
-    const pastTickets = tickets.filter((ticket) => new Date(ticket.date) < new Date());
+    const upcomingTickets = tickets.upcoming;
+    const pastTickets = tickets.past;
 
     // Si el usuario no está autenticado, redirigir o mostrar mensaje
     if (!auth.user) {
@@ -143,20 +99,20 @@ export default function MyTickets() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
                             <CardContent className=" text-center">
-                                <div className="text-2xl font-bold text-foreground mb-2">{upcomingTickets.length}</div>
+                                <div className="text-2xl font-bold text-foreground mb-2">{stats.upcoming_count}</div>
                                 <div className="text-foreground/80">Próximos Eventos</div>
                             </CardContent>
                         </Card>
                         <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
                             <CardContent className=" text-center">
-                                <div className="text-2xl font-bold text-foreground mb-2">{pastTickets.length}</div>
+                                <div className="text-2xl font-bold text-foreground mb-2">{stats.past_count}</div>
                                 <div className="text-foreground/80">Eventos Pasados</div>
                             </CardContent>
                         </Card>
                         <Card className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
                             <CardContent className=" text-center">
                                 <div className="text-2xl font-bold text-foreground mb-2">
-                                    ${tickets.reduce((sum, ticket) => sum + ticket.total, 0).toLocaleString()}
+                                    ${stats.total_spent.toLocaleString()}
                                 </div>
                                 <div className="text-foreground/80">Total Gastado</div>
                             </CardContent>

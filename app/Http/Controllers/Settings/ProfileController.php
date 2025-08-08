@@ -3,48 +3,112 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
     /**
-     * Show the user's profile settings page.
+     * Mostrar página de mi cuenta
      */
-    public function edit(Request $request): Response
+    public function edit(): Response
     {
-        return Inertia::render('settings/profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
+        $user = Auth::user();
+        $user->load('person');
+        
+        return Inertia::render('user/myaccount', [
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at,
+                'person' => [
+                    'name' => $user->person->name ?? '',
+                    'last_name' => $user->person->last_name ?? '',
+                    'dni' => $user->person->dni ?? '',
+                    'phone' => $user->person->phone ?? '',
+                    'address' => $user->person->address ?? '',
+                ]
+            ]
         ]);
     }
 
     /**
-     * Update the user's profile settings.
+     * Actualizar información personal
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $user = $request->user();
-        $validated = $request->validated();
+        $user = Auth::user();
+        
+        $validated = $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'documentNumber' => 'required|string|max:20', // ✅ Validar como requerido
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'postalCode' => 'nullable|string|max:10',
+        ]);
 
-        $user->person->update($validated['person']);
-        unset($validated['person']);
+        // Actualizar usuario
+        $user->update([
+            'email' => $validated['email'],
+        ]);
 
-        $user->fill($validated);
+        // Actualizar persona con el mapeo correcto
+        $user->person->update([
+            'name' => $validated['firstName'],
+            'last_name' => $validated['lastName'],
+            'phone' => $validated['phone'],
+            'dni' => $validated['documentNumber'], // ✅ Mapear documentNumber → dni
+            'address' => $validated['address'],
+        ]);
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
+        return redirect()->back()->with('success', 'Información personal actualizada correctamente');
+    }
 
-        $user->save();
+    /**
+     * Cambiar contraseña
+     */
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        
+        $validated = $request->validate([
+            'current_password' => 'required|current_password',
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
 
-        return to_route('profile.edit')->with('success', 'Profile updated successfully.');
+        $user->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        return redirect()->back()->with('success', 'Contraseña actualizada correctamente');
+    }
+
+    /**
+     * Actualizar configuración de notificaciones
+     */
+    public function updateNotifications(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'emailNotifications' => 'boolean',
+            'smsNotifications' => 'boolean',
+            'pushNotifications' => 'boolean',
+            'eventReminders' => 'boolean',
+            'promotionalEmails' => 'boolean',
+            'securityAlerts' => 'boolean',
+        ]);
+
+        // Por ahora guardamos en la sesión, después puedes crear una tabla user_preferences
+        session(['notification_preferences' => $validated]);
+
+        return redirect()->back()->with('success', 'Preferencias de notificaciones actualizadas');
     }
 
     /**
