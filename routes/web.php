@@ -3,52 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
 
 /*-------Rutas protegidas para administradores----------*/ 
+require __DIR__.'/admin.php';
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
-    Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
-    
-    Route::get('/events', function () {
-        return Inertia::render('admin/events');
-    })->name('events');
-    
-    Route::get('/events/create', function () {
-        return Inertia::render('admin/createevent');
-    })->name('events.create');
-    
-    Route::get('/events/{eventId}/edit', function ($eventId) {
-        return Inertia::render('admin/events/edit', [
-            'eventId' => $eventId
-        ]);
-    })->name('events.edit');
-
-    Route::get('/users', function () {
-        return Inertia::render('admin/users');
-    })->name('users');
-    
-    // Gestión de organizadores
-    Route::get('/organizers', function () {
-        return Inertia::render('admin/organizers');
-    })->name('organizers');
-    
-    // Reportes
-    Route::get('/reports', function () {
-        return Inertia::render('admin/reports');
-    })->name('reports');
-    
-    // Configuración
-    Route::get('/settings', function () {
-        return Inertia::render('admin/settings');
-    })->name('settings');
-});
-
-
-
-/*-------Rutas protegidas para orgenizadores----------*/ 
+/*-------Rutas protegidas para organizadores----------*/ 
 
 Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
@@ -94,10 +54,6 @@ Route::get('/checkout/{eventId}', function ($eventId) {
         'eventId' => $eventId
     ]);
 })->name('checkout.confirm');
-
-
-
-
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
