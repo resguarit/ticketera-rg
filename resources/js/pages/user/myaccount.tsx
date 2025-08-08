@@ -70,12 +70,12 @@ export default function MyAccount() {
         firstName: auth.user?.person?.name || "",
         lastName: auth.user?.person?.last_name || "",
         email: auth.user?.email || "",
-        phone: "",
+        phone: auth.user?.person?.phone || "", // ✅ Cargar phone existente
         birthDate: "",
         country: "Argentina",
         documentType: "DNI",
-        documentNumber: "",
-        address: "",
+        documentNumber: auth.user?.person?.dni || "", // ✅ Cargar DNI existente
+        address: auth.user?.person?.address || "", // ✅ Cargar address existente
         city: "",
         postalCode: "",
     });
@@ -355,6 +355,91 @@ export default function MyAccount() {
                                                                 className="pl-10 bg-white border-gray-300 text-foreground"
                                                             />
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="documentType" className="text-foreground font-medium">
+                                                            Tipo de Documento
+                                                        </Label>
+                                                        <Select
+                                                            value={personalInfo.documentType}
+                                                            onValueChange={(value) =>
+                                                                setPersonalInfo((prev) => ({ ...prev, documentType: value }))
+                                                            }
+                                                        >
+                                                            <SelectTrigger className="bg-white border-gray-300 text-foreground">
+                                                                <SelectValue placeholder="Selecciona tipo" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="DNI">DNI</SelectItem>
+                                                                <SelectItem value="Pasaporte">Pasaporte</SelectItem>
+                                                                <SelectItem value="Cedula">Cédula</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="documentNumber" className="text-foreground font-medium">
+                                                            Número de Documento *
+                                                        </Label>
+                                                        <Input
+                                                            id="documentNumber"
+                                                            value={personalInfo.documentNumber}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="12345678"
+                                                            required
+                                                        />
+                                                        <p className="text-foreground/60 text-sm">Número sin puntos ni espacios</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="address" className="text-foreground font-medium">
+                                                        Dirección
+                                                    </Label>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                                                        <Input
+                                                            id="address"
+                                                            value={personalInfo.address}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, address: e.target.value }))}
+                                                            className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="Calle 123, Ciudad"
+                                                        />
+                                                    </div>
+                                                    <p className="text-foreground/60 text-sm">Dirección completa (opcional)</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="city" className="text-foreground font-medium">
+                                                            Ciudad
+                                                        </Label>
+                                                        <Input
+                                                            id="city"
+                                                            value={personalInfo.city}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, city: e.target.value }))
+                                                            }
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="Buenos Aires"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="postalCode" className="text-foreground font-medium">
+                                                            Código Postal
+                                                        </Label>
+                                                        <Input
+                                                            id="postalCode"
+                                                            value={personalInfo.postalCode}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, postalCode: e.target.value }))
+                                                            }
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="1000"
+                                                        />
                                                     </div>
                                                 </div>
 

@@ -38,7 +38,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Actualizar información personal
+     * Actualizar información personal - AJUSTADO SEGÚN TUS MODELOS
      */
     public function update(Request $request): RedirectResponse
     {
@@ -49,31 +49,29 @@ class ProfileController extends Controller
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'documentNumber' => 'required|string|max:20', // ✅ Validar como requerido
+            'documentNumber' => 'required|string|max:20',
             'address' => 'nullable|string|max:500',
-            'city' => 'nullable|string|max:100',
-            'postalCode' => 'nullable|string|max:10',
         ]);
 
-        // Actualizar usuario
+        // Actualizar usuario (solo email según tu modelo User)
         $user->update([
             'email' => $validated['email'],
         ]);
 
-        // Actualizar persona con el mapeo correcto
+        // Actualizar persona según el modelo Person que tienes
         $user->person->update([
-            'name' => $validated['firstName'],
-            'last_name' => $validated['lastName'],
-            'phone' => $validated['phone'],
-            'dni' => $validated['documentNumber'], // ✅ Mapear documentNumber → dni
-            'address' => $validated['address'],
+            'name' => $validated['firstName'],        // ✅ name
+            'last_name' => $validated['lastName'],    // ✅ last_name  
+            'dni' => $validated['documentNumber'],    // ✅ dni
+            'phone' => $validated['phone'],           // ✅ phone
+            'address' => $validated['address'],       // ✅ address
         ]);
 
         return redirect()->back()->with('success', 'Información personal actualizada correctamente');
     }
 
     /**
-     * Cambiar contraseña
+     * Cambiar contraseña - AJUSTADO PARA TU MODELO USER
      */
     public function updatePassword(Request $request): RedirectResponse
     {
@@ -84,6 +82,7 @@ class ProfileController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
+        // Actualizar solo el password según tu modelo User
         $user->update([
             'password' => Hash::make($validated['password'])
         ]);
