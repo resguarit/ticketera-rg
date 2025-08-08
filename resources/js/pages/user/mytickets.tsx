@@ -8,6 +8,23 @@ import { Head, Link } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 
+// Definir la interfaz TicketType
+interface TicketType {
+    id: number;
+    eventTitle: string;
+    eventImage: string;
+    date: string;
+    time: string;
+    location: string;
+    city: string;
+    ticketType: string;
+    quantity: number;
+    total: number;
+    status: 'confirmed' | 'pending' | 'cancelled';
+    qrCode?: string;
+    orderId?: number;
+}
+
 interface TicketProps {
     tickets: {
         upcoming: TicketType[];
