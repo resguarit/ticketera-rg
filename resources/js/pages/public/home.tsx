@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +21,6 @@ interface Event {
     city?: string;
     category: string;
     price?: number;
-    rating?: number;
     featured?: boolean;
 }
 
@@ -45,16 +44,16 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Mapeo de iconos (ya que del backend viene como string)
+// Mapeo de iconos ampliado
 const iconMap = {
     music: Music,
     theater: Theater,
     trophy: Trophy,
-    presentation: Calendar, // Para conferencias
-    utensils: Calendar,     // Para gastronómico (usa un icono por defecto)
-    palette: Calendar,      // Para cultural
-    laugh: Theater,         // Para comedia
-    users: Calendar,        // Para familiar
+    presentation: Presentation,
+    utensils: Utensils,
+    palette: Palette,
+    laugh: Laugh,
+    users: Users,
 };
 
 export default function Home({ featuredEvents, events, categories }: HomeProps) {
@@ -62,6 +61,16 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
     const [currentSlide, setCurrentSlide] = useState(0);
+
+    // Auto-rotate del carousel cada 5 segundos
+    useEffect(() => {
+        if (featuredEvents.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+            }, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [featuredEvents.length]);
 
     // Filtrar eventos basado en los criterios de búsqueda
     const filteredEvents = events.filter((event) => {
@@ -79,6 +88,12 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
         return iconMap[iconName as keyof typeof iconMap] || Music;
     };
 
+    // Obtener color de categoría
+    const getCategoryColor = (categoryName: string) => {
+        const category = categories.find(c => c.id === categoryName.toLowerCase());
+        return category?.color || '#3b82f6';
+    };
+
     // Obtener colores únicos de ciudades para el filtro
     const cities = [...new Set(events.map(event => event.city).filter(Boolean))];
 
@@ -88,9 +103,9 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             <Header className="" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
-                {/* Hero Banner */}
+                {/* Hero Banner - Solo eventos destacados */}
                 <section className="relative h-[400px] overflow-hidden">
-                    {featuredEvents.length > 0 && (
+                    {featuredEvents.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
                             <img
@@ -141,6 +156,14 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 </div>
                             )}
                         </>
+                    ) : (
+                        // Fallback si no hay eventos destacados
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
+                            <div className="text-center text-white">
+                                <h2 className="text-5xl mb-4">¡Próximamente!</h2>
+                                <p className="text-xl">Eventos destacados muy pronto</p>
+                            </div>
+                        </div>
                     )}
                 </section>
 
@@ -203,6 +226,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 const IconComponent = getCategoryIcon(
                                     categories.find(c => c.id === event.category.toLowerCase())?.icon || 'music'
                                 );
+                                const categoryColor = getCategoryColor(event.category);
+                                
                                 return (
                                     <Card
                                         key={event.id}
@@ -214,13 +239,17 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                                 alt={event.title}
                                                 className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                             />
-                                            <div className="absolute top-4 left-4 p-2 rounded-full bg-primary">
+                                            {/* Icono de categoría con color de la BD */}
+                                            <div 
+                                                className="absolute top-4 left-4 p-2 rounded-full"
+                                                style={{ backgroundColor: categoryColor }}
+                                            >
                                                 <IconComponent className="w-4 h-4 text-white" />
                                             </div>
-                                            {event.rating && (
-                                                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-black/50 rounded-full px-2 py-1">
-                                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                                    <span className="text-white text-sm">{event.rating}</span>
+                                            {/* Estrella para eventos destacados */}
+                                            {event.featured && (
+                                                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-foreground/80 rounded-full p-2">
+                                                    <Star className="w-4 h-4 text-white fill-current" />
                                                 </div>
                                             )}
                                         </div>
