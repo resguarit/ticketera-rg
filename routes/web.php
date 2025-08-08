@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
 use App\Http\Controllers\Organizer\CategoryController;
 use App\Http\Controllers\Organizer\VenueController;
@@ -13,44 +12,7 @@ use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\EventController as PublicEventController;
 
 /*-------Rutas protegidas para administradores----------*/ 
-
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
-    Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
-    
-    Route::get('/events', function () {
-        return Inertia::render('admin/events');
-    })->name('events');
-    
-    Route::get('/events/create', function () {
-        return Inertia::render('admin/createevent');
-    })->name('events.create');
-    
-    Route::get('/events/{eventId}/edit', function ($eventId) {
-        return Inertia::render('admin/events/edit', [
-            'eventId' => $eventId
-        ]);
-    })->name('events.edit');
-
-    Route::get('/users', function () {
-        return Inertia::render('admin/users');
-    })->name('users');
-    
-    // Gestión de organizadores
-    Route::get('/organizers', function () {
-        return Inertia::render('admin/organizers');
-    })->name('organizers');
-    
-    // Reportes
-    Route::get('/reports', function () {
-        return Inertia::render('admin/reports');
-    })->name('reports');
-    
-    // Configuración
-    Route::get('/settings', function () {
-        return Inertia::render('admin/settings');
-    })->name('settings');
-});
+require __DIR__.'/admin.php';
 
 /*-------Rutas protegidas para organizadores----------*/ 
 
