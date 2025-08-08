@@ -104,7 +104,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 {/* Hero Banner - Solo eventos destacados */}
-                <section className="relative h-[400px] overflow-hidden">
+                <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
@@ -114,26 +114,26 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 z-20 flex items-center">
-                                <div className="container mx-auto px-4">
-                                    <div className="max-w-2xl">
-                                        <Badge className="mb-4 rounded-sm bg-primary text-white border-0">
+                                <div className="container mx-auto px-3 sm:px-4">
+                                    <div className="max-w-xl lg:max-w-2xl">
+                                        <Badge className="mb-2 sm:mb-4 rounded-sm bg-primary text-white border-0 text-xs sm:text-sm">
                                             Evento Destacado
                                         </Badge>
-                                        <h2 className="text-5xl mb-4 text-white">
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 sm:mb-4 text-white font-bold leading-tight">
                                             {featuredEvents[currentSlide]?.title}
                                         </h2>
-                                        <div className="flex items-center space-x-4 text-white mb-6">
-                                            <div className="flex items-center space-x-2">
-                                                <Calendar className="w-5 h-5" />
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-white mb-4 sm:mb-6 text-sm sm:text-base">
+                                            <div className="flex items-center space-x-1 sm:space-x-2">
+                                                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
                                                 <span>{featuredEvents[currentSlide]?.date}</span>
                                             </div>
-                                            <div className="flex items-center space-x-2">
-                                                <MapPin className="w-5 h-5" />
-                                                <span>{featuredEvents[currentSlide]?.location}</span>
+                                            <div className="flex items-center space-x-1 sm:space-x-2">
+                                                <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                <span className="truncate">{featuredEvents[currentSlide]?.location}</span>
                                             </div>
                                         </div>
                                         <Link href={`/events/${featuredEvents[currentSlide]?.id}`}>
-                                            <button className="bg-primary hover:bg-primary-hover text-white px-6 py-2 text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
+                                            <button className="bg-primary hover:bg-primary-hover text-white px-4 sm:px-6 py-2 text-sm sm:text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
                                                 Comprar Entradas
                                             </button>
                                         </Link>
@@ -143,12 +143,12 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
 
                             {/* Slide indicators */}
                             {featuredEvents.length > 1 && (
-                                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+                                <div className="absolute bottom-3 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
                                     {featuredEvents.map((_, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setCurrentSlide(index)}
-                                            className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                                            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
                                                 index === currentSlide ? "bg-white" : "bg-white/40"
                                             }`}
                                         />
@@ -159,30 +159,30 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                     ) : (
                         // Fallback si no hay eventos destacados
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
-                            <div className="text-center text-white">
-                                <h2 className="text-5xl mb-4">¡Próximamente!</h2>
-                                <p className="text-xl">Eventos destacados muy pronto</p>
+                            <div className="text-center text-white px-4">
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Próximamente!</h2>
+                                <p className="text-base sm:text-xl">Eventos destacados muy pronto</p>
                             </div>
                         </div>
                     )}
                 </section>
 
                 {/* Search and Filters */}
-                <section className="container mx-auto px-4 py-8">
+                <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                            <div className="relative lg:col-span-1">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                                 <Input
                                     placeholder="Buscar eventos..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md"
+                                    className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10"
                                 />
                             </div>
 
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10">
                                     <SelectValue placeholder="Categoría" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -196,7 +196,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             </Select>
 
                             <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md">
+                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10">
                                     <SelectValue placeholder="Ciudad" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -209,8 +209,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 </SelectContent>
                             </Select>
 
-                            <Button className="bg-primary hover:bg-primary-hover text-white">
-                                <Filter className="w-4 h-4 mr-2" />
+                            <Button className="bg-primary hover:bg-primary-hover text-white text-xs sm:text-base h-7 sm:h-10 px-3 sm:px-4">
+                                <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Filtrar
                             </Button>
                         </div>
@@ -218,10 +218,10 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 </section>
 
                 {/* Events Grid */}
-                <section className="container mx-auto px-4 pb-12">
-                    <h2 className="text-3xl text-foreground mb-8">Próximos Eventos</h2>
+                <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
                     {filteredEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-12">
                             {filteredEvents.map((event) => {
                                 const IconComponent = getCategoryIcon(
                                     categories.find(c => c.id === event.category.toLowerCase())?.icon || 'music'
@@ -231,61 +231,61 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 return (
                                     <Card
                                         key={event.id}
-                                        className="bg-white pt-4 py-0 gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
+                                        className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
                                     >
                                         <div className="relative">
                                             <img
                                                 src={event.image}
                                                 alt={event.title}
-                                                className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
+                                                className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                             />
                                             {/* Icono de categoría con color de la BD */}
                                             <div 
-                                                className="absolute top-4 left-4 p-2 rounded-full"
+                                                className="absolute top-2 sm:top-4 left-2 sm:left-4 p-1.5 sm:p-2 rounded-full"
                                                 style={{ backgroundColor: categoryColor }}
                                             >
-                                                <IconComponent className="w-4 h-4 text-white" />
+                                                <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                             </div>
                                             {/* Estrella para eventos destacados */}
                                             {event.featured && (
-                                                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-foreground/80 rounded-full p-2">
-                                                    <Star className="w-4 h-4 text-white fill-current" />
+                                                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex items-center space-x-1 bg-foreground/80 rounded-full p-1.5 sm:p-2">
+                                                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-white fill-current" />
                                                 </div>
                                             )}
                                         </div>
-                                        <CardContent className="px-6 pb-4">
-                                            <h4 className="text-xl font-bold text-foreground mb-2 line-clamp-2">
+                                        <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
+                                            <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">
                                                 {event.title}
                                             </h4>
-                                            <div className="space-y-2 mb-4">
+                                            <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
                                                 <div className="flex items-center text-foreground/80">
-                                                    <Calendar className="w-4 h-4 mr-2" />
-                                                    <span className="text-sm">
+                                                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm truncate">
                                                         {event.date} {event.time && `• ${event.time}`}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center text-foreground/80">
-                                                    <MapPin className="w-4 h-4 mr-2" />
-                                                    <span className="text-sm">
+                                                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm truncate">
                                                         {event.location}{event.city && `, ${event.city}`}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <div>
+                                                <div className="min-w-0">
                                                     {event.price ? (
                                                         <>
-                                                            <span className="text-2xl font-bold text-foreground">
+                                                            <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                                                                 ${event.price.toLocaleString()}
                                                             </span>
-                                                            <span className="text-foreground/60 text-sm ml-1">ARS</span>
+                                                            <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
                                                         </>
                                                     ) : (
-                                                        <span className="text-lg font-bold text-foreground">Gratis</span>
+                                                        <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground">Gratis</span>
                                                     )}
                                                 </div>
                                                 <Link href={`/events/${event.id}`}>
-                                                    <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
+                                                    <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-3 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10">
                                                         Comprar
                                                     </Button>
                                                 </Link>
@@ -296,8 +296,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             })}
                         </div>
                     ) : (
-                        <div className="text-center py-12">
-                            <p className="text-lg text-foreground/60">No se encontraron eventos que coincidan con tu búsqueda.</p>
+                        <div className="text-center py-8 sm:py-12">
+                            <p className="text-base sm:text-lg text-foreground/60 px-4">No se encontraron eventos que coincidan con tu búsqueda.</p>
                         </div>
                     )}
                 </section>
