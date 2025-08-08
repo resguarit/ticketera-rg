@@ -21,6 +21,11 @@ class Event extends Model
         'name',
         'description',
         'banner_url',
+        'featured',
+    ];
+
+    protected $casts = [
+        'featured' => 'boolean',
     ];
 
     public function category(): BelongsTo

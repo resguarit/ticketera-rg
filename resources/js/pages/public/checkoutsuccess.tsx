@@ -1,31 +1,45 @@
 import { useEffect, useState } from 'react';
-import { Check, Download, Share2, Calendar, MapPin, Mail, Phone } from 'lucide-react';
+import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/header';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { type SharedData } from '@/types';
 
-const mockPurchaseData = {
-    orderId: "TM-2024-001234",
+interface PurchaseData {
+    orderId: string;
     event: {
-        title: "Festival de Música Electrónica 2024",
-        image: "/placeholder.svg?height=200&width=300",
-        date: "15 Mar 2024",
-        time: "20:00",
-        location: "Estadio Nacional",
-        city: "Buenos Aires",
-    },
-    tickets: [
-        { type: "General", quantity: 2, price: 8500 },
-        { type: "VIP", quantity: 1, price: 15000 },
-    ],
-    total: 32600,
-    purchaseDate: new Date().toLocaleDateString(),
-};
+        title: string;
+        image: string;
+        date: string;
+        time: string;
+        location: string;
+        city: string;
+        function?: {
+            id: number;
+            name: string;
+            description: string;
+        } | null;
+    };
+    tickets: Array<{
+        type: string;
+        quantity: number;
+        price: number;
+    }>;
+    total: number;
+    purchaseDate: string;
+}
 
-export default function CheckoutSuccess() {
+interface CheckoutSuccessProps {
+    purchaseData: PurchaseData;
+}
+
+export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) {
     const [showConfetti, setShowConfetti] = useState(true);
+    
+    // ✅ Obtener auth usando usePage hook
+    const { auth } = usePage<SharedData>().props;
 
     useEffect(() => {
         const timer = setTimeout(() => setShowConfetti(false), 3000);
@@ -81,31 +95,42 @@ export default function CheckoutSuccess() {
                                         Confirmado
                                     </Badge>
                                 </CardTitle>
-                                <p className="text-foreground/60">Orden #{mockPurchaseData.orderId}</p>
+                                <p className="text-foreground/60">Orden #{purchaseData.orderId}</p>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {/* Event Info */}
                                 <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                                         <img
-                                            src={mockPurchaseData.event.image}
-                                            alt={mockPurchaseData.event.title}
+                                            src={purchaseData.event.image}
+                                            alt={purchaseData.event.title}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-foreground mb-1">{mockPurchaseData.event.title}</h3>
+                                        <h3 className="text-lg font-bold text-foreground mb-1">{purchaseData.event.title}</h3>
+                                        {/* Mostrar información de la función si existe */}
+                                        {purchaseData.event.function && (
+                                            <div className="mb-2">
+                                                <Badge variant="outline" className="bg-blue-50 border-blue-300 text-blue-700 text-xs">
+                                                    {purchaseData.event.function.name}
+                                                </Badge>
+                                                {purchaseData.event.function.description && (
+                                                    <p className="text-foreground/60 text-xs mt-1">{purchaseData.event.function.description}</p>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="flex items-center space-x-4 text-foreground/80 text-sm">
                                             <div className="flex items-center space-x-1">
                                                 <Calendar className="w-4 h-4 text-primary" />
                                                 <span>
-                                                    {mockPurchaseData.event.date} • {mockPurchaseData.event.time}
+                                                    {purchaseData.event.date} • {purchaseData.event.time}
                                                 </span>
                                             </div>
                                             <div className="flex items-center space-x-1">
                                                 <MapPin className="w-4 h-4 text-pink-500" />
                                                 <span>
-                                                    {mockPurchaseData.event.location}, {mockPurchaseData.event.city}
+                                                    {purchaseData.event.location}, {purchaseData.event.city}
                                                 </span>
                                             </div>
                                         </div>
@@ -115,7 +140,7 @@ export default function CheckoutSuccess() {
                                 {/* Tickets */}
                                 <div className="space-y-3">
                                     <h4 className="text-foreground font-semibold">Tickets Comprados:</h4>
-                                    {mockPurchaseData.tickets.map((ticket, index) => (
+                                    {purchaseData.tickets.map((ticket, index) => (
                                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div>
                                                 <span className="text-foreground font-medium">{ticket.type}</span>
@@ -128,13 +153,13 @@ export default function CheckoutSuccess() {
                                     ))}
                                     <div className="flex justify-between items-center p-3 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg border border-primary/30">
                                         <span className="text-foreground font-bold text-lg">Total Pagado</span>
-                                        <span className="text-foreground font-bold text-xl">${mockPurchaseData.total.toLocaleString()} ARS</span>
+                                        <span className="text-foreground font-bold text-xl">${purchaseData.total.toLocaleString()} ARS</span>
                                     </div>
                                 </div>
 
                                 {/* Purchase Date */}
                                 <div className="text-center text-foreground/60 text-sm">
-                                    Compra realizada el {mockPurchaseData.purchaseDate}
+                                    Compra realizada el {purchaseData.purchaseDate}
                                 </div>
                             </CardContent>
                         </Card>
@@ -202,6 +227,38 @@ export default function CheckoutSuccess() {
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Account Information - Solo si se creó una cuenta nueva */}
+                        {auth.user && (
+                            <Card className="bg-blue-50 border-blue-200 shadow-lg">
+                                <CardContent className="p-6">
+                                    <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
+                                        <User className="w-5 h-5 text-blue-500" />
+                                        <span>Tu Cuenta TicketMax</span>
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <p className="text-foreground/80 text-sm">
+                                            Hemos creado una cuenta para ti para que puedas gestionar tus tickets:
+                                        </p>
+                                        <div className="bg-white p-4 rounded-lg border border-blue-200">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-foreground/60">Email:</p>
+                                                    <p className="font-semibold text-foreground">{auth.user.email}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-foreground/60">Contraseña:</p>
+                                                    <p className="font-semibold text-foreground">12345678</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-foreground/70 text-xs">
+                                            💡 Te recomendamos cambiar tu contraseña en "Mi Cuenta" por seguridad
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>

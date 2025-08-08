@@ -70,12 +70,12 @@ export default function MyAccount() {
         firstName: auth.user?.person?.name || "",
         lastName: auth.user?.person?.last_name || "",
         email: auth.user?.email || "",
-        phone: "",
+        phone: auth.user?.person?.phone || "", // ✅ Cargar phone existente
         birthDate: "",
         country: "Argentina",
         documentType: "DNI",
-        documentNumber: "",
-        address: "",
+        documentNumber: auth.user?.person?.dni || "", // ✅ Cargar DNI existente
+        address: auth.user?.person?.address || "", // ✅ Cargar address existente
         city: "",
         postalCode: "",
     });
@@ -123,11 +123,21 @@ export default function MyAccount() {
     const handleSavePersonalInfo = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        
+        try {
+            await router.patch(route('profile.update'), personalInfo, {
+                onSuccess: () => {
+                    alert('Información personal actualizada correctamente');
+                },
+                onError: (errors) => {
+                    console.error('Errores:', errors);
+                },
+                onFinish: () => setIsLoading(false)
+            });
+        } catch (error) {
+            console.error('Error:', error);
             setIsLoading(false);
-            // Aquí harías la llamada real a la API
-        }, 1000);
+        }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -136,18 +146,58 @@ export default function MyAccount() {
             alert("Las contraseñas no coinciden");
             return;
         }
+        
+        try {
+            await router.put(route('password.update'), {
+                current_password: securityInfo.currentPassword,
+                password: securityInfo.newPassword,
+                password_confirmation: securityInfo.confirmPassword,
+            }, {
+                onSuccess: () => {
+                    setSecurityInfo({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                        twoFactorEnabled: securityInfo.twoFactorEnabled,
+                    });
+                    alert("Contraseña actualizada exitosamente");
+                },
+                onError: (errors) => {
+                    console.error('Errores:', errors);
+                    alert('Error al actualizar la contraseña');
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const handleSaveNotifications = async (e: React.FormEvent) => {
+        e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        
+        try {
+            // Por ahora solo simular, ya que no hay ruta para notificaciones en settings
+            setTimeout(() => {
+                alert('Preferencias de notificaciones guardadas (simulado)');
+                setIsLoading(false);
+            }, 1000);
+            
+            // Cuando quieras agregar la funcionalidad real, descomenta esto:
+            // await router.put(route('profile.notifications'), notificationSettings, {
+            //     onSuccess: () => {
+            //         alert('Preferencias de notificaciones actualizadas');
+            //     },
+            //     onError: (errors) => {
+            //         console.error('Errores:', errors);
+            //         alert('Error al actualizar las preferencias');
+            //     },
+            //     onFinish: () => setIsLoading(false)
+            // });
+        } catch (error) {
+            console.error('Error:', error);
             setIsLoading(false);
-            setSecurityInfo((prev) => ({
-                ...prev,
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: "",
-            }));
-            alert("Contraseña actualizada exitosamente");
-        }, 1000);
+        }
     };
 
     return (
@@ -281,7 +331,8 @@ export default function MyAccount() {
                                                             <Input
                                                                 id="phone"
                                                                 value={personalInfo.phone}
-                                                                onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))}
+                                                                onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))
+                                                                }
                                                                 className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                                 placeholder="+54 11 1234-5678"
                                                             />
@@ -304,6 +355,91 @@ export default function MyAccount() {
                                                                 className="pl-10 bg-white border-gray-300 text-foreground"
                                                             />
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="documentType" className="text-foreground font-medium">
+                                                            Tipo de Documento
+                                                        </Label>
+                                                        <Select
+                                                            value={personalInfo.documentType}
+                                                            onValueChange={(value) =>
+                                                                setPersonalInfo((prev) => ({ ...prev, documentType: value }))
+                                                            }
+                                                        >
+                                                            <SelectTrigger className="bg-white border-gray-300 text-foreground">
+                                                                <SelectValue placeholder="Selecciona tipo" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="DNI">DNI</SelectItem>
+                                                                <SelectItem value="Pasaporte">Pasaporte</SelectItem>
+                                                                <SelectItem value="Cedula">Cédula</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="documentNumber" className="text-foreground font-medium">
+                                                            Número de Documento *
+                                                        </Label>
+                                                        <Input
+                                                            id="documentNumber"
+                                                            value={personalInfo.documentNumber}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="12345678"
+                                                            required
+                                                        />
+                                                        <p className="text-foreground/60 text-sm">Número sin puntos ni espacios</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="address" className="text-foreground font-medium">
+                                                        Dirección
+                                                    </Label>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                                                        <Input
+                                                            id="address"
+                                                            value={personalInfo.address}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, address: e.target.value }))}
+                                                            className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="Calle 123, Ciudad"
+                                                        />
+                                                    </div>
+                                                    <p className="text-foreground/60 text-sm">Dirección completa (opcional)</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="city" className="text-foreground font-medium">
+                                                            Ciudad
+                                                        </Label>
+                                                        <Input
+                                                            id="city"
+                                                            value={personalInfo.city}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, city: e.target.value }))
+                                                            }
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="Buenos Aires"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="postalCode" className="text-foreground font-medium">
+                                                            Código Postal
+                                                        </Label>
+                                                        <Input
+                                                            id="postalCode"
+                                                            value={personalInfo.postalCode}
+                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, postalCode: e.target.value }))
+                                                            }
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            placeholder="1000"
+                                                        />
                                                     </div>
                                                 </div>
 

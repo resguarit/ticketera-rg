@@ -14,9 +14,11 @@ class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
-        // Eventos destacados (los primeros 3 eventos)
+        // Eventos destacados (solo los que tienen featured = 1/true)
         $featuredEvents = Event::with(['venue', 'category', 'organizer', 'functions'])
-            ->limit(3)
+            ->where('featured', true) // o ->where('featured', 1)
+            ->orderBy('created_at', 'desc')
+            ->limit(5) // Máximo 5 para el carousel
             ->get()
             ->map(function($event) {
                 return [
@@ -25,13 +27,15 @@ class HomeController extends Controller
                     'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
                     'date' => $event->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                     'location' => $event->venue->name,
+                    'city' => $this->extractCity($event->venue->address),
                     'category' => $event->category->name,
-                    'featured' => true,
+                    'featured' => $event->featured, // Usar el valor real de la BD
                 ];
             });
 
         // Todos los eventos para la grilla
         $events = Event::with(['venue', 'category', 'organizer', 'functions.ticketTypes'])
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(function($event) {
                 $firstFunction = $event->functions->first();
@@ -53,17 +57,17 @@ class HomeController extends Controller
                     'city' => $this->extractCity($event->venue->address),
                     'category' => strtolower($event->category->name),
                     'price' => $minPrice,
-                    'rating' => 4.5 + (rand(0, 8) / 10), // Temporal hasta implementar ratings reales
+                    'featured' => $event->featured, // Incluir el valor real de featured
                 ];
             });
 
-        // Categorías disponibles
+        // Categorías disponibles con colores de la BD
         $categories = Category::all()->map(function($category) {
             return [
                 'id' => strtolower($category->name),
                 'label' => $category->name,
-                'icon' => $this->getCategoryIcon($category->name),
-                'color' => 'primary',
+                'icon' => $category->icon ?: $this->getCategoryIcon($category->name), // Usar icono de la BD
+                'color' => $category->color ?: '#3b82f6', // Usar color de la BD
             ];
         });
 

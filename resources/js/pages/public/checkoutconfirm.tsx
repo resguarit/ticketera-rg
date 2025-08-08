@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,32 +12,39 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-// Mock data - esto vendría del backend
-const mockEventData = {
-    id: 1,
-    title: "Festival de Música Electrónica 2024",
-    image: "/placeholder.svg?height=200&width=300",
-    date: "15 Mar 2024",
-    time: "20:00",
-    location: "Estadio Nacional",
-    city: "Buenos Aires",
-    selectedTickets: [
-        {
-            id: 1,
-            type: "General",
-            price: 8500,
-            quantity: 2,
-            description: "Acceso general al festival",
-        },
-        {
-            id: 2,
-            type: "VIP",
-            price: 15000,
-            quantity: 1,
-            description: "Acceso VIP con área exclusiva",
-        },
-    ],
-};
+// Tipos de datos que llegan del backend
+interface SelectedTicket {
+    id: number;
+    type: string;
+    price: number;
+    quantity: number;
+    description: string;
+}
+
+interface EventFunction {
+    id: number;
+    name: string;
+    description: string;
+    start_time: string;
+    end_time: string;
+}
+
+interface EventData {
+    id: number;
+    title: string;
+    image: string;
+    date: string;
+    time: string;
+    location: string;
+    city: string;
+    selectedTickets: SelectedTicket[];
+    function?: EventFunction; // Agregar información de la función
+}
+
+interface CheckoutConfirmProps {
+    eventData: EventData;
+    eventId: number;
+}
 
 const paymentMethods = [
     {
@@ -63,11 +70,7 @@ const paymentMethods = [
     },
 ];
 
-interface CheckoutConfirmProps {
-    eventId?: string;
-}
-
-export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
+export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [showCVV, setShowCVV] = useState(false);
@@ -101,11 +104,11 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
     });
 
     const getTotalPrice = () => {
-        return mockEventData.selectedTickets.reduce((total, ticket) => total + ticket.price * ticket.quantity, 0);
+        return eventData.selectedTickets.reduce((total, ticket) => total + ticket.price * ticket.quantity, 0);
     };
 
     const getTotalTickets = () => {
-        return mockEventData.selectedTickets.reduce((total, ticket) => total + ticket.quantity, 0);
+        return eventData.selectedTickets.reduce((total, ticket) => total + ticket.quantity, 0);
     };
 
     const getServiceFee = () => {
@@ -130,17 +133,32 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
 
     const handleSubmitPayment = async (e: React.FormEvent) => {
         e.preventDefault();
+        
         if (!agreements.terms || !agreements.privacy) {
             alert("Debes aceptar los términos y condiciones y la política de privacidad");
             return;
         }
 
         setIsLoading(true);
-        // Simulate payment processing
-        setTimeout(() => {
+
+        // Enviar datos al backend incluyendo información de la función
+        const formData = {
+            event_id: eventId,
+            function_id: eventData.function?.id,
+            billing_info: billingInfo,
+            payment_info: paymentInfo,
+            selected_tickets: eventData.selectedTickets,
+            agreements: agreements,
+        };
+
+        try {
+            // CAMBIAR LA RUTA AQUÍ
+            router.post(route('checkout.process'), formData);
+        } catch (error) {
+            console.error('Error procesando el pago:', error);
             setIsLoading(false);
-            router.visit(route('checkout.success'));
-        }, 3000);
+            alert('Error procesando el pago. Por favor intenta de nuevo.');
+        }
     };
 
     const formatCardNumber = (value: string) => {
@@ -176,7 +194,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                 <div className="container mx-auto px-4 py-8">
                     {/* Back Button */}
                     <div className="mb-6">
-                        <Link href={route('event.detail', eventId || mockEventData.id)}>
+                        <Link href={route('event.detail', eventId)}>
                             <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver al Evento
@@ -230,24 +248,35 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                     <div className="flex items-center space-x-4">
                                         <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                                             <img
-                                                src={mockEventData.image}
-                                                alt={mockEventData.title}
+                                                src={eventData.image}
+                                                alt={eventData.title}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-foreground mb-2">{mockEventData.title}</h3>
+                                            <h3 className="text-lg font-bold text-foreground mb-2">{eventData.title}</h3>
+                                            {/* Mostrar información de la función si existe */}
+                                            {eventData.function && (
+                                                <div className="mb-2">
+                                                    <Badge variant="outline" className="bg-blue-50 border-blue-300 text-blue-700">
+                                                        {eventData.function.name}
+                                                    </Badge>
+                                                    {eventData.function.description && (
+                                                        <p className="text-foreground/60 text-xs mt-1">{eventData.function.description}</p>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="flex items-center space-x-4 text-foreground/80 text-sm">
                                                 <div className="flex items-center space-x-1">
                                                     <Calendar className="w-4 h-4 text-primary" />
                                                     <span>
-                                                        {mockEventData.date} • {mockEventData.time}
+                                                        {eventData.date} {eventData.time && `• ${eventData.time}`}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center space-x-1">
                                                     <MapPin className="w-4 h-4 text-pink-500" />
                                                     <span>
-                                                        {mockEventData.location}, {mockEventData.city}
+                                                        {eventData.location}, {eventData.city}
                                                     </span>
                                                 </div>
                                             </div>
@@ -594,7 +623,7 @@ export default function CheckoutConfirm({ eventId }: CheckoutConfirmProps) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {mockEventData.selectedTickets.map((ticket) => (
+                                    {eventData.selectedTickets.map((ticket) => (
                                         <div key={ticket.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex-1">
                                                 <h4 className="text-foreground font-semibold">{ticket.type}</h4>
