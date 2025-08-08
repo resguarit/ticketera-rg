@@ -302,11 +302,17 @@ export default function Index({ auth }: any) {
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent className="w-56 bg-popover border-border">
-                                                            <DropdownMenuItem className="hover:bg-accent">
+                                                            <DropdownMenuItem 
+                                                                className="hover:bg-accent"
+                                                                onClick={() => router.get(route('admin.organizers.show', organizer.id))}
+                                                            >
                                                                 <Eye className="w-4 h-4 mr-2" />
                                                                 Ver perfil
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem className="hover:bg-accent">
+                                                            <DropdownMenuItem 
+                                                                className="hover:bg-accent"
+                                                                onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
+                                                            >
                                                                 <Edit className="w-4 h-4 mr-2" />
                                                                 Editar organizador
                                                             </DropdownMenuItem>
