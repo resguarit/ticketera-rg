@@ -95,13 +95,41 @@ class EventController extends Controller
     {
         $event->load(['venue', 'category', 'organizer', 'functions.ticketTypes']);
 
+        // Preparar funciones con sus tickets
+        $functions = $event->functions->map(function($function) {
+            return [
+                'id' => $function->id,
+                'name' => $function->name,
+                'description' => $function->description,
+                'start_time' => $function->start_time,
+                'end_time' => $function->end_time,
+                'date' => $function->start_time?->format('d M Y'),
+                'time' => $function->start_time?->format('H:i'),
+                'day_name' => $function->start_time?->format('l'), // Lunes, Martes, etc.
+                'is_active' => $function->is_active,
+                'ticketTypes' => $function->ticketTypes->map(function($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'name' => $ticket->name,
+                        'description' => $ticket->description,
+                        'price' => $ticket->price,
+                        'available' => $ticket->quantity - $ticket->quantity_sold,
+                        'quantity' => $ticket->quantity,
+                        'quantity_sold' => $ticket->quantity_sold,
+                        'sales_start_date' => $ticket->sales_start_date,
+                        'sales_end_date' => $ticket->sales_end_date,
+                        'is_hidden' => $ticket->is_hidden,
+                        'color' => 'from-blue-500 to-cyan-500', // Temporal
+                    ];
+                }),
+            ];
+        });
+
         $eventData = [
             'id' => $event->id,
             'title' => $event->name,
             'description' => $event->description,
             'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
-            'date' => $event->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-            'time' => $event->functions->first()?->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
             'city' => $this->extractCity($event->venue->address),
             'category' => strtolower($event->category->name),
@@ -109,16 +137,10 @@ class EventController extends Controller
             'reviews' => 1247, // Temporal
             'duration' => '8 horas', // Temporal
             'ageRestriction' => '18+', // Temporal
-            'ticketTypes' => $event->functions->first()?->ticketTypes->map(function($ticket) {
-                return [
-                    'id' => $ticket->id,
-                    'name' => $ticket->name,
-                    'description' => $ticket->description,
-                    'price' => $ticket->price,
-                    'available' => $ticket->quantity - $ticket->quantity_sold,
-                    'color' => 'from-blue-500 to-cyan-500', // Temporal
-                ];
-            }) ?? collect([]),
+            'functions' => $functions,
+            // Para compatibilidad con el código existente, enviamos la primera función
+            'date' => $functions->first()['date'] ?? 'Fecha por confirmar',
+            'time' => $functions->first()['time'] ?? '',
         ];
 
         return Inertia::render('public/eventdetail', [

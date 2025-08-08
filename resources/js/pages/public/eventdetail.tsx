@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ArrowLeft, Calendar, MapPin, Clock, Users, Star, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Users, Star, Minus, Plus, ShoppingCart, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -13,7 +14,25 @@ interface TicketType {
     description: string;
     price: number;
     available: number;
+    quantity: number;
+    quantity_sold: number;
+    sales_start_date: string;
+    sales_end_date: string;
+    is_hidden: boolean;
     color?: string;
+}
+
+interface EventFunction {
+    id: number;
+    name: string;
+    description: string;
+    start_time: string;
+    end_time: string;
+    date: string;
+    time: string;
+    day_name: string;
+    is_active: boolean;
+    ticketTypes: TicketType[];
 }
 
 interface EventData {
@@ -21,8 +40,8 @@ interface EventData {
     title: string;
     description: string;
     image: string;
-    date: string;
-    time: string;
+    date: string; // Para compatibilidad
+    time: string; // Para compatibilidad
     location: string;
     city: string;
     category: string;
@@ -30,7 +49,7 @@ interface EventData {
     reviews: number;
     duration: string;
     ageRestriction: string;
-    ticketTypes: TicketType[];
+    functions: EventFunction[];
 }
 
 interface EventDetailProps {
@@ -38,8 +57,23 @@ interface EventDetailProps {
 }
 
 export default function EventDetail({ eventData }: EventDetailProps) {
+    // Estado para la función seleccionada
+    const [selectedFunctionId, setSelectedFunctionId] = useState<number>(
+        eventData.functions.length > 0 ? eventData.functions[0].id : 0
+    );
+    
     const [selectedTickets, setSelectedTickets] = useState<{ [key: number]: number }>({});
     const [isLoading, setIsLoading] = useState(false);
+
+    // Obtener la función seleccionada
+    const selectedFunction = eventData.functions.find(f => f.id === selectedFunctionId);
+    const currentTicketTypes = selectedFunction?.ticketTypes || [];
+
+    // Limpiar tickets seleccionados cuando cambia la función
+    const handleFunctionChange = (functionId: string) => {
+        setSelectedFunctionId(parseInt(functionId));
+        setSelectedTickets({}); // Limpiar selección de tickets
+    };
 
     const updateTicketQuantity = (ticketId: number, change: number) => {
         setSelectedTickets((prev) => {
@@ -55,7 +89,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
     const getTotalPrice = () => {
         return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
-            const ticket = eventData.ticketTypes.find((t) => t.id === Number.parseInt(ticketId));
+            const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
             return total + (ticket ? ticket.price * quantity : 0);
         }, 0);
     };
@@ -70,11 +104,30 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             return;
         }
 
+        if (!selectedFunction) {
+            alert('Por favor selecciona una función');
+            return;
+        }
+
         setIsLoading(true);
-        // Simulate redirection to checkout
+        
+        // Preparar datos para el checkout
+        const selectedTicketsData = Object.entries(selectedTickets)
+            .filter(([_, quantity]) => quantity > 0)
+            .reduce((acc, [ticketId, quantity]) => {
+                acc[ticketId] = quantity;
+                return acc;
+            }, {} as { [key: string]: number });
+
+        // Redirigir al checkout con los datos
+        const queryParams = new URLSearchParams({
+            function_id: selectedFunction.id.toString(),
+            tickets: JSON.stringify(selectedTicketsData)
+        });
+
         setTimeout(() => {
             setIsLoading(false);
-            router.visit(route('checkout.confirm', eventData.id));
+            router.visit(`${route('checkout.confirm', eventData.id)}?${queryParams.toString()}`);
         }, 1000);
     };
 
@@ -135,16 +188,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         <div className="flex items-center space-x-3 text-foreground/80">
                                             <Calendar className="w-5 h-5 text-primary" />
                                             <div>
-                                                <p className="font-semibold text-foreground">Fecha</p>
-                                                <p>{eventData.date}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center space-x-3 text-foreground/80">
-                                            <Clock className="w-5 h-5 text-purple-500" />
-                                            <div>
-                                                <p className="font-semibold text-foreground">Hora</p>
-                                                <p>{eventData.time}</p>
+                                                <p className="font-semibold text-foreground">Fecha y Hora</p>
+                                                {selectedFunction ? (
+                                                    <p>{selectedFunction.date} • {selectedFunction.time}</p>
+                                                ) : (
+                                                    <p>Selecciona una función</p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -152,9 +201,15 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                             <MapPin className="w-5 h-5 text-pink-500" />
                                             <div>
                                                 <p className="font-semibold text-foreground">Ubicación</p>
-                                                <p>
-                                                    {eventData.location}, {eventData.city}
-                                                </p>
+                                                <p>{eventData.location}, {eventData.city}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center space-x-3 text-foreground/80">
+                                            <Clock className="w-5 h-5 text-purple-500" />
+                                            <div>
+                                                <p className="font-semibold text-foreground">Duración</p>
+                                                <p>{eventData.duration}</p>
                                             </div>
                                         </div>
 
@@ -168,6 +223,46 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Functions List (if multiple) */}
+                            {eventData.functions.length > 1 && (
+                                <Card className="bg-white border-gray-200 shadow-lg">
+                                    <CardHeader>
+                                        <CardTitle className="text-foreground text-xl">Funciones Disponibles</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {eventData.functions.map((func) => (
+                                                <div
+                                                    key={func.id}
+                                                    onClick={() => setSelectedFunctionId(func.id)}
+                                                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                                        selectedFunctionId === func.id
+                                                            ? 'border-primary bg-primary/10'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <h4 className="font-bold text-foreground mb-2">{func.name}</h4>
+                                                    <p className="text-foreground/80 text-sm mb-2">{func.description}</p>
+                                                    <div className="flex items-center text-foreground/60 text-sm">
+                                                        <Calendar className="w-4 h-4 mr-1" />
+                                                        <span>{func.date} • {func.time}</span>
+                                                    </div>
+                                                    <Badge 
+                                                        className={`mt-2 ${
+                                                            selectedFunctionId === func.id 
+                                                                ? 'bg-primary text-white' 
+                                                                : 'bg-gray-100 text-gray-600'
+                                                        }`}
+                                                    >
+                                                        {func.ticketTypes.length} tipos de entrada
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
 
                         {/* Ticket Selection */}
@@ -175,58 +270,102 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
                                 <CardHeader>
                                     <CardTitle className="text-foreground text-xl">Seleccionar Entradas</CardTitle>
+                                    {eventData.functions.length > 1 && (
+                                        <div className="mt-4">
+                                            <label className="text-foreground/80 text-sm font-medium block mb-2">
+                                                Función:
+                                            </label>
+                                            <Select value={selectedFunctionId.toString()} onValueChange={handleFunctionChange}>
+                                                <SelectTrigger className="bg-white border-gray-300 text-foreground">
+                                                    <SelectValue placeholder="Selecciona una función" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white border-gray-300">
+                                                    {eventData.functions.map((func) => (
+                                                        <SelectItem key={func.id} value={func.id.toString()}>
+                                                            {func.name} - {func.date} {func.time}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {eventData.ticketTypes && eventData.ticketTypes.length > 0 ? (
-                                        eventData.ticketTypes.map((ticket) => (
-                                            <div
-                                                key={ticket.id}
-                                                className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                            >
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h4 className="font-bold text-foreground text-lg">{ticket.name}</h4>
-                                                        <p className="text-foreground/80 text-sm">{ticket.description}</p>
-                                                        <p className="text-foreground/60 text-xs mt-1">{ticket.available} disponibles</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-2xl font-bold text-foreground">${ticket.price.toLocaleString()}</p>
-                                                        <p className="text-foreground/60 text-sm">ARS</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-3">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                            disabled={!selectedTickets[ticket.id]}
-                                                            className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                        >
-                                                            <Minus className="w-4 h-4" />
-                                                        </Button>
-                                                        <span className="text-foreground font-semibold w-8 text-center">
-                                                            {selectedTickets[ticket.id] || 0}
-                                                        </span>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                            disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                            className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
+                                    {selectedFunction && currentTicketTypes.length > 0 ? (
+                                        <>
+                                            {/* Información de la función seleccionada */}
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                <h4 className="font-semibold text-foreground text-sm mb-1">
+                                                    {selectedFunction.name}
+                                                </h4>
+                                                <p className="text-foreground/60 text-xs">
+                                                    {selectedFunction.date} • {selectedFunction.time}
+                                                </p>
                                             </div>
-                                        ))
+
+                                            {currentTicketTypes
+                                                .filter(ticket => !ticket.is_hidden && ticket.available > 0)
+                                                .map((ticket) => (
+                                                <div
+                                                    key={ticket.id}
+                                                    className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <h4 className="font-bold text-foreground text-lg">{ticket.name}</h4>
+                                                            <p className="text-foreground/80 text-sm">{ticket.description}</p>
+                                                            <p className="text-foreground/60 text-xs mt-1">
+                                                                {ticket.available} de {ticket.quantity} disponibles
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-2xl font-bold text-foreground">
+                                                                ${ticket.price.toLocaleString()}
+                                                            </p>
+                                                            <p className="text-foreground/60 text-sm">ARS</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-3">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => updateTicketQuantity(ticket.id, -1)}
+                                                                disabled={!selectedTickets[ticket.id]}
+                                                                className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
+                                                            >
+                                                                <Minus className="w-4 h-4" />
+                                                            </Button>
+                                                            <span className="text-foreground font-semibold w-8 text-center">
+                                                                {selectedTickets[ticket.id] || 0}
+                                                            </span>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => updateTicketQuantity(ticket.id, 1)}
+                                                                disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
+                                                                className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : selectedFunction && currentTicketTypes.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <p className="text-foreground/60 mb-4">No hay entradas disponibles para esta función</p>
+                                            <Badge variant="outline" className="border-orange-300 text-orange-600">
+                                                Agotado
+                                            </Badge>
+                                        </div>
                                     ) : (
                                         <div className="text-center py-8">
-                                            <p className="text-foreground/60 mb-4">No hay entradas disponibles para este evento</p>
-                                            <Badge variant="outline" className="border-orange-300 text-orange-600">
-                                                Próximamente
+                                            <p className="text-foreground/60 mb-4">Selecciona una función para ver las entradas disponibles</p>
+                                            <Badge variant="outline" className="border-blue-300 text-blue-600">
+                                                Selecciona función
                                             </Badge>
                                         </div>
                                     )}
@@ -245,7 +384,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
-                                                    disabled={isLoading}
+                                                    disabled={isLoading || !selectedFunction}
                                                     className="w-full bg-primary hover:bg-primary-hover text-white py-3 text-lg font-semibold rounded-xl transform hover:scale-105 transition-all duration-200"
                                                 >
                                                     {isLoading ? (
