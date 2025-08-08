@@ -129,22 +129,22 @@ export default function Index({ auth }: any) {
         <>
             <Head title="Gestión de Organizadores - Panel Admin" />
             
-            <div className="min-h-screen bg-white">
+            <div className="min-h-screen bg-background">
                 <div className="container mx-auto px-4 py-8">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold text-black mb-2">
+                            <h2 className="section text-foreground">
                                 Gestión de Organizadores
-                            </h1>
-                            <p className="text-gray-600 text-lg">
+                            </h2>
+                            <p className="text-muted-foreground text-lg">
                                 Administra todos los organizadores de eventos
                             </p>
                         </div>
                         
                         <div className="flex items-center space-x-4">
                             <Link href="/admin/organizers/create">
-                                <Button className="bg-black text-white hover:bg-gray-800">
+                                <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
                                     <Plus className="w-4 h-4 mr-2" />
                                     Crear Organizador
                                 </Button>
@@ -154,57 +154,57 @@ export default function Index({ auth }: any) {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <Card className="bg-white border-gray-200 shadow-lg">
+                        <Card className="bg-card border-border shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Organizadores</p>
-                                        <p className="text-2xl font-bold text-black">{stats.total_organizers}</p>
+                                        <p className="text-muted-foreground text-sm font-medium">Total Organizadores</p>
+                                        <p className="text-2xl font-bold text-card-foreground">{stats.total_organizers}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                                        <Building className="w-6 h-6 text-white" />
+                                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                                        <Building className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-white border-gray-200 shadow-lg">
+                        <Card className="bg-card border-border shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Organizadores Activos</p>
-                                        <p className="text-2xl font-bold text-black">{stats.active_organizers}</p>
+                                        <p className="text-muted-foreground text-sm font-medium">Organizadores Activos</p>
+                                        <p className="text-2xl font-bold text-card-foreground">{stats.active_organizers}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                                        <CheckCircle className="w-6 h-6 text-white" />
+                                    <div className="w-12 h-12 bg-chart-2 rounded-lg flex items-center justify-center">
+                                        <CheckCircle className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-white border-gray-200 shadow-lg">
+                        <Card className="bg-card border-border shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Eventos Creados</p>
-                                        <p className="text-2xl font-bold text-black">{stats.total_events}</p>
+                                        <p className="text-muted-foreground text-sm font-medium">Eventos Creados</p>
+                                        <p className="text-2xl font-bold text-card-foreground">{stats.total_events}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                                        <Calendar className="w-6 h-6 text-white" />
+                                    <div className="w-12 h-12 bg-chart-3 rounded-lg flex items-center justify-center">
+                                        <Calendar className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-white border-gray-200 shadow-lg">
+                        <Card className="bg-card border-border shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Ingresos Totales</p>
-                                        <p className="text-2xl font-bold text-black">${stats.total_revenue.toLocaleString()}</p>
+                                        <p className="text-muted-foreground text-sm font-medium">Ingresos Totales</p>
+                                        <p className="text-2xl font-bold text-card-foreground">${stats.total_revenue.toLocaleString()}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
-                                        <DollarSign className="w-6 h-6 text-white" />
+                                    <div className="w-12 h-12 bg-chart-4 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -212,23 +212,23 @@ export default function Index({ auth }: any) {
                     </div>
 
                     {/* Filters - Simplificado a solo búsqueda */}
-                    <Card className="bg-white border-gray-200 shadow-lg mb-8">
+                    <Card className="bg-card border-border shadow-lg mb-8">
                         <CardContent className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                                 <div className="relative md:col-span-5">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                                     <Input
                                         placeholder="Buscar por nombre o email..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-500"
+                                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground"
                                     />
                                 </div>
 
                                 <Button 
                                     onClick={() => setSearchTerm("")}
                                     variant="outline"
-                                    className="border-gray-300 text-black hover:bg-gray-50 bg-white"
+                                    className="border-border text-foreground hover:bg-accent bg-background"
                                 >
                                     <Filter className="w-4 h-4 mr-2" />
                                     Limpiar
@@ -238,10 +238,10 @@ export default function Index({ auth }: any) {
                     </Card>
 
                     {/* Organizers Table - Usando datos reales de `organizers` */}
-                    <Card className="bg-white border-gray-200 shadow-lg">
-                        <CardHeader className="border-b border-gray-200 pb-6">
+                    <Card className="bg-card border-border shadow-lg">
+                        <CardHeader className="border-b border-border pb-6">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-black">
+                                <CardTitle className="text-card-foreground">
                                     Organizadores ({organizers.total})
                                 </CardTitle>
                                 {/* Se eliminan los Tabs de status ya que no existe en el modelo */}
@@ -250,21 +250,21 @@ export default function Index({ auth }: any) {
                         <CardContent className="p-6">
                             <div className="space-y-4">
                                 {organizers.data.map((organizer) => (
-                                    <div key={organizer.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                    <div key={organizer.id} className="p-4 bg-muted rounded-lg hover:bg-accent transition-colors border border-border">
                                         <div className="flex items-center space-x-6">
-                                            <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                            <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center flex-shrink-0">
                                                 {/* Puedes usar el logo_url si existe */}
-                                                {organizer.logo_url ? <img src={`/storage/${organizer.logo_url}`} alt={organizer.name} className="w-full h-full object-cover rounded-lg" /> : <Building className="w-8 h-8 text-white" />}
+                                                {organizer.logo_url ? <img src={`/storage/${organizer.logo_url}`} alt={organizer.name} className="w-full h-full object-cover rounded-lg" /> : <Building className="w-8 h-8 text-primary-foreground" />}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between mb-2">
                                                     <div>
-                                                        <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
+                                                        <h3 className="text-lg font-semibold text-card-foreground mb-1 flex items-center space-x-2">
                                                             <span>{organizer.name}</span>
                                                             {/* Se elimina badge de verificado */}
                                                         </h3>
-                                                        <p className="text-gray-600 text-sm flex items-center space-x-4">
+                                                        <p className="text-muted-foreground text-sm flex items-center space-x-4">
                                                             <span className="flex items-center space-x-1">
                                                                 <Users className="w-4 h-4" />
                                                                 <span>{organizer.referring}</span>
@@ -279,61 +279,61 @@ export default function Index({ auth }: any) {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                                                    <div className="flex items-center text-gray-700 text-sm">
-                                                        <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                                                    <div className="flex items-center text-muted-foreground text-sm">
+                                                        <Calendar className="w-4 h-4 mr-2 text-primary" />
                                                         <span>Registro: {new Date(organizer.created_at).toLocaleDateString('es-ES')}</span>
                                                     </div>
-                                                    <div className="flex items-center text-gray-700 text-sm">
-                                                        <Calendar className="w-4 h-4 mr-2 text-purple-500" />
+                                                    <div className="flex items-center text-muted-foreground text-sm">
+                                                        <Calendar className="w-4 h-4 mr-2 text-chart-3" />
                                                         <span>{organizer.events_count} eventos</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                                                         <span>Teléfono: {organizer.phone}</span>
                                                         <span>ID: #{organizer.id}</span>
                                                     </div>
 
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
+                                                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                                                                 <MoreVertical className="w-4 h-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
-                                                        <DropdownMenuContent className="w-56 bg-white border-gray-300">
-                                                            <DropdownMenuItem className="hover:bg-gray-100">
+                                                        <DropdownMenuContent className="w-56 bg-popover border-border">
+                                                            <DropdownMenuItem className="hover:bg-accent">
                                                                 <Eye className="w-4 h-4 mr-2" />
                                                                 Ver perfil
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem className="hover:bg-gray-100">
+                                                            <DropdownMenuItem className="hover:bg-accent">
                                                                 <Edit className="w-4 h-4 mr-2" />
                                                                 Editar organizador
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-gray-200" />
+                                                            <DropdownMenuSeparator className="bg-border" />
                                                             <AlertDialog>
                                                                 <AlertDialogTrigger asChild>
                                                                     <DropdownMenuItem 
-                                                                        className="text-red-600 focus:text-red-600 hover:bg-red-50"
+                                                                        className="text-destructive focus:text-destructive hover:bg-destructive/10"
                                                                         onSelect={(e) => e.preventDefault()}
                                                                     >
                                                                         <Trash2 className="w-4 h-4 mr-2" />
                                                                         Eliminar organizador
                                                                     </DropdownMenuItem>
                                                                 </AlertDialogTrigger>
-                                                                <AlertDialogContent className="bg-white border-gray-300">
+                                                                <AlertDialogContent className="bg-popover border-border">
                                                                     <AlertDialogHeader>
-                                                                        <AlertDialogTitle className="text-black">¿Estás seguro?</AlertDialogTitle>
-                                                                        <AlertDialogDescription className="text-gray-600">
+                                                                        <AlertDialogTitle className="text-popover-foreground">¿Estás seguro?</AlertDialogTitle>
+                                                                        <AlertDialogDescription className="text-muted-foreground">
                                                                             Esta acción no se puede deshacer. Esto eliminará permanentemente el organizador
                                                                             "{organizer.name}" y todos los datos relacionados.
                                                                         </AlertDialogDescription>
                                                                     </AlertDialogHeader>
                                                                     <AlertDialogFooter>
-                                                                        <AlertDialogCancel className="border-gray-300 text-black hover:bg-gray-50">Cancelar</AlertDialogCancel>
+                                                                        <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancelar</AlertDialogCancel>
                                                                         <AlertDialogAction 
                                                                             onClick={() => handleDeleteOrganizer(organizer.id)}
-                                                                            className="bg-red-600 hover:bg-red-700 text-white"
+                                                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                                                                         >
                                                                             Eliminar
                                                                         </AlertDialogAction>
@@ -350,15 +350,15 @@ export default function Index({ auth }: any) {
 
                                 {organizers.data.length === 0 && (
                                     <div className="text-center py-12">
-                                        <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                        <h3 className="text-xl font-semibold text-black mb-2">No se encontraron organizadores</h3>
-                                        <p className="text-gray-600 mb-6">
+                                        <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-foreground mb-2">No se encontraron organizadores</h3>
+                                        <p className="text-muted-foreground mb-6">
                                             {filters.search
                                                 ? "Prueba ajustando los filtros de búsqueda"
                                                 : "Aún no hay organizadores registrados"}
                                         </p>
                                         <Link href={route('admin.organizers.create')}>
-                                            <Button className="bg-black text-white hover:bg-gray-800">
+                                            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
                                                 <Plus className="w-4 h-4 mr-2" />
                                                 Crear primer organizador
                                             </Button>
