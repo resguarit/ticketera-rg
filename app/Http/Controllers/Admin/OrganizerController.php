@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrganizerRequest;
+use App\Http\Requests\Admin\UpdateOrganizerRequest;
 use App\Models\Event;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Organizer;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
 class OrganizerController extends Controller
 {
@@ -64,4 +66,32 @@ class OrganizerController extends Controller
         return redirect()->route('admin.organizers.index');
     }
 
+    public function show(int $organizerId): Response
+    {
+        $organizer = Organizer::with(['events.category', 'events.venue', 'users.person'])->findOrFail($organizerId);
+        return Inertia::render('admin/organizers/show', [
+            'organizer' => $organizer,
+        ]);
+    }
+
+    public function edit(int $organizerId): Response
+    {
+        $organizer = Organizer::findOrFail($organizerId);
+        return Inertia::render('admin/organizers/edit', [
+            'organizer' => $organizer,
+        ]);
+    }
+
+    public function update(UpdateOrganizerRequest $request, $organizerId)
+    {
+        
+    }
+
+    public function destroy(int $organizerId): RedirectResponse
+    {
+        $organizer = Organizer::findOrFail($organizerId);
+        $organizer->delete();
+        
+        return redirect()->route('admin.organizers.index')->with('success', 'Organizador eliminado correctamente.');
+    }
 }

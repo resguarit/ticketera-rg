@@ -42,6 +42,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/create', [OrganizerController::class, 'create'])->name('create');
 
         Route::post('/store', [OrganizerController::class, 'store'])->name('store');
+
+        Route::get('/{organizerId}', [OrganizerController::class, 'show'])->name('show');
+
+        Route::get('/{organizerId}/edit', [OrganizerController::class, 'edit'])->name('edit');
+
+        Route::put('/{organizerId}', [OrganizerController::class, 'update'])->name('update');
+
+        Route::delete('/{organizerId}', [OrganizerController::class, 'destroy'])->name('destroy');
     });
     
     // Reportes
