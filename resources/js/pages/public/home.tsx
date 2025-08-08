@@ -10,6 +10,34 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import Header from '@/components/header';
 
+// Definir los tipos de datos que llegan del backend
+interface Event {
+    id: number;
+    title: string;
+    image: string;
+    date: string;
+    time?: string;
+    location: string;
+    city?: string;
+    category: string;
+    price?: number;
+    rating?: number;
+    featured?: boolean;
+}
+
+interface Category {
+    id: string;
+    label: string;
+    icon: string;
+    color: string;
+}
+
+interface HomeProps {
+    featuredEvents: Event[];
+    events: Event[];
+    categories: Category[];
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Home',
@@ -17,196 +45,103 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const featuredEvents = [
-    {
-        id: 1,
-        title: "Festival de Música Electrónica 2024",
-        image: "/placeholder.svg?height=400&width=800",
-        date: "15 Mar 2024",
-        location: "Estadio Nacional",
-        category: "música",
-        featured: true,
-    },
-    {
-        id: 2,
-        title: "Concierto Sinfónico de Primavera",
-        image: "/placeholder.svg?height=400&width=800",
-        date: "22 Mar 2024",
-        location: "Teatro Colón",
-        category: "música",
-        featured: true,
-    },
-    {
-        id: 3,
-        title: "Copa Mundial de Fútbol",
-        image: "/placeholder.svg?height=400&width=800",
-        date: "30 Mar 2024",
-        location: "Estadio Centenario",
-        category: "deportes",
-        featured: true,
-    },
-];
+// Mapeo de iconos (ya que del backend viene como string)
+const iconMap = {
+    music: Music,
+    theater: Theater,
+    trophy: Trophy,
+    presentation: Calendar, // Para conferencias
+    utensils: Calendar,     // Para gastronómico (usa un icono por defecto)
+    palette: Calendar,      // Para cultural
+    laugh: Theater,         // Para comedia
+    users: Calendar,        // Para familiar
+};
 
-const events = [
-    {
-        id: 1,
-        title: "Festival de Música Electrónica 2024",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "15 Mar 2024",
-        time: "20:00",
-        location: "Estadio Nacional",
-        city: "Buenos Aires",
-        category: "música",
-        price: 8500,
-        rating: 4.8,
-    },
-    {
-        id: 2,
-        title: "Concierto Sinfónico de Primavera",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "22 Mar 2024",
-        time: "19:30",
-        location: "Teatro Colón",
-        city: "Buenos Aires",
-        category: "música",
-        price: 12000,
-        rating: 4.9,
-    },
-    {
-        id: 3,
-        title: "Copa Mundial de Fútbol",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "30 Mar 2024",
-        time: "16:00",
-        location: "Estadio Centenario",
-        city: "Montevideo",
-        category: "deportes",
-        price: 15000,
-        rating: 4.7,
-    },
-    {
-        id: 4,
-        title: "Obra de Teatro: Romeo y Julieta",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "05 Abr 2024",
-        time: "21:00",
-        location: "Teatro San Martín",
-        city: "Córdoba",
-        category: "teatro",
-        price: 6500,
-        rating: 4.6,
-    },
-    {
-        id: 5,
-        title: "Festival de Jazz Internacional",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "12 Abr 2024",
-        time: "18:00",
-        location: "Parque Centenario",
-        city: "Buenos Aires",
-        category: "música",
-        price: 9500,
-        rating: 4.8,
-    },
-    {
-        id: 6,
-        title: "Campeonato de Tenis",
-        image: "/placeholder.svg?height=300&width=400",
-        date: "20 Abr 2024",
-        time: "14:00",
-        location: "Club de Tenis",
-        city: "Rosario",
-        category: "deportes",
-        price: 4500,
-        rating: 4.5,
-    },
-];
-
-const categories = [
-    { id: "música", label: "Música", icon: Music, color: "primary" },
-    { id: "teatro", label: "Teatro", icon: Theater, color: "primary" },
-    { id: "deportes", label: "Deportes", icon: Trophy, color: "primary" },
-];
-
-export default function Home() {
+export default function Home({ featuredEvents, events, categories }: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
     const [currentSlide, setCurrentSlide] = useState(0);
 
+    // Filtrar eventos basado en los criterios de búsqueda
     const filteredEvents = events.filter((event) => {
         const matchesSearch =
             event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             event.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
+        const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory;
         const matchesCity = selectedCity === "all" || event.city === selectedCity;
 
         return matchesSearch && matchesCategory && matchesCity;
     });
 
-    const getCategoryIcon = (category: string) => {
-        const cat = categories.find((c) => c.id === category);
-        return cat ? cat.icon : Music;
+    // Obtener icono de categoría
+    const getCategoryIcon = (iconName: string) => {
+        return iconMap[iconName as keyof typeof iconMap] || Music;
     };
 
-    const getCategoryColor = (category: string) => {
-        const cat = categories.find((c) => c.id === category);
-        return cat ? cat.color : "from-blue-500 to-blue-500";
-    };
+    // Obtener colores únicos de ciudades para el filtro
+    const cities = [...new Set(events.map(event => event.city).filter(Boolean))];
 
     return (
         <>
+            <Head title="Ticketera RG - Eventos" />
             <Header className="" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200  to-secondary ">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 {/* Hero Banner */}
                 <section className="relative h-[400px] overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
-                    <img
-                        src={featuredEvents[currentSlide].image}
-                        alt={featuredEvents[currentSlide].title}
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 z-20 flex items-center">
-                        <div className="container mx-auto px-4">
-                            <div className="max-w-2xl">
-                                <Badge className="mb-4 rounded-sm bg-primary text-white border-0">
-                                    Evento Destacado
-                                </Badge>
-                                <h2 className="text-5xl mb-4 text-white">
-                                    {featuredEvents[currentSlide].title}
-                                </h2>
-                                <div className="flex items-center space-x-4 text-white mb-6">
-                                    <div className="flex items-center space-x-2">
-                                        <Calendar className="w-5 h-5" />
-                                        <span>{featuredEvents[currentSlide].date}</span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <MapPin className="w-5 h-5" />
-                                        <span>{featuredEvents[currentSlide].location}</span>
+                    {featuredEvents.length > 0 && (
+                        <>
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
+                            <img
+                                src={featuredEvents[currentSlide]?.image || "/placeholder.svg?height=400&width=800"}
+                                alt={featuredEvents[currentSlide]?.title || "Evento"}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 z-20 flex items-center">
+                                <div className="container mx-auto px-4">
+                                    <div className="max-w-2xl">
+                                        <Badge className="mb-4 rounded-sm bg-primary text-white border-0">
+                                            Evento Destacado
+                                        </Badge>
+                                        <h2 className="text-5xl mb-4 text-white">
+                                            {featuredEvents[currentSlide]?.title}
+                                        </h2>
+                                        <div className="flex items-center space-x-4 text-white mb-6">
+                                            <div className="flex items-center space-x-2">
+                                                <Calendar className="w-5 h-5" />
+                                                <span>{featuredEvents[currentSlide]?.date}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <MapPin className="w-5 h-5" />
+                                                <span>{featuredEvents[currentSlide]?.location}</span>
+                                            </div>
+                                        </div>
+                                        <Link href={`/events/${featuredEvents[currentSlide]?.id}`}>
+                                            <button className="bg-primary hover:bg-primary-hover text-white px-6 py-2 text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
+                                                Comprar Entradas
+                                            </button>
+                                        </Link>
                                     </div>
                                 </div>
-                                <Link href={`/events/${featuredEvents[currentSlide].id}`}>
-                                    <button className="bg-primary hover:bg-primary-hover text-white px-6 py-2 text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
-                                        Comprar Entradas
-                                    </button>
-                                </Link>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Slide indicators */}
-                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
-                        {featuredEvents.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentSlide(index)}
-                                className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                                    index === currentSlide ? "bg-white" : "bg-white/40"
-                                }`}
-                            />
-                        ))}
-                    </div>
+                            {/* Slide indicators */}
+                            {featuredEvents.length > 1 && (
+                                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+                                    {featuredEvents.map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentSlide(index)}
+                                            className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                                                index === currentSlide ? "bg-white" : "bg-white/40"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
                 </section>
 
                 {/* Search and Filters */}
@@ -243,14 +178,15 @@ export default function Home() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todas las ciudades</SelectItem>
-                                    <SelectItem value="Buenos Aires">Buenos Aires</SelectItem>
-                                    <SelectItem value="Córdoba">Córdoba</SelectItem>
-                                    <SelectItem value="Rosario">Rosario</SelectItem>
-                                    <SelectItem value="Montevideo">Montevideo</SelectItem>
+                                    {cities.filter(city => city).map((city) => (
+                                        <SelectItem key={city} value={city!}>
+                                            {city}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
 
-                            <Button className="bg-primary hover: text-white">
+                            <Button className="bg-primary hover:bg-primary-hover text-white">
                                 <Filter className="w-4 h-4 mr-2" />
                                 Filtrar
                             </Button>
@@ -260,65 +196,83 @@ export default function Home() {
 
                 {/* Events Grid */}
                 <section className="container mx-auto px-4 pb-12">
-                    <h2 className="text-3xl  text-foreground mb-8">Próximos Eventos</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredEvents.map((event) => {
-                            const IconComponent = getCategoryIcon(event.category);
-                            return (
-                                <Card
-                                    key={event.id}
-                                    className="bg-white pt-4 py-0 gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
-                                >
-                                    <div className="relative">
-                                        <img
-                                            src={event.image}
-                                            alt={event.title}
-                                            className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
-                                        />
-                                        <div
-                                            className={`absolute top-4 left-4 p-2 rounded-full  bg-${getCategoryColor(event.category)}`}
-                                        >
-                                            <IconComponent className="w-4 h-4 text-white" />
-                                        </div>
-                                        <div className="absolute top-4 right-4 flex items-center space-x-1 bg-black/50 rounded-full px-2 py-1">
-                                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                            <span className="text-white text-sm">{event.rating}</span>
-                                        </div>
-                                    </div>
-                                    <CardContent className=" px-6 pb-4">
-                                        <h4 className="text-xl font-bold text-foreground mb-2 line-clamp-2">{event.title}</h4>
-                                        <div className="space-y-2 mb-4">
-                                            <div className="flex items-center text-foreground/80">
-                                                <Calendar className="w-4 h-4 mr-2" />
-                                                <span className="text-sm">
-                                                    {event.date} • {event.time}
-                                                </span>
+                    <h2 className="text-3xl text-foreground mb-8">Próximos Eventos</h2>
+                    {filteredEvents.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredEvents.map((event) => {
+                                const IconComponent = getCategoryIcon(
+                                    categories.find(c => c.id === event.category.toLowerCase())?.icon || 'music'
+                                );
+                                return (
+                                    <Card
+                                        key={event.id}
+                                        className="bg-white pt-4 py-0 gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
+                                    >
+                                        <div className="relative">
+                                            <img
+                                                src={event.image}
+                                                alt={event.title}
+                                                className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-300"
+                                            />
+                                            <div className="absolute top-4 left-4 p-2 rounded-full bg-primary">
+                                                <IconComponent className="w-4 h-4 text-white" />
                                             </div>
-                                            <div className="flex items-center text-foreground/80">
-                                                <MapPin className="w-4 h-4 mr-2" />
-                                                <span className="text-sm">
-                                                    {event.location}, {event.city}
-                                                </span>
-                                            </div>
+                                            {event.rating && (
+                                                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-black/50 rounded-full px-2 py-1">
+                                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                                    <span className="text-white text-sm">{event.rating}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="text-2xl font-bold text-foreground">${event.price.toLocaleString()}</span>
-                                                <span className="text-foreground/60 text-sm ml-1">ARS</span>
+                                        <CardContent className="px-6 pb-4">
+                                            <h4 className="text-xl font-bold text-foreground mb-2 line-clamp-2">
+                                                {event.title}
+                                            </h4>
+                                            <div className="space-y-2 mb-4">
+                                                <div className="flex items-center text-foreground/80">
+                                                    <Calendar className="w-4 h-4 mr-2" />
+                                                    <span className="text-sm">
+                                                        {event.date} {event.time && `• ${event.time}`}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center text-foreground/80">
+                                                    <MapPin className="w-4 h-4 mr-2" />
+                                                    <span className="text-sm">
+                                                        {event.location}{event.city && `, ${event.city}`}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <Link href={`/events/${event.id}`}>
-                                                <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
-                                                    Comprar
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    {event.price ? (
+                                                        <>
+                                                            <span className="text-2xl font-bold text-foreground">
+                                                                ${event.price.toLocaleString()}
+                                                            </span>
+                                                            <span className="text-foreground/60 text-sm ml-1">ARS</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-lg font-bold text-foreground">Gratis</span>
+                                                    )}
+                                                </div>
+                                                <Link href={`/events/${event.id}`}>
+                                                    <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-6">
+                                                        Comprar
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-lg text-foreground/60">No se encontraron eventos que coincidan con tu búsqueda.</p>
+                        </div>
+                    )}
                 </section>
             </div>
-</>
+        </>
     );
 }

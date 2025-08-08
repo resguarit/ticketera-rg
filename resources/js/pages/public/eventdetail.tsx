@@ -7,55 +7,37 @@ import { Separator } from '@/components/ui/separator';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-// Mock data - normalmente esto vendría del backend
-const eventData = {
-    id: 1,
-    title: "Festival de Música Electrónica 2024",
-    description:
-        "El festival de música electrónica más grande de Sudamérica regresa con los mejores DJs internacionales. Una experiencia única con múltiples escenarios, efectos visuales espectaculares y la mejor tecnología de sonido.",
-    image: "/placeholder.svg?height=400&width=800",
-    date: "15 Mar 2024",
-    time: "20:00",
-    location: "Estadio Nacional",
-    city: "Buenos Aires",
-    category: "música",
-    rating: 4.8,
-    reviews: 1247,
-    duration: "8 horas",
-    ageRestriction: "18+",
-    ticketTypes: [
-        {
-            id: 1,
-            name: "General",
-            description: "Acceso general al festival",
-            price: 8500,
-            available: 150,
-            color: "from-blue-500 to-cyan-500",
-        },
-        {
-            id: 2,
-            name: "VIP",
-            description: "Acceso VIP con área exclusiva y bar premium",
-            price: 15000,
-            available: 45,
-            color: "from-purple-500 to-pink-500",
-        },
-        {
-            id: 3,
-            name: "Premium",
-            description: "Acceso premium con backstage y meet & greet",
-            price: 25000,
-            available: 12,
-            color: "from-orange-500 to-red-500",
-        },
-    ],
-};
-
-interface EventDetailProps {
-    eventId?: string;
+interface TicketType {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    available: number;
+    color?: string;
 }
 
-export default function EventDetail({ eventId }: EventDetailProps) {
+interface EventData {
+    id: number;
+    title: string;
+    description: string;
+    image: string;
+    date: string;
+    time: string;
+    location: string;
+    city: string;
+    category: string;
+    rating: number;
+    reviews: number;
+    duration: string;
+    ageRestriction: string;
+    ticketTypes: TicketType[];
+}
+
+interface EventDetailProps {
+    eventData: EventData;
+}
+
+export default function EventDetail({ eventData }: EventDetailProps) {
     const [selectedTickets, setSelectedTickets] = useState<{ [key: number]: number }>({});
     const [isLoading, setIsLoading] = useState(false);
 
@@ -83,11 +65,16 @@ export default function EventDetail({ eventId }: EventDetailProps) {
     };
 
     const handlePurchase = () => {
+        if (getTotalTickets() === 0) {
+            alert('Por favor selecciona al menos una entrada');
+            return;
+        }
+
         setIsLoading(true);
         // Simulate redirection to checkout
         setTimeout(() => {
             setIsLoading(false);
-            router.visit(route('checkout.confirm', eventId || 1));
+            router.visit(route('checkout.confirm', eventData.id));
         }, 1000);
     };
 
@@ -190,50 +177,59 @@ export default function EventDetail({ eventId }: EventDetailProps) {
                                     <CardTitle className="text-foreground text-xl">Seleccionar Entradas</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {eventData.ticketTypes.map((ticket) => (
-                                        <div
-                                            key={ticket.id}
-                                            className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h4 className="font-bold text-foreground text-lg">{ticket.name}</h4>
-                                                    <p className="text-foreground/80 text-sm">{ticket.description}</p>
-                                                    <p className="text-foreground/60 text-xs mt-1">{ticket.available} disponibles</p>
+                                    {eventData.ticketTypes && eventData.ticketTypes.length > 0 ? (
+                                        eventData.ticketTypes.map((ticket) => (
+                                            <div
+                                                key={ticket.id}
+                                                className="p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                            >
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <h4 className="font-bold text-foreground text-lg">{ticket.name}</h4>
+                                                        <p className="text-foreground/80 text-sm">{ticket.description}</p>
+                                                        <p className="text-foreground/60 text-xs mt-1">{ticket.available} disponibles</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-2xl font-bold text-foreground">${ticket.price.toLocaleString()}</p>
+                                                        <p className="text-foreground/60 text-sm">ARS</p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-2xl font-bold text-foreground">${ticket.price.toLocaleString()}</p>
-                                                    <p className="text-foreground/60 text-sm">ARS</p>
-                                                </div>
-                                            </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-3">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                        disabled={!selectedTickets[ticket.id]}
-                                                        className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                    >
-                                                        <Minus className="w-4 h-4" />
-                                                    </Button>
-                                                    <span className="text-foreground font-semibold w-8 text-center">
-                                                        {selectedTickets[ticket.id] || 0}
-                                                    </span>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                        disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                        className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </Button>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-3">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => updateTicketQuantity(ticket.id, -1)}
+                                                            disabled={!selectedTickets[ticket.id]}
+                                                            className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
+                                                        >
+                                                            <Minus className="w-4 h-4" />
+                                                        </Button>
+                                                        <span className="text-foreground font-semibold w-8 text-center">
+                                                            {selectedTickets[ticket.id] || 0}
+                                                        </span>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => updateTicketQuantity(ticket.id, 1)}
+                                                            disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
+                                                            className="w-8 h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <p className="text-foreground/60 mb-4">No hay entradas disponibles para este evento</p>
+                                            <Badge variant="outline" className="border-orange-300 text-orange-600">
+                                                Próximamente
+                                            </Badge>
                                         </div>
-                                    ))}
+                                    )}
 
                                     {getTotalTickets() > 0 && (
                                         <>

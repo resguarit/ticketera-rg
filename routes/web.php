@@ -4,6 +4,12 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
+use App\Http\Controllers\Organizer\CategoryController;
+use App\Http\Controllers\Organizer\VenueController;
+use App\Http\Controllers\Organizer\SectorController;
+
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\EventController as PublicEventController;
 
 /*-------Rutas protegidas para administradores----------*/ 
 require __DIR__.'/admin.php';
@@ -12,6 +18,18 @@ require __DIR__.'/admin.php';
 
 Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
+    
+    // Gestión de categorías
+    Route::resource('categories', CategoryController::class);
+    Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
+    
+    // Gestión de venues
+    Route::resource('venues', VenueController::class);
+    Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
+    
+    // Gestión de sectores
+    Route::resource('sectors', SectorController::class);
+    Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);
 });
 
 /*-------Rutas protegidas para usuarios autenticados----------*/ 
@@ -25,25 +43,19 @@ Route::middleware('auth')->get('/my-account', function () {
 })->name('my-account');
 
 
-/*--------------------Rutas publicas-----------------------*/ 
+/*--------------------Rutas públicas-----------------------*/ 
 
-Route::get('/', function () {
-    return Inertia::render('public/home');
-})->name('home');
+// Página principal - conectada al HomeController
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/events', function () {
-    return Inertia::render('public/events');
-})->name('events');
+// Páginas de eventos - conectadas al EventController
+Route::get('/events', [PublicEventController::class, 'index'])->name('events');
+Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
 
+// Otras rutas públicas que mantienen closures por ahora
 Route::get('/help', function () {
     return Inertia::render('public/help');
 })->name('help');
-
-Route::get('/events/{eventId}', function ($eventId) {
-    return Inertia::render('public/eventdetail', [
-        'eventId' => $eventId
-    ]);
-})->name('event.detail');
 
 Route::get('/checkout/success', function () {
     return Inertia::render('public/checkoutsuccess');
