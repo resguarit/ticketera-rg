@@ -26,6 +26,7 @@ class EventSeeder extends Seeder
                 'name' => 'Festival de Música Electrónica 2024',
                 'description' => 'El festival de música electrónica más grande de Sudamérica regresa con los mejores DJs internacionales. Una experiencia única con múltiples escenarios, efectos visuales espectaculares y la mejor tecnología de sonido.',
                 'banner_url' => '/images/events/festival-electronica-2024.jpg',
+                'featured' => true, // Evento destacado
             ],
             [
                 'organizer_id' => 1, // MusicPro Events
@@ -34,6 +35,7 @@ class EventSeeder extends Seeder
                 'name' => 'Concierto Sinfónico de Primavera',
                 'description' => 'La Orquesta Sinfónica Nacional presenta un repertorio especial con obras clásicas y contemporáneas para celebrar la llegada de la primavera.',
                 'banner_url' => '/images/events/concierto-sinfonico.jpg',
+                'featured' => false,
             ],
             [
                 'organizer_id' => 5, // Liga Amateur
@@ -42,6 +44,7 @@ class EventSeeder extends Seeder
                 'name' => 'Copa Mundial de Fútbol',
                 'description' => 'Partido clasificatorio para la Copa Mundial. Un evento deportivo imperdible que reunirá a los mejores equipos de la región.',
                 'banner_url' => '/images/events/copa-mundial.jpg',
+                'featured' => true, // Evento destacado
             ],
             [
                 'organizer_id' => 3, // Teatro Municipal
@@ -50,6 +53,7 @@ class EventSeeder extends Seeder
                 'name' => 'Obra de Teatro: Romeo y Julieta',
                 'description' => 'La clásica obra de Shakespeare interpretada por el elenco del Teatro Municipal. Una puesta en escena moderna de esta historia atemporal.',
                 'banner_url' => '/images/events/romeo-julieta.jpg',
+                'featured' => false,
             ],
             [
                 'organizer_id' => 6, // Cultura Viva
@@ -58,6 +62,7 @@ class EventSeeder extends Seeder
                 'name' => 'Festival de Jazz Internacional',
                 'description' => 'Tres días de jazz con artistas nacionales e internacionales en un ambiente único al aire libre. Música, gastronomía y arte en un solo lugar.',
                 'banner_url' => '/images/events/festival-jazz.jpg',
+                'featured' => true, // Evento destacado
             ],
             [
                 'organizer_id' => 5, // Liga Amateur
@@ -66,6 +71,7 @@ class EventSeeder extends Seeder
                 'name' => 'Campeonato de Tenis',
                 'description' => 'Torneo profesional de tenis con la participación de los mejores jugadores de Argentina y la región.',
                 'banner_url' => '/images/events/campeonato-tenis.jpg',
+                'featured' => false,
             ],
             [
                 'organizer_id' => 2, // Rock Producciones
@@ -74,6 +80,7 @@ class EventSeeder extends Seeder
                 'name' => 'Concierto de Rock Nacional',
                 'description' => 'Una noche épica con las mejores bandas de rock nacional. Música, energía y una experiencia inolvidable.',
                 'banner_url' => '/images/events/rock-nacional.jpg',
+                'featured' => false,
             ],
             [
                 'organizer_id' => 4, // TechEvents
@@ -82,6 +89,7 @@ class EventSeeder extends Seeder
                 'name' => 'Conferencia Tech 2024',
                 'description' => 'La conferencia de tecnología más importante del año. Speakers internacionales, workshops y networking.',
                 'banner_url' => '/images/events/tech-conference.jpg',
+                'featured' => false,
             ],
         ];
 
