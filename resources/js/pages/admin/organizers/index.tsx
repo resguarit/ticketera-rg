@@ -244,7 +244,6 @@ export default function Index({ auth }: any) {
                                 <CardTitle className="text-card-foreground">
                                     Organizadores ({organizers.total})
                                 </CardTitle>
-                                {/* Se eliminan los Tabs de status ya que no existe en el modelo */}
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -252,9 +251,22 @@ export default function Index({ auth }: any) {
                                 {organizers.data.map((organizer) => (
                                     <div key={organizer.id} className="p-4 bg-muted rounded-lg hover:bg-accent transition-colors border border-border">
                                         <div className="flex items-center space-x-6">
-                                            <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center flex-shrink-0">
-                                                {/* Puedes usar el logo_url si existe */}
-                                                {organizer.logo_url ? <img src={`/storage/${organizer.logo_url}`} alt={organizer.name} className="w-full h-full object-cover rounded-lg" /> : <Building className="w-8 h-8 text-primary-foreground" />}
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border">
+                                                {organizer.logo_url ? (
+                                                    <img 
+                                                        src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
+                                                        alt={`Logo de ${organizer.name}`}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            // Fallback si no se encuentra la imagen
+                                                            e.currentTarget.style.display = 'none';
+                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div className={`w-full h-full bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center ${organizer.logo_url ? 'hidden' : ''}`}>
+                                                    <Building className="w-8 h-8 text-primary-foreground" />
+                                                </div>
                                             </div>
 
                                             <div className="flex-1 min-w-0">

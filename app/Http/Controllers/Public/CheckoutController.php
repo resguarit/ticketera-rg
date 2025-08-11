@@ -166,13 +166,24 @@ class CheckoutController extends Controller
             ];
 
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
-            $order = $this->orderService->createOrder($orderData);
+            $orderResult = $this->orderService->createOrder($orderData);
+            
+            // Verificar si se creó una nueva cuenta
+            $accountCreated = $orderResult['account_created'] ?? false;
+            $order = $orderResult['order'];
 
             // Procesar el pago usando el servicio
             $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
 
             if ($paymentSuccessful) {
-                return redirect()->route('checkout.success', ['order' => $order->id])
+                $redirectParams = ['order' => $order->id];
+                
+                // Solo agregar el parámetro si se creó una cuenta
+                if ($accountCreated) {
+                    $redirectParams['account_created'] = '1';
+                }
+                
+                return redirect()->route('checkout.success', $redirectParams)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
                 return redirect()->back()
@@ -197,6 +208,7 @@ class CheckoutController extends Controller
     public function success(Request $request): Response
     {
         $orderId = $request->query('order');
+        $accountCreated = $request->query('account_created', false); // Nuevo parámetro
         
         if (!$orderId) {
             return redirect()->route('home')
@@ -250,7 +262,8 @@ class CheckoutController extends Controller
         ];
 
         return Inertia::render('public/checkoutsuccess', [
-            'purchaseData' => $purchaseData
+            'purchaseData' => $purchaseData,
+            'accountCreated' => (bool) $accountCreated // Pasar el flag al frontend
         ]);
     }
 

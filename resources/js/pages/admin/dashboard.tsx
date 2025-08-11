@@ -24,160 +24,97 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
-// Mock data para el dashboard
-const dashboardStats = [
-    {
-        title: "Total Usuarios",
-        value: "12,547",
-        change: "+12%",
-        changeType: "positive",
-        icon: Users,
-        color: "bg-blue-500",
-        description: "Usuarios registrados este mes"
-    },
-    {
-        title: "Eventos Activos",
-        value: "1,234",
-        change: "+8%",
-        changeType: "positive",
-        icon: Calendar,
-        color: "bg-purple-500",
-        description: "Eventos programados"
-    },
-    {
-        title: "Ingresos Totales",
-        value: "$2.4M",
-        change: "+15%",
-        changeType: "positive",
-        icon: DollarSign,
-        color: "bg-green-500",
-        description: "Ingresos este mes"
-    },
-    {
-        title: "Tickets Vendidos",
-        value: "45,231",
-        change: "+23%",
-        changeType: "positive",
-        icon: Ticket,
-        color: "bg-orange-500",
-        description: "Tickets vendidos hoy"
+// Interfaces para TypeScript
+interface DashboardStat {
+    title: string;
+    value: string;
+    change: string;
+    changeType: 'positive' | 'negative';
+    description: string;
+}
+
+interface RecentEvent {
+    id: number;
+    name: string;
+    organizer: string;
+    date: string;
+    status: string;
+    tickets_sold: number;
+    total_tickets: number;
+    revenue: number;
+}
+
+interface RecentUser {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    joined: string;
+    status: string;
+    purchases?: number;
+    events_created?: number;
+}
+
+interface SystemAlert {
+    id: number;
+    type: string;
+    title: string;
+    message: string;
+    time: string;
+}
+
+interface SystemStatus {
+    name: string;
+    status: string;
+    label: string;
+}
+
+interface DashboardProps {
+    auth: any;
+    dashboardStats: DashboardStat[];
+    recentEvents: RecentEvent[];
+    recentUsers: RecentUser[];
+    systemAlerts: SystemAlert[];
+    systemStatus: SystemStatus[];
+    timeRange: string;
+}
+
+// Mapeo de iconos para las estadísticas
+const getStatIcon = (title: string) => {
+    switch (title) {
+        case 'Total Clientes': return Users; // Cambié de 'Total Usuarios' a 'Total Clientes'
+        case 'Eventos Activos': return Calendar;
+        case 'Ingresos Totales': return DollarSign;
+        case 'Tickets Vendidos': return Ticket;
+        default: return Activity;
     }
-];
+};
 
-const recentEvents = [
-    {
-        id: 1,
-        name: "Festival de Música Electrónica",
-        organizer: "MusicPro Events",
-        date: "2024-03-15",
-        status: "active",
-        tickets_sold: 2450,
-        total_tickets: 3000,
-        revenue: 125000
-    },
-    {
-        id: 2,
-        name: "Concierto Rock Nacional",
-        organizer: "Rock Producciones",
-        date: "2024-03-20",
-        status: "pending",
-        tickets_sold: 890,
-        total_tickets: 1500,
-        revenue: 45000
-    },
-    {
-        id: 3,
-        name: "Teatro: Romeo y Julieta",
-        organizer: "Teatro Municipal",
-        date: "2024-03-25",
-        status: "active",
-        tickets_sold: 180,
-        total_tickets: 200,
-        revenue: 18000
-    },
-    {
-        id: 4,
-        name: "Conferencia Tech 2024",
-        organizer: "TechEvents",
-        date: "2024-04-01",
-        status: "draft",
-        tickets_sold: 0,
-        total_tickets: 500,
-        revenue: 0
+// Mapeo de colores para las estadísticas
+const getStatColor = (title: string) => {
+    switch (title) {
+        case 'Total Clientes': return 'bg-blue-500'; // Cambié de 'Total Usuarios' a 'Total Clientes'
+        case 'Eventos Activos': return 'bg-purple-500';
+        case 'Ingresos Totales': return 'bg-green-500';
+        case 'Tickets Vendidos': return 'bg-orange-500';
+        default: return 'bg-gray-500';
     }
-];
+};
 
-const recentUsers = [
-    {
-        id: 1,
-        name: "María González",
-        email: "maria@email.com",
-        role: "client",
-        joined: "2024-03-10",
-        status: "active",
-        purchases: 3
-    },
-    {
-        id: 2,
-        name: "Carlos Rodríguez",
-        email: "carlos@events.com",
-        role: "organizer",
-        joined: "2024-03-09",
-        status: "pending",
-        events_created: 5
-    },
-    {
-        id: 3,
-        name: "Ana Martínez",
-        email: "ana@email.com",
-        role: "client",
-        joined: "2024-03-08",
-        status: "active",
-        purchases: 1
-    },
-    {
-        id: 4,
-        name: "Luis Fernández",
-        email: "luis@email.com",
-        role: "client",
-        joined: "2024-03-07",
-        status: "suspended",
-        purchases: 0
-    }
-];
-
-const systemAlerts = [
-    {
-        id: 1,
-        type: "warning",
-        title: "Alto tráfico detectado",
-        message: "El servidor está experimentando 300% más tráfico de lo normal",
-        time: "hace 5 min"
-    },
-    {
-        id: 2,
-        type: "info",
-        title: "Mantenimiento programado",
-        message: "Mantenimiento del sistema programado para mañana a las 2:00 AM",
-        time: "hace 2 horas"
-    },
-    {
-        id: 3,
-        type: "success",
-        title: "Backup completado",
-        message: "Backup diario completado exitosamente",
-        time: "hace 6 horas"
-    }
-];
-
-export default function AdminDashboard({ auth }: any) {
-    const [timeRange, setTimeRange] = useState("7d");
+export default function AdminDashboard({ 
+    auth, 
+    dashboardStats, 
+    recentEvents, 
+    recentUsers, 
+    systemAlerts, 
+    systemStatus,
+    timeRange: initialTimeRange 
+}: DashboardProps) {
+    const [timeRange, setTimeRange] = useState(initialTimeRange);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -185,12 +122,23 @@ export default function AdminDashboard({ auth }: any) {
         return () => clearInterval(timer);
     }, []);
 
+    // Actualizar datos cuando cambia el rango de tiempo
+    const handleTimeRangeChange = (newTimeRange: string) => {
+        setTimeRange(newTimeRange);
+        router.get(route('admin.dashboard'), { timeRange: newTimeRange }, {
+            preserveState: true,
+            preserveScroll: true
+        });
+    };
+
     const getStatusBadge = (status: string) => {
         const statusConfig = {
+            published: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
             active: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
             pending: { label: "Pendiente", color: "bg-yellow-500 hover:bg-yellow-600" },
             draft: { label: "Borrador", color: "bg-gray-500 hover:bg-gray-600" },
-            suspended: { label: "Suspendido", color: "bg-red-500 hover:bg-red-600" }
+            suspended: { label: "Suspendido", color: "bg-red-500 hover:bg-red-600" },
+            cancelled: { label: "Cancelado", color: "bg-red-500 hover:bg-red-600" }
         };
         
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
@@ -226,6 +174,33 @@ export default function AdminDashboard({ auth }: any) {
         }
     };
 
+    const getSystemStatusIcon = (status: string) => {
+        switch (status) {
+            case 'operational': return <CheckCircle className="w-5 h-5 text-green-500" />;
+            case 'slow': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+            case 'down': return <XCircle className="w-5 h-5 text-red-500" />;
+            default: return <CheckCircle className="w-5 h-5 text-green-500" />;
+        }
+    };
+
+    const getSystemStatusColor = (status: string) => {
+        switch (status) {
+            case 'operational': return 'bg-green-50 border-green-200';
+            case 'slow': return 'bg-yellow-50 border-yellow-200';
+            case 'down': return 'bg-red-50 border-red-200';
+            default: return 'bg-green-50 border-green-200';
+        }
+    };
+
+    const getSystemStatusBadge = (status: string) => {
+        switch (status) {
+            case 'operational': return 'bg-green-500';
+            case 'slow': return 'bg-yellow-500';
+            case 'down': return 'bg-red-500';
+            default: return 'bg-green-500';
+        }
+    };
+
     return (
         <>
             <Head title="Panel de Administración - TicketMax" />
@@ -239,7 +214,7 @@ export default function AdminDashboard({ auth }: any) {
                                 Panel de Administración
                             </h1>
                             <p className="text-gray-600 text-lg">
-                                Bienvenido, {auth.user.person.name} • {currentTime.toLocaleDateString('es-ES', { 
+                                Bienvenido, {auth.user.person?.name || auth.user.email} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
                                     month: 'long', 
@@ -249,7 +224,7 @@ export default function AdminDashboard({ auth }: any) {
                         </div>
                         
                         <div className="flex items-center space-x-4">
-                            <Select value={timeRange} onValueChange={setTimeRange}>
+                            <Select value={timeRange} onValueChange={handleTimeRangeChange}>
                                 <SelectTrigger className="w-40 bg-white border-gray-300 text-black">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -270,23 +245,28 @@ export default function AdminDashboard({ auth }: any) {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {dashboardStats.map((stat, index) => (
-                            <Card key={index} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                                            <stat.icon className="w-6 h-6 text-white" />
+                        {dashboardStats.map((stat, index) => {
+                            const IconComponent = getStatIcon(stat.title);
+                            const colorClass = getStatColor(stat.title);
+                            
+                            return (
+                                <Card key={index} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className={`w-12 h-12 ${colorClass} rounded-lg flex items-center justify-center`}>
+                                                <IconComponent className="w-6 h-6 text-white" />
+                                            </div>
+                                            <Badge className={`${stat.changeType === 'positive' ? 'bg-green-500' : 'bg-red-500'} text-white border-0`}>
+                                                {stat.change}
+                                            </Badge>
                                         </div>
-                                        <Badge className={`${stat.changeType === 'positive' ? 'bg-green-500' : 'bg-red-500'} text-white border-0`}>
-                                            {stat.change}
-                                        </Badge>
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-black mb-1">{stat.value}</h3>
-                                    <p className="text-gray-700 text-sm font-medium mb-1">{stat.title}</p>
-                                    <p className="text-gray-500 text-xs">{stat.description}</p>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                        <h3 className="text-2xl font-bold text-black mb-1">{stat.value}</h3>
+                                        <p className="text-gray-700 text-sm font-medium mb-1">{stat.title}</p>
+                                        <p className="text-gray-500 text-xs">{stat.description}</p>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
 
                     {/* Main Content */}
@@ -315,7 +295,7 @@ export default function AdminDashboard({ auth }: any) {
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <div className="space-y-4">
-                                        {recentEvents.map((event) => (
+                                        {recentEvents.length > 0 ? recentEvents.map((event) => (
                                             <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex-1">
                                                     <div className="flex items-center space-x-3 mb-2">
@@ -334,7 +314,7 @@ export default function AdminDashboard({ auth }: any) {
                                                         </span>
                                                     </div>
                                                     <Progress 
-                                                        value={(event.tickets_sold / event.total_tickets) * 100} 
+                                                        value={event.total_tickets > 0 ? (event.tickets_sold / event.total_tickets) * 100 : 0} 
                                                         className="mt-2 h-2"
                                                     />
                                                 </div>
@@ -342,7 +322,12 @@ export default function AdminDashboard({ auth }: any) {
                                                     <MoreVertical className="w-4 h-4" />
                                                 </Button>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-8">
+                                                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                                <p className="text-gray-500">No hay eventos recientes</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -364,12 +349,12 @@ export default function AdminDashboard({ auth }: any) {
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <div className="space-y-3">
-                                        {recentUsers.map((user) => (
+                                        {recentUsers.length > 0 ? recentUsers.map((user) => (
                                             <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                                                         <span className="text-white font-semibold text-sm">
-                                                            {user.name.charAt(0)}
+                                                            {user.name.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
                                                     <div>
@@ -390,9 +375,19 @@ export default function AdminDashboard({ auth }: any) {
                                                             {user.purchases} compras
                                                         </p>
                                                     )}
+                                                    {user.events_created !== undefined && (
+                                                        <p className="text-gray-700 text-xs">
+                                                            {user.events_created} eventos
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-8">
+                                                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                                <p className="text-gray-500">No hay usuarios recientes</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -409,35 +404,17 @@ export default function AdminDashboard({ auth }: any) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
-                                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                                        <div className="flex items-center space-x-2">
-                                            <CheckCircle className="w-5 h-5 text-green-500" />
-                                            <span className="text-gray-700 font-medium">Servidores</span>
+                                    {systemStatus.map((system, index) => (
+                                        <div key={index} className={`flex items-center justify-between p-3 rounded-lg border ${getSystemStatusColor(system.status)}`}>
+                                            <div className="flex items-center space-x-2">
+                                                {getSystemStatusIcon(system.status)}
+                                                <span className="text-gray-700 font-medium">{system.name}</span>
+                                            </div>
+                                            <Badge className={`${getSystemStatusBadge(system.status)} text-white border-0`}>
+                                                {system.label}
+                                            </Badge>
                                         </div>
-                                        <Badge className="bg-green-500 text-white border-0">
-                                            Operativo
-                                        </Badge>
-                                    </div>
-                                    
-                                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                                        <div className="flex items-center space-x-2">
-                                            <CheckCircle className="w-5 h-5 text-green-500" />
-                                            <span className="text-gray-700 font-medium">Base de Datos</span>
-                                        </div>
-                                        <Badge className="bg-green-500 text-white border-0">
-                                            Operativo
-                                        </Badge>
-                                    </div>
-                                    
-                                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                                        <div className="flex items-center space-x-2">
-                                            <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                                            <span className="text-gray-700 font-medium">CDN</span>
-                                        </div>
-                                        <Badge className="bg-yellow-500 text-white border-0">
-                                            Lento
-                                        </Badge>
-                                    </div>
+                                    ))}
                                 </CardContent>
                             </Card>
 
@@ -451,7 +428,7 @@ export default function AdminDashboard({ auth }: any) {
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <div className="space-y-3">
-                                        {systemAlerts.map((alert) => (
+                                        {systemAlerts.length > 0 ? systemAlerts.map((alert) => (
                                             <div key={alert.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-orange-500">
                                                 <div className="flex items-start space-x-3">
                                                     {getAlertIcon(alert.type)}
@@ -462,7 +439,12 @@ export default function AdminDashboard({ auth }: any) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-8">
+                                                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                                                <p className="text-gray-500">No hay alertas activas</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

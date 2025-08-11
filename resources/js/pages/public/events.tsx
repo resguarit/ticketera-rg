@@ -289,7 +289,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                             )}
                                                         </div>
                                                         <Link href={`/events/${event.id}`}>
-                                                            <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-3 sm:px-4 lg:px-6 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10">
+                                                            <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-2 sm:px-2 lg:px-3 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10">
                                                                 Ver Más
                                                             </Button>
                                                         </Link>
