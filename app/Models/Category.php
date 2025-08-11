@@ -13,7 +13,7 @@ class Category extends Model
 
     protected $table = 'categories';
 
-    protected $fillable = ['name', 'icon'];
+    protected $fillable = ['name', 'icon', 'color'];
 
     public function events(): HasMany
     {
