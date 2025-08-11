@@ -219,13 +219,13 @@ export default function Events({ auth }: any) {
                     {/* Stats Cards - Usando datos reales */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                         <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-6">
+                            <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Total Eventos</p>
                                         <p className="text-2xl font-bold text-black">{stats.total}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                                         <Calendar className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -233,13 +233,13 @@ export default function Events({ auth }: any) {
                         </Card>
 
                         <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-6">
+                            <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Eventos Activos</p>
                                         <p className="text-2xl font-bold text-black">{stats.active}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-2 rounded-lg flex items-center justify-center">
                                         <CheckCircle className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -247,13 +247,13 @@ export default function Events({ auth }: any) {
                         </Card>
 
                         <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-6">
+                            <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Tickets Vendidos</p>
                                         <p className="text-2xl font-bold text-black">{stats.totalTicketsSold.toLocaleString()}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-3 rounded-lg flex items-center justify-center">
                                         <Users className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -261,13 +261,13 @@ export default function Events({ auth }: any) {
                         </Card>
 
                         <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-6">
+                            <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Ingresos Totales</p>
                                         <p className="text-2xl font-bold text-black">${stats.totalRevenue.toLocaleString()}</p>
                                     </div>
-                                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-4 rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -278,7 +278,7 @@ export default function Events({ auth }: any) {
                     {/* Filters - Usando datos reales */}
                     <Card className="bg-white border-gray-200 shadow-lg mb-8">
                         <CardContent className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                                     <Input
@@ -327,13 +327,7 @@ export default function Events({ auth }: any) {
                                     </SelectContent>
                                 </Select>
 
-                                <Button 
-                                    onClick={handleFilters}
-                                    className="bg-black text-white hover:bg-gray-800"
-                                >
-                                    <Search className="w-4 h-4 mr-2" />
-                                    Buscar
-                                </Button>
+
 
                                 <Button 
                                     onClick={handleClearFilters}
@@ -386,7 +380,7 @@ export default function Events({ auth }: any) {
                                                         <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
                                                             <span>{event.title}</span>
                                                             {event.featured && (
-                                                                <Badge className="bg-orange-500 text-white border-0 text-xs">
+                                                                <Badge className="bg-primary text-white border-0 text-xs">
                                                                     Destacado
                                                                 </Badge>
                                                             )}
@@ -403,21 +397,21 @@ export default function Events({ auth }: any) {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                                                     <div className="flex items-center text-gray-700 text-sm">
-                                                        <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                                                        <Calendar className="w-4 h-4 mr-2 text-primary" />
                                                         <span>
                                                             {formatDateTime(event.date, event.time)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center text-gray-700 text-sm">
-                                                        <MapPin className="w-4 h-4 mr-2 text-purple-500" />
+                                                        <MapPin className="w-4 h-4 mr-2 text-primary" />
                                                         <span>{event.location}, {event.city}</span>
                                                     </div>
                                                     <div className="flex items-center text-gray-700 text-sm">
-                                                        <Users className="w-4 h-4 mr-2 text-green-500" />
+                                                        <Users className="w-4 h-4 mr-2 text-primary" />
                                                         <span>{event.tickets_sold}/{event.total_tickets} tickets</span>
                                                     </div>
                                                     <div className="flex items-center text-gray-700 text-sm">
-                                                        <DollarSign className="w-4 h-4 mr-2 text-orange-500" />
+                                                        <DollarSign className="w-4 h-4 mr-2 text-primary" />
                                                         <span>${event.revenue.toLocaleString()}</span>
                                                     </div>
                                                 </div>
@@ -454,8 +448,8 @@ export default function Events({ auth }: any) {
                                                             variant={event.featured ? "default" : "outline"}
                                                             size="sm"
                                                             className={event.featured 
-                                                                ? "bg-orange-500 hover:bg-orange-600 text-white" 
-                                                                : "border-orange-300 text-orange-600 hover:bg-orange-50"
+                                                                ? "bg-primary hover:bg-primary-hover text-white" 
+                                                                : "border-gray-200 text-gray-400 hover:text-primary"
                                                             }
                                                         >
                                                             <Star className="w-4 h-4" />
