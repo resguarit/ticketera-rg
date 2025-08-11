@@ -312,16 +312,21 @@ export default function Show({ auth }: any) {
                                                 <Card key={event.id} className="bg-muted border-border hover:shadow-md transition-shadow">
                                                     <CardContent className="p-4">
                                                         <div className="flex items-start space-x-4">
-                                                            <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-chart-1 to-chart-3 flex items-center justify-center flex-shrink-0">
+                                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border">
                                                                 {event.banner_url ? (
                                                                     <img 
-                                                                        src={`/storage/${event.banner_url}`} 
+                                                                        src={event.banner_url.startsWith('/') ? event.banner_url : `/images/events/${event.banner_url}`}
                                                                         alt={event.name} 
-                                                                        className="w-full h-full object-cover rounded-lg" 
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => {
+                                                                            e.currentTarget.style.display = 'none';
+                                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                                        }}
                                                                     />
-                                                                ) : (
+                                                                ) : null}
+                                                                <div className={`w-full h-full bg-gradient-to-r from-chart-1 to-chart-3 flex items-center justify-center ${event.banner_url ? 'hidden' : ''}`}>
                                                                     <Ticket className="w-8 h-8 text-primary-foreground" />
-                                                                )}
+                                                                </div>
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <h3 className="font-semibold text-card-foreground mb-1 truncate">{event.name}</h3>
