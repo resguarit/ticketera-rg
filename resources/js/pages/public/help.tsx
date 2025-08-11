@@ -191,17 +191,17 @@ export default function Help() {
 
                 <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     {/* Page Header */}
-                    <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+                    <div className="text-center mb-2 sm:mb-4 lg:mb-6">
                         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-2 sm:mb-4">
                             Centro de Ayuda
                         </h1>
-                        <p className="text-foreground text-sm sm:text-base lg:text-lg max-w-2xl mx-auto px-4">
+                        <p className="text-foreground text-sm sm:text-base lg:text-lg  mx-auto px-4">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
                     </div>
 
                     {/* Search */}
-                    <div className="max-w-2xl mx-auto mb-6 sm:mb-8 lg:mb-12">
+                    <div className="max-w-2xl mx-auto mb-4 sm:mb-6 lg:mb-10">
                         <div className="relative">
                             <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                             <Input
