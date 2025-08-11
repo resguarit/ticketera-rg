@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User } from 'lucide-react';
+import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,9 +33,10 @@ interface PurchaseData {
 
 interface CheckoutSuccessProps {
     purchaseData: PurchaseData;
+    accountCreated?: boolean; // Nuevo prop para indicar si se creó una cuenta
 }
 
-export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) {
+export default function CheckoutSuccess({ purchaseData, accountCreated = false }: CheckoutSuccessProps) {
     const [showConfetti, setShowConfetti] = useState(true);
     
     // ✅ Obtener auth usando usePage hook
@@ -229,12 +230,12 @@ export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) 
                         </div>
 
                         {/* Account Information - Solo si se creó una cuenta nueva */}
-                        {auth.user && (
-                            <Card className="bg-blue-50 border-blue-200 shadow-lg">
+                        {auth.user && accountCreated && (
+                            <Card className="bg-blue-50 border-blue-200 shadow-lg mt-6">
                                 <CardContent className="p-6">
                                     <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
                                         <User className="w-5 h-5 text-blue-500" />
-                                        <span>Tu Cuenta TicketMax</span>
+                                        <span>¡Cuenta Creada!</span>
                                     </h4>
                                     <div className="space-y-3">
                                         <p className="text-foreground/80 text-sm">
@@ -247,7 +248,7 @@ export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) 
                                                     <p className="font-semibold text-foreground">{auth.user.email}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-foreground/60">Contraseña:</p>
+                                                    <p className="text-foreground/60">Contraseña temporal:</p>
                                                     <p className="font-semibold text-foreground">12345678</p>
                                                 </div>
                                             </div>
@@ -255,6 +256,43 @@ export default function CheckoutSuccess({ purchaseData }: CheckoutSuccessProps) 
                                         <p className="text-foreground/70 text-xs">
                                             💡 Te recomendamos cambiar tu contraseña en "Mi Cuenta" por seguridad
                                         </p>
+                                        <div className="pt-2">
+                                            <Link href={route('myaccount')}>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                                                >
+                                                    Ir a Mi Cuenta
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Si el usuario ya tenía cuenta, mostrar solo el mensaje de mis tickets */}
+                        {auth.user && !accountCreated && (
+                            <Card className="bg-green-50 border-green-200 shadow-lg mt-6">
+                                <CardContent className="p-6">
+                                    <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
+                                        <Ticket className="w-5 h-5 text-green-500" />
+                                        <span>Tus Tickets</span>
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <p className="text-foreground/80 text-sm">
+                                            Puedes encontrar todos tus tickets en la sección "Mis Tickets" de tu cuenta.
+                                        </p>
+                                        <div className="pt-2">
+                                            <Link href={route('my-tickets')}>
+                                                <Button 
+                                                    className="bg-green-500 hover:bg-green-600 text-white"
+                                                >
+                                                    Ver Mis Tickets
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

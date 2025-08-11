@@ -18,21 +18,31 @@ use Illuminate\Support\Facades\Hash;
 
 class OrderService
 {
-    public function createOrder(array $orderData): Order
+    public function createOrder(array $orderData): array
     {
         return DB::transaction(function () use ($orderData) {
             $userId = null;
-
+            $accountCreated = false;
+    
             // Si no hay usuario autenticado, crear uno nuevo
             if (!Auth::check()) {
-                $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
+                // Verificar si el usuario ya existe
+                $existingUser = User::where('email', $orderData['billing_info']['email'])->first();
                 
+                if (!$existingUser) {
+                    // Crear nuevo usuario
+                    $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
+                    $accountCreated = true;
+                } else {
+                    $userId = $existingUser->id;
+                }
+    
                 // Autenticar automáticamente al usuario recién creado
                 Auth::loginUsingId($userId);
             } else {
                 $userId = Auth::id();
             }
-
+    
             // Crear la orden principal
             $order = Order::create([
                 'client_id' => $userId,
@@ -42,17 +52,17 @@ class OrderService
                 'payment_method' => $orderData['payment_method'],
                 'transaction_id' => null,
             ]);
-
+    
             // Crear los tickets individuales y verificar disponibilidad
             foreach ($orderData['selected_tickets'] as $ticketData) {
                 $ticketType = TicketType::findOrFail($ticketData['id']);
-
+    
                 // Verificar disponibilidad
                 $availableQuantity = $ticketType->quantity - $ticketType->quantity_sold;
                 if ($availableQuantity < $ticketData['quantity']) {
                     throw new \Exception("No hay suficientes tickets disponibles para {$ticketType->name}. Disponibles: {$availableQuantity}");
                 }
-
+    
                 // Crear tickets individuales
                 for ($i = 0; $i < $ticketData['quantity']; $i++) {
                     IssuedTicket::create([
@@ -64,19 +74,22 @@ class OrderService
                         'issued_at' => now(),
                     ]);
                 }
-
+    
                 // Actualizar cantidad vendida
                 $ticketType->increment('quantity_sold', $ticketData['quantity']);
             }
-
+    
             Log::info('Orden creada exitosamente', [
                 'order_id' => $order->id,
                 'user_id' => $userId,
                 'total_amount' => $orderData['total_amount'],
                 'user_created' => !Auth::check()
             ]);
-
-            return $order;
+    
+            return [
+                'order' => $order,
+                'account_created' => $accountCreated
+            ];
         });
     }
 
