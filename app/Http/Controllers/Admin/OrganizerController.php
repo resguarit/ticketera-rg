@@ -57,13 +57,20 @@ class OrganizerController extends Controller
         $validated = $request->validated();
 
         if ($request->hasFile('logo_url')) {
-            $path = $request->file('logo_url')->store('logos', 'public');
-            $validated['logo_url'] = $path;
+            $file = $request->file('logo_url');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            // Mover el archivo a public/images/organizers
+            $file->move(public_path('images/organizers'), $filename);
+            
+            // Guardar solo el nombre del archivo en la base de datos
+            $validated['logo_url'] = $filename;
         }
 
         Organizer::create($validated);
         
-        return redirect()->route('admin.organizers.index');
+        return redirect()->route('admin.organizers.index')
+            ->with('success', 'Organizador creado correctamente.');
     }
 
     public function show(int $organizerId): Response
@@ -82,16 +89,50 @@ class OrganizerController extends Controller
         ]);
     }
 
-    public function update(UpdateOrganizerRequest $request, $organizerId)
+    public function update(UpdateOrganizerRequest $request, $organizerId): RedirectResponse
     {
+        $organizer = Organizer::findOrFail($organizerId);
+        $validated = $request->validated();
+
+        if ($request->hasFile('logo_url')) {
+            // Eliminar el logo anterior si existe
+            if ($organizer->logo_url) {
+                $oldLogoPath = public_path('images/organizers/' . $organizer->logo_url);
+                if (file_exists($oldLogoPath)) {
+                    unlink($oldLogoPath);
+                }
+            }
+
+            $file = $request->file('logo_url');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            // Mover el nuevo archivo
+            $file->move(public_path('images/organizers'), $filename);
+            
+            $validated['logo_url'] = $filename;
+        }
+
+        $organizer->update($validated);
         
+        return redirect()->route('admin.organizers.index')
+            ->with('success', 'Organizador actualizado correctamente.');
     }
 
     public function destroy(int $organizerId): RedirectResponse
     {
         $organizer = Organizer::findOrFail($organizerId);
+        
+        // Eliminar el logo si existe
+        if ($organizer->logo_url) {
+            $logoPath = public_path('images/organizers/' . $organizer->logo_url);
+            if (file_exists($logoPath)) {
+                unlink($logoPath);
+            }
+        }
+        
         $organizer->delete();
         
-        return redirect()->route('admin.organizers.index')->with('success', 'Organizador eliminado correctamente.');
+        return redirect()->route('admin.organizers.index')
+            ->with('success', 'Organizador eliminado correctamente.');
     }
 }

@@ -118,91 +118,106 @@ export default function Show({ auth }: any) {
             
             <div className="min-h-screen bg-background">
                 <div className="container mx-auto px-4 py-8">
-                    {/* Header con navegación de vuelta */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center space-x-4">
-                            <Link href={route('admin.organizers.index')}>
-                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                                    <ArrowLeft className="w-4 h-4 mr-2" />
-                                    Volver a organizadores
-                                </Button>
-                            </Link>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <Link href={route('admin.organizers.edit', organizer.id)}>
-                                <Button variant="outline" className="border-border text-foreground hover:bg-accent">
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Información del organizador - Sección compacta */}
+                    {/* Header con información del organizador */}
                     <Card className="bg-card border-border shadow-lg mb-8">
-                        <CardContent className="p-6">
+                        <CardContent className="p-8">
                             <div className="flex items-start space-x-6">
-                                <div className="w-20 h-20 rounded-lg bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center flex-shrink-0">
+                                {/* Logo del organizador */}
+                                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-border">
                                     {organizer.logo_url ? (
                                         <img 
-                                            src={`/storage/${organizer.logo_url}`} 
-                                            alt={organizer.name} 
-                                            className="w-full h-full object-cover rounded-lg" 
+                                            src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
+                                            alt={`Logo de ${organizer.name}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                            }}
                                         />
-                                    ) : (
-                                        <Building className="w-10 h-10 text-primary-foreground" />
-                                    )}
+                                    ) : null}
+                                    <div className={`w-full h-full bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center ${organizer.logo_url ? 'hidden' : ''}`}>
+                                        <Building className="w-12 h-12 text-primary-foreground" />
+                                    </div>
                                 </div>
 
+                                {/* Información del organizador */}
                                 <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h2 className="section text-foreground mb-2">{organizer.name}</h2>
-                                            <p className="text-muted-foreground text-lg">{organizer.referring}</p>
-                                        </div>
-                                        <div className="text-right text-sm text-muted-foreground">
-                                            <p>Registrado el {formatDate(organizer.created_at)}</p>
-                                            <p>ID: #{organizer.id}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <h1 className="text-3xl font-bold text-card-foreground mb-2">
+                                        {organizer.name}
+                                    </h1>
+                                    <p className="text-lg text-muted-foreground mb-4">
+                                        Referente: {organizer.referring}
+                                    </p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                         <div className="flex items-center text-muted-foreground">
-                                            <Mail className="w-4 h-4 mr-2 text-primary" />
+                                            <Mail className="w-4 h-4 mr-2" />
                                             <span>{organizer.email}</span>
                                         </div>
                                         <div className="flex items-center text-muted-foreground">
-                                            <Phone className="w-4 h-4 mr-2 text-primary" />
+                                            <Users className="w-4 h-4 mr-2" />
                                             <span>{organizer.phone}</span>
                                         </div>
                                         <div className="flex items-center text-muted-foreground">
-                                            <CreditCard className="w-4 h-4 mr-2 text-primary" />
-                                            <span>CUIT: {organizer.tax}</span>
+                                            <Calendar className="w-4 h-4 mr-2" />
+                                            <span>Registrado: {formatDate(organizer.created_at)}</span>
+                                        </div>
+                                        <div className="flex items-center text-muted-foreground">
+                                            <Building className="w-4 h-4 mr-2" />
+                                            <span>{organizer.events.length} eventos creados</span>
                                         </div>
                                     </div>
 
                                     {/* Redes sociales si existen */}
                                     {(organizer.facebook_url || organizer.instagram_url || organizer.twitter_url) && (
-                                        <div className="flex items-center space-x-3">
-                                            <span className="text-sm text-muted-foreground">Redes sociales:</span>
+                                        <div className="flex items-center space-x-4 mt-4">
                                             {organizer.facebook_url && (
-                                                <a href={organizer.facebook_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover">
-                                                    <Facebook className="w-4 h-4" />
+                                                <a 
+                                                    href={organizer.facebook_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                >
+                                                    Facebook
                                                 </a>
                                             )}
                                             {organizer.instagram_url && (
-                                                <a href={organizer.instagram_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover">
-                                                    <Instagram className="w-4 h-4" />
+                                                <a 
+                                                    href={organizer.instagram_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-pink-600 hover:text-pink-800"
+                                                >
+                                                    Instagram
                                                 </a>
                                             )}
                                             {organizer.twitter_url && (
-                                                <a href={organizer.twitter_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover">
-                                                    <Twitter className="w-4 h-4" />
+                                                <a 
+                                                    href={organizer.twitter_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-400 hover:text-blue-600"
+                                                >
+                                                    Twitter
                                                 </a>
                                             )}
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Botones de acción */}
+                                <div className="flex flex-col space-y-2">
+                                    <Link href={route('admin.organizers.edit', organizer.id)}>
+                                        <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                                            <Edit className="w-4 h-4 mr-2" />
+                                            Editar
+                                        </Button>
+                                    </Link>
+                                    <Link href={route('admin.organizers.index')}>
+                                        <Button variant="outline" className="border-border text-foreground hover:bg-accent">
+                                            Volver
+                                        </Button>
+                                    </Link>
                                 </div>
                             </div>
                         </CardContent>
