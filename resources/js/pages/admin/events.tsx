@@ -48,6 +48,9 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 
+// Importar las utilidades de fecha
+import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
+
 // Interfaces para datos reales
 interface EventOrganizer {
     id: number;
@@ -60,8 +63,9 @@ interface EventData {
     title: string;
     organizer: EventOrganizer;
     category: string;
-    date: string | null;
+    date: string | null; // Ya formateada como Y-m-d
     time: string | null;
+    datetime?: string | null; // Para comparaciones si es necesario
     location: string;
     city: string;
     status: string;
@@ -69,7 +73,8 @@ interface EventData {
     total_tickets: number;
     revenue: number;
     price_range: string;
-    created_at: string;
+    created_at: string; // Ya formateada como Y-m-d
+    created_datetime?: string | null; // Para comparaciones si es necesario
     image: string | null;
     featured: boolean;
     functions_count: number;
@@ -342,7 +347,7 @@ export default function Events({ auth }: any) {
                         </CardContent>
                     </Card>
 
-                    {/* Events Table - Usando datos reales */}
+                    {/* Events Table - Usando helpers de fecha */}
                     <Card className="bg-white border-gray-200 shadow-lg">
                         <CardHeader className="border-b border-gray-200">
                             <div className="flex items-center justify-between">
@@ -400,8 +405,7 @@ export default function Events({ auth }: any) {
                                                     <div className="flex items-center text-gray-700 text-sm">
                                                         <Calendar className="w-4 h-4 mr-2 text-blue-500" />
                                                         <span>
-                                                            {event.date ? new Date(event.date).toLocaleDateString('es-ES') : 'Sin fecha'}
-                                                            {event.time && ` • ${event.time}`}
+                                                            {formatDateTime(event.date, event.time)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center text-gray-700 text-sm">
@@ -432,7 +436,7 @@ export default function Events({ auth }: any) {
                                                         <span>Rango: ${event.price_range} ARS</span>
                                                         <span>Categoría: {event.category}</span>
                                                         <span>Funciones: {event.functions_count}</span>
-                                                        <span>Creado: {new Date(event.created_at).toLocaleDateString('es-ES')}</span>
+                                                        <span>Creado: {formatRelativeTime(event.created_at)}</span>
                                                     </div>
 
                                                     {/* Actions */}
@@ -444,6 +448,7 @@ export default function Events({ auth }: any) {
                                                             </Button>
                                                         </Link>
                                                         
+
                                                         <Button 
                                                             onClick={() => handleToggleFeatured(event.id)}
                                                             variant={event.featured ? "default" : "outline"}

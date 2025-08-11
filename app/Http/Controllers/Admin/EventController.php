@@ -141,16 +141,18 @@ class EventController extends Controller
                     'email' => $event->organizer->email,
                 ],
                 'category' => $event->category->name ?? 'Sin categoría',
-                'date' => $firstFunction ? $firstFunction->start_time->toDateString() : null,
+                'date' => $firstFunction ? $firstFunction->start_time->format('Y-m-d') : null, // Solo fecha
                 'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
+                'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null, // Para comparaciones
                 'location' => $event->venue->name ?? 'Sin venue',
-                'city' => $this->extractCity($event->venue->address ?? ''), // Extraer ciudad de address
+                'city' => $this->extractCity($event->venue->address ?? ''),
                 'status' => $status,
                 'tickets_sold' => $soldTickets,
                 'total_tickets' => $totalTickets,
                 'revenue' => $revenue,
                 'price_range' => $priceRange,
-                'created_at' => $event->created_at->toDateString(),
+                'created_at' => $event->created_at->format('Y-m-d'), // Solo fecha
+                'created_datetime' => $event->created_at->toISOString(), // Para comparaciones
                 'image' => $event->banner_url,
                 'featured' => $event->featured,
                 'functions_count' => $event->functions->count(),
