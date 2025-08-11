@@ -176,10 +176,10 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                     {upcomingTickets.map((ticket) => (
                                         <Card
                                             key={ticket.id}
-                                            className="bg-white border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden rounded-lg sm:rounded-xl"
+                                            className="bg-white py-0 border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden rounded-lg sm:rounded-xl"
                                         >
-                                            <div className="flex flex-col sm:flex-row">
-                                                <div className="relative w-full h-32 sm:w-24 sm:h-24 lg:w-32 lg:h-32 flex-shrink-0">
+                                            <div className="flex flex-col sm:flex-row items-center">
+                                                <div className="relative w-full h-32 sm:w-32 sm:h-60 flex-shrink-0">
                                                     <img
                                                         src={ticket.eventImage}
                                                         alt={ticket.eventTitle}
