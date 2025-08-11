@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Lock, Shield, Monitor, HelpCircle, Bell, CreditCard, MapPin, Mail, Phone, Calendar, Save, Camera, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Shield, Monitor, HelpCircle, Bell, CreditCard, MapPin, Mail, Phone, Calendar, Save, Camera, Eye, EyeOff, BadgeCheck  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { usePage } from '@inertiajs/react';
 const sidebarItems = [
     {
         id: "personal",
-        label: "Información Personal",
+        label: "Personal",
         icon: User,
         color: "bg-foreground",
     },
@@ -43,12 +43,6 @@ const sidebarItems = [
         id: "payment",
         label: "Métodos de Pago",
         icon: CreditCard,
-        color: "bg-foreground",
-    },
-    {
-        id: "sessions",
-        label: "Sesiones Activas",
-        icon: Monitor,
         color: "bg-foreground",
     },
     {
@@ -207,48 +201,77 @@ export default function MyAccount() {
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
 
-                <div className="container mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="container mx-0 lg:mx-auto px-0 lg:px-4 py-0 lg:py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 lg:gap-8">
                         {/* Sidebar */}
                         <div className="lg:col-span-1">
-                            <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
-                                <CardHeader className="text-center pb-4">
-                                    <div className="relative w-20 h-20 mx-auto mb-4">
-                                        <div className="w-20 h-20 bg-foreground  rounded-full flex items-center justify-center">
-                                            <User className="w-10 h-10 text-white" />
+                            <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg sticky top-24 py-4 lg:py-8">
+                                <CardHeader className="text-start items-center flex flex-row lg:flex-col lg:text-center pb-0 lg:pb-4">
+                                    <div className="relative h-10 w-fit lg:w-20 lg:h-20 justify-start lg:justify-center lg:mx-auto ">
+                                        <div className="lg:w-20 lg:h-20 w-10 h-10 bg-foreground  rounded-full flex items-center justify-center">
+                                            <User className="w-6 h-6 lg:w-10 lg:h-10 text-white" />
                                         </div>
-                                        <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary text-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform">
-                                            <Camera className="w-4 h-4 text-white" />
-                                        </button>
                                     </div>
-                                    <h3 className="text-xl font-bold text-foreground">{auth.user.person.name}</h3>
-                                    <p className="text-foreground/60 text-sm">{auth.user.email}</p>
-                                    <Badge className="bg-green-500 text-white border-0 mt-2">
-                                        Cuenta Verificada
-                                    </Badge>
+                                    <div className="flex flex-col">
+                                    <h3 className="text-lg lg:text-xl font-bold text-foreground">{auth.user.person.name}</h3>
+                                    <p className="text-foreground/60 text-xs lg:text-sm">{auth.user.email}</p>
+                                    </div>
                                 </CardHeader>
-                                <CardContent className="p-0">
-                                    <nav className="space-y-1">
-                                        {sidebarItems.map((item) => (
-                                            <button
-                                                key={item.id}
-                                                onClick={() => setActiveTab(item.id)}
-                                                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${
-                                                    activeTab === item.id
-                                                        ? "bg-foreground text-white border-r-2 border-primary"
-                                                        : "text-foreground/80 hover:bg-gray-50 hover:text-foreground"
-                                                }`}
-                                            >
-                                                <div
-                                                    className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}
-                                                >
-                                                    <item.icon className="w-4 h-4 text-white" />
-                                                </div>
-                                                <span className="font-medium">{item.label}</span>
-                                            </button>
-                                        ))}
-                                    </nav>
-                                </CardContent>
+<CardContent className="p-0">
+    {/* Desktop Navigation - Vertical */}
+    <nav className="hidden lg:block space-y-1">
+        {sidebarItems.map((item) => (
+            <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${
+                    activeTab === item.id
+                        ? "bg-foreground text-white border-r-2 border-primary"
+                        : "text-foreground/80 hover:bg-gray-50 hover:text-foreground"
+                }`}
+            >
+                <div
+                    className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}
+                >
+                    <item.icon className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-medium">{item.label}</span>
+            </button>
+        ))}
+    </nav>
+
+    {/* Mobile Navigation - Horizontal Tabs */}
+    <div className="lg:hidden">
+        <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex space-x-1 p-2 min-w-max">
+                {sidebarItems.map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 ${
+                            activeTab === item.id
+                                ? "bg-primary text-white shadow-sm"
+                                : "text-foreground/70 hover:bg-gray-50 hover:text-foreground"
+                        }`}
+                    >
+                        <div
+                            className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                                activeTab === item.id ? "bg-white/20" : "bg-foreground/10"
+                            }`}
+                        >
+                            <item.icon className={`w-3 h-3 ${
+                                activeTab === item.id ? "text-white" : "text-foreground/70"
+                            }`} />
+                        </div>
+                        <span className="text-xs font-medium truncate max-w-16">
+                            {item.label.split(' ')[0]}
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    </div>
+</CardContent>
                             </Card>
                         </div>
 
@@ -257,21 +280,21 @@ export default function MyAccount() {
                             <Tabs value={activeTab} onValueChange={setActiveTab}>
                                 {/* Personal Information */}
                                 <TabsContent value="personal">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
+                                    <Card className="bg-white border-gray-200 lg:rounded-md rounded-none shadow-lg lg:gap-6 gap-4">
                                         <CardHeader>
-                                            <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
-                                                    <User className="w-5 h-5 text-white" />
+                                            <CardTitle className="text-lg lg:text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                <div className="lg:w-10 lg:h-10 w-8 h-8 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
+                                                    <User className="lg:w-5 lg:h-5 w-4 h-4 text-white" />
                                                 </div>
                                                 <span>Información Personal</span>
                                             </CardTitle>
-                                            <p className="text-foreground/80">Actualiza tu información personal y de contacto</p>
+                                            <p className="text-foreground/80 lg:text-base text-sm">Actualiza tu información personal y de contacto</p>
                                         </CardHeader>
                                         <CardContent>
                                             <form onSubmit={handleSavePersonalInfo} className="space-y-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="firstName" className="text-foreground font-medium">
+                                                <div className="grid grid-cols-2 gap-2 lg:gap-6 mb-2">
+                                                    <div className="space-y-1 ">
+                                                        <Label htmlFor="firstName" className="lg:text-sm text-xs text-foreground font-medium">
                                                             Nombre
                                                         </Label>
                                                         <Input
@@ -280,14 +303,14 @@ export default function MyAccount() {
                                                             onChange={(e) =>
                                                                 setPersonalInfo((prev) => ({ ...prev, firstName: e.target.value }))
                                                             }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="bg-white border-gray-300  text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="Tu nombre"
                                                         />
-                                                        <p className="text-foreground/60 text-sm">Nombre como figura en tu documento</p>
+                                                        <p className="text-foreground/60 text-xs lg:text-sm">Nombre como figura en tu documento</p>
                                                     </div>
 
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="lastName" className="text-foreground font-medium">
+                                                    <div className="space-y-1 ">
+                                                        <Label htmlFor="lastName" className="lg:text-sm text-xs text-foreground font-medium">
                                                             Apellido
                                                         </Label>
                                                         <Input
@@ -296,55 +319,55 @@ export default function MyAccount() {
                                                             onChange={(e) =>
                                                                 setPersonalInfo((prev) => ({ ...prev, lastName: e.target.value }))
                                                             }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="Tu apellido"
                                                         />
-                                                        <p className="text-foreground/60 text-sm">Apellido como figura en tu documento</p>
+                                                        <p className="text-foreground/60 text-xs lg:text-sm">Apellido como figura en tu documento</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="email" className="text-foreground font-medium">
+                                                <div className="space-y-1 mb-2">
+                                                    <Label htmlFor="email" className="text-foreground font-medium text-xs lg:text-sm">
                                                         E-Mail
                                                     </Label>
                                                     <div className="relative">
-                                                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                        <Mail className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                         <Input
                                                             id="email"
                                                             type="email"
                                                             value={personalInfo.email}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, email: e.target.value }))}
-                                                            className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="lg:pl-10 pl-6 bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base  h-fit py-1"
                                                             placeholder="tu@email.com"
                                                         />
                                                     </div>
-                                                    <p className="text-foreground/60 text-sm">E-mail para notificaciones y recuperación de contraseña</p>
+                                                    <p className="text-foreground/60 text-xs lg:text-sm">E-mail para notificaciones y recuperación de contraseña</p>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="phone" className="text-foreground font-medium">
+                                                <div className="grid grid-cols-2 gap-2 lg:gap-6 mb-2">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="phone" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Teléfono
                                                         </Label>
                                                         <div className="relative">
-                                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                            <Phone className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                             <Input
                                                                 id="phone"
                                                                 value={personalInfo.phone}
                                                                 onChange={(e) => setPersonalInfo((prev) => ({ ...prev, phone: e.target.value }))
                                                                 }
-                                                                className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                                className="lg:pl-10 pl-6 bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base h-fit py-1"
                                                                 placeholder="+54 11 1234-5678"
                                                             />
                                                         </div>
                                                     </div>
 
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="birthDate" className="text-foreground font-medium">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="birthDate" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Fecha de Nacimiento
                                                         </Label>
                                                         <div className="relative">
-                                                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                            <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                             <Input
                                                                 id="birthDate"
                                                                 type="date"
@@ -352,15 +375,15 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setPersonalInfo((prev) => ({ ...prev, birthDate: e.target.value }))
                                                                 }
-                                                                className="pl-10 bg-white border-gray-300 text-foreground"
+                                                                className="lg:pl-10 pl-6 bg-white border-gray-300 text-foreground text-sm lg:text-base  h-fit py-1"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="documentType" className="text-foreground font-medium">
+                                                <div className="grid grid-cols-2 gap-2 lg:gap-6 mb-2">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="documentType" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Tipo de Documento
                                                         </Label>
                                                         <Select
@@ -369,7 +392,7 @@ export default function MyAccount() {
                                                                 setPersonalInfo((prev) => ({ ...prev, documentType: value }))
                                                             }
                                                         >
-                                                            <SelectTrigger className="bg-white border-gray-300 text-foreground">
+                                                            <SelectTrigger className="bg-white border-gray-300 text-foreground text-sm lg:text-base lg:px-3 px-2 h-fit py-1">
                                                                 <SelectValue placeholder="Selecciona tipo" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -380,42 +403,42 @@ export default function MyAccount() {
                                                         </Select>
                                                     </div>
 
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="documentNumber" className="text-foreground font-medium">
-                                                            Número de Documento *
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="documentNumber" className="text-xs lg:text-sm text-foreground font-medium">
+                                                            Número de Documento 
                                                         </Label>
                                                         <Input
                                                             id="documentNumber"
                                                             value={personalInfo.documentNumber}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="12345678"
                                                             required
                                                         />
-                                                        <p className="text-foreground/60 text-sm">Número sin puntos ni espacios</p>
+                                                        <p className="text-foreground/60 text-xs lg:text-sm">Número sin puntos ni espacios</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="address" className="text-foreground font-medium">
+                                                <div className="space-y-1 mb-2">
+                                                    <Label htmlFor="address" className="text-xs lg:text-sm text-foreground font-medium">
                                                         Dirección
                                                     </Label>
                                                     <div className="relative">
-                                                        <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                                                        <MapPin className="absolute left-2 top-2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                         <Input
                                                             id="address"
                                                             value={personalInfo.address}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, address: e.target.value }))}
-                                                            className="pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="pl-6 lg:pl-10 bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base  h-fit py-1"
                                                             placeholder="Calle 123, Ciudad"
                                                         />
                                                     </div>
-                                                    <p className="text-foreground/60 text-sm">Dirección completa (opcional)</p>
+                                                    <p className="text-foreground/60 text-xs lg:text-sm">Dirección completa (opcional)</p>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="city" className="text-foreground font-medium">
+                                                <div className="grid grid-cols-2 gap-2 lg:gap-6">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="city" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Ciudad
                                                         </Label>
                                                         <Input
@@ -423,13 +446,13 @@ export default function MyAccount() {
                                                             value={personalInfo.city}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, city: e.target.value }))
                                                             }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="Buenos Aires"
                                                         />
                                                     </div>
 
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="postalCode" className="text-foreground font-medium">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="postalCode" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Código Postal
                                                         </Label>
                                                         <Input
@@ -437,7 +460,7 @@ export default function MyAccount() {
                                                             value={personalInfo.postalCode}
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, postalCode: e.target.value }))
                                                             }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="1000"
                                                         />
                                                     </div>
@@ -470,23 +493,23 @@ export default function MyAccount() {
                                 {/* Security */}
                                 <TabsContent value="security">
                                     <div className="space-y-6">
-                                        <Card className="bg-white border-gray-200 shadow-lg">
+                                        <Card className="bg-white border-gray-200 lg:rounded-md rounded-none shadow-lg">
                                             <CardHeader>
-                                                <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
-                                                        <Lock className="w-5 h-5 text-white" />
+                                                <CardTitle className="text-lg lg:text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                    <div className="lg:w-10 lg:h-10 w-8 h-8 bg-gradient-to-r from-primary to-blue-500 rounded-lg flex items-center justify-center">
+                                                        <Lock className="lg:w-5 lg:h-5 h-4 w-4 text-white" />
                                                     </div>
                                                     <span>Cambiar Contraseña</span>
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent>
-                                                <form onSubmit={handleChangePassword} className="space-y-4">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="currentPassword" className="text-foreground font-medium">
+                                                <form onSubmit={handleChangePassword} className="space-y-2 lg:space-y-4">
+                                                    <div className="space-y-1">
+                                                        <Label htmlFor="currentPassword" className="text-xs lg:text-sm  text-foreground font-medium">
                                                             Contraseña Actual
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                            <Lock className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                             <Input
                                                                 id="currentPassword"
                                                                 type={showPassword ? "text" : "password"}
@@ -494,25 +517,25 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, currentPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 pr-10 bg-white border-gray-300 text-foreground"
+                                                                className="lg:pl-10 lg:pr-10 pl-8 pr-8 bg-white border-gray-300 text-foreground lg:h-9 h-fit text-sm lg:text-base"
                                                                 required
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowPassword(!showPassword)}
-                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
+                                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
                                                             >
-                                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                                {showPassword ? <EyeOff className="lg:w-5 lg:h-5 w-4 h-4" /> : <Eye className="lg:w-5 lg:h-5 w-4 h-4" />}
                                                             </button>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="newPassword" className="text-foreground font-medium">
+                                                        <Label htmlFor="newPassword" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Nueva Contraseña
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                            <Lock className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                             <Input
                                                                 id="newPassword"
                                                                 type={showNewPassword ? "text" : "password"}
@@ -520,25 +543,25 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, newPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 pr-10 bg-white border-gray-300 text-foreground"
+                                                                className="lg:pl-10 lg:pr-10 pl-8 pr-8 bg-white border-gray-300 text-foreground lg:h-9 h-fit text-sm lg:text-base"
                                                                 required
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
+                                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-foreground"
                                                             >
-                                                                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                                {showNewPassword ? <EyeOff className="lg:w-5 lg:h-5 w-4 h-4" /> : <Eye className="lg:w-5 lg:h-5 w-4 h-4" />}
                                                             </button>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="confirmPassword" className="text-foreground font-medium">
+                                                        <Label htmlFor="confirmPassword" className="text-xs lg:text-sm text-foreground font-medium">
                                                             Confirmar Nueva Contraseña
                                                         </Label>
                                                         <div className="relative">
-                                                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                                            <Lock className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
                                                             <Input
                                                                 id="confirmPassword"
                                                                 type={showNewPassword ? "text" : "password"}
@@ -546,7 +569,7 @@ export default function MyAccount() {
                                                                 onChange={(e) =>
                                                                     setSecurityInfo((prev) => ({ ...prev, confirmPassword: e.target.value }))
                                                                 }
-                                                                className="pl-10 bg-white border-gray-300 text-foreground"
+                                                                className="pl-10 bg-white border-gray-300 text-foreground lg:h-9 h-fit text-sm lg:text-base"
                                                                 required
                                                             />
                                                         </div>
@@ -555,7 +578,7 @@ export default function MyAccount() {
                                                     <Button
                                                         type="submit"
                                                         disabled={isLoading}
-                                                        className="bg-primary hover:bg-primary-hover text-white"
+                                                        className="bg-primary hover:bg-primary-hover text-white mt-2"
                                                     >
                                                         Actualizar Contraseña
                                                     </Button>
@@ -563,18 +586,18 @@ export default function MyAccount() {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="bg-white border-gray-200 shadow-lg">
+                                        <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
                                             <CardHeader>
-                                                <CardTitle className="text-xl font-bold text-foreground flex items-center space-x-3">
-                                                    <Shield className="w-6 h-6 text-primary" />
+                                                <CardTitle className="text-lg lg:text-xl font-bold text-foreground flex items-center space-x-3">
+                                                    <Shield className="lg:w-6 lg:h-6 w-5 h-5 text-primary" />
                                                     <span>Autenticación de Dos Factores</span>
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <p className="text-foreground font-medium">Activar 2FA</p>
-                                                        <p className="text-foreground/60 text-sm">
+                                                        <p className="text-foreground font-medium text-sm lg:text-base">Activar 2FA</p>
+                                                        <p className="text-foreground/60 text-xs lg:text-sm">
                                                             Agrega una capa extra de seguridad a tu cuenta
                                                         </p>
                                                     </div>
@@ -592,16 +615,16 @@ export default function MyAccount() {
 
                                 {/* Notifications */}
                                 <TabsContent value="notifications">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
+                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
                                         <CardHeader>
-                                            <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                                                    <Bell className="w-5 h-5 text-white" />
+                                            <CardTitle className="text-lg lg:text-2xl font-bold text-foreground flex items-center space-x-3">
+                                                <div className="lg:w-10 lg:h-10 h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                                                    <Bell className="lg:w-5 lg:h-5 h-4 w-4 text-white" />
                                                 </div>
                                                 <span>Preferencias de Notificaciones</span>
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-6">
+                                        <CardContent className="space-y-4 lg:space-y-6">
                                             {[
                                                 {
                                                     key: "emailNotifications",
@@ -653,7 +676,7 @@ export default function MyAccount() {
 
                                 {/* Other tabs placeholder */}
                                 <TabsContent value="privacy">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
+                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
                                         <CardContent className="p-12 text-center">
                                             <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                                             <h3 className="text-xl font-semibold text-foreground mb-2">Configuración de Privacidad</h3>
@@ -663,7 +686,7 @@ export default function MyAccount() {
                                 </TabsContent>
 
                                 <TabsContent value="payment">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
+                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
                                         <CardContent className="p-12 text-center">
                                             <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                                             <h3 className="text-xl font-semibold text-foreground mb-2">Métodos de Pago</h3>
@@ -672,18 +695,9 @@ export default function MyAccount() {
                                     </Card>
                                 </TabsContent>
 
-                                <TabsContent value="sessions">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
-                                        <CardContent className="p-12 text-center">
-                                            <Monitor className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-foreground mb-2">Sesiones Activas</h3>
-                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
 
                                 <TabsContent value="help">
-                                    <Card className="bg-white border-gray-200 shadow-lg">
+                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
                                         <CardContent className="p-12 text-center">
                                             <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                                             <h3 className="text-xl font-semibold text-foreground mb-2">Ayuda y Soporte</h3>
