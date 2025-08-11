@@ -257,7 +257,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                             💡 Te recomendamos cambiar tu contraseña en "Mi Cuenta" por seguridad
                                         </p>
                                         <div className="pt-2">
-                                            <Link href={route('myaccount')}>
+                                            <Link href={route('profile.edit')}>
                                                 <Button 
                                                     variant="outline" 
                                                     size="sm"
