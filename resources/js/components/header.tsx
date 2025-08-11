@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Menu, X, User, LogOut, Calendar, Ticket, HelpCircle } from 'lucide-react';
+import { Menu, X, User, LogOut, Calendar, Ticket, HelpCircle, ChevronRight } from 'lucide-react';
 
 interface HeaderProps {
     className?: string;
@@ -90,7 +90,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="p-2 h-9 w-9 text-gray-500 hover:text-primary hover:bg-gray-100"
+                                    className="p-2 h-9 w-9 text-primary hover:text-primary hover:bg-gray-100"
                                 >
                                     <Menu className="h-5 w-5" />
                                     <span className="sr-only">Abrir menú</span>
@@ -112,8 +112,10 @@ export default function Header({ className = '' }: HeaderProps) {
                                     <div className="flex-1 ">
                                         {/* User Section */}
                                         {auth.user && (
-                                            <div className="px-6 mb-6">
-                                                <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                            <Link className=""                                                     
+                                            href={route('my-account')}
+                                                    onClick={handleLinkClick}>
+                                                <div className="mx-6 mb-2 flex items-center space-x-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                                                         <User className="w-5 h-5 text-white" />
                                                     </div>
@@ -121,12 +123,15 @@ export default function Header({ className = '' }: HeaderProps) {
                                                         <p className="font-semibold text-foreground text-sm truncate">
                                                             {auth.user.person.name}
                                                         </p>
-                                                        <p className="text-xs text-foreground/60 truncate">
+                                                        <p className="text-xs text-foreground/60 truncate ">
                                                             {auth.user.email}
+                                                        </p>
+                                                        <p className="flex items-center text-xs text-foreground/70">Mi Cuenta
+                                                            <ChevronRight size={14} />
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         )}
 
                                         {/* Navigation Links */}
@@ -148,17 +153,6 @@ export default function Header({ className = '' }: HeaderProps) {
                                                 >
                                                     <Ticket className="w-5 h-5 text-primary group-hover:text-primary" />
                                                     <span className="font-medium">Mis Tickets</span>
-                                                </Link>
-                                            )}
-
-                                            {auth.user && (
-                                                <Link
-                                                    href={route('my-account')}
-                                                    onClick={handleLinkClick}
-                                                    className="flex items-center space-x-3 p-2 rounded-lg text-foreground hover:bg-gray-50 hover:text-primary transition-colors group"
-                                                >
-                                                    <User className="w-5 h-5 text-primary group-hover:text-primary" />
-                                                    <span className="font-medium">Mi Cuenta</span>
                                                 </Link>
                                             )}
 
