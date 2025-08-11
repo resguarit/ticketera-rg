@@ -222,15 +222,19 @@ class EventController extends Controller
                 'id' => $event->venue->id,
                 'name' => $event->venue->name,
                 'address' => $event->venue->address,
-                'city' => $this->extractCity($event->venue->address ?? ''), // Extraer ciudad
+                'city' => $this->extractCity($event->venue->address ?? ''),
             ],
             'functions' => $event->functions->map(function($function) {
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
                     'description' => $function->description,
-                    'start_time' => $function->start_time,
-                    'end_time' => $function->end_time,
+                    'start_time' => $function->start_time->format('Y-m-d H:i:s'),
+                    'start_date' => $function->start_time->format('Y-m-d'),
+                    'start_time_only' => $function->start_time->format('H:i'),
+                    'end_time' => $function->end_time->format('Y-m-d H:i:s'),
+                    'end_date' => $function->end_time->format('Y-m-d'),
+                    'end_time_only' => $function->end_time->format('H:i'),
                     'is_active' => $function->is_active,
                     'ticket_types' => $function->ticketTypes->map(function($ticketType) {
                         return [
@@ -244,8 +248,8 @@ class EventController extends Controller
                     }),
                 ];
             }),
-            'created_at' => $event->created_at,
-            'updated_at' => $event->updated_at,
+            'created_at' => $event->created_at->format('Y-m-d'),
+            'updated_at' => $event->updated_at->format('Y-m-d H:i:s'),
         ];
 
         return Inertia::render('admin/events/show', [
