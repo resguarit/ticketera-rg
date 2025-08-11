@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { 
     Search, 
     Plus, 
@@ -16,7 +17,8 @@ import {
     Clock,
     AlertTriangle,
     Download,
-    Upload
+    Upload,
+    Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,157 +46,123 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
-// Mock data de eventos
-const mockEvents = [
-    {
-        id: 1,
-        title: "Festival de Música Electrónica 2024",
-        organizer: {
-            id: 1,
-            name: "MusicPro Events",
-            email: "contact@musicpro.com"
-        },
-        category: "música",
-        date: "2024-03-15",
-        time: "20:00",
-        location: "Estadio Nacional",
-        city: "Buenos Aires",
-        status: "active",
-        tickets_sold: 2450,
-        total_tickets: 3000,
-        revenue: 125000,
-        price_range: "8500 - 25000",
-        created_at: "2024-02-01",
-        image: "/placeholder.svg?height=200&width=300",
-        featured: true
-    },
-    {
-        id: 2,
-        title: "Concierto Rock Nacional",
-        organizer: {
-            id: 2,
-            name: "Rock Producciones",
-            email: "info@rockprod.com"
-        },
-        category: "música",
-        date: "2024-03-20",
-        time: "21:30",
-        location: "Luna Park",
-        city: "Buenos Aires",
-        status: "pending",
-        tickets_sold: 890,
-        total_tickets: 1500,
-        revenue: 45000,
-        price_range: "5000 - 12000",
-        created_at: "2024-02-10",
-        image: "/placeholder.svg?height=200&width=300",
-        featured: false
-    },
-    {
-        id: 3,
-        title: "Teatro: Romeo y Julieta",
-        organizer: {
-            id: 3,
-            name: "Teatro Municipal",
-            email: "teatro@municipal.gov"
-        },
-        category: "teatro",
-        date: "2024-03-25",
-        time: "20:00",
-        location: "Teatro San Martín",
-        city: "Córdoba",
-        status: "active",
-        tickets_sold: 180,
-        total_tickets: 200,
-        revenue: 18000,
-        price_range: "3000 - 8000",
-        created_at: "2024-01-15",
-        image: "/placeholder.svg?height=200&width=300",
-        featured: false
-    },
-    {
-        id: 4,
-        title: "Conferencia Tech 2024",
-        organizer: {
-            id: 4,
-            name: "TechEvents",
-            email: "events@tech.com"
-        },
-        category: "conferencia",
-        date: "2024-04-01",
-        time: "09:00",
-        location: "Centro de Convenciones",
-        city: "Rosario",
-        status: "draft",
-        tickets_sold: 0,
-        total_tickets: 500,
-        revenue: 0,
-        price_range: "2000 - 5000",
-        created_at: "2024-02-20",
-        image: "/placeholder.svg?height=200&width=300",
-        featured: false
-    },
-    {
-        id: 5,
-        title: "Copa de Fútbol Amateur",
-        organizer: {
-            id: 5,
-            name: "Liga Amateur",
-            email: "liga@amateur.com"
-        },
-        category: "deportes",
-        date: "2024-03-30",
-        time: "16:00",
-        location: "Estadio Centenario",
-        city: "Montevideo",
-        status: "cancelled",
-        tickets_sold: 150,
-        total_tickets: 800,
-        revenue: 7500,
-        price_range: "500 - 1500",
-        created_at: "2024-01-20",
-        image: "/placeholder.svg?height=200&width=300",
-        featured: false
-    }
-];
+// Interfaces para datos reales
+interface EventOrganizer {
+    id: number;
+    name: string;
+    email: string;
+}
 
-const eventStats = {
-    total: mockEvents.length,
-    active: mockEvents.filter(e => e.status === 'active').length,
-    pending: mockEvents.filter(e => e.status === 'pending').length,
-    draft: mockEvents.filter(e => e.status === 'draft').length,
-    cancelled: mockEvents.filter(e => e.status === 'cancelled').length,
-    totalRevenue: mockEvents.reduce((sum, e) => sum + e.revenue, 0),
-    totalTicketsSold: mockEvents.reduce((sum, e) => sum + e.tickets_sold, 0)
-};
+interface EventData {
+    id: number;
+    title: string;
+    organizer: EventOrganizer;
+    category: string;
+    date: string | null;
+    time: string | null;
+    location: string;
+    city: string;
+    status: string;
+    tickets_sold: number;
+    total_tickets: number;
+    revenue: number;
+    price_range: string;
+    created_at: string;
+    image: string | null;
+    featured: boolean;
+    functions_count: number;
+}
+
+interface EventStats {
+    total: number;
+    active: number;
+    inactive: number;
+    finished: number;
+    draft: number;
+    totalTicketsSold: number;
+    totalRevenue: number;
+}
+
+interface PaginatedEvents {
+    data: EventData[];
+    links: { url: string | null; label: string; active: boolean }[];
+    total: number;
+}
+
+interface PageProps {
+    events: PaginatedEvents;
+    stats: EventStats;
+    filters: {
+        search: string;
+        status: string;
+        category: string;
+        city: string;
+        sort_by: string;
+        sort_direction: string;
+    };
+    categories: string[];
+    cities: string[];
+    [key: string]: any;
+}
 
 export default function Events({ auth }: any) {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedStatus, setSelectedStatus] = useState("all");
-    const [selectedCategory, setSelectedCategory] = useState("all");
-    const [selectedCity, setSelectedCity] = useState("all");
-    const [sortBy, setSortBy] = useState("date");
-    const [viewMode, setViewMode] = useState("all");
+    const { events, stats, filters, categories, cities } = usePage<PageProps>().props;
 
-    const filteredEvents = mockEvents.filter(event => {
-        const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            event.organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            event.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = selectedStatus === "all" || event.status === selectedStatus;
-        const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
-        const matchesCity = selectedCity === "all" || event.city === selectedCity;
+    // Estados para filtros locales
+    const [searchTerm, setSearchTerm] = useState(filters.search || "");
+    const [selectedStatus, setSelectedStatus] = useState(filters.status || "all");
+    const [selectedCategory, setSelectedCategory] = useState(filters.category || "all");
+    const [selectedCity, setSelectedCity] = useState(filters.city || "all");
+    const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
 
-        return matchesSearch && matchesStatus && matchesCategory && matchesCity;
-    });
+    // Función para aplicar filtros
+    const handleFilters = () => {
+        router.get(route('admin.events.index'), {
+            search: searchTerm,
+            status: selectedStatus,
+            category: selectedCategory,
+            city: selectedCity,
+            sort_by: sortBy,
+        }, {
+            preserveState: true,
+            replace: true
+        });
+    };
+
+    // Función para limpiar filtros
+    const handleClearFilters = () => {
+        setSearchTerm("");
+        setSelectedStatus("all");
+        setSelectedCategory("all");
+        setSelectedCity("all");
+        setSortBy("created_at");
+        router.get(route('admin.events.index'), {}, {
+            preserveState: true,
+            replace: true
+        });
+    };
+
+    // Manejar Enter en búsqueda
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleFilters();
+        }
+    };
+
+    const handleToggleFeatured = (eventId: number) => {
+        router.patch(route('admin.events.toggle-featured', eventId), {}, {
+            preserveScroll: true,
+        });
+    };
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
             active: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
-            pending: { label: "Pendiente", color: "bg-yellow-500 hover:bg-yellow-600" },
-            draft: { label: "Borrador", color: "bg-gray-500 hover:bg-gray-600" },
-            cancelled: { label: "Cancelado", color: "bg-red-500 hover:bg-red-600" }
+            inactive: { label: "Inactivo", color: "bg-yellow-500 hover:bg-yellow-600" },
+            finished: { label: "Finalizado", color: "bg-gray-500 hover:bg-gray-600" },
+            draft: { label: "Borrador", color: "bg-red-500 hover:bg-red-600" }
         };
         
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
@@ -209,20 +177,10 @@ export default function Events({ auth }: any) {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case "active": return <CheckCircle className="w-4 h-4 text-green-500" />;
-            case "pending": return <Clock className="w-4 h-4 text-yellow-500" />;
-            case "cancelled": return <XCircle className="w-4 h-4 text-red-500" />;
-            default: return <AlertTriangle className="w-4 h-4 text-gray-500" />;
+            case "inactive": return <Clock className="w-4 h-4 text-yellow-500" />;
+            case "finished": return <XCircle className="w-4 h-4 text-gray-500" />;
+            default: return <AlertTriangle className="w-4 h-4 text-red-500" />;
         }
-    };
-
-    const handleDeleteEvent = (eventId: number) => {
-        console.log(`Eliminar evento ${eventId}`);
-        // Aquí iría la lógica para eliminar el evento
-    };
-
-    const handleStatusChange = (eventId: number, newStatus: string) => {
-        console.log(`Cambiar estado del evento ${eventId} a ${newStatus}`);
-        // Aquí iría la lógica para cambiar el estado
     };
 
     return (
@@ -250,32 +208,17 @@ export default function Events({ auth }: any) {
                                 <Download className="w-4 h-4 mr-2" />
                                 Exportar
                             </Button>
-                            
-                            <Button 
-                                variant="outline" 
-                                className="border-gray-300 text-black hover:bg-gray-50 bg-white"
-                            >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Importar
-                            </Button>
-                            
-                            <Link href="/admin/events/create">
-                                <Button className="bg-black text-white hover:bg-gray-800">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Crear Evento
-                                </Button>
-                            </Link>
                         </div>
                     </div>
 
-                    {/* Stats Cards */}
+                    {/* Stats Cards - Usando datos reales */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Total Eventos</p>
-                                        <p className="text-2xl font-bold text-black">{eventStats.total}</p>
+                                        <p className="text-2xl font-bold text-black">{stats.total}</p>
                                     </div>
                                     <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                                         <Calendar className="w-6 h-6 text-white" />
@@ -289,7 +232,7 @@ export default function Events({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Eventos Activos</p>
-                                        <p className="text-2xl font-bold text-black">{eventStats.active}</p>
+                                        <p className="text-2xl font-bold text-black">{stats.active}</p>
                                     </div>
                                     <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                                         <CheckCircle className="w-6 h-6 text-white" />
@@ -303,7 +246,7 @@ export default function Events({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Tickets Vendidos</p>
-                                        <p className="text-2xl font-bold text-black">{eventStats.totalTicketsSold.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-black">{stats.totalTicketsSold.toLocaleString()}</p>
                                     </div>
                                     <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
                                         <Users className="w-6 h-6 text-white" />
@@ -317,7 +260,7 @@ export default function Events({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Ingresos Totales</p>
-                                        <p className="text-2xl font-bold text-black">${eventStats.totalRevenue.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-black">${stats.totalRevenue.toLocaleString()}</p>
                                     </div>
                                     <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-6 h-6 text-white" />
@@ -327,7 +270,7 @@ export default function Events({ auth }: any) {
                         </Card>
                     </div>
 
-                    {/* Filters */}
+                    {/* Filters - Usando datos reales */}
                     <Card className="bg-white border-gray-200 shadow-lg mb-8">
                         <CardContent className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
@@ -337,6 +280,7 @@ export default function Events({ auth }: any) {
                                         placeholder="Buscar eventos..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
+                                        onKeyPress={handleKeyPress}
                                         className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-500"
                                     />
                                 </div>
@@ -348,9 +292,9 @@ export default function Events({ auth }: any) {
                                     <SelectContent className="bg-white border-gray-300">
                                         <SelectItem value="all">Todos los estados</SelectItem>
                                         <SelectItem value="active">Activos</SelectItem>
-                                        <SelectItem value="pending">Pendientes</SelectItem>
+                                        <SelectItem value="inactive">Inactivos</SelectItem>
+                                        <SelectItem value="finished">Finalizados</SelectItem>
                                         <SelectItem value="draft">Borradores</SelectItem>
-                                        <SelectItem value="cancelled">Cancelados</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -360,10 +304,9 @@ export default function Events({ auth }: any) {
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-gray-300">
                                         <SelectItem value="all">Todas las categorías</SelectItem>
-                                        <SelectItem value="música">Música</SelectItem>
-                                        <SelectItem value="teatro">Teatro</SelectItem>
-                                        <SelectItem value="deportes">Deportes</SelectItem>
-                                        <SelectItem value="conferencia">Conferencias</SelectItem>
+                                        {categories.map((category) => (
+                                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
 
@@ -373,33 +316,22 @@ export default function Events({ auth }: any) {
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-gray-300">
                                         <SelectItem value="all">Todas las ciudades</SelectItem>
-                                        <SelectItem value="Buenos Aires">Buenos Aires</SelectItem>
-                                        <SelectItem value="Córdoba">Córdoba</SelectItem>
-                                        <SelectItem value="Rosario">Rosario</SelectItem>
-                                        <SelectItem value="Montevideo">Montevideo</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="bg-white border-gray-300 text-black">
-                                        <SelectValue placeholder="Ordenar por" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white border-gray-300">
-                                        <SelectItem value="date">Fecha</SelectItem>
-                                        <SelectItem value="revenue">Ingresos</SelectItem>
-                                        <SelectItem value="tickets">Tickets vendidos</SelectItem>
-                                        <SelectItem value="created">Fecha de creación</SelectItem>
+                                        {cities.map((city) => (
+                                            <SelectItem key={city} value={city}>{city}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
 
                                 <Button 
-                                    onClick={() => {
-                                        setSearchTerm("");
-                                        setSelectedStatus("all");
-                                        setSelectedCategory("all");
-                                        setSelectedCity("all");
-                                        setSortBy("date");
-                                    }}
+                                    onClick={handleFilters}
+                                    className="bg-black text-white hover:bg-gray-800"
+                                >
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Buscar
+                                </Button>
+
+                                <Button 
+                                    onClick={handleClearFilters}
                                     variant="outline"
                                     className="border-gray-300 text-black hover:bg-gray-50 bg-white"
                                 >
@@ -410,30 +342,34 @@ export default function Events({ auth }: any) {
                         </CardContent>
                     </Card>
 
-                    {/* Events Table */}
+                    {/* Events Table - Usando datos reales */}
                     <Card className="bg-white border-gray-200 shadow-lg">
                         <CardHeader className="border-b border-gray-200">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-black">
-                                    Eventos ({filteredEvents.length})
+                                    Eventos ({events.total})
                                 </CardTitle>
-                                <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                                    <TabsList className="bg-gray-100 border border-gray-300">
-                                        <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:text-black">Todos</TabsTrigger>
-                                        <TabsTrigger value="active" className="data-[state=active]:bg-white data-[state=active]:text-black">Activos</TabsTrigger>
-                                        <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:text-black">Pendientes</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="space-y-4">
-                                {filteredEvents.map((event) => (
+                                {events.data.map((event) => (
                                     <div key={event.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                         <div className="flex items-center space-x-6">
                                             {/* Event Image */}
-                                            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                                            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                                {event.image ? (
+                                                    <img 
+                                                        src={event.image.startsWith('/') ? event.image : `/images/events/${event.image}`}
+                                                        alt={event.title} 
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${event.image ? 'hidden' : ''}`}>
                                                     <Calendar className="w-8 h-8 text-gray-600" />
                                                 </div>
                                             </div>
@@ -463,7 +399,10 @@ export default function Events({ auth }: any) {
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                                                     <div className="flex items-center text-gray-700 text-sm">
                                                         <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-                                                        <span>{new Date(event.date).toLocaleDateString('es-ES')} • {event.time}</span>
+                                                        <span>
+                                                            {event.date ? new Date(event.date).toLocaleDateString('es-ES') : 'Sin fecha'}
+                                                            {event.time && ` • ${event.time}`}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center text-gray-700 text-sm">
                                                         <MapPin className="w-4 h-4 mr-2 text-purple-500" />
@@ -483,115 +422,80 @@ export default function Events({ auth }: any) {
                                                 <div className="mb-3">
                                                     <div className="flex justify-between text-xs text-gray-600 mb-1">
                                                         <span>Progreso de ventas</span>
-                                                        <span>{Math.round((event.tickets_sold / event.total_tickets) * 100)}%</span>
+                                                        <span>{event.total_tickets > 0 ? Math.round((event.tickets_sold / event.total_tickets) * 100) : 0}%</span>
                                                     </div>
-                                                    <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2" />
+                                                    <Progress value={event.total_tickets > 0 ? (event.tickets_sold / event.total_tickets) * 100 : 0} className="h-2" />
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-4 text-xs text-gray-500">
                                                         <span>Rango: ${event.price_range} ARS</span>
                                                         <span>Categoría: {event.category}</span>
+                                                        <span>Funciones: {event.functions_count}</span>
                                                         <span>Creado: {new Date(event.created_at).toLocaleDateString('es-ES')}</span>
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
-                                                                <MoreVertical className="w-4 h-4" />
+                                                    <div className="flex items-center space-x-2">
+                                                        <Link href={route('admin.events.show', event.id)}>
+                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
+                                                                <Eye className="w-4 h-4 mr-1" />
+                                                                Ver
                                                             </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent className="w-56 bg-white border-gray-300">
-                                                            <DropdownMenuItem className="hover:bg-gray-100">
-                                                                <Eye className="w-4 h-4 mr-2" />
-                                                                Ver detalles
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="hover:bg-gray-100">
-                                                                <Edit className="w-4 h-4 mr-2" />
-                                                                Editar evento
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-gray-200" />
-                                                            <DropdownMenuItem 
-                                                                onClick={() => handleStatusChange(event.id, 'active')}
-                                                                disabled={event.status === 'active'}
-                                                                className="hover:bg-gray-100"
-                                                            >
-                                                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                                                                Activar
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => handleStatusChange(event.id, 'pending')}
-                                                                disabled={event.status === 'pending'}
-                                                                className="hover:bg-gray-100"
-                                                            >
-                                                                <Clock className="w-4 h-4 mr-2 text-yellow-500" />
-                                                                Poner en revisión
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                onClick={() => handleStatusChange(event.id, 'cancelled')}
-                                                                disabled={event.status === 'cancelled'}
-                                                                className="hover:bg-gray-100"
-                                                            >
-                                                                <XCircle className="w-4 h-4 mr-2 text-red-500" />
-                                                                Cancelar
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-gray-200" />
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <DropdownMenuItem 
-                                                                        className="text-red-600 focus:text-red-600 hover:bg-red-50"
-                                                                        onSelect={(e) => e.preventDefault()}
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-2" />
-                                                                        Eliminar evento
-                                                                    </DropdownMenuItem>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent className="bg-white border-gray-300">
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle className="text-black">¿Estás seguro?</AlertDialogTitle>
-                                                                        <AlertDialogDescription className="text-gray-600">
-                                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el evento
-                                                                            "{event.title}" y todos los datos relacionados.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel className="border-gray-300 text-black hover:bg-gray-50">Cancelar</AlertDialogCancel>
-                                                                        <AlertDialogAction 
-                                                                            onClick={() => handleDeleteEvent(event.id)}
-                                                                            className="bg-red-600 hover:bg-red-700 text-white"
-                                                                        >
-                                                                            Eliminar
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                        </Link>
+                                                        
+                                                        <Button 
+                                                            onClick={() => handleToggleFeatured(event.id)}
+                                                            variant={event.featured ? "default" : "outline"}
+                                                            size="sm"
+                                                            className={event.featured 
+                                                                ? "bg-orange-500 hover:bg-orange-600 text-white" 
+                                                                : "border-orange-300 text-orange-600 hover:bg-orange-50"
+                                                            }
+                                                        >
+                                                            <Star className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
 
-                                {filteredEvents.length === 0 && (
+                                {events.data.length === 0 && (
                                     <div className="text-center py-12">
                                         <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                                         <h3 className="text-xl font-semibold text-black mb-2">No se encontraron eventos</h3>
-                                        <p className="text-gray-600 mb-6">
+                                        <p className="text-gray-600">
                                             {searchTerm || selectedStatus !== "all" || selectedCategory !== "all" || selectedCity !== "all"
                                                 ? "Prueba ajustando los filtros de búsqueda"
                                                 : "Aún no hay eventos creados"}
                                         </p>
-                                        <Link href="/admin/events/create">
-                                            <Button className="bg-black text-white hover:bg-gray-800">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Crear primer evento
-                                            </Button>
-                                        </Link>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Pagination */}
+                            {events.data.length > 0 && (
+                                <div className="mt-6 flex justify-center">
+                                    <div className="flex items-center space-x-2">
+                                        {events.links.map((link, index) => (
+                                            <Link
+                                                key={index}
+                                                href={link.url || '#'}
+                                                className={`px-3 py-2 text-sm rounded-md ${
+                                                    link.active
+                                                        ? 'bg-black text-white'
+                                                        : link.url
+                                                        ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

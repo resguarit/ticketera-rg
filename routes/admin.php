@@ -5,6 +5,7 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrganizerController;
+use App\Http\Controllers\Admin\EventController;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -12,20 +13,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Gestión de eventos
     Route::prefix('events')->name('events.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('admin/events');
-        })->name('index');
-        
-        Route::get('/create', function () {
-            return Inertia::render('admin/createevent');
-        })->name('create');
-        
-        Route::get('/{eventId}/edit', function ($eventId) {
-            return Inertia::render('admin/events/edit', [
-                'eventId' => $eventId
-            ]);
-        })->name('edit');
+        Route::get('/', [EventController::class, 'index'])->name('index');
+        Route::get('/{event}', [EventController::class, 'show'])->name('show');
+        Route::patch('/{event}/toggle-featured', [EventController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::patch('/functions/{function}/toggle', [EventController::class, 'toggleFunction'])->name('functions.toggle');
     });
+    
 
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->group(function () {
