@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('last_name', 100);
-            $table->string('dni', 20)->unique();
+            $table->string('dni', 20)->unique()->nullable();
             $table->text('address')->nullable();
             $table->timestamps();
             $table->softDeletes();

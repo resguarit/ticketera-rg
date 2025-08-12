@@ -13,6 +13,12 @@ use Inertia\Response;
 use App\Models\Organizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Models\Person;
+use Illuminate\Support\Str;
+use App\Enums\UserRole;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrganizerController extends Controller
 {
@@ -134,5 +140,106 @@ class OrganizerController extends Controller
         
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador eliminado correctamente.');
+    }
+
+    public function addUser(Request $request, int $organizerId): RedirectResponse
+    {
+        $organizer = Organizer::findOrFail($organizerId);
+
+        $validated = $request->validate([
+            'mode' => 'required|in:existing,new',
+            'user_id' => 'required_if:mode,existing|nullable|exists:users,id',
+            'person.name' => 'required_if:mode,new|string|max:255',
+            'person.last_name' => 'required_if:mode,new|string|max:255',
+            'person.dni' => 'nullable|string|max:50',
+            'person.phone' => 'nullable|string|max:50',
+            'person.address' => 'nullable|string|max:255',
+            'email' => 'required_if:mode,new|email|max:255|unique:users,email',
+        ]);
+
+        if (!isset($validated['mode'])) {
+            return redirect()->back()->with('error', 'Modo inválido.');
+        }
+
+        if ($validated['mode'] === 'existing') {
+            $user = User::whereNull('organizer_id')->findOrFail($validated['user_id']);
+            $user->role = UserRole::ORGANIZER;
+            $user->organizer_id = $organizer->id;
+            $user->save();
+            return redirect()->back()->with('success', 'Usuario asignado correctamente.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $person = Person::create([
+                'name' => $request->input('person.name'),
+                'last_name' => $request->input('person.last_name'),
+                'dni' => $request->input('person.dni'),
+                'phone' => $request->input('person.phone'),
+                'address' => $request->input('person.address'),
+            ]);
+
+            $randomPassword = Str::password(12);
+
+            $user = User::create([
+                'organizer_id' => $organizer->id,
+                'person_id' => $person->id,
+                'email' => $request->input('email'),
+                'password' => $randomPassword,
+                'role' => UserRole::ORGANIZER,
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Error creando usuario de organizador', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'No se pudo crear el usuario, intenta nuevamente.');
+        }
+
+        return redirect()->back()->with([
+            'success' => 'Usuario creado y asignado correctamente.',
+            'credentials' => [
+                'email' => $user->email,
+                'password' => $randomPassword,
+            ],
+        ]);
+    }
+
+    public function removeUser(Request $request, int $organizerId, int $userId): RedirectResponse
+    {
+        $organizer = Organizer::findOrFail($organizerId);
+        $user = User::where('organizer_id', $organizer->id)->findOrFail($userId);
+
+        $user->organizer_id = null;
+        $user->role = UserRole::CLIENT; // vuelve a cliente
+        $user->save();
+
+        return redirect()->back()->with('success', 'Usuario removido del organizador.');
+    }
+
+    public function searchUsers(Request $request, int $organizerId)
+    {
+        $query = $request->input('q');
+        $users = User::with('person')
+            ->whereNull('organizer_id')
+            ->when($query, function ($q) use ($query) {
+                $q->where('email', 'like', "%{$query}%")
+                  ->orWhereHas('person', function ($p) use ($query) {
+                      $p->where('name', 'like', "%{$query}%")
+                        ->orWhere('last_name', 'like', "%{$query}%");
+                  });
+            })
+            ->limit(10)
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->person ? $u->person->name . ' ' . $u->person->last_name : $u->email,
+                    'email' => $u->email,
+                ];
+            });
+
+        return response()->json($users);
     }
 }
