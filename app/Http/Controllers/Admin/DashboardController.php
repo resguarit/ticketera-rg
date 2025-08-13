@@ -200,6 +200,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->person->name ?? $user->email,
+                    'last_name' => $user->person->last_name,
                     'email' => $user->email,
                     'role' => $user->role->value, // Obtener el valor del enum
                     'joined' => $user->created_at->toDateString(),
