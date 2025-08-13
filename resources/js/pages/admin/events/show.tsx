@@ -153,6 +153,10 @@ export default function Show({ auth }: any) {
         });
     };
 
+    const handleViewPublic = () => {
+        router.visit(route('event.detail', event.id));
+    };
+
     return (
         <>
             <Head title={`${event.name} - Detalle del Evento`} />
@@ -201,10 +205,10 @@ export default function Show({ auth }: any) {
                                         <Download className="w-4 h-4 mr-2" />
                                         Exportar datos
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-gray-700 hover:bg-gray-50">
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        Ver como público
-                                    </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            Ver como público
+                                        </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -432,7 +436,7 @@ export default function Show({ auth }: any) {
                                                 Descargar reporte
                                             </Button>
                                             
-                                            <Button variant="outline" className="w-full border-gray-300">
+                                            <Button variant="outline" className="w-full border-gray-300" onClick={handleViewPublic}>
                                                 <Eye className="w-4 h-4 mr-2" />
                                                 Ver como público
                                             </Button>
