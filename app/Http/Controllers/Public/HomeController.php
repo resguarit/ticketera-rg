@@ -14,11 +14,12 @@ class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
+        // ACTUALIZADO: incluir ciudad y provincia en las consultas
         // Eventos destacados (solo los que tienen featured = 1/true)
-        $featuredEvents = Event::with(['venue', 'category', 'organizer', 'functions'])
-            ->where('featured', true) // o ->where('featured', 1)
+        $featuredEvents = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions'])
+            ->where('featured', true)
             ->orderBy('created_at', 'desc')
-            ->limit(5) // Máximo 5 para el carousel
+            ->limit(5)
             ->get()
             ->map(function($event) {
                 return [
@@ -27,14 +28,17 @@ class HomeController extends Controller
                     'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
                     'date' => $event->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                     'location' => $event->venue->name,
-                    'city' => $this->extractCity($event->venue->address),
+                    // ACTUALIZADO: usar la nueva estructura
+                    'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                        $event->venue->ciudad->provincia->name : null,
                     'category' => $event->category->name,
-                    'featured' => $event->featured, // Usar el valor real de la BD
+                    'featured' => $event->featured,
                 ];
             });
 
         // Todos los eventos para la grilla
-        $events = Event::with(['venue', 'category', 'organizer', 'functions.ticketTypes'])
+        $events = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function($event) {
@@ -54,10 +58,13 @@ class HomeController extends Controller
                     'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                     'time' => $firstFunction?->start_time?->format('H:i') ?? '',
                     'location' => $event->venue->name,
-                    'city' => $this->extractCity($event->venue->address),
+                    // ACTUALIZADO: usar la nueva estructura
+                    'city' => $event->venue->ciudad ? $event->venue->ciudad->name : null,
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                        $event->venue->ciudad->provincia->name : null,
                     'category' => strtolower($event->category->name),
                     'price' => $minPrice,
-                    'featured' => $event->featured, // Incluir el valor real de featured
+                    'featured' => $event->featured,
                 ];
             });
 
@@ -66,8 +73,8 @@ class HomeController extends Controller
             return [
                 'id' => strtolower($category->name),
                 'label' => $category->name,
-                'icon' => $category->icon ?: $this->getCategoryIcon($category->name), // Usar icono de la BD
-                'color' => $category->color ?: '#3b82f6', // Usar color de la BD
+                'icon' => $category->icon ?: $this->getCategoryIcon($category->name),
+                'color' => $category->color ?: '#3b82f6',
             ];
         });
 
@@ -76,29 +83,6 @@ class HomeController extends Controller
             'events' => $events,
             'categories' => $categories,
         ]);
-    }
-
-    /**
-     * Extraer ciudad de la dirección
-     */
-    private function extractCity(string $address): string
-    {
-        $parts = explode(',', $address);
-        
-        // Buscar por palabras clave de ciudades conocidas
-        $cities = ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Montevideo'];
-        
-        foreach ($parts as $part) {
-            $part = trim($part);
-            foreach ($cities as $city) {
-                if (stripos($part, $city) !== false) {
-                    return $city;
-                }
-            }
-        }
-        
-        // Si no encuentra ciudad conocida, retorna la penúltima parte o Buenos Aires por defecto
-        return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 
     /**

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\Order;
-use App\Models\IssuedTicket; // Cambié de Ticket a IssuedTicket
+use App\Models\IssuedTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -61,10 +61,10 @@ class DashboardController extends Controller
     private function getDashboardStats(Carbon $startDate): array
     {
         // Total de usuarios CLIENTES únicamente
-        $totalUsers = User::where('role', 'CLIENT')->count(); // Cambié aquí
-        $newUsersThisPeriod = User::where('role', 'CLIENT') // Y aquí
+        $totalUsers = User::where('role', 'CLIENT')->count();
+        $newUsersThisPeriod = User::where('role', 'CLIENT')
             ->where('created_at', '>=', $startDate)->count();
-        $previousPeriodUsers = User::where('role', 'CLIENT') // Y aquí
+        $previousPeriodUsers = User::where('role', 'CLIENT')
             ->where('created_at', '<', $startDate)
             ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
             ->count();
@@ -102,11 +102,11 @@ class DashboardController extends Controller
 
         return [
             [
-                'title' => 'Total Clientes', // Cambié el título para mayor claridad
+                'title' => 'Total Clientes',
                 'value' => number_format($totalUsers),
                 'change' => ($userGrowth >= 0 ? '+' : '') . $userGrowth . '%',
                 'changeType' => $userGrowth >= 0 ? 'positive' : 'negative',
-                'description' => 'Clientes registrados en el periodo' // Actualicé la descripción
+                'description' => 'Clientes registrados en el periodo'
             ],
             [
                 'title' => 'Eventos Activos',
@@ -134,7 +134,8 @@ class DashboardController extends Controller
 
     private function getRecentEvents(): array
     {
-        return Event::with(['organizer', 'functions.ticketTypes'])
+        // ACTUALIZADO: incluir ciudad y provincia en la consulta
+        return Event::with(['organizer', 'venue.ciudad.provincia', 'functions.ticketTypes'])
             ->orderBy('created_at', 'desc')
             ->limit(4)
             ->get()
@@ -168,13 +169,18 @@ class DashboardController extends Controller
 
                 return [
                     'id' => $event->id,
-                    'name' => $event->name, // Usar 'name' en lugar de 'title'
-                    'organizer' => $event->organizer->name ?? 'Organizador', // Sin relación person
+                    'name' => $event->name,
+                    'organizer' => $event->organizer->name ?? 'Organizador',
                     'date' => $function ? $function->start_time->toDateString() : $event->created_at->toDateString(),
                     'status' => $status,
                     'tickets_sold' => $soldTickets,
                     'total_tickets' => $totalTickets,
-                    'revenue' => $revenue
+                    'revenue' => $revenue,
+                    // ACTUALIZADO: agregar información de ubicación
+                    'venue' => $event->venue->name ?? 'Sin venue',
+                    'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                        $event->venue->ciudad->provincia->name : null,
                 ];
             })->toArray();
     }
@@ -189,7 +195,7 @@ class DashboardController extends Controller
                 $purchases = 0;
                 $eventsCreated = 0;
 
-                if ($user->role->value === 'client') { // Usar el enum
+                if ($user->role->value === 'client') {
                     $purchases = Order::where('client_id', $user->id)
                         ->where('status', 'PAID')
                         ->count();
@@ -202,7 +208,7 @@ class DashboardController extends Controller
                     'name' => $user->person->name ?? $user->email,
                     'last_name' => $user->person->last_name,
                     'email' => $user->email,
-                    'role' => $user->role->value, // Obtener el valor del enum
+                    'role' => $user->role->value,
                     'joined' => $user->created_at->toDateString(),
                     'status' => $user->email_verified_at ? 'active' : 'pending',
                     'purchases' => $purchases,

@@ -18,6 +18,7 @@ interface Event {
     time: string;
     location: string;
     city: string;
+    province?: string;
     category: string;
     price: number;
     rating: number;

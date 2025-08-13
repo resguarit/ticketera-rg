@@ -46,6 +46,9 @@ interface RecentEvent {
     tickets_sold: number;
     total_tickets: number;
     revenue: number;
+    venue?: string; // NUEVO: agregar venue
+    city?: string; // NUEVO: agregar city
+    province?: string; 
 }
 
 interface RecentUser {
