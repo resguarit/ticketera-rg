@@ -145,7 +145,9 @@ class EventController extends Controller
                 'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
                 'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null, // Para comparaciones
                 'location' => $event->venue->name ?? 'Sin venue',
-                'city' => $this->extractCity($event->venue->address ?? ''),
+                'city' => $event->venue->ciudad ? 
+                    $event->venue->ciudad->name : 
+                    $this->extractCity($event->venue->address ?? ''), // Fallback por compatibilidad
                 'status' => $status,
                 'tickets_sold' => $soldTickets,
                 'total_tickets' => $totalTickets,
@@ -391,8 +393,9 @@ class EventController extends Controller
     /**
      * Extraer ciudad de la dirección
      */
-    private function extractCity(string $address): string
+    private function extractCity(string $address = null): string
     {
+        // Este método ahora será deprecado, pero mantenemos compatibilidad
         if (empty($address)) {
             return 'Sin ciudad';
         }
@@ -411,7 +414,6 @@ class EventController extends Controller
             }
         }
         
-        // Si no encuentra ciudad conocida, retorna la penúltima parte o Buenos Aires por defecto
         return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 }
