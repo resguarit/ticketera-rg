@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
     BarChart3, 
     TrendingUp,
@@ -21,104 +21,126 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+// import { PageProps } from '@/types';
 
-// Mock data para reportes
-const salesData = {
-    totalRevenue: 2450000,
-    monthlyRevenue: 340000,
-    totalTickets: 15420,
-    monthlyTickets: 2180,
-    averageTicketPrice: 8500,
-    conversionRate: 12.5,
-    growthRate: 18.5
-};
+interface RealTimeStats {
+    today_sales: number;
+    today_tickets: number;
+    active_events: number;
+    total_users: number;
+    last_update: string;
+}
 
-const topEvents = [
-    {
-        id: 1,
-        name: "Festival de Música Electrónica 2024",
-        category: "música",
-        revenue: 450000,
-        tickets_sold: 2850,
-        growth: "+25%",
-        status: "active"
-    },
-    {
-        id: 2,
-        name: "Concierto Sinfónico de Primavera",
-        category: "música",
-        revenue: 320000,
-        tickets_sold: 1200,
-        growth: "+18%",
-        status: "completed"
-    },
-    {
-        id: 3,
-        name: "Copa Mundial de Fútbol",
-        category: "deportes",
-        revenue: 280000,
-        tickets_sold: 1850,
-        growth: "+12%",
-        status: "active"
-    },
-    {
-        id: 4,
-        name: "Teatro: Romeo y Julieta",
-        category: "teatro",
-        revenue: 95000,
-        tickets_sold: 580,
-        growth: "+8%",
-        status: "completed"
-    },
-    {
-        id: 5,
-        name: "Conferencia Tech 2024",
-        category: "conferencia",
-        revenue: 75000,
-        tickets_sold: 450,
-        growth: "+15%",
-        status: "active"
-    }
-];
-
-const monthlyData = [
-    { month: "Ene", revenue: 180000, tickets: 950 },
-    { month: "Feb", revenue: 220000, tickets: 1200 },
-    { month: "Mar", revenue: 340000, tickets: 1850 },
-    { month: "Abr", revenue: 280000, tickets: 1420 },
-    { month: "May", revenue: 320000, tickets: 1680 },
-    { month: "Jun", revenue: 450000, tickets: 2350 }
-];
-
-const categoryData = [
-    { category: "Música", percentage: 45, revenue: 1102500, color: "bg-purple-500" },
-    { category: "Deportes", percentage: 25, revenue: 612500, color: "bg-blue-500" },
-    { category: "Teatro", percentage: 15, revenue: 367500, color: "bg-orange-500" },
-    { category: "Conferencias", percentage: 10, revenue: 245000, color: "bg-green-500" },
-    { category: "Otros", percentage: 5, revenue: 122500, color: "bg-gray-500" }
-];
-
-const userDemographics = [
-    { age: "18-25", percentage: 30, users: 4626 },
-    { age: "26-35", percentage: 35, users: 5397 },
-    { age: "36-45", percentage: 20, users: 3084 },
-    { age: "46-55", percentage: 10, users: 1542 },
-    { age: "56+", percentage: 5, users: 771 }
-];
+interface ReportsProps {
+    salesData: {
+        totalRevenue: number;
+        monthlyRevenue: number;
+        totalTickets: number;
+        monthlyTickets: number;
+        averageTicketPrice: number;
+        conversionRate: number;
+        growthRate: number;
+    };
+    topEvents: Array<{
+        id: number;
+        name: string;
+        category: string;
+        revenue: number;
+        tickets_sold: number;
+        growth: string;
+        status: string;
+    }>;
+    monthlyData: Array<{
+        month: string;
+        revenue: number;
+        tickets: number;
+    }>;
+    categoryData: Array<{
+        category: string;
+        percentage: number;
+        revenue: number;
+        color: string;
+    }>;
+    userDemographics: Array<{
+        age: string;
+        percentage: number;
+        users: number;
+    }>;
+    timeRange: string;
+    [key: string]: any; // Index signature para satisfacer PageProps
+}
 
 export default function Reports({ auth }: any) {
-    const [timeRange, setTimeRange] = useState("6m");
+    const { salesData, topEvents, monthlyData, categoryData, userDemographics, timeRange } = usePage<ReportsProps>().props;
+    
+    const [currentTimeRange, setCurrentTimeRange] = useState(timeRange);
     const [reportType, setReportType] = useState("sales");
     const [isGenerating, setIsGenerating] = useState(false);
+    const [realTimeStats, setRealTimeStats] = useState<RealTimeStats | null>(null);
 
-    const handleGenerateReport = (type: string) => {
+    // Actualizar datos cuando cambia el rango de tiempo
+    const handleTimeRangeChange = (newTimeRange: string) => {
+        setCurrentTimeRange(newTimeRange);
+        router.get(route('admin.reports.index'), { timeRange: newTimeRange }, {
+            preserveState: true,
+            preserveScroll: true
+        });
+    };
+
+    // Cargar estadísticas en tiempo real
+    const loadRealTimeStats = async () => {
+        try {
+            const response = await fetch(route('admin.reports.real-time'));
+            const stats: RealTimeStats = await response.json();
+            setRealTimeStats(stats);
+        } catch (error) {
+            console.error('Error loading real-time stats:', error);
+        }
+    };
+
+    // Cargar estadísticas cada 30 segundos
+    useEffect(() => {
+        loadRealTimeStats();
+        const interval = setInterval(loadRealTimeStats, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleGenerateReport = async (type: string) => {
         setIsGenerating(true);
-        // Simular generación de reporte
-        setTimeout(() => {
+        
+        try {
+            const response = await fetch(route('admin.reports.export', { 
+                type, 
+                timeRange: currentTimeRange 
+            }));
+            const result = await response.json();
+            
+            // Mostrar mensaje de éxito (puedes usar toast aquí)
+            console.log(result.message);
+            
+        } catch (error) {
+            console.error('Error generando reporte:', error);
+        } finally {
             setIsGenerating(false);
-            console.log(`Generando reporte de ${type}`);
-        }, 2000);
+        }
+    };
+
+    const handleDownloadReport = async (reportType: string, format: string = 'pdf') => {
+        try {
+            const response = await fetch(route('admin.reports.download', {
+                type: format,
+                report: reportType,
+                timeRange: currentTimeRange
+            }));
+            const result = await response.json();
+            
+            // Simular descarga
+            console.log(result.message);
+            
+        } catch (error) {
+            console.error('Error descargando reporte:', error);
+        }
     };
 
     const getCategoryIcon = (category: string) => {
@@ -126,9 +148,25 @@ export default function Reports({ auth }: any) {
             case "música": return "🎵";
             case "deportes": return "⚽";
             case "teatro": return "🎭";
-            case "conferencia": return "💼";
+            case "conferencias": return "💼";
+            case "arte": return "🎨";
+            case "cine": return "🎬";
+            case "gastronomía": return "🍽️";
             default: return "📅";
         }
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS'
+        }).format(amount);
+    };
+
+    // Manejar caso cuando monthlyData está vacío
+    const getMaxRevenue = () => {
+        if (monthlyData.length === 0) return 1;
+        return Math.max(...monthlyData.map(m => m.revenue));
     };
 
     return (
@@ -146,10 +184,15 @@ export default function Reports({ auth }: any) {
                             <p className="text-gray-600 text-lg">
                                 Análisis detallado del rendimiento de la plataforma
                             </p>
+                            {realTimeStats && (
+                                <p className="text-sm text-gray-500 mt-2">
+                                    Última actualización: {realTimeStats.last_update}
+                                </p>
+                            )}
                         </div>
                         
                         <div className="flex items-center space-x-4">
-                            <Select value={timeRange} onValueChange={setTimeRange}>
+                            <Select value={currentTimeRange} onValueChange={handleTimeRangeChange}>
                                 <SelectTrigger className="w-40 bg-white border-gray-300 text-black">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -172,7 +215,7 @@ export default function Reports({ auth }: any) {
                             
                             <Button 
                                 className="bg-black text-white hover:bg-gray-800"
-                                onClick={() => handleGenerateReport('complete')}
+                                onClick={() => handleDownloadReport('complete')}
                                 disabled={isGenerating}
                             >
                                 {isGenerating ? (
@@ -197,13 +240,21 @@ export default function Reports({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Ingresos Totales</p>
-                                        <p className="text-2xl font-bold text-black">${salesData.totalRevenue.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-black">{formatCurrency(salesData.totalRevenue)}</p>
                                         <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                                            <span className="text-green-600 text-sm font-medium">+{salesData.growthRate}%</span>
+                                            {salesData.growthRate >= 0 ? (
+                                                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                                            ) : (
+                                                <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                                            )}
+                                            <span className={`text-sm font-medium ${
+                                                salesData.growthRate >= 0 ? 'text-green-600' : 'text-red-600'
+                                            }`}>
+                                                {salesData.growthRate >= 0 ? '+' : ''}{salesData.growthRate}%
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -217,11 +268,11 @@ export default function Reports({ auth }: any) {
                                         <p className="text-gray-600 text-sm font-medium">Tickets Vendidos</p>
                                         <p className="text-2xl font-bold text-black">{salesData.totalTickets.toLocaleString()}</p>
                                         <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-4 h-4 text-blue-500 mr-1" />
-                                            <span className="text-blue-600 text-sm font-medium">+22%</span>
+                                            <TrendingUp className="w-4 h-4 text-chart-2 mr-1" />
+                                            <span className="text-chart-2 text-sm font-medium">+22%</span>
                                         </div>
                                     </div>
-                                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-2 rounded-lg flex items-center justify-center">
                                         <Users className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -233,13 +284,13 @@ export default function Reports({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Precio Promedio</p>
-                                        <p className="text-2xl font-bold text-black">${salesData.averageTicketPrice.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-black">{formatCurrency(salesData.averageTicketPrice)}</p>
                                         <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-4 h-4 text-purple-500 mr-1" />
-                                            <span className="text-purple-600 text-sm font-medium">+8%</span>
+                                            <TrendingUp className="w-4 h-4 text-chart-3 mr-1" />
+                                            <span className="text-chart-3 text-sm font-medium">+8%</span>
                                         </div>
                                     </div>
-                                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-3 rounded-lg flex items-center justify-center">
                                         <BarChart3 className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
@@ -253,17 +304,43 @@ export default function Reports({ auth }: any) {
                                         <p className="text-gray-600 text-sm font-medium">Tasa de Conversión</p>
                                         <p className="text-2xl font-bold text-black">{salesData.conversionRate}%</p>
                                         <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-4 h-4 text-orange-500 mr-1" />
-                                            <span className="text-orange-600 text-sm font-medium">+3.2%</span>
+                                            <TrendingUp className="w-4 h-4 text-chart-4 mr-1" />
+                                            <span className="text-chart-4 text-sm font-medium">+3.2%</span>
                                         </div>
                                     </div>
-                                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-chart-4 rounded-lg flex items-center justify-center">
                                         <TrendingUp className="w-6 h-6 text-white" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
+
+                    {/* Stats en tiempo real */}
+                    {realTimeStats && (
+                        <Card className="bg-gradient-to-r from-primary to-chart-4 text-white mb-8">
+                            <CardContent className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                                    <div>
+                                        <p className="text-blue-100 text-sm">Ventas Hoy</p>
+                                        <p className="text-2xl font-bold">{formatCurrency(realTimeStats.today_sales)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-blue-100 text-sm">Tickets Hoy</p>
+                                        <p className="text-2xl font-bold">{realTimeStats.today_tickets}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-blue-100 text-sm">Eventos Activos</p>
+                                        <p className="text-2xl font-bold">{realTimeStats.active_events}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-blue-100 text-sm">Total Usuarios</p>
+                                        <p className="text-2xl font-bold">{realTimeStats.total_users}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Tabs de Reportes */}
                     <Tabs value={reportType} onValueChange={setReportType}>
@@ -290,27 +367,33 @@ export default function Reports({ auth }: any) {
                                         <CardHeader>
                                             <CardTitle className="text-black flex items-center space-x-2">
                                                 <LineChart className="w-5 h-5" />
-                                                <span>Tendencia de Ventas (Últimos 6 meses)</span>
+                                                <span>Tendencia de Ventas</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="space-y-4">
-                                                {monthlyData.map((data, index) => (
+                                                {monthlyData.length > 0 ? monthlyData.map((data, index) => (
                                                     <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                                         <div className="flex items-center space-x-4">
-                                                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                                            <div className="w-12 h-12 bg-gradient-to-r from-primary to-chart-4 rounded-lg flex items-center justify-center">
                                                                 <span className="text-white font-bold">{data.month}</span>
                                                             </div>
                                                             <div>
-                                                                <p className="font-semibold text-black">${data.revenue.toLocaleString()}</p>
+                                                                <p className="font-semibold text-black">{formatCurrency(data.revenue)}</p>
                                                                 <p className="text-gray-600 text-sm">{data.tickets} tickets vendidos</p>
                                                             </div>
                                                         </div>
                                                         <div className="w-32">
-                                                            <Progress value={(data.revenue / 500000) * 100} className="h-2" />
+                                                            <Progress value={Math.max(data.revenue / getMaxRevenue() * 100, 5)} className="h-2" />
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )) : (
+                                                    <div className="text-center py-8">
+                                                        <LineChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                                        <h3 className="text-xl font-semibold text-gray-600 mb-2">No hay datos de ventas</h3>
+                                                        <p className="text-gray-500">No se encontraron ventas en el período seleccionado</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -327,7 +410,7 @@ export default function Reports({ auth }: any) {
                                                     <span className="text-green-800 font-medium">Este Mes</span>
                                                     <TrendingUp className="w-4 h-4 text-green-600" />
                                                 </div>
-                                                <p className="text-2xl font-bold text-green-900">${salesData.monthlyRevenue.toLocaleString()}</p>
+                                                <p className="text-2xl font-bold text-green-900">{formatCurrency(salesData.monthlyRevenue)}</p>
                                                 <p className="text-green-700 text-sm">{salesData.monthlyTickets} tickets</p>
                                             </div>
 
@@ -336,7 +419,7 @@ export default function Reports({ auth }: any) {
                                                     <span className="text-blue-800 font-medium">Promedio Diario</span>
                                                     <BarChart3 className="w-4 h-4 text-blue-600" />
                                                 </div>
-                                                <p className="text-2xl font-bold text-blue-900">${Math.round(salesData.monthlyRevenue / 30).toLocaleString()}</p>
+                                                <p className="text-2xl font-bold text-blue-900">{formatCurrency(Math.round(salesData.monthlyRevenue / 30))}</p>
                                                 <p className="text-blue-700 text-sm">{Math.round(salesData.monthlyTickets / 30)} tickets</p>
                                             </div>
 
@@ -345,7 +428,7 @@ export default function Reports({ auth }: any) {
                                                     <span className="text-purple-800 font-medium">Proyección Anual</span>
                                                     <TrendingUp className="w-4 h-4 text-purple-600" />
                                                 </div>
-                                                <p className="text-2xl font-bold text-purple-900">${(salesData.monthlyRevenue * 12).toLocaleString()}</p>
+                                                <p className="text-2xl font-bold text-purple-900">{formatCurrency(salesData.monthlyRevenue * 12)}</p>
                                                 <p className="text-purple-700 text-sm">{(salesData.monthlyTickets * 12).toLocaleString()} tickets</p>
                                             </div>
                                         </CardContent>
@@ -360,15 +443,15 @@ export default function Reports({ auth }: any) {
                                 <CardHeader>
                                     <CardTitle className="text-black flex items-center space-x-2">
                                         <Calendar className="w-5 h-5" />
-                                        <span>Top 5 Eventos por Ingresos</span>
+                                        <span>Top {topEvents.length} Eventos por Ingresos</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {topEvents.map((event, index) => (
+                                        {topEvents.length > 0 ? topEvents.map((event, index) => (
                                             <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                                 <div className="flex items-center space-x-4">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-lg flex items-center justify-center">
                                                         <span className="text-white font-bold">#{index + 1}</span>
                                                     </div>
                                                     <div>
@@ -387,7 +470,7 @@ export default function Reports({ auth }: any) {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-xl font-bold text-black">${event.revenue.toLocaleString()}</p>
+                                                    <p className="text-xl font-bold text-black">{formatCurrency(event.revenue)}</p>
                                                     <p className="text-gray-600 text-sm">{event.tickets_sold} tickets</p>
                                                     <div className="flex items-center justify-end mt-1">
                                                         <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
@@ -395,7 +478,13 @@ export default function Reports({ auth }: any) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-8">
+                                                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-600 mb-2">No hay datos de eventos</h3>
+                                                <p className="text-gray-500">No se encontraron eventos con ventas en el período seleccionado</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -417,7 +506,7 @@ export default function Reports({ auth }: any) {
                                                 <div key={index} className="space-y-2">
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-black font-medium">{demo.age} años</span>
-                                                        <span className="text-gray-600">{demo.users.toLocaleString()} usuarios ({demo.percentage}%)</span>
+                                                        <span className="text-gray-600">{Math.round(demo.users).toLocaleString()} usuarios ({demo.percentage}%)</span>
                                                     </div>
                                                     <Progress value={demo.percentage} className="h-2" />
                                                 </div>
@@ -434,19 +523,29 @@ export default function Reports({ auth }: any) {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="p-4 bg-blue-50 rounded-lg text-center">
                                                 <p className="text-blue-600 text-sm font-medium">Total Usuarios</p>
-                                                <p className="text-2xl font-bold text-blue-900">15,420</p>
+                                                <p className="text-2xl font-bold text-blue-900">{userDemographics.reduce((sum, demo) => sum + demo.users, 0).toLocaleString()}</p>
                                             </div>
                                             <div className="p-4 bg-green-50 rounded-lg text-center">
-                                                <p className="text-green-600 text-sm font-medium">Nuevos (Mes)</p>
-                                                <p className="text-2xl font-bold text-green-900">1,247</p>
+                                                <p className="text-green-600 text-sm font-medium">Más Activos</p>
+                                                <p className="text-2xl font-bold text-green-900">
+                                                    {userDemographics.length > 0 
+                                                        ? userDemographics.find(d => d.percentage === Math.max(...userDemographics.map(ud => ud.percentage)))?.age || 'N/A'
+                                                        : 'N/A'
+                                                    }
+                                                </p>
                                             </div>
                                             <div className="p-4 bg-purple-50 rounded-lg text-center">
-                                                <p className="text-purple-600 text-sm font-medium">Activos</p>
-                                                <p className="text-2xl font-bold text-purple-900">12,891</p>
+                                                <p className="text-purple-600 text-sm font-medium">Promedio</p>
+                                                <p className="text-2xl font-bold text-purple-900">
+                                                    {userDemographics.length > 0 
+                                                        ? Math.round(userDemographics.reduce((sum, demo) => sum + demo.users, 0) / userDemographics.length).toLocaleString()
+                                                        : '0'
+                                                    }
+                                                </p>
                                             </div>
                                             <div className="p-4 bg-orange-50 rounded-lg text-center">
-                                                <p className="text-orange-600 text-sm font-medium">Retención</p>
-                                                <p className="text-2xl font-bold text-orange-900">83.6%</p>
+                                                <p className="text-orange-600 text-sm font-medium">Crecimiento</p>
+                                                <p className="text-2xl font-bold text-orange-900">+12.5%</p>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -465,21 +564,27 @@ export default function Reports({ auth }: any) {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-6">
-                                        {categoryData.map((category, index) => (
+                                        {categoryData.length > 0 ? categoryData.map((category, index) => (
                                             <div key={index} className="space-y-3">
                                                 <div className="flex justify-between items-center">
                                                     <div className="flex items-center space-x-3">
-                                                        <div className={`w-4 h-4 rounded ${category.color}`}></div>
+                                                        <div className={`w-4 h-4 rounded`} style={{ backgroundColor: category.color }}></div>
                                                         <span className="text-black font-medium">{category.category}</span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-black font-semibold">${category.revenue.toLocaleString()}</p>
+                                                        <p className="text-black font-semibold">{formatCurrency(category.revenue)}</p>
                                                         <p className="text-gray-600 text-sm">{category.percentage}%</p>
                                                     </div>
                                                 </div>
                                                 <Progress value={category.percentage} className="h-3" />
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-8">
+                                                <PieChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-600 mb-2">No hay datos de categorías</h3>
+                                                <p className="text-gray-500">No se encontraron ventas por categorías en el período seleccionado</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -499,7 +604,7 @@ export default function Reports({ auth }: any) {
                                 <Button 
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
-                                    onClick={() => handleGenerateReport('sales')}
+                                    onClick={() => handleDownloadReport('sales')}
                                 >
                                     <BarChart3 className="w-6 h-6 mb-2" />
                                     <span>Reporte de Ventas</span>
@@ -508,7 +613,7 @@ export default function Reports({ auth }: any) {
                                 <Button 
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
-                                    onClick={() => handleGenerateReport('events')}
+                                    onClick={() => handleDownloadReport('events')}
                                 >
                                     <Calendar className="w-6 h-6 mb-2" />
                                     <span>Reporte de Eventos</span>
@@ -517,7 +622,7 @@ export default function Reports({ auth }: any) {
                                 <Button 
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
-                                    onClick={() => handleGenerateReport('users')}
+                                    onClick={() => handleDownloadReport('users')}
                                 >
                                     <Users className="w-6 h-6 mb-2" />
                                     <span>Reporte de Usuarios</span>
