@@ -2,9 +2,9 @@ import { UserItem } from '@/types/organizer';
 import { UserCard } from '@/components/organizers/users/UserCard';
 import { UserCheck } from 'lucide-react';
 
-interface Props { users: UserItem[]; onRemove(userId: number): void; removingIds: Record<number, boolean> }
+interface Props { users: UserItem[]; onRemove(userId: number): void; removingIds: Record<number, boolean>; onViewCredentials?(user: UserItem): void }
 
-export function UserList({ users, onRemove }: Props) {
+export function UserList({ users, onRemove, onViewCredentials }: Props) {
   if (users.length === 0) {
     return (
       <div className="text-center py-12">
@@ -17,7 +17,7 @@ export function UserList({ users, onRemove }: Props) {
   return (
     <div className="space-y-4">
       {users.map(user => (
-        <UserCard key={user.id} user={user} onRemove={() => onRemove(user.id)} />
+        <UserCard key={user.id} user={user} onRemove={() => onRemove(user.id)} onViewCredentials={() => onViewCredentials && onViewCredentials(user)} />
       ))}
     </div>
   );

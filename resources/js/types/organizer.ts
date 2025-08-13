@@ -22,6 +22,7 @@ export interface UserItem {
   email: string;
   role: string;
   created_at: string;
+  organizer_id?: number | null;
   person: PersonItem;
 }
 

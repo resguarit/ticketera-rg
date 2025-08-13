@@ -45,6 +45,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{organizerId}/users', [OrganizerController::class, 'addUser'])->name('add-user');
         Route::get('/{organizerId}/users/search', [OrganizerController::class, 'searchUsers'])->name('search-users');
         Route::delete('/{organizerId}/users/{userId}', [OrganizerController::class, 'removeUser'])->name('remove-user');
+        Route::post('/{organizerId}/users/{userId}/regenerate-credentials', [OrganizerController::class, 'regenerateCredentials'])->name('regenerate-credentials');
     });
     
     // Reportes
