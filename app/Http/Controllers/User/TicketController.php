@@ -150,11 +150,11 @@ class TicketController extends Controller
     private function mapTicketStatus(string $status): string
     {
         return match($status) {
-            'AVAILABLE' => 'confirmed',
+            'AVAILABLE' => 'available',
             'USED' => 'used',
             'CANCELLED' => 'cancelled',
-            'TRANSFERRED' => 'transferred',
-            default => 'pending'
+            'REPRINTED' => 'reprinted',
+            default => 'available'
         };
     }
 

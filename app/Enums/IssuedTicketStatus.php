@@ -8,5 +8,4 @@ enum IssuedTicketStatus: string
     case USED = 'used';
     case CANCELED = 'canceled';
     case REPRINTED = 'reprinted';
-
 }

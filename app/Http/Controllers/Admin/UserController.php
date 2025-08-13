@@ -67,13 +67,13 @@ class UserController extends Controller
                 break;
             case 'purchases':
                 $query->withCount(['orders' => function($q) {
-                    $q->where('status', 'CONFIRMED');
+                    $q->where('status', 'PAID');
                 }])
                 ->orderBy('orders_count', $sortDirection);
                 break;
             case 'spent':
                 $query->withSum(['orders' => function($q) {
-                    $q->where('status', 'CONFIRMED');
+                    $q->where('status', 'PAID');
                 }], 'total_amount')
                 ->orderBy('orders_sum_total_amount', $sortDirection);
                 break;
@@ -88,11 +88,11 @@ class UserController extends Controller
         $usersData = $users->getCollection()->map(function ($user) {
             // Estadísticas del usuario
             $totalPurchases = Order::where('client_id', $user->id)
-                ->where('status', 'CONFIRMED')
+                ->where('status', 'PAID')
                 ->count();
             
             $totalSpent = Order::where('client_id', $user->id)
-                ->where('status', 'CONFIRMED')
+                ->where('status', 'PAID')
                 ->sum('total_amount');
 
             $lastOrder = Order::where('client_id', $user->id)
@@ -165,9 +165,9 @@ class UserController extends Controller
         // Estadísticas del usuario
         $userStats = [
             'total_orders' => $orders->count(),
-            'confirmed_orders' => $orders->where('status', 'CONFIRMED')->count(),
-            'total_spent' => $orders->where('status', 'CONFIRMED')->sum('total_amount'),
-            'avg_order_value' => $orders->where('status', 'CONFIRMED')->avg('total_amount') ?: 0,
+            'confirmed_orders' => $orders->where('status', 'PAID')->count(),
+            'total_spent' => $orders->where('status', 'PAID')->sum('total_amount'),
+            'avg_order_value' => $orders->where('status', 'PAID')->avg('total_amount') ?: 0,
         ];
 
         $userData = [
@@ -371,10 +371,10 @@ class UserController extends Controller
             ->count();
 
         // Total de órdenes confirmadas
-        $totalOrders = Order::where('status', 'CONFIRMED')->count();
+        $totalOrders = Order::where('status', 'PAID')->count();
 
         // Ingresos totales
-        $totalRevenue = Order::where('status', 'CONFIRMED')
+        $totalRevenue = Order::where('status', 'PAID')
             ->sum('total_amount');
 
         return [

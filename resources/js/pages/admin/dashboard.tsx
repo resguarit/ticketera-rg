@@ -97,10 +97,10 @@ const getStatIcon = (title: string) => {
 // Mapeo de colores para las estadísticas
 const getStatColor = (title: string) => {
     switch (title) {
-        case 'Total Clientes': return 'bg-blue-500'; // Cambié de 'Total Usuarios' a 'Total Clientes'
-        case 'Eventos Activos': return 'bg-purple-500';
-        case 'Ingresos Totales': return 'bg-green-500';
-        case 'Tickets Vendidos': return 'bg-orange-500';
+        case 'Total Clientes': return 'bg-primary'; // Cambié de 'Total Usuarios' a 'Total Clientes'
+        case 'Eventos Activos': return 'bg-chart-2';
+        case 'Ingresos Totales': return 'bg-chart-3';
+        case 'Tickets Vendidos': return 'bg-chart-4';
         default: return 'bg-gray-500';
     }
 };
@@ -333,15 +333,15 @@ export default function AdminDashboard({
                             </Card>
 
                             {/* Recent Users */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
-                                <CardHeader className="border-b border-gray-200">
+                            <Card className="bg-white border-gray-200 shadow-lg gap-2">
+                                <CardHeader className="border-b border-gray-200 ">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-black flex items-center space-x-3">
-                                            <Users className="w-6 h-6 text-purple-500" />
+                                            <Users className="w-6 h-6 text-primary" />
                                             <span>Usuarios Recientes</span>
                                         </CardTitle>
                                         <Link href="/admin/users">
-                                            <Button variant="ghost" size="sm" className="text-purple-500 hover:text-purple-600 hover:bg-purple-50">
+                                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary-50">
                                                 Ver todos
                                             </Button>
                                         </Link>
@@ -352,7 +352,7 @@ export default function AdminDashboard({
                                         {recentUsers.length > 0 ? recentUsers.map((user) => (
                                             <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
                                                         <span className="text-white font-semibold text-sm">
                                                             {user.name.charAt(0).toUpperCase()}
                                                         </span>
@@ -450,44 +450,44 @@ export default function AdminDashboard({
                             </Card>
 
                             {/* Quick Actions */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
-                                <CardHeader className="border-b border-gray-200">
+                            <Card className="bg-white border-gray-200 shadow-lg gap-4 py-3">
+                                <CardHeader className="border-b border-gray-200 pb-3">
                                     <CardTitle className="text-black flex items-center space-x-3">
                                         <Settings className="w-6 h-6 text-gray-600" />
                                         <span>Acciones Rápidas</span>
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-6 space-y-3">
+                                <CardContent className="p-6 space-y-3 gap-4">
                                     <Link href="/admin/users">
-                                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white justify-start">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <UserCheck className="w-4 h-4 mr-2" />
                                             Gestionar Usuarios
                                         </Button>
                                     </Link>
                                     
                                     <Link href="/admin/organizers">
-                                        <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white justify-start">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <Building className="w-4 h-4 mr-2" />
                                             Gestionar Organizadores
                                         </Button>
                                     </Link>
                                     
                                     <Link href="/admin/events">
-                                        <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white justify-start">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <Calendar className="w-4 h-4 mr-2" />
                                             Revisar Eventos
                                         </Button>
                                     </Link>
                                     
                                     <Link href="/admin/reports">
-                                        <Button className="w-full bg-green-500 hover:bg-green-600 text-white justify-start">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <BarChart3 className="w-4 h-4 mr-2" />
                                             Ver Reportes
                                         </Button>
                                     </Link>
                                     
                                     <Link href="/admin/settings">
-                                        <Button className="w-full bg-gray-500 hover:bg-gray-600 text-white justify-start">
+                                        <Button className="w-full bbg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <Settings className="w-4 h-4 mr-2" />
                                             Configuración
                                         </Button>

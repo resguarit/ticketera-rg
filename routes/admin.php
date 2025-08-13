@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrganizerController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ReportController; // Agregar esta línea
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -20,7 +21,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::patch('/functions/{function}/toggle', [EventController::class, 'toggleFunction'])->name('functions.toggle');
     });
     
-
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
@@ -48,11 +48,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{organizerId}/users/{userId}/regenerate-credentials', [OrganizerController::class, 'regenerateCredentials'])->name('regenerate-credentials');
     });
     
-    // Reportes
+    // Reportes - ACTUALIZADO
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('admin/reports');
-        })->name('index');
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/export', [ReportController::class, 'export'])->name('export');
+        Route::get('/download', [ReportController::class, 'downloadReport'])->name('download');
+        Route::get('/real-time', [ReportController::class, 'realTimeStats'])->name('real-time');
     });
     
     // Configuración

@@ -81,11 +81,11 @@ class DashboardController extends Controller
         $newEventsThisPeriod = Event::where('created_at', '>=', $startDate)->count();
         
         // Ingresos totales (usando el enum de OrderStatus)
-        $totalRevenue = Order::where('status', 'CONFIRMED')
+        $totalRevenue = Order::where('status', 'PAID')
             ->where('created_at', '>=', $startDate)
             ->sum('total_amount');
 
-        $previousRevenue = Order::where('status', 'CONFIRMED')
+        $previousRevenue = Order::where('status', 'PAID')
             ->where('created_at', '<', $startDate)
             ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
             ->sum('total_amount');
@@ -96,7 +96,7 @@ class DashboardController extends Controller
 
         // Tickets vendidos (usando IssuedTicket)
         $ticketsSold = IssuedTicket::whereHas('order', function($query) use ($startDate) {
-            $query->where('status', 'CONFIRMED')
+            $query->where('status', 'PAID')
                   ->where('created_at', '>=', $startDate);
         })->count();
 
@@ -191,7 +191,7 @@ class DashboardController extends Controller
 
                 if ($user->role->value === 'client') { // Usar el enum
                     $purchases = Order::where('client_id', $user->id)
-                        ->where('status', 'CONFIRMED')
+                        ->where('status', 'PAID')
                         ->count();
                 } elseif ($user->role->value === 'organizer') {
                     $eventsCreated = Event::where('organizer_id', $user->organizer_id)->count();
