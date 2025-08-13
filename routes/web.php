@@ -18,22 +18,7 @@ use App\Http\Controllers\User\TicketController as UserTicketController;
 require __DIR__.'/admin.php';
 
 /*-------Rutas protegidas para organizadores----------*/ 
-
-Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.')->group(function () {
-    Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
-    
-    // Gestión de categorías
-    Route::resource('categories', CategoryController::class);
-    Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
-    
-    // Gestión de venues
-    Route::resource('venues', VenueController::class);
-    Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
-    
-    // Gestión de sectores
-    Route::resource('sectors', SectorController::class);
-    Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);
-});
+require __DIR__.'/organizer.php';
 
 /*-------Rutas protegidas para usuarios autenticados----------*/ 
 

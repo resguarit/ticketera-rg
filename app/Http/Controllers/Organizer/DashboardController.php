@@ -14,13 +14,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $organizerData = [
-            'name' => 'Fan Tickets', 
-            'id' => 1,
-        ];
-
         return Inertia::render('organizer/dashboard', [
-            'organizer' => $organizerData, 
+            'organizer' => $user->organizer,
         ]);
     }
 }

@@ -1,14 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Key } from 'lucide-react';
 import { UserItem } from '@/types/organizer';
 import { getRoleText, getUserFullName, formatDate } from '@/utils/userFormat';
 import RemoveUserDialog from '@/components/organizers/users/RemoveUserDialog';
 
-interface Props { user: UserItem; onRemove(): void }
+interface Props { user: UserItem; onRemove(): void; onViewCredentials?(): void }
 
-export function UserCard({ user, onRemove }: Props) {
+export function UserCard({ user, onRemove, onViewCredentials }: Props) {
   return (
     <div className="p-4 bg-muted rounded-lg hover:bg-accent transition-colors border border-border">
       <div className="flex items-center justify-between">
@@ -28,8 +28,9 @@ export function UserCard({ user, onRemove }: Props) {
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="secondary" className="bg-secondary text-secondary-foreground">{getRoleText(user.role)}</Badge>
-          <span className="text-xs text-muted-foreground">Desde {formatDate(user.created_at)}</span>
-          <RemoveUserDialog onConfirm={onRemove} />
+            <span className="text-xs text-muted-foreground">Desde {formatDate(user.created_at)}</span>
+            <Button size="sm" variant="outline" className="border-border hover:bg-white" onClick={onViewCredentials}><Key className="w-3 h-3 mr-1"/>Credenciales</Button>
+            <RemoveUserDialog onConfirm={onRemove} />
         </div>
       </div>
     </div>

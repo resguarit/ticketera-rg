@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Hash;
 
 class OrganizerController extends Controller
 {
@@ -241,5 +242,23 @@ class OrganizerController extends Controller
             });
 
         return response()->json($users);
+    }
+
+    public function regenerateCredentials(Request $request, int $organizerId, int $userId): RedirectResponse
+    {
+        $organizer = Organizer::findOrFail($organizerId);
+        $user = User::where('organizer_id', $organizer->id)->findOrFail($userId);
+
+        $newPassword = Str::password(12);
+        $user->password = $newPassword; // hashed via cast
+        $user->save();
+
+        return redirect()->back()->with([
+            'credentials' => [
+                'email' => $user->email,
+                'password' => $newPassword,
+            ],
+            'regen_credentials' => true,
+        ]);
     }
 }

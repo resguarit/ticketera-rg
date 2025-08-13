@@ -58,11 +58,33 @@ export default function Header({ className = '' }: HeaderProps) {
                                 >
                                     Hola, {auth.user.person.name}
                                 </Link>
+                                {auth.user.role === 'admin' && (
+                                    <Link href={route('admin.dashboard')} className="text-gray-500 hover:text-primary font-medium transition-colors">
+                                        <Button 
+                                            variant="outline"
+                                            size="sm"
+                                            className='bg-orange-500 text-white hover:text-white hover:bg-orange-600 border-orange-500'
+                                        >
+                                            Admin
+                                        </Button>
+                                    </Link>
+                                )}
+                                {auth.user.role === 'organizer' && (
+                                    <Link href={route('organizer.dashboard')} className="text-gray-500 hover:text-primary font-medium transition-colors">
+                                        <Button 
+                                            variant="outline"
+                                            size="sm"
+                                            className='bg-green-500 text-white hover:text-white hover:bg-green-600 border-green-500'
+                                        >
+                                            Panel Organizador
+                                        </Button>
+                                    </Link>
+                                )}
                                 <Button
                                     onClick={handleLogout}
                                     variant="outline"
                                     size="sm"
-                                    className="bg-primary text-white hover:bg-primary-hover border-primary"
+                                    className="bg-primary text-white hover:bg-primary-hover hover:text-white border-primary"
                                 >
                                     Cerrar Sesión
                                 </Button>
