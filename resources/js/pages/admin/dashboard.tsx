@@ -71,6 +71,7 @@ interface SystemStatus {
     name: string;
     status: string;
     label: string;
+    details?: string;
 }
 
 interface DashboardProps {
@@ -406,11 +407,16 @@ export default function AdminDashboard({
                                 <CardContent className="p-6 space-y-4">
                                     {systemStatus.map((system, index) => (
                                         <div key={index} className={`flex items-center justify-between p-3 rounded-lg border ${getSystemStatusColor(system.status)}`}>
-                                            <div className="flex items-center space-x-2">
+                                            <div className="flex items-center space-x-2 flex-1">
                                                 {getSystemStatusIcon(system.status)}
-                                                <span className="text-gray-700 font-medium">{system.name}</span>
+                                                <div className="flex-1">
+                                                    <span className="text-gray-700 font-medium block">{system.name}</span>
+                                                    {system.details && (
+                                                        <span className="text-gray-500 text-xs block mt-1">{system.details}</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <Badge className={`${getSystemStatusBadge(system.status)} text-white border-0`}>
+                                            <Badge className={`${getSystemStatusBadge(system.status)} text-white border-0 ml-2`}>
                                                 {system.label}
                                             </Badge>
                                         </div>

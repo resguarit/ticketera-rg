@@ -1,23 +1,27 @@
-import { useState, useEffect } from 'react';
+// Ejemplo de cómo implementar la página de usuarios con el nuevo sistema
+// Este archivo muestra cómo usar AdminDashboardLayout para la página de usuarios
+
+import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { 
-    UserPlus, 
-    Eye, 
-    Edit, 
-    Trash2, 
-    Users as UsersIcon,
-    TrendingUp,
-    ShoppingCart,
+    Users as UsersIcon, 
+    UserPlus,
     CheckCircle,
     Clock,
-    XCircle
+    TrendingUp,
+    ShoppingCart,
+    Eye,
+    Edit,
+    Trash2
 } from 'lucide-react';
+import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
+// Interfaces (mantener las existentes)
 interface UserData {
     id: number;
     name: string;
@@ -69,22 +73,6 @@ export default function Users({ auth }: any) {
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all");
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
 
-    // Estado para detectar si hay filtros pendientes de aplicar
-    const [hasPendingFilters, setHasPendingFilters] = useState(false);
-
-    // Detectar cambios en los filtros para mostrar indicador
-    const checkPendingFilters = () => {
-        const hasChanges = 
-            searchTerm !== (filters.search || "") ||
-            selectedStatus !== (filters.status || "all");
-        setHasPendingFilters(hasChanges);
-    };
-
-    // Llamar checkPendingFilters cuando cambien los filtros locales
-    useEffect(() => {
-        checkPendingFilters();
-    }, [searchTerm, selectedStatus]);
-
     // Configuración de estadísticas para el dashboard
     const userStats: StatCardProps[] = [
         {
@@ -125,9 +113,8 @@ export default function Users({ auth }: any) {
         ],
     };
 
-    // Aplicar filtros (solo cuando se presione el botón o Enter)
+    // Aplicar filtros
     const handleFilters = () => {
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
         router.get(route('admin.users.index'), {
             search: searchTerm,
             status: selectedStatus,
@@ -143,14 +130,13 @@ export default function Users({ auth }: any) {
         setSearchTerm("");
         setSelectedStatus("all");
         setSortBy("created_at");
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
         router.get(route('admin.users.index'), {}, {
             preserveState: true,
             replace: true
         });
     };
 
-    // Manejar Enter en búsqueda para aplicar filtros
+    // Manejar Enter en búsqueda
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             handleFilters();
@@ -184,14 +170,6 @@ export default function Users({ auth }: any) {
         );
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "active": return <CheckCircle className="w-4 h-4 text-green-500" />;
-            case "pending": return <Clock className="w-4 h-4 text-yellow-500" />;
-            default: return <XCircle className="w-4 h-4 text-gray-500" />;
-        }
-    };
-
     return (
         <>
             <Head title="Gestión de Usuarios - Panel Admin" />
@@ -213,73 +191,61 @@ export default function Users({ auth }: any) {
                 onApplyFilters={handleFilters}
                 onClearFilters={handleClearFilters}
                 onKeyPress={handleKeyPress}
-                hasPendingFilters={hasPendingFilters}
             >
                 {/* Users Table */}
                 <Card className="bg-white border-gray-200 shadow-lg">
                     <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-black">
-                            Usuarios ({users.total})
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-black">
+                                Usuarios ({users.total})
+                            </CardTitle>
+                        </div>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="space-y-4">
                             {users.data.map((user) => (
                                 <div key={user.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4 flex-1">
-                                            {/* Avatar */}
-                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                                                 <UsersIcon className="w-6 h-6 text-white" />
                                             </div>
-
-                                            {/* User Info */}
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-black">{user.name}</h3>
-                                                        <p className="text-gray-600 text-sm">{user.email}</p>
-                                                        <p className="text-gray-500 text-xs">DNI: {user.dni} • Tel: {user.phone}</p>
-                                                    </div>
-
-                                                    <div className="flex items-center space-x-4">
-                                                        {/* Stats */}
-                                                        <div className="text-right">
-                                                            <p className="text-sm font-medium text-black">
-                                                                {user.total_purchases} compras
-                                                            </p>
-                                                            <p className="text-sm text-gray-600">
-                                                                ${user.total_spent.toLocaleString()} gastados
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Status */}
-                                                        <div className="flex items-center space-x-2">
-                                                            {getStatusIcon(user.status)}
-                                                            {getStatusBadge(user.status)}
-                                                        </div>
-
-                                                        {/* Actions */}
-                                                        <div className="flex items-center space-x-2">
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Eye className="w-4 h-4 mr-1" />
-                                                                Ver
-                                                            </Button>
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Edit className="w-4 h-4 mr-1" />
-                                                                Editar
-                                                            </Button>
-                                                            <Button 
-                                                                onClick={() => handleDeleteUser(user.id)}
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-black">{user.name}</h3>
+                                                <p className="text-gray-600 text-sm">{user.email}</p>
+                                                <p className="text-gray-500 text-xs">DNI: {user.dni} • Tel: {user.phone}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-4">
+                                            <div className="text-right">
+                                                <p className="text-sm font-medium text-black">
+                                                    {user.total_purchases} compras
+                                                </p>
+                                                <p className="text-sm text-gray-600">
+                                                    ${user.total_spent.toLocaleString()} gastados
+                                                </p>
+                                            </div>
+                                            
+                                            {getStatusBadge(user.status)}
+                                            
+                                            <div className="flex items-center space-x-2">
+                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
+                                                    <Eye className="w-4 h-4 mr-1" />
+                                                    Ver
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
+                                                    <Edit className="w-4 h-4 mr-1" />
+                                                    Editar
+                                                </Button>
+                                                <Button 
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>

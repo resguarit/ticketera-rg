@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { 
-    Search, 
     Plus, 
-    Filter, 
     MoreVertical, 
     Eye, 
     Edit, 
@@ -13,20 +11,10 @@ import {
     Calendar, 
     Users,
     CheckCircle,
-    XCircle,
-    Clock,
-    AlertTriangle,
-    Download,
-    Upload,
-    Star,
     DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -48,6 +36,10 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useDebounce } from 'use-debounce';
+
+// Components
+import { AdminDashboardLayout } from '@/components/admin/AdminDashboardLayout';
+import type { StatCardProps, FilterConfig } from '@/types/admin';
 
 // 1. Interfaces ajustadas a los datos reales del backend
 interface Stat {
@@ -91,22 +83,80 @@ export default function Index({ auth }: any) {
 
     // Estados para manejar los filtros
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
+    const [selectedStatus, setSelectedStatus] = useState("all");
+    const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
+    const [hasPendingFilters, setHasPendingFilters] = useState(false);
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
-    // 3. Eliminar la lógica de filtrado del lado del cliente (filteredOrganizers y mockOrganizers)
+    // Configuración de estadísticas para el dashboard
+    const organizerStats: StatCardProps[] = [
+        {
+            title: "Total Organizadores",
+            value: stats.total_organizers,
+            format: "number",
+            icon: Building,
+            variant: "primary"
+        },
+        {
+            title: "Organizadores Activos",
+            value: stats.active_organizers,
+            format: "number",
+            icon: CheckCircle,
+            variant: "success"
+        },
+        {
+            title: "Eventos Creados",
+            value: stats.total_events,
+            format: "number",
+            icon: Calendar,
+            variant: "info"
+        },
+        {
+            title: "Ingresos Totales",
+            value: stats.total_revenue,
+            format: "currency",
+            icon: DollarSign,
+            variant: "warning"
+        }
+    ];
 
-    // Efecto para recargar los datos cuando cambia el término de búsqueda
+    // Detectar cambios pendientes en filtros
     useEffect(() => {
-        router.get(
-            route('admin.organizers.index'), 
-            { search: debouncedSearchTerm }, 
-            { 
-                preserveState: true, 
-                replace: true 
-            }
-        );
-    }, [debouncedSearchTerm]);
+        const hasChanges = 
+            searchTerm !== (filters.search || "") ||
+            selectedStatus !== "all" ||
+            sortBy !== (filters.sort_by || "created_at");
+        
+        setHasPendingFilters(hasChanges);
+    }, [searchTerm, selectedStatus, sortBy, filters]);
 
+    // Función para aplicar filtros
+    const handleFilters = () => {
+        router.get(route('admin.organizers.index'), {
+            search: searchTerm,
+            status: selectedStatus !== "all" ? selectedStatus : undefined,
+            sort_by: sortBy,
+        }, {
+            preserveState: true,
+            replace: true,
+            onFinish: () => {
+                setHasPendingFilters(false);
+            }
+        });
+    };
+
+    // Función para limpiar filtros
+    const handleClearFilters = () => {
+        setSearchTerm("");
+        setSelectedStatus("all");
+        setSortBy("created_at");
+        setHasPendingFilters(false);
+        
+        router.get(route('admin.organizers.index'), {}, {
+            preserveState: true,
+            replace: true
+        });
+    };
 
     const handleDeleteOrganizer = (organizerId: number) => {
         // Lógica para eliminar (ej: usando Inertia)
@@ -129,265 +179,212 @@ export default function Index({ auth }: any) {
         <>
             <Head title="Gestión de Organizadores - Panel Admin" />
             
-            <div className="min-h-screen bg-background">
-                <div className="container mx-auto px-4 py-8">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="section text-foreground">
-                                Gestión de Organizadores
-                            </h2>
-                            <p className="text-muted-foreground text-lg">
-                                Administra todos los organizadores de eventos
-                            </p>
+            <AdminDashboardLayout
+                title="Gestión de Organizadores"
+                description="Administra todos los organizadores de eventos"
+                stats={organizerStats}
+                filterConfig={{
+                    searchPlaceholder: "Buscar organizadores...",
+                    customFilters: [
+                        {
+                            key: "status",
+                            placeholder: "Estado",
+                            options: [
+                                { value: "all", label: "Todos los estados" },
+                                { value: "active", label: "Activos" },
+                                { value: "inactive", label: "Inactivos" }
+                            ]
+                        },
+                        {
+                            key: "sort_by",
+                            placeholder: "Ordenar por",
+                            options: [
+                                { value: "created_at", label: "Fecha de registro" },
+                                { value: "name", label: "Nombre" },
+                                { value: "events_count", label: "Número de eventos" },
+                                { value: "email", label: "Email" }
+                            ]
+                        }
+                    ]
+                }}
+                primaryAction={{
+                    label: "Crear Organizador",
+                    onClick: () => router.get(route('admin.organizers.create')),
+                    icon: Plus
+                }}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                customFilterValues={{
+                    status: selectedStatus,
+                    sort_by: sortBy
+                }}
+                onCustomFilterChange={(key: string, value: string) => {
+                    if (key === 'status') setSelectedStatus(value);
+                    if (key === 'sort_by') setSortBy(value);
+                }}
+                onApplyFilters={handleFilters}
+                onClearFilters={handleClearFilters}
+                hasPendingFilters={hasPendingFilters}
+            >
+                {/* Organizers Content */}
+                <div className="space-y-4">
+                    {organizers.data.map((organizer) => (
+                        <div key={organizer.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                            <div className="flex items-center space-x-6">
+                                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                    {organizer.logo_url ? (
+                                        <img 
+                                            src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
+                                            alt={`Logo de ${organizer.name}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                // Fallback si no se encuentra la imagen
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className={`w-full h-full bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center ${organizer.logo_url ? 'hidden' : ''}`}>
+                                        <Building className="w-8 h-8 text-white" />
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
+                                                <span>{organizer.name}</span>
+                                            </h3>
+                                            <p className="text-gray-600 text-sm flex items-center space-x-4">
+                                                <span className="flex items-center space-x-1">
+                                                    <Users className="w-4 h-4" />
+                                                    <span>{organizer.referring}</span>
+                                                </span>
+                                                <span className="flex items-center space-x-1">
+                                                    <Mail className="w-4 h-4" />
+                                                    <span>{organizer.email}</span>
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                        <div className="flex items-center text-gray-600 text-sm">
+                                            <Calendar className="w-4 h-4 mr-2 text-primary" />
+                                            <span>Registro: {new Date(organizer.created_at).toLocaleDateString('es-ES')}</span>
+                                        </div>
+                                        <div className="flex items-center text-gray-600 text-sm">
+                                            <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                                            <span>{organizer.events_count} eventos</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                            <span>Teléfono: {organizer.phone}</span>
+                                            <span>ID: #{organizer.id}</span>
+                                        </div>
+
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-56 bg-white border-gray-300">
+                                                <DropdownMenuItem 
+                                                    className="text-gray-700 hover:bg-gray-50"
+                                                    onClick={() => router.get(route('admin.organizers.show', organizer.id))}
+                                                >
+                                                    <Eye className="w-4 h-4 mr-2" />
+                                                    Ver perfil
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                    className="text-gray-700 hover:bg-gray-50"
+                                                    onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
+                                                >
+                                                    <Edit className="w-4 h-4 mr-2" />
+                                                    Editar organizador
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator className="bg-gray-200" />
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem 
+                                                            className="text-red-600 focus:text-red-600 hover:bg-red-50"
+                                                            onSelect={(e) => e.preventDefault()}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                            Eliminar organizador
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="bg-white border-gray-300">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle className="text-black">¿Estás seguro?</AlertDialogTitle>
+                                                            <AlertDialogDescription className="text-gray-600">
+                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente el organizador
+                                                                "{organizer.name}" y todos los datos relacionados.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="border-gray-300 text-black hover:bg-gray-50">Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction 
+                                                                onClick={() => handleDeleteOrganizer(organizer.id)}
+                                                                className="bg-red-600 hover:bg-red-700 text-white"
+                                                            >
+                                                                Eliminar
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <Link href="/admin/organizers/create">
-                                <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                    ))}
+
+                    {organizers.data.length === 0 && (
+                        <div className="text-center py-12">
+                            <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <h3 className="text-xl font-semibold text-black mb-2">No se encontraron organizadores</h3>
+                            <p className="text-gray-600 mb-6">
+                                {searchTerm || selectedStatus !== "all"
+                                    ? "Prueba ajustando los filtros de búsqueda"
+                                    : "Aún no hay organizadores registrados"}
+                            </p>
+                            <Link href={route('admin.organizers.create')}>
+                                <Button className="bg-black text-white hover:bg-gray-800">
                                     <Plus className="w-4 h-4 mr-2" />
-                                    Crear Organizador
+                                    Crear primer organizador
                                 </Button>
                             </Link>
                         </div>
-                    </div>
-
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <Card className="bg-card border-border shadow-lg">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-muted-foreground text-sm font-medium">Total Organizadores</p>
-                                        <p className="text-2xl font-bold text-card-foreground">{stats.total_organizers}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                                        <Building className="w-6 h-6 text-primary-foreground" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-card border-border shadow-lg">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-muted-foreground text-sm font-medium">Organizadores Activos</p>
-                                        <p className="text-2xl font-bold text-card-foreground">{stats.active_organizers}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-chart-2 rounded-lg flex items-center justify-center">
-                                        <CheckCircle className="w-6 h-6 text-primary-foreground" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-card border-border shadow-lg">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-muted-foreground text-sm font-medium">Eventos Creados</p>
-                                        <p className="text-2xl font-bold text-card-foreground">{stats.total_events}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-chart-3 rounded-lg flex items-center justify-center">
-                                        <Calendar className="w-6 h-6 text-primary-foreground" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-card border-border shadow-lg">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-muted-foreground text-sm font-medium">Ingresos Totales</p>
-                                        <p className="text-2xl font-bold text-card-foreground">${stats.total_revenue.toLocaleString()}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-chart-4 rounded-lg flex items-center justify-center">
-                                        <DollarSign className="w-6 h-6 text-primary-foreground" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Filters - Simplificado a solo búsqueda */}
-                    <Card className="bg-card border-border shadow-lg mb-8">
-                        <CardContent className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                                <div className="relative md:col-span-5">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                                    <Input
-                                        placeholder="Buscar por nombre o email..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                                    />
-                                </div>
-
-                                <Button 
-                                    onClick={() => setSearchTerm("")}
-                                    variant="outline"
-                                    className="border-border text-foreground hover:bg-accent bg-background"
-                                >
-                                    <Filter className="w-4 h-4 mr-2" />
-                                    Limpiar
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Organizers Table - Usando datos reales de `organizers` */}
-                    <Card className="bg-card border-border shadow-lg">
-                        <CardHeader className="border-b border-border pb-6">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-card-foreground">
-                                    Organizadores ({organizers.total})
-                                </CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="space-y-4">
-                                {organizers.data.map((organizer) => (
-                                    <div key={organizer.id} className="p-4 bg-muted rounded-lg hover:bg-accent transition-colors border border-border">
-                                        <div className="flex items-center space-x-6">
-                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border">
-                                                {organizer.logo_url ? (
-                                                    <img 
-                                                        src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
-                                                        alt={`Logo de ${organizer.name}`}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            // Fallback si no se encuentra la imagen
-                                                            e.currentTarget.style.display = 'none';
-                                                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                                        }}
-                                                    />
-                                                ) : null}
-                                                <div className={`w-full h-full bg-gradient-to-r from-primary to-chart-2 flex items-center justify-center ${organizer.logo_url ? 'hidden' : ''}`}>
-                                                    <Building className="w-8 h-8 text-primary-foreground" />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-card-foreground mb-1 flex items-center space-x-2">
-                                                            <span>{organizer.name}</span>
-                                                            {/* Se elimina badge de verificado */}
-                                                        </h3>
-                                                        <p className="text-muted-foreground text-sm flex items-center space-x-4">
-                                                            <span className="flex items-center space-x-1">
-                                                                <Users className="w-4 h-4" />
-                                                                <span>{organizer.referring}</span>
-                                                            </span>
-                                                            <span className="flex items-center space-x-1">
-                                                                <Mail className="w-4 h-4" />
-                                                                <span>{organizer.email}</span>
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                    {/* Se elimina el status badge */}
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                                                    <div className="flex items-center text-muted-foreground text-sm">
-                                                        <Calendar className="w-4 h-4 mr-2 text-primary" />
-                                                        <span>Registro: {new Date(organizer.created_at).toLocaleDateString('es-ES')}</span>
-                                                    </div>
-                                                    <div className="flex items-center text-muted-foreground text-sm">
-                                                        <Calendar className="w-4 h-4 mr-2 text-chart-3" />
-                                                        <span>{organizer.events_count} eventos</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                                        <span>Teléfono: {organizer.phone}</span>
-                                                        <span>ID: #{organizer.id}</span>
-                                                    </div>
-
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
-                                                                <MoreVertical className="w-4 h-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent className="w-56 bg-popover border-border">
-                                                            <DropdownMenuItem 
-                                                                className="hover:bg-accent"
-                                                                onClick={() => router.get(route('admin.organizers.show', organizer.id))}
-                                                            >
-                                                                <Eye className="w-4 h-4 mr-2" />
-                                                                Ver perfil
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                className="hover:bg-accent"
-                                                                onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
-                                                            >
-                                                                <Edit className="w-4 h-4 mr-2" />
-                                                                Editar organizador
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-border" />
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <DropdownMenuItem 
-                                                                        className="text-destructive focus:text-destructive hover:bg-destructive/10"
-                                                                        onSelect={(e) => e.preventDefault()}
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-2" />
-                                                                        Eliminar organizador
-                                                                    </DropdownMenuItem>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent className="bg-popover border-border">
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle className="text-popover-foreground">¿Estás seguro?</AlertDialogTitle>
-                                                                        <AlertDialogDescription className="text-muted-foreground">
-                                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el organizador
-                                                                            "{organizer.name}" y todos los datos relacionados.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancelar</AlertDialogCancel>
-                                                                        <AlertDialogAction 
-                                                                            onClick={() => handleDeleteOrganizer(organizer.id)}
-                                                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                                                                        >
-                                                                            Eliminar
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {organizers.data.length === 0 && (
-                                    <div className="text-center py-12">
-                                        <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                                        <h3 className="text-xl font-semibold text-foreground mb-2">No se encontraron organizadores</h3>
-                                        <p className="text-muted-foreground mb-6">
-                                            {filters.search
-                                                ? "Prueba ajustando los filtros de búsqueda"
-                                                : "Aún no hay organizadores registrados"}
-                                        </p>
-                                        <Link href={route('admin.organizers.create')}>
-                                            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Crear primer organizador
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    )}
                 </div>
-            </div>
+
+                {/* Pagination */}
+                {organizers.data.length > 0 && (
+                    <div className="mt-6 flex justify-center">
+                        <div className="flex items-center space-x-2">
+                            {organizers.links.map((link, index) => (
+                                <Link
+                                    key={index}
+                                    href={link.url || '#'}
+                                    className={`px-3 py-2 text-sm rounded-md ${
+                                        link.active
+                                            ? 'bg-black text-white'
+                                            : link.url
+                                            ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </AdminDashboardLayout>
         </>
     );
 }
