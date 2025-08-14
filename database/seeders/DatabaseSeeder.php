@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             $person = Person::create([
                 'name' => 'Juan',
                 'last_name' => 'Gimenez',
-                'dni' => '12345678',
             ]);
 
             User::create([
