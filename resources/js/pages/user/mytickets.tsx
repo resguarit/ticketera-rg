@@ -17,6 +17,8 @@ interface TicketType {
     time: string;
     location: string;
     city: string;
+    province?: string; // NUEVO: agregar provincia
+    full_address?: string;
     ticketType: string;
     quantity: number;
     total: number;

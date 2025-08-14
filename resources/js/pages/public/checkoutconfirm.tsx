@@ -37,6 +37,8 @@ interface EventData {
     time: string;
     location: string;
     city: string;
+    province?: string; // NUEVO: agregar provincia
+    full_address?: string;
     selectedTickets: SelectedTicket[];
     function?: EventFunction; // Agregar información de la función
 }

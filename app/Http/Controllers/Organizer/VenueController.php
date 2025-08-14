@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Organizer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
+use App\Models\Ciudad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,9 +15,27 @@ class VenueController extends Controller
 {
     public function index(): Response
     {
-        $venues = Venue::withCount(['eventos', 'sectors'])
+        // ACTUALIZADO: incluir ciudad y provincia
+        $venues = Venue::with(['ciudad.provincia'])
+            ->withCount(['eventos', 'sectors'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function($venue) {
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                    'address' => $venue->address,
+                    'city' => $venue->ciudad ? $venue->ciudad->name : 'Sin ciudad',
+                    'province' => $venue->ciudad && $venue->ciudad->provincia ? 
+                        $venue->ciudad->provincia->name : null,
+                    'full_address' => $venue->getFullAddressAttribute(),
+                    'eventos_count' => $venue->eventos_count,
+                    'sectors_count' => $venue->sectors_count,
+                    'coordinates' => $venue->coordinates,
+                    'banner_url' => $venue->banner_url,
+                    'referring' => $venue->referring,
+                ];
+            });
         
         return Inertia::render('organizer/venues', [
             'venues' => $venues
@@ -25,7 +44,12 @@ class VenueController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('organizer/venues/create');
+        // Obtener ciudades para el select
+        $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
+        
+        return Inertia::render('organizer/venues/create', [
+            'ciudades' => $ciudades
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -33,6 +57,7 @@ class VenueController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
+            'ciudad_id' => 'required|exists:ciudades,id', // NUEVO: validar ciudad
             'coordinates' => 'nullable|string|max:100',
             'banner_url' => 'nullable|string|max:255',
             'referring' => 'nullable|string|max:1000'
@@ -41,6 +66,7 @@ class VenueController extends Controller
         Venue::create($request->only([
             'name', 
             'address', 
+            'ciudad_id', // NUEVO: incluir ciudad_id
             'coordinates', 
             'banner_url', 
             'referring'
@@ -52,7 +78,8 @@ class VenueController extends Controller
 
     public function show(Venue $venue): Response
     {
-        $venue->load(['eventos', 'sectors']);
+        // ACTUALIZADO: cargar ciudad y provincia
+        $venue->load(['eventos', 'sectors', 'ciudad.provincia']);
         
         return Inertia::render('organizer/venues/show', [
             'venue' => $venue
@@ -61,8 +88,15 @@ class VenueController extends Controller
 
     public function edit(Venue $venue): Response
     {
+        // Cargar ciudad y provincia del venue
+        $venue->load('ciudad.provincia');
+        
+        // Obtener todas las ciudades para el select
+        $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
+        
         return Inertia::render('organizer/venues/edit', [
-            'venue' => $venue
+            'venue' => $venue,
+            'ciudades' => $ciudades
         ]);
     }
 
@@ -71,6 +105,7 @@ class VenueController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
+            'ciudad_id' => 'required|exists:ciudades,id', // NUEVO: validar ciudad
             'coordinates' => 'nullable|string|max:100',
             'banner_url' => 'nullable|string|max:255',
             'referring' => 'nullable|string|max:1000'
@@ -79,6 +114,7 @@ class VenueController extends Controller
         $venue->update($request->only([
             'name', 
             'address', 
+            'ciudad_id', // NUEVO: incluir ciudad_id
             'coordinates', 
             'banner_url', 
             'referring'
@@ -104,7 +140,19 @@ class VenueController extends Controller
     // API endpoint para select options
     public function getForSelect()
     {
-        $venues = Venue::select('id', 'name', 'address')->get();
+        // ACTUALIZADO: incluir ciudad
+        $venues = Venue::with('ciudad')
+            ->select('id', 'name', 'address', 'ciudad_id')
+            ->get()
+            ->map(function($venue) {
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                    'address' => $venue->address,
+                    'city' => $venue->ciudad ? $venue->ciudad->name : 'Sin ciudad',
+                    'full_address' => $venue->getFullAddressAttribute(),
+                ];
+            });
         
         return response()->json($venues);
     }

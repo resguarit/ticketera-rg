@@ -47,6 +47,8 @@ class DatabaseSeeder extends Seeder
 
             // Ejecutar seeders de las tablas principales
             $this->call([
+                ProvinciaSeeder::class,
+                CiudadSeeder::class,
                 CategorySeeder::class,
                 VenueSeeder::class,
                 SectorSeeder::class,

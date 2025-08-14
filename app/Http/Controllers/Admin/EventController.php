@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Category;
 use App\Models\Venue;
+use App\Models\Ciudad;
 use App\Models\Order;
 use App\Models\IssuedTicket;
 use Illuminate\Http\Request;
@@ -28,11 +29,11 @@ class EventController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        // Consulta base con relaciones
+        // Consulta base con relaciones ACTUALIZADA
         $query = Event::with([
             'organizer',
             'category',
-            'venue',
+            'venue.ciudad.provincia', // NUEVO: incluir ciudad y provincia
             'functions.ticketTypes'
         ]);
 
@@ -56,10 +57,10 @@ class EventController extends Controller
             });
         }
 
-        // Filtro por ciudad (usando address en lugar de city)
+        // ACTUALIZADO: Filtro por ciudad usando la nueva relación
         if ($city !== 'all') {
-            $query->whereHas('venue', function($q) use ($city) {
-                $q->where('address', 'like', "%{$city}%");
+            $query->whereHas('venue.ciudad', function($q) use ($city) {
+                $q->where('name', $city);
             });
         }
 
@@ -141,18 +142,21 @@ class EventController extends Controller
                     'email' => $event->organizer->email,
                 ],
                 'category' => $event->category->name ?? 'Sin categoría',
-                'date' => $firstFunction ? $firstFunction->start_time->format('Y-m-d') : null, // Solo fecha
+                'date' => $firstFunction ? $firstFunction->start_time->format('Y-m-d') : null,
                 'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
-                'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null, // Para comparaciones
+                'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null,
                 'location' => $event->venue->name ?? 'Sin venue',
-                'city' => $this->extractCity($event->venue->address ?? ''),
+                // ACTUALIZADO: usar la nueva estructura de ciudad
+                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    $event->venue->ciudad->provincia->name : null,
                 'status' => $status,
                 'tickets_sold' => $soldTickets,
                 'total_tickets' => $totalTickets,
                 'revenue' => $revenue,
                 'price_range' => $priceRange,
-                'created_at' => $event->created_at->format('Y-m-d'), // Solo fecha
-                'created_datetime' => $event->created_at->toISOString(), // Para comparaciones
+                'created_at' => $event->created_at->format('Y-m-d'),
+                'created_datetime' => $event->created_at->toISOString(),
                 'image' => $event->banner_url,
                 'featured' => $event->featured,
                 'functions_count' => $event->functions->count(),
@@ -168,14 +172,8 @@ class EventController extends Controller
         // Filtros para el frontend
         $categories = Category::pluck('name')->unique();
         
-        // Obtener ciudades extrayéndolas de las direcciones
-        $cities = Venue::pluck('address')
-            ->map(function($address) {
-                return $this->extractCity($address ?? '');
-            })
-            ->unique()
-            ->filter()
-            ->values();
+        // ACTUALIZADO: Obtener ciudades de la nueva tabla
+        $cities = Ciudad::orderBy('name')->pluck('name');
 
         return Inertia::render('admin/events', [
             'events' => $events,
@@ -195,10 +193,11 @@ class EventController extends Controller
 
     public function show(int $eventId): Response
     {
+        // ACTUALIZADO: incluir ciudad y provincia en la consulta
         $event = Event::with([
             'organizer',
             'category',
-            'venue',
+            'venue.ciudad.provincia',
             'functions.ticketTypes'
         ])->findOrFail($eventId);
 
@@ -222,7 +221,11 @@ class EventController extends Controller
                 'id' => $event->venue->id,
                 'name' => $event->venue->name,
                 'address' => $event->venue->address,
-                'city' => $this->extractCity($event->venue->address ?? ''),
+                // ACTUALIZADO: usar la nueva estructura
+                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    $event->venue->ciudad->provincia->name : null,
+                'full_address' => $event->venue->getFullAddressAttribute(), // Usar el helper del modelo
             ],
             'functions' => $event->functions->map(function($function) {
                 return [
@@ -386,32 +389,5 @@ class EventController extends Controller
         }
 
         return number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.');
-    }
-
-    /**
-     * Extraer ciudad de la dirección
-     */
-    private function extractCity(string $address): string
-    {
-        if (empty($address)) {
-            return 'Sin ciudad';
-        }
-
-        $parts = explode(',', $address);
-        
-        // Buscar por palabras clave de ciudades conocidas
-        $cities = ['Buenos Aires', 'CABA', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Montevideo'];
-        
-        foreach ($parts as $part) {
-            $part = trim($part);
-            foreach ($cities as $city) {
-                if (stripos($part, $city) !== false) {
-                    return $city === 'CABA' ? 'Buenos Aires' : $city;
-                }
-            }
-        }
-        
-        // Si no encuentra ciudad conocida, retorna la penúltima parte o Buenos Aires por defecto
-        return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 }

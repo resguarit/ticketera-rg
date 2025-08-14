@@ -91,6 +91,8 @@ interface EventData {
         name: string;
         address: string;
         city: string;
+        province?: string; // NUEVO: agregar provincia
+        full_address?: string; 
     };
     functions: EventFunction[];
     created_at: string;
@@ -343,7 +345,7 @@ export default function Show({ auth }: any) {
                                                     <div>
                                                         <p className="text-sm text-gray-600">Venue</p>
                                                         <p className="font-medium text-black">{event.venue.name}</p>
-                                                        <p className="text-sm text-gray-500">{event.venue.address}</p>
+                                                        <p className="text-sm text-gray-500">{event.venue.address}, {event.venue.city}, {event.venue.province}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-2">

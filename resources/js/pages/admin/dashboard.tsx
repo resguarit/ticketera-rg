@@ -46,11 +46,15 @@ interface RecentEvent {
     tickets_sold: number;
     total_tickets: number;
     revenue: number;
+    venue?: string; // NUEVO: agregar venue
+    city?: string; // NUEVO: agregar city
+    province?: string; 
 }
 
 interface RecentUser {
     id: number;
     name: string;
+    last_name: string;
     email: string;
     role: string;
     joined: string;
@@ -237,10 +241,6 @@ export default function AdminDashboard({
                                 </SelectContent>
                             </Select>
                             
-                            <Button className="bg-black text-white hover:bg-gray-800">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Acciones Rápidas
-                            </Button>
                         </div>
                     </div>
 
@@ -283,9 +283,6 @@ export default function AdminDashboard({
                                             <span>Eventos Recientes</span>
                                         </CardTitle>
                                         <div className="flex items-center space-x-2">
-                                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-100">
-                                                <Filter className="w-4 h-4" />
-                                            </Button>
                                             <Link href="/admin/events">
                                                 <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
                                                     Ver todos
@@ -342,7 +339,7 @@ export default function AdminDashboard({
                                             <span>Usuarios Recientes</span>
                                         </CardTitle>
                                         <Link href="/admin/users">
-                                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary-50">
+                                            <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
                                                 Ver todos
                                             </Button>
                                         </Link>
@@ -354,8 +351,11 @@ export default function AdminDashboard({
                                             <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-semibold text-sm">
-                                                            {user.name.charAt(0).toUpperCase()}
+                                                        <span className="text-white font-semibold text-sm tracking-tight">
+                                                            {user.name.charAt(0).toUpperCase()} 
+                                                        </span>
+                                                        <span className="text-white font-semibold text-sm tracking-tight">
+                                                             {user.last_name.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
                                                     <div>
