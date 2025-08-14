@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\Order;
-use App\Models\IssuedTicket; // Cambié de Ticket a IssuedTicket
+use App\Models\IssuedTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;

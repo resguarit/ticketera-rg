@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             $person = Person::create([
                 'name' => 'Juan',
                 'last_name' => 'Gimenez',
-                'dni' => '12345678',
             ]);
 
             User::create([
@@ -32,6 +31,7 @@ class DatabaseSeeder extends Seeder
                 'person_id' => $person->id,
             ]);
 
+            /*
             $person = Person::create([
                 'name' => 'Federico',
                 'last_name' => 'Perez',
@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
                 EventSeeder::class,
                 EventFunctionSeeder::class,
                 TicketTypeSeeder::class,
-            ]);
+            ]);*/
 
             DB::commit();
         } catch (\Exception $e) {
