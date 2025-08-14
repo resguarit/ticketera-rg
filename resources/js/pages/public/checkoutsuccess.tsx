@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { formatNumber, formatPriceWithCurrency } from '@/lib/currencyHelpers';
+import { calculateTicketSubtotal } from '@/lib/ticketHelpers';
 import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -150,13 +152,13 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                                 <span className="text-foreground/60 ml-2">x{ticket.quantity}</span>
                                             </div>
                                             <span className="text-foreground font-bold">
-                                                ${(ticket.price * ticket.quantity).toLocaleString()}
+                                                {formatNumber(calculateTicketSubtotal(ticket.price, ticket.quantity))}
                                             </span>
                                         </div>
                                     ))}
                                     <div className="flex justify-between items-center p-3 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg border border-primary/30">
                                         <span className="text-foreground font-bold text-lg">Total Pagado</span>
-                                        <span className="text-foreground font-bold text-xl">${purchaseData.total.toLocaleString()} ARS</span>
+                                        <span className="text-foreground font-bold text-xl">{formatPriceWithCurrency(purchaseData.total)}</span>
                                     </div>
                                 </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
+import { formatDate } from '@/lib/dateHelpers';
 import { 
     Plus, 
     MoreVertical, 
@@ -271,7 +272,7 @@ export default function Index({ auth }: any) {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                                         <div className="flex items-center text-gray-600 text-sm">
                                             <Calendar className="w-4 h-4 mr-2 text-primary" />
-                                            <span>Registro: {new Date(organizer.created_at).toLocaleDateString('es-ES')}</span>
+                                            <span>Registro: {formatDate(organizer.created_at)}</span>
                                         </div>
                                         <div className="flex items-center text-gray-600 text-sm">
                                             <Calendar className="w-4 h-4 mr-2 text-blue-500" />

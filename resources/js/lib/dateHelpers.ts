@@ -222,3 +222,10 @@ export const getLastDayOfMonth = (dateString: string | null): string => {
         return '';
     }
 };
+
+/**
+ * Compara dos fechas para ordenamiento
+ */
+export const compareDates = (dateA: string, dateB: string): number => {
+  return new Date(dateA).getTime() - new Date(dateB).getTime();
+};

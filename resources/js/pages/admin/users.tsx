@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatNumber } from '@/lib/currencyHelpers';
 import { 
     UserPlus, 
     Eye, 
@@ -249,7 +250,7 @@ export default function Users({ auth }: any) {
                                                                 {user.total_purchases} compras
                                                             </p>
                                                             <p className="text-sm text-gray-600">
-                                                                ${user.total_spent.toLocaleString()} gastados
+                                                                {formatNumber(user.total_spent)} gastados
                                                             </p>
                                                         </div>
 

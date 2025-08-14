@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { formatDate } from '@/lib/dateHelpers';
+import { getUserDisplayName } from '@/lib/userHelpers';
 import { 
     Users, 
     Calendar, 
@@ -219,7 +221,7 @@ export default function AdminDashboard({
                                 Panel de Administración
                             </h1>
                             <p className="text-gray-600 text-lg">
-                                Bienvenido, {auth.user.person?.name || auth.user.email} • {currentTime.toLocaleDateString('es-ES', { 
+                                Bienvenido, {getUserDisplayName(auth.user)} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
                                     month: 'long', 
@@ -301,7 +303,7 @@ export default function AdminDashboard({
                                                         {getStatusBadge(event.status)}
                                                     </div>
                                                     <p className="text-gray-600 text-sm mb-2">
-                                                        Por: {event.organizer} • {new Date(event.date).toLocaleDateString('es-ES')}
+                                                        Por: {event.organizer} • {formatDate(event.date)}
                                                     </p>
                                                     <div className="flex items-center space-x-4 text-sm">
                                                         <span className="text-gray-700">
@@ -369,7 +371,7 @@ export default function AdminDashboard({
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-gray-600 text-sm">
-                                                        {new Date(user.joined).toLocaleDateString('es-ES')}
+                                                        {formatDate(user.joined)}
                                                     </p>
                                                     {user.purchases !== undefined && (
                                                         <p className="text-gray-700 text-xs">

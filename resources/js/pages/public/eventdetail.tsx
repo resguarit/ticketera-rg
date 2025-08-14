@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { formatPrice, formatPriceWithCurrency } from '@/lib/currencyHelpers';
+import { getAvailabilityText } from '@/lib/ticketHelpers';
+import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
 import { ArrowLeft, Calendar, MapPin, Clock, Users, Star, Minus, Plus, ShoppingCart, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -390,12 +393,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                             <h4 className="font-bold text-foreground text-sm sm:text-base">{ticket.name}</h4>
                                                             <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                             <p className="text-foreground/60 text-xs mt-1">
-                                                                {ticket.available} de {ticket.quantity} disponibles
+                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
                                                             </p>
                                                         </div>
                                                         <div className="text-right flex-shrink-0">
                                                             <p className="text-lg sm:text-xl font-bold text-foreground">
-                                                                ${ticket.price.toLocaleString()}
+                                                                {formatPrice(ticket.price)}
                                                             </p>
                                                             <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
                                                         </div>
@@ -602,12 +605,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                             <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
                                                             <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                             <p className="text-foreground/60 text-xs mt-1">
-                                                                {ticket.available} de {ticket.quantity} disponibles
+                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
                                                             </p>
                                                         </div>
                                                         <div className="text-right flex-shrink-0">
                                                             <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                ${ticket.price.toLocaleString()}
+                                                                {formatPrice(ticket.price)}
                                                             </p>
                                                             <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
                                                         </div>
