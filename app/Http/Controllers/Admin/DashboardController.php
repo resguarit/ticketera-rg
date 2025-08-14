@@ -242,36 +242,168 @@ class DashboardController extends Controller
             ];
         }
 
-        // Backup simulado
-        $alerts[] = [
-            'id' => 3,
-            'type' => 'success',
-            'title' => 'Backup completado',
-            'message' => 'Backup diario completado exitosamente',
-            'time' => 'hace 6 horas'
-        ];
-
         return $alerts;
     }
 
     private function getSystemStatus(): array
     {
-        return [
-            [
-                'name' => 'Servidores',
-                'status' => 'operational',
-                'label' => 'Operativo'
-            ],
-            [
-                'name' => 'Base de Datos',
-                'status' => 'operational', 
-                'label' => 'Operativo'
-            ],
-            [
-                'name' => 'CDN',
-                'status' => 'slow',
-                'label' => 'Lento'
-            ]
+        $status = [];
+
+        // 1. Estado de la Base de Datos
+        try {
+            $dbStart = microtime(true);
+            DB::connection()->getPdo();
+            $dbTime = (microtime(true) - $dbStart) * 1000; // Convertir a ms
+            
+            $dbStatus = 'operational';
+            $dbLabel = 'Operativo';
+            $dbDetails = round($dbTime, 2) . 'ms';
+            
+            if ($dbTime > 100) {
+                $dbStatus = 'slow';
+                $dbLabel = 'Lento';
+            }
+            if ($dbTime > 500) {
+                $dbStatus = 'down';
+                $dbLabel = 'Crítico';
+            }
+        } catch (\Exception $e) {
+            $dbStatus = 'down';
+            $dbLabel = 'Desconectado';
+            $dbDetails = 'Error de conexión';
+        }
+
+        $status[] = [
+            'name' => 'Base de Datos',
+            'status' => $dbStatus,
+            'label' => $dbLabel,
+            'details' => $dbDetails ?? null
         ];
+
+        // 2. Estado del Cache
+        try {
+            $cacheStart = microtime(true);
+            Cache::put('health_check', true, 1);
+            $cacheResult = Cache::get('health_check');
+            $cacheTime = (microtime(true) - $cacheStart) * 1000;
+            
+            $cacheStatus = $cacheResult ? 'operational' : 'down';
+            $cacheLabel = $cacheResult ? 'Operativo' : 'Fallo';
+            $cacheDetails = $cacheResult ? round($cacheTime, 2) . 'ms' : 'Sin respuesta';
+            
+            if ($cacheTime > 50 && $cacheResult) {
+                $cacheStatus = 'slow';
+                $cacheLabel = 'Lento';
+            }
+        } catch (\Exception $e) {
+            $cacheStatus = 'down';
+            $cacheLabel = 'Error';
+            $cacheDetails = 'Fallo de cache';
+        }
+
+        $status[] = [
+            'name' => 'Sistema de Cache',
+            'status' => $cacheStatus,
+            'label' => $cacheLabel,
+            'details' => $cacheDetails
+        ];
+
+        // 3. Uso de Memoria
+        $memoryUsage = memory_get_usage(true);
+        $memoryLimit = ini_get('memory_limit');
+        $memoryLimitBytes = $this->parseBytes($memoryLimit);
+        $memoryPercent = ($memoryUsage / $memoryLimitBytes) * 100;
+
+        $memoryStatus = 'operational';
+        $memoryLabel = 'Normal';
+        if ($memoryPercent > 70) {
+            $memoryStatus = 'slow';
+            $memoryLabel = 'Alto';
+        }
+        if ($memoryPercent > 90) {
+            $memoryStatus = 'down';
+            $memoryLabel = 'Crítico';
+        }
+
+        $status[] = [
+            'name' => 'Memoria PHP',
+            'status' => $memoryStatus,
+            'label' => $memoryLabel,
+            'details' => $this->formatBytes($memoryUsage) . ' / ' . $memoryLimit . ' (' . round($memoryPercent, 1) . '%)'
+        ];
+
+        // 4. Espacio en Disco
+        $diskFree = disk_free_space('/');
+        $diskTotal = disk_total_space('/');
+        $diskUsedPercent = (($diskTotal - $diskFree) / $diskTotal) * 100;
+
+        $diskStatus = 'operational';
+        $diskLabel = 'Normal';
+        if ($diskUsedPercent > 80) {
+            $diskStatus = 'slow';
+            $diskLabel = 'Alto';
+        }
+        if ($diskUsedPercent > 95) {
+            $diskStatus = 'down';
+            $diskLabel = 'Crítico';
+        }
+
+        $status[] = [
+            'name' => 'Espacio en Disco',
+            'status' => $diskStatus,
+            'label' => $diskLabel,
+            'details' => $this->formatBytes($diskFree) . ' libre (' . round(100 - $diskUsedPercent, 1) . '%)'
+        ];
+
+        // 5. Cola de Trabajos (Jobs Queue)
+        try {
+            $failedJobs = DB::table('failed_jobs')->count();
+            $queueStatus = 'operational';
+            $queueLabel = 'Normal';
+            $queueDetails = '0 trabajos fallidos';
+
+            if ($failedJobs > 0) {
+                $queueStatus = 'slow';
+                $queueLabel = 'Atención';
+                $queueDetails = $failedJobs . ' trabajos fallidos';
+            }
+            if ($failedJobs > 10) {
+                $queueStatus = 'down';
+                $queueLabel = 'Crítico';
+            }
+        } catch (\Exception $e) {
+            $queueStatus = 'operational';
+            $queueLabel = 'N/A';
+            $queueDetails = 'No configurado';
+        }
+
+        $status[] = [
+            'name' => 'Cola de Trabajos',
+            'status' => $queueStatus,
+            'label' => $queueLabel,
+            'details' => $queueDetails
+        ];
+
+        return $status;
+    }
+
+    private function parseBytes(string $size): int
+    {
+        $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
+        $size = preg_replace('/[^0-9\.]/', '', $size);
+        
+        if ($unit) {
+            return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
+        }
+        
+        return round($size);
+    }
+
+    private function formatBytes(int $size, int $precision = 2): string
+    {
+        $base = log($size, 1024);
+        $suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        return round(pow(1024, $base - floor($base)), $precision) . ' ' . $suffixes[floor($base)];
     }
 }
