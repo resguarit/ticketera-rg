@@ -16,6 +16,8 @@ interface PurchaseData {
         time: string;
         location: string;
         city: string;
+        province?: string; // NUEVO: agregar provincia
+        full_address?: string; 
         function?: {
             id: number;
             name: string;

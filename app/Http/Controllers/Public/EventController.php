@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Category;
+use App\Models\Ciudad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,7 +15,8 @@ class EventController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Event::with(['venue', 'category', 'organizer', 'functions.ticketTypes']);
+        // ACTUALIZADO: incluir ciudad y provincia
+        $query = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
         // Filtros
         if ($request->filled('search')) {
@@ -33,10 +35,11 @@ class EventController extends Controller
             });
         }
 
+        // ACTUALIZADO: filtro por ciudad usando la nueva relación
         if ($request->filled('city') && $request->get('city') !== 'all') {
             $city = $request->get('city');
-            $query->whereHas('venue', function($q) use ($city) {
-                $q->where('address', 'LIKE', "%{$city}%");
+            $query->whereHas('venue.ciudad', function($q) use ($city) {
+                $q->where('name', $city);
             });
         }
 
@@ -57,7 +60,10 @@ class EventController extends Controller
                 'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $firstFunction?->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
-                'city' => $this->extractCity($event->venue->address),
+                // ACTUALIZADO: usar la nueva estructura
+                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    $event->venue->ciudad->provincia->name : null,
                 'category' => strtolower($event->category->name),
                 'price' => $minPrice,
                 'rating' => 4.5 + (rand(0, 8) / 10),
@@ -75,8 +81,8 @@ class EventController extends Controller
             ];
         });
 
-        // Ciudades únicas para el filtro
-        $cities = $events->pluck('city')->unique()->filter()->values();
+        // ACTUALIZADO: ciudades desde la tabla ciudades
+        $cities = Ciudad::orderBy('name')->pluck('name');
 
         return Inertia::render('public/events', [
             'events' => $events,
@@ -93,7 +99,8 @@ class EventController extends Controller
 
     public function show(Event $event): Response
     {
-        $event->load(['venue', 'category', 'organizer', 'functions.ticketTypes']);
+        // ACTUALIZADO: incluir ciudad y provincia
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
         // Preparar funciones con sus tickets
         $functions = $event->functions->map(function($function) {
@@ -105,7 +112,7 @@ class EventController extends Controller
                 'end_time' => $function->end_time,
                 'date' => $function->start_time?->format('d M Y'),
                 'time' => $function->start_time?->format('H:i'),
-                'day_name' => $function->start_time?->format('l'), // Lunes, Martes, etc.
+                'day_name' => $function->start_time?->format('l'),
                 'is_active' => $function->is_active,
                 'ticketTypes' => $function->ticketTypes->map(function($ticket) {
                     return [
@@ -119,7 +126,7 @@ class EventController extends Controller
                         'sales_start_date' => $ticket->sales_start_date,
                         'sales_end_date' => $ticket->sales_end_date,
                         'is_hidden' => $ticket->is_hidden,
-                        'color' => 'from-blue-500 to-cyan-500', // Temporal
+                        'color' => 'from-blue-500 to-cyan-500',
                     ];
                 }),
             ];
@@ -131,14 +138,18 @@ class EventController extends Controller
             'description' => $event->description,
             'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
             'location' => $event->venue->name,
-            'city' => $this->extractCity($event->venue->address),
+            // ACTUALIZADO: usar la nueva estructura
+            'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                $event->venue->ciudad->provincia->name : null,
+            'full_address' => $event->venue->getFullAddressAttribute(),
             'category' => strtolower($event->category->name),
-            'rating' => 4.8, // Temporal
-            'reviews' => 1247, // Temporal
-            'duration' => '8 horas', // Temporal
-            'ageRestriction' => '18+', // Temporal
+            'rating' => 4.8,
+            'reviews' => 1247,
+            'duration' => '8 horas',
+            'ageRestriction' => '18+',
             'functions' => $functions,
-            // Para compatibilidad con el código existente, enviamos la primera función
+            // Para compatibilidad con el código existente
             'date' => $functions->first()['date'] ?? 'Fecha por confirmar',
             'time' => $functions->first()['time'] ?? '',
         ];
@@ -146,23 +157,6 @@ class EventController extends Controller
         return Inertia::render('public/eventdetail', [
             'eventData' => $eventData
         ]);
-    }
-
-    private function extractCity(string $address): string
-    {
-        $parts = explode(',', $address);
-        $cities = ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Montevideo'];
-        
-        foreach ($parts as $part) {
-            $part = trim($part);
-            foreach ($cities as $city) {
-                if (stripos($part, $city) !== false) {
-                    return $city;
-                }
-            }
-        }
-        
-        return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 
     private function getCategoryIcon(string $categoryName): string

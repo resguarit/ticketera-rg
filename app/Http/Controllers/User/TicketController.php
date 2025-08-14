@@ -21,10 +21,10 @@ class TicketController extends Controller
     {
         $user = Auth::user();
         
-        // Obtener todos los tickets del usuario
+        // ACTUALIZADO: Obtener todos los tickets del usuario con ciudad y provincia
         $tickets = IssuedTicket::with([
             'order',
-            'ticketType.eventFunction.event.venue',
+            'ticketType.eventFunction.event.venue.ciudad.provincia',
             'ticketType.eventFunction.event.category'
         ])
         ->where('client_id', $user->id)
@@ -41,7 +41,11 @@ class TicketController extends Controller
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
-                'city' => $this->extractCity($event->venue->address),
+                // ACTUALIZADO: usar la nueva estructura
+                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    $event->venue->ciudad->provincia->name : null,
+                'full_address' => $event->venue->getFullAddressAttribute(),
                 'ticketType' => $ticket->ticketType->name,
                 'quantity' => 1, // Cada IssuedTicket es individual
                 'price' => $ticket->ticketType->price,
@@ -111,6 +115,9 @@ class TicketController extends Controller
             abort(403, 'No tienes permiso para ver este ticket');
         }
 
+        // ACTUALIZADO: Cargar con ciudad y provincia para obtener datos completos
+        $ticket->load('ticketType.eventFunction.event.venue.ciudad.provincia');
+
         return response()->json([
             'qr_code' => $ticket->unique_code,
             'ticket_info' => [
@@ -118,6 +125,9 @@ class TicketController extends Controller
                 'date' => $ticket->ticketType->eventFunction->start_time?->format('d/m/Y H:i'),
                 'type' => $ticket->ticketType->name,
                 'venue' => $ticket->ticketType->eventFunction->event->venue->name,
+                'city' => $ticket->ticketType->eventFunction->event->venue->ciudad ? 
+                    $ticket->ticketType->eventFunction->event->venue->ciudad->name : 'Sin ciudad',
+                'full_address' => $ticket->ticketType->eventFunction->event->venue->getFullAddressAttribute(),
             ]
         ]);
     }
@@ -164,25 +174,5 @@ class TicketController extends Controller
     private function generateOrderNumber(Order $order): string
     {
         return 'TM-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * Extraer ciudad de dirección
-     */
-    private function extractCity(string $address): string
-    {
-        $parts = explode(',', $address);
-        $cities = ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Montevideo'];
-        
-        foreach ($parts as $part) {
-            $part = trim($part);
-            foreach ($cities as $city) {
-                if (stripos($part, $city) !== false) {
-                    return $city;
-                }
-            }
-        }
-        
-        return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 }

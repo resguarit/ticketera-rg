@@ -25,8 +25,8 @@ class CheckoutController extends Controller
 
     public function confirm(Request $request, Event $event): Response
     {
-        // Cargar el evento con todas sus relaciones
-        $event->load(['venue', 'category', 'organizer', 'functions.ticketTypes']);
+        // ACTUALIZADO: Cargar el evento con ciudad y provincia
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
         // Obtener la función específica
         $functionId = $request->input('function_id');
@@ -92,7 +92,11 @@ class CheckoutController extends Controller
             'date' => $selectedFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
             'time' => $selectedFunction->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
-            'city' => $this->extractCity($event->venue->address),
+            // ACTUALIZADO: usar la nueva estructura
+            'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                $event->venue->ciudad->provincia->name : null,
+            'full_address' => $event->venue->getFullAddressAttribute(),
             'selectedTickets' => $selectedTickets,
             'function' => [
                 'id' => $selectedFunction->id,
@@ -208,23 +212,18 @@ class CheckoutController extends Controller
     public function success(Request $request): Response
     {
         $orderId = $request->query('order');
-        $accountCreated = $request->query('account_created', false); // Nuevo parámetro
+        $accountCreated = $request->query('account_created', false);
         
         if (!$orderId) {
             return redirect()->route('home')
                 ->with('error', 'Orden no encontrada');
         }
 
-        // Cargar la orden con todas sus relaciones
+        // ACTUALIZADO: Cargar la orden con ciudad y provincia
         $order = Order::with([
-            'items.ticketType.eventFunction.event.venue',
+            'items.ticketType.eventFunction.event.venue.ciudad.provincia',
             'client.person'
         ])->findOrFail($orderId);
-
-        // Verificar que la orden pertenezca al usuario autenticado (si está logueado)
-/*         if (Auth::check() && $order->client_id !== Auth::id()) {
-            abort(403, 'No tienes permiso para ver esta orden');
-        } */
 
         // Obtener resumen de la orden usando el servicio
         $orderSummary = $this->orderService->getOrderSummary($order);
@@ -243,7 +242,11 @@ class CheckoutController extends Controller
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
-                'city' => $this->extractCity($event->venue->address),
+                // ACTUALIZADO: usar la nueva estructura
+                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    $event->venue->ciudad->provincia->name : null,
+                'full_address' => $event->venue->getFullAddressAttribute(),
                 'function' => [
                     'id' => $eventFunction->id,
                     'name' => $eventFunction->name,
@@ -263,24 +266,7 @@ class CheckoutController extends Controller
 
         return Inertia::render('public/checkoutsuccess', [
             'purchaseData' => $purchaseData,
-            'accountCreated' => (bool) $accountCreated // Pasar el flag al frontend
+            'accountCreated' => (bool) $accountCreated
         ]);
-    }
-
-    private function extractCity(string $address): string
-    {
-        $parts = explode(',', $address);
-        $cities = ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Montevideo'];
-        
-        foreach ($parts as $part) {
-            $part = trim($part);
-            foreach ($cities as $city) {
-                if (stripos($part, $city) !== false) {
-                    return $city;
-                }
-            }
-        }
-        
-        return count($parts) > 1 ? trim($parts[count($parts) - 2]) : 'Buenos Aires';
     }
 }

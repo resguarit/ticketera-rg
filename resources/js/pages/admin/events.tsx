@@ -41,6 +41,7 @@ interface EventData {
     datetime?: string | null; // Para comparaciones si es necesario
     location: string;
     city: string;
+    province?: string;
     status: string;
     tickets_sold: number;
     total_tickets: number;

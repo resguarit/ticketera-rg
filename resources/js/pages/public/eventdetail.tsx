@@ -45,6 +45,8 @@ interface EventData {
     time: string; // Para compatibilidad
     location: string;
     city: string;
+    province?: string; // NUEVO: agregar provincia
+    full_address?: string;
     category: string;
     rating: number;
     reviews: number;
