@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { compareDates } from '@/lib/dateHelpers';
+import { formatPrice } from '@/lib/currencyHelpers';
 import { Search, Calendar, MapPin, Music, Theater, Trophy, Star, Grid, List, BringToFront, Presentation, Utensils, Palette, Laugh, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,7 +85,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                     return b.rating - a.rating;
                 case "date":
                 default:
-                    return new Date(a.date).getTime() - new Date(b.date).getTime();
+                    return compareDates(a.date, b.date);
             }
         });
 
@@ -281,7 +283,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                             {event.price > 0 ? (
                                                                 <>
                                                                     <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                        ${event.price.toLocaleString()}
+                                                                        {formatPrice(event.price)}
                                                                     </span>
                                                                     <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
                                                                 </>
@@ -355,7 +357,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                                     {event.price > 0 ? (
                                                                         <>
                                                                             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                                ${event.price.toLocaleString()}
+                                                                                {formatPrice(event.price)}
                                                                             </div>
                                                                             <div className="text-foreground/60 text-xs sm:text-sm">ARS</div>
                                                                         </>

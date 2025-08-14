@@ -1,4 +1,5 @@
 import { Calendar, MapPin, Clock, Download, QrCode, Share2, Ticket } from 'lucide-react';
+import { formatNumber, formatPriceWithCurrency } from '@/lib/currencyHelpers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -133,7 +134,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                         <Card className="bg-white py-0 border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-shadow sm:col-span-2 lg:col-span-1">
                             <CardContent className="p-2 sm:p-4 lg:p-6 text-center">
                                 <div className="tex-lg sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-                                    ${stats.total_spent.toLocaleString()}
+                                    {formatNumber(stats.total_spent)}
                                 </div>
                                 <div className="text-foreground/80 text-xs sm:text-sm lg:text-base">Total Gastado</div>
                             </CardContent>
@@ -216,7 +217,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                             <div className="text-foreground font-semibold text-xs sm:text-sm lg:text-base">
                                                                 {ticket.quantity}x {ticket.ticketType}
                                                             </div>
-                                                            <div className="text-foreground/60 text-xs sm:text-sm">${ticket.total.toLocaleString()} ARS</div>
+                                                            <div className="text-foreground/60 text-xs sm:text-sm">{formatPriceWithCurrency(ticket.total)}</div>
                                                         </div>
                                                         <div className="flex space-x-1 sm:space-x-2 flex-shrink-0">
                                                             <Button
@@ -288,7 +289,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                         </div>
                                                     </div>
                                                     <div className="text-left sm:text-right flex-shrink-0">
-                                                        <div className="text-foreground font-semibold text-sm sm:text-base lg:text-lg">${ticket.total.toLocaleString()}</div>
+                                                        <div className="text-foreground font-semibold text-sm sm:text-base lg:text-lg">{formatNumber(ticket.total)}</div>
                                                         <div className="text-foreground/80 text-xs sm:text-sm">ARS</div>
                                                     </div>
                                                 </div>

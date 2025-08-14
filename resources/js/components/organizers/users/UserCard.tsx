@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Mail, Phone, Key } from 'lucide-react';
 import { UserItem } from '@/types/organizer';
 import { getRoleText, getUserFullName, formatDate } from '@/utils/userFormat';
+import { getUserInitials } from '@/lib/userHelpers';
 import RemoveUserDialog from '@/components/organizers/users/RemoveUserDialog';
 
 interface Props { user: UserItem; onRemove(): void; onViewCredentials?(): void }
@@ -15,7 +16,7 @@ export function UserCard({ user, onRemove, onViewCredentials }: Props) {
         <div className="flex items-center space-x-4">
           <Avatar className="w-12 h-12">
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {user.person.name.charAt(0)}{user.person.last_name.charAt(0)}
+              {getUserInitials(user)}
             </AvatarFallback>
           </Avatar>
           <div>

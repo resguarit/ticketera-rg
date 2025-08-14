@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatNumber } from '@/lib/currencyHelpers';
 import { 
     BarChart3, 
     TrendingUp,
@@ -266,7 +267,7 @@ export default function Reports({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Tickets Vendidos</p>
-                                        <p className="text-2xl font-bold text-black">{salesData.totalTickets.toLocaleString()}</p>
+                                        <p className="text-2xl font-bold text-black">{formatNumber(salesData.totalTickets)}</p>
                                         <div className="flex items-center mt-2">
                                             <TrendingUp className="w-4 h-4 text-chart-2 mr-1" />
                                             <span className="text-chart-2 text-sm font-medium">+22%</span>
@@ -429,7 +430,7 @@ export default function Reports({ auth }: any) {
                                                     <TrendingUp className="w-4 h-4 text-purple-600" />
                                                 </div>
                                                 <p className="text-2xl font-bold text-purple-900">{formatCurrency(salesData.monthlyRevenue * 12)}</p>
-                                                <p className="text-purple-700 text-sm">{(salesData.monthlyTickets * 12).toLocaleString()} tickets</p>
+                                                <p className="text-purple-700 text-sm">{formatNumber(salesData.monthlyTickets * 12)} tickets</p>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -506,7 +507,7 @@ export default function Reports({ auth }: any) {
                                                 <div key={index} className="space-y-2">
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-black font-medium">{demo.age} años</span>
-                                                        <span className="text-gray-600">{Math.round(demo.users).toLocaleString()} usuarios ({demo.percentage}%)</span>
+                                                        <span className="text-gray-600">{formatNumber(Math.round(demo.users))} usuarios ({demo.percentage}%)</span>
                                                     </div>
                                                     <Progress value={demo.percentage} className="h-2" />
                                                 </div>

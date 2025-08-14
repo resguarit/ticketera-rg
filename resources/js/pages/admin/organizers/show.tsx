@@ -8,6 +8,7 @@ import { Building, Mail, Users, Calendar, Eye, Edit, Star, MapPin, Ticket, Calen
 import { OrganizerItem, EventItem, CredentialsFlash } from '@/types/organizer';
 import OrganizerUsersTab from '@/components/organizers/OrganizerUsersTab';
 import { formatDate } from '@/utils/userFormat';
+import { getVenueLocation } from '@/lib/venueHelpers';
 
 interface PageProps extends Record<string, any> { organizer: OrganizerItem; flash?: { success?: string; error?: string }; credentials?: CredentialsFlash | null }
 
@@ -102,7 +103,7 @@ export default function Show() {
                                 <p className="text-sm text-muted-foreground mb-2 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.description}</p>
                                 <div className="space-y-1 text-xs text-muted-foreground">
                                   <div className="flex items-center"><Star className="w-3 h-3 mr-1 text-primary" /><span>{event.category.name}</span></div>
-                                  <div className="flex items-center"><MapPin className="w-3 h-3 mr-1 text-primary" /><span className="truncate">{event.venue.name}, {event.venue.city}</span></div>
+                                  <div className="flex items-center"><MapPin className="w-3 h-3 mr-1 text-primary" /><span className="truncate">{getVenueLocation(event.venue)}</span></div>
                                   <div className="flex items-center"><CalendarIcon className="w-3 h-3 mr-1 text-primary" /><span>Creado {formatDate(event.created_at)}</span></div>
                                 </div>
                                 <div className="mt-4 flex justify-end">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/lib/currencyHelpers';
 import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -277,7 +278,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                                     {event.price ? (
                                                         <>
                                                             <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                ${event.price.toLocaleString()}
+                                                                {formatPrice(event.price)}
                                                             </span>
                                                             <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
                                                         </>

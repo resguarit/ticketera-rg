@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { formatNumber } from '@/lib/currencyHelpers';
+import { calculateTotalRevenue, calculateSalesPercentage } from '@/lib/ticketHelpers';
+import { getVenueCompleteAddress } from '@/lib/venueHelpers';
 import { 
     ArrowLeft,
     Calendar, 
@@ -117,11 +120,9 @@ export default function Show({ auth }: any) {
         sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + ticket.quantity_sold, 0), 0
     );
 
-    const totalRevenue = event.functions.reduce((sum, func) => 
-        sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + (ticket.quantity_sold * ticket.price), 0), 0
-    );
+    const totalRevenue = calculateTotalRevenue(event.functions);
 
-    const salesProgress = totalTickets > 0 ? (soldTickets / totalTickets) * 100 : 0;
+    const salesProgress = calculateSalesPercentage(soldTickets, totalTickets);
 
     // Determinar estado del evento
     const getEventStatus = () => {
@@ -257,7 +258,7 @@ export default function Show({ auth }: any) {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Ingresos</p>
-                                        <p className="font-semibold text-black">${totalRevenue.toLocaleString()}</p>
+                                        <p className="font-semibold text-black">{formatNumber(totalRevenue)}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -345,7 +346,7 @@ export default function Show({ auth }: any) {
                                                     <div>
                                                         <p className="text-sm text-gray-600">Venue</p>
                                                         <p className="font-medium text-black">{event.venue.name}</p>
-                                                        <p className="text-sm text-gray-500">{event.venue.address}, {event.venue.city}, {event.venue.province}</p>
+                                                        <p className="text-sm text-gray-500">{getVenueCompleteAddress(event.venue)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
@@ -626,7 +627,7 @@ export default function Show({ auth }: any) {
                                         <div className="space-y-3">
                                             {event.functions.map((func) => {
                                                 const funcTickets = func.ticket_types.reduce((sum, t) => sum + t.quantity_sold, 0);
-                                                const funcRevenue = func.ticket_types.reduce((sum, t) => sum + (t.quantity_sold * t.price), 0);
+                                                const funcRevenue = calculateTotalRevenue([func]);
                                                 
                                                 return (
                                                     <div key={func.id} className="p-3 bg-gray-50 rounded-lg">

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
+import { formatPrice, formatPriceWithCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -176,14 +178,6 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         } else {
             return v;
         }
-    };
-
-    const formatExpiryDate = (value: string) => {
-        const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
-        if (v.length >= 2) {
-            return v.substring(0, 2) + "/" + v.substring(2, 4);
-        }
-        return v;
     };
 
     return (
@@ -465,7 +459,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                             id="expiryDate"
                                                             value={paymentInfo.expiryDate}
                                                             onChange={(e) =>
-                                                                setPaymentInfo((prev) => ({ ...prev, expiryDate: formatExpiryDate(e.target.value) }))
+                                                                setPaymentInfo((prev) => ({ ...prev, expiryDate: formatCreditCardExpiry(e.target.value) }))
                                                             }
                                                             className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
                                                             placeholder="MM/AA"
@@ -633,8 +627,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                 <p className="text-foreground/80 text-sm">Cantidad: {ticket.quantity}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-foreground font-bold">${(ticket.price * ticket.quantity).toLocaleString()}</p>
-                                                <p className="text-foreground/60 text-sm">${ticket.price.toLocaleString()} c/u</p>
+                                                <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
+                                                <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
                                             </div>
                                         </div>
                                     ))}
@@ -644,16 +638,16 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-foreground/80">
                                             <span>Subtotal ({getTotalTickets()} tickets)</span>
-                                            <span>${getTotalPrice().toLocaleString()}</span>
+                                            <span>{formatPrice(getTotalPrice())}</span>
                                         </div>
                                         <div className="flex justify-between text-foreground/80">
                                             <span>Cargo por servicio</span>
-                                            <span>${getServiceFee().toLocaleString()}</span>
+                                            <span>{formatPrice(getServiceFee())}</span>
                                         </div>
                                         <Separator className="bg-gray-200" />
                                         <div className="flex justify-between text-foreground text-xl font-bold">
                                             <span>Total</span>
-                                            <span>${getFinalTotal().toLocaleString()} ARS</span>
+                                            <span>{formatPriceWithCurrency(getFinalTotal())}</span>
                                         </div>
                                     </div>
 
