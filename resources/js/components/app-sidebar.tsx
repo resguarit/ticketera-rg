@@ -2,7 +2,7 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
+import { type NavItem, type User } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { 
     BookOpen, 
@@ -64,24 +64,9 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     icon: LayoutGrid,
                 },
                 {
-                    title: 'Mis Eventos',
+                    title: 'Eventos',
                     href: '/organizer/events',
                     icon: Calendar,
-                },
-                {
-                    title: 'Crear Evento',
-                    href: '/organizer/events/create',
-                    icon: Ticket,
-                },
-                {
-                    title: 'Ventas',
-                    href: '/organizer/sales',
-                    icon: BarChart3,
-                },
-                {
-                    title: 'Mi Perfil',
-                    href: '/organizer/profile',
-                    icon: UserCheck,
                 }
             ];
         
@@ -138,7 +123,8 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     // Obtener los datos del usuario autenticado
-    const { auth } = usePage<{ auth: { user: { role: string } | null } }>().props;
+    const page = usePage();
+    const auth = (page.props as any).auth as { user: User | null };
     
     // Determinar el rol del usuario (por defecto 'client' si no está autenticado)
     const userRole = auth.user?.role || 'client';
@@ -149,14 +135,37 @@ export function AppSidebar() {
     // Obtener URL del dashboard según el rol
     const dashboardUrl = getDashboardUrl(userRole);
 
+    // Determinar el título y logo según el rol
+    const getLogoProps = () => {
+        switch (userRole) {
+            case 'admin':
+                return {
+                    title: 'Panel Admin',
+                    logoUrl: undefined // Mantiene el logo de Laravel
+                };
+            case 'organizer':
+                return {
+                    title: auth.user?.organizer?.name || 'Organizador',
+                    logoUrl: auth.user?.organizer?.logo_url
+                };
+            default:
+                return {
+                    title: 'Laravel Starter Kit',
+                    logoUrl: undefined
+                };
+        }
+    };
+
+    const logoProps = getLogoProps();
+
     return (
         <Sidebar collapsible="icon" variant="floating">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild tooltip={{ children: logoProps.title }}>
                             <Link href={dashboardUrl} prefetch>
-                                <AppLogo />
+                                <AppLogo {...logoProps} />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

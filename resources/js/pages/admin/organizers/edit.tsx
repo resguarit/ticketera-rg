@@ -150,7 +150,7 @@ export default function EditOrganizer() {
                     <InputError message={errors.phone} className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="tax" className="text-card-foreground">CUIT / Tax ID</Label>
+                    <Label htmlFor="tax" className="text-card-foreground">Cargo por servicio (%)</Label>
                     <Input id="tax" value={data.tax} onChange={e => setData('tax', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
                     <InputError message={errors.tax} className="mt-1" />
                   </div>
