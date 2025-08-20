@@ -18,7 +18,38 @@ class EventController extends Controller
     {
         $organizer = Auth::user()->organizer;
 
-        $events = $organizer->events;
+        $events = $organizer->events()
+            ->with(['category', 'venue', 'organizer', 'functions'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($event) {
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'description' => $event->description,
+                    'banner_url' => $event->banner_url,
+                    'featured' => $event->featured,
+                    'category' => $event->category,
+                    'venue' => $event->venue,
+                    'organizer' => $event->organizer,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                    'functions' => $event->functions->map(function($function) {
+                        return [
+                            'id' => $function->id,
+                            'name' => $function->name,
+                            'description' => $function->description,
+                            'start_time' => $function->start_time, // Raw para compatibilidad
+                            'end_time' => $function->end_time,     // Raw para compatibilidad
+                            'date' => $function->start_time?->format('d M Y'),
+                            'time' => $function->start_time?->format('H:i'),
+                            'formatted_date' => $function->start_time?->format('Y-m-d'),
+                            'day_name' => $function->start_time?->format('l'),
+                            'is_active' => $function->is_active,
+                        ];
+                    }),
+                ];
+            });
 
         return Inertia::render('organizer/events/index', [
             'events' => $events,

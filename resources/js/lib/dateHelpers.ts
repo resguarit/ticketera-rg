@@ -229,3 +229,52 @@ export const getLastDayOfMonth = (dateString: string | null): string => {
 export const compareDates = (dateA: string, dateB: string): number => {
   return new Date(dateA).getTime() - new Date(dateB).getTime();
 };
+
+/**
+ * Formatea una fecha y hora desde el backend (ya en zona horaria correcta)
+ * Acepta tanto datetime completo como fecha + hora separadas
+ */
+export const formatEventDateTime = (datetime: string | null, time?: string | null): string => {
+    if (!datetime) return 'Sin fecha';
+    
+    // Si viene tiempo separado, es que tenemos fecha + hora del backend formateadas
+    if (time) {
+        return `${datetime} • ${time}`;
+    }
+    
+    // Si es datetime completo, usar las utilidades existentes
+    try {
+        const date = new Date(datetime);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    } catch (error) {
+        console.warn('Error formateando fecha y hora:', datetime);
+    }
+    
+    return datetime;
+};
+
+/**
+ * Formatea una fecha para mostrar en componentes de tarjeta
+ * Extrae día y mes de una fecha ya formateada del backend (ej: "23 ago 2025")
+ */
+export const formatDateForCard = (formattedDate: string): { day: string; month: string } => {
+    if (!formattedDate) return { day: '', month: '' };
+    
+    const parts = formattedDate.split(' ');
+    if (parts.length >= 2) {
+        return {
+            day: parts[0],
+            month: parts[1].toUpperCase()
+        };
+    }
+    
+    return { day: '', month: '' };
+};
