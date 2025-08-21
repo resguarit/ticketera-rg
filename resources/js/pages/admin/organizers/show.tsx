@@ -25,9 +25,9 @@ export default function Show() {
             <CardContent className="p-8">
               <div className="flex items-start space-x-6">
                 <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-border">
-                  {organizer.logo_url ? (
+                  {organizer.image_url ? (
                     <img
-                      src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
+                      src={organizer.image_url}
                       alt={`Logo de ${organizer.name}`}
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}

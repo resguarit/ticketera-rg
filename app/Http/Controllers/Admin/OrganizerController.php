@@ -66,12 +66,9 @@ class OrganizerController extends Controller
         if ($request->hasFile('logo_url')) {
             $file = $request->file('logo_url');
             $filename = time() . '_' . $file->getClientOriginalName();
-            
-            // Mover el archivo a public/images/organizers
-            $file->move(public_path('images/organizers'), $filename);
-            
+            $path = $request->file('logo_url')->storeAs('logos', $filename, 'public');
             // Guardar solo el nombre del archivo en la base de datos
-            $validated['logo_url'] = $filename;
+            $validated['logo_url'] = $path;
         }
 
         Organizer::create($validated);

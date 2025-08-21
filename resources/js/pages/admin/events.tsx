@@ -276,7 +276,7 @@ export default function Events({ auth }: any) {
                                         <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                                             {event.image ? (
                                                 <img 
-                                                    src={event.image.startsWith('/') ? event.image : `/images/events/${event.image}`}
+                                                    src={event.image}
                                                     alt={event.title} 
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {

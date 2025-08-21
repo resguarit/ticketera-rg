@@ -33,6 +33,7 @@ export interface OrganizerItem {
   email: string;
   phone: string;
   logo_url: string | null;
+  image_url: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   twitter_url: string | null;

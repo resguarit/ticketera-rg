@@ -56,7 +56,7 @@ class EventController extends Controller
             return [
                 'id' => $event->id,
                 'title' => $event->name,
-                'image' => $event->banner_url ?: "/placeholder.svg?height=300&width=400",
+                'image' => $event->image_url ?: "/placeholder.svg?height=300&width=400",
                 'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $firstFunction?->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
@@ -136,7 +136,7 @@ class EventController extends Controller
             'id' => $event->id,
             'title' => $event->name,
             'description' => $event->description,
-            'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
+            'image' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
             'location' => $event->venue->name,
             // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',

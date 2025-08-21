@@ -31,19 +31,6 @@ class DatabaseSeeder extends Seeder
                 'person_id' => $person->id,
             ]);
 
-            $person = Person::create([
-                'name' => 'Federico',
-                'last_name' => 'Perez',
-                'dni' => '87654321',
-            ]);
-
-            User::create([
-                'email' => 'organizer@example.com',
-                'password' => bcrypt('password'),
-                'role' => UserRole::ORGANIZER,
-                'person_id' => $person->id,
-            ]);
-
             // Ejecutar seeders de las tablas principales
             $this->call([
                 ProvinciaSeeder::class,

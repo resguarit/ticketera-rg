@@ -34,6 +34,7 @@ export interface SharedData {
 export interface User {
     id: number;
     email: string;
+    role: string;
     avatar?: string;
     email_verified_at: string | null;
     created_at: string;
@@ -45,6 +46,14 @@ export interface User {
         dni: string;
         phone?: string | null; // Optional phone field
         address?: string;
+    };
+    organizer?: {
+        id: number;
+        name: string;
+        logo_url?: string;
+        referring?: string;
+        email?: string;
+        phone?: string;
     };
     [key: string]: unknown; // This allows for additional properties...
 }

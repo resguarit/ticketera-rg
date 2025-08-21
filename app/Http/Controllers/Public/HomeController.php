@@ -25,7 +25,7 @@ class HomeController extends Controller
                 return [
                     'id' => $event->id,
                     'title' => $event->name,
-                    'image' => $event->banner_url ?: "/placeholder.svg?height=400&width=800",
+                    'image' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
                     'date' => $event->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                     'location' => $event->venue->name,
                     // ACTUALIZADO: usar la nueva estructura
@@ -54,7 +54,7 @@ class HomeController extends Controller
                 return [
                     'id' => $event->id,
                     'title' => $event->name,
-                    'image' => $event->banner_url ?: "/placeholder.svg?height=300&width=400",
+                    'image' => $event->image_url ?: "/placeholder.svg?height=300&width=400",
                     'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                     'time' => $firstFunction?->start_time?->format('H:i') ?? '',
                     'location' => $event->venue->name,
