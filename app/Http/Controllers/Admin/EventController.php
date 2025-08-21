@@ -157,7 +157,7 @@ class EventController extends Controller
                 'price_range' => $priceRange,
                 'created_at' => $event->created_at->format('Y-m-d'),
                 'created_datetime' => $event->created_at->toISOString(),
-                'image' => $event->banner_url,
+                'image' => $event->image_url,
                 'featured' => $event->featured,
                 'functions_count' => $event->functions->count(),
             ];
@@ -206,7 +206,7 @@ class EventController extends Controller
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
-            'banner_url' => $event->banner_url,
+            'banner_url' => $event->image_url,
             'featured' => $event->featured,
             'organizer' => [
                 'id' => $event->organizer->id,

@@ -78,7 +78,7 @@ interface EventData {
     id: number;
     name: string;
     description: string;
-    banner_url: string;
+    image_url: string;
     featured: boolean;
     organizer: {
         id: number;
@@ -323,10 +323,10 @@ export default function Show({ auth }: any) {
                                         </CardHeader>
                                         <CardContent className="space-y-4">
                                             {/* Banner del evento */}
-                                            {event.banner_url && (
+                                            {event.image_url && (
                                                 <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200">
                                                     <img 
-                                                        src={event.banner_url.startsWith('/') ? event.banner_url : `/images/events/${event.banner_url}`}
+                                                        src={event.image_url}
                                                         alt={event.name}
                                                         className="w-full h-full object-cover"
                                                     />

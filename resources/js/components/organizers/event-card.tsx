@@ -18,7 +18,7 @@ interface Event {
     id: number;
     name: string;
     description: string;
-    banner_url: string | null;
+    image_url: string | null;
     featured: boolean;
     category: {
         id: number;
@@ -116,11 +116,11 @@ export default function OrganizerEventCard({ event }: { event: Event }) {
                 {console.log(event)}
 
                 {/* Banner si existe */}
-                {event.banner_url && (
+                {event.image_url && (
                     <div className="mb-4">
                         <div className="text-sm font-medium text-gray-700 mb-2">Banner</div>
                         <img
-                            src={`/storage/${event.banner_url}`}
+                            src={event.image_url}
                             alt={`Banner de ${event.name}`}
                             className="w-full h-20 object-cover rounded border"
                             onError={(e) => {

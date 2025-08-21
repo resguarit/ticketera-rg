@@ -27,7 +27,7 @@ class EventController extends Controller
                     'id' => $event->id,
                     'name' => $event->name,
                     'description' => $event->description,
-                    'banner_url' => $event->banner_url,
+                    'banner_url' => $event->image_url,
                     'featured' => $event->featured,
                     'category' => $event->category,
                     'venue' => $event->venue,

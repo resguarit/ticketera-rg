@@ -8,7 +8,7 @@ interface Event {
     id: number;
     name: string;
     description: string;
-    banner_url: string | null;
+    image_url: string | null;
     featured: boolean;
     category: {
         id: number;

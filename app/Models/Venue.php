@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Venue extends Model
 {
@@ -22,6 +24,17 @@ class Venue extends Model
         'banner_url',
         'referring',
     ];
+
+    protected $appends = ['image_url'];
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->banner_url
+                ? Storage::url($this->banner_url)
+                : null
+        );
+    }
 
     public function ciudad(): BelongsTo
     {

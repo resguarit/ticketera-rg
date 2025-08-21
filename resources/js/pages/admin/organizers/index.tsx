@@ -58,6 +58,7 @@ interface Organizer {
     phone: string;
     events_count: number; // de withCount('events')
     logo_url: string;
+    image_url: string;
     created_at: string;
 }
 
@@ -81,6 +82,7 @@ interface PageProps {
 export default function Index({ auth }: any) {
     // 2. Usar los props reales que vienen de Inertia
     const { organizers, stats, filters } = usePage<PageProps>().props;
+    console.log(organizers)
 
     // Estados para manejar los filtros
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
@@ -229,13 +231,15 @@ export default function Index({ auth }: any) {
             >
                 {/* Organizers Content */}
                 <div className="space-y-4">
+
                     {organizers.data.map((organizer) => (
+                        
                         <div key={organizer.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                             <div className="flex items-center space-x-6">
                                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                                    {organizer.logo_url ? (
+                                    {organizer.image_url ? (
                                         <img 
-                                            src={organizer.logo_url.startsWith('/') ? organizer.logo_url : `/images/organizers/${organizer.logo_url}`}
+                                            src={organizer.image_url}
                                             alt={`Logo de ${organizer.name}`}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {

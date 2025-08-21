@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Dom\Attr;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Organizer extends Model
 {
@@ -28,6 +31,17 @@ class Organizer extends Model
         'decidir_public_key_test',
         'decidir_secret_key_test',
     ];
+
+    protected $appends = ['image_url'];
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->logo_url
+                ? Storage::url($this->logo_url)
+                : null,
+        );
+    }
 
     public function events(): HasMany
     {

@@ -16,24 +16,12 @@ interface Organizer {
   email: string;
   phone: string | null;
   logo_url: string | null;
+  image_url: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   twitter_url: string | null;
   tax: string | null;
 }
-
-// Helper para resolver la URL del logo almacenado en DB (sea solo nombre, path relativo o URL absoluta)
-const resolveLogoUrl = (value: string | null): string | null => {
-  if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value; // URL absoluta
-  // Si ya incluye la carpeta images/organizers
-  if (value.includes('images/organizers/')) {
-    // Asegura exactamente un slash inicial
-    return value.startsWith('/') ? value : '/' + value;
-  }
-  // Es solo el nombre de archivo
-  return `/images/organizers/${value}`;
-};
 
 export default function EditOrganizer() {
   const { props } = usePage<{ organizer: Organizer }>();
@@ -52,9 +40,9 @@ export default function EditOrganizer() {
     tax: organizer.tax || '',
   });
 
-  const existingLogoResolved = resolveLogoUrl(organizer.logo_url);
+  const existingLogoResolved = organizer.image_url;
   const [logoPreview, setLogoPreview] = useState<string | null>(existingLogoResolved);
-  const [originalLogo, setOriginalLogo] = useState<string | null>(organizer.logo_url);
+  const [originalLogo, setOriginalLogo] = useState<string | null>(organizer.image_url);
 
   useEffect(() => {
     return () => {
@@ -80,7 +68,7 @@ export default function EditOrganizer() {
     if (file) {
       setLogoPreview(URL.createObjectURL(file));
     } else {
-      setLogoPreview(resolveLogoUrl(originalLogo));
+      setLogoPreview((originalLogo));
     }
   };
 
@@ -91,7 +79,7 @@ export default function EditOrganizer() {
 
   const resetForm = () => {
     reset();
-    setLogoPreview(resolveLogoUrl(originalLogo));
+    setLogoPreview(originalLogo);
   };
 
   return (

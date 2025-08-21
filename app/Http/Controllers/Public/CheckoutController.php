@@ -88,7 +88,7 @@ class CheckoutController extends Controller
         $eventData = [
             'id' => $event->id,
             'title' => $event->name,
-            'image' => $event->banner_url ?: "/placeholder.svg?height=200&width=300",
+            'image' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
             'date' => $selectedFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
             'time' => $selectedFunction->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
@@ -238,7 +238,7 @@ class CheckoutController extends Controller
             'orderId' => $orderSummary['order_number'],
             'event' => [
                 'title' => $event->name,
-                'image' => $event->banner_url ?: "/placeholder.svg?height=200&width=300",
+                'image' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,

@@ -32,7 +32,7 @@ class VenueController extends Controller
                     'eventos_count' => $venue->eventos_count,
                     'sectors_count' => $venue->sectors_count,
                     'coordinates' => $venue->coordinates,
-                    'banner_url' => $venue->banner_url,
+                    'banner_url' => $venue->image_url,
                     'referring' => $venue->referring,
                 ];
             });
@@ -62,6 +62,12 @@ class VenueController extends Controller
             'banner_url' => 'nullable|string|max:255',
             'referring' => 'nullable|string|max:1000'
         ]);
+
+        if ($request->hasFile('banner_url')) {
+            $request->merge([
+                'banner_url' => $request->file('banner_url')->store('venues', 'public')
+            ]);
+        }
 
         Venue::create($request->only([
             'name', 

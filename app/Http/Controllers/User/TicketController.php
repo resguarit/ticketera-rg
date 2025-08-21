@@ -37,7 +37,7 @@ class TicketController extends Controller
                 'id' => $ticket->id,
                 'eventId' => $event->id,
                 'eventTitle' => $event->name,
-                'eventImage' => $event->banner_url ?: "/placeholder.svg?height=200&width=300",
+                'eventImage' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
