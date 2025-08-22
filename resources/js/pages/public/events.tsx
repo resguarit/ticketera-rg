@@ -11,40 +11,9 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-// Tipos de datos que llegan del backend
-interface Event {
-    id: number;
-    title: string;
-    image: string;
-    date: string;
-    time: string;
-    location: string;
-    city: string;
-    province?: string;
-    category: string;
-    price: number;
-    rating: number;
-    featured: boolean;
-}
-
-interface Category {
-    id: string;
-    label: string;
-    icon: string;
-    color: string;
-}
-
-interface EventsProps {
-    events: Event[];
-    categories: Category[];
-    cities: string[];
-    filters: {
-        search: string;
-        category: string;
-        city: string;
-        sortBy: string;
-    };
-}
+import {
+    PublicEventsPageProps
+} from '@/types';
 
 // Mapeo de iconos (igual que en home)
 const iconMap = {
@@ -58,7 +27,7 @@ const iconMap = {
     users: Users,
 };
 
-export default function Events({ events, categories, cities, filters }: EventsProps) {
+export default function Events({ events, categories, cities, filters }: PublicEventsPageProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search);
     const [selectedCategory, setSelectedCategory] = useState(filters.category);
     const [selectedCity, setSelectedCity] = useState(filters.city);
@@ -69,10 +38,10 @@ export default function Events({ events, categories, cities, filters }: EventsPr
     const filteredEvents = events
         .filter((event) => {
             const matchesSearch =
-                event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                event.location.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
-            const matchesCity = selectedCity === "all" || event.city === selectedCity;
+                event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || event.category.name === selectedCategory;
+            const matchesCity = selectedCity === "all" || event.venue.city === selectedCity;
             return matchesSearch && matchesCategory && matchesCity;
         })
         .sort((a, b) => {
@@ -81,8 +50,6 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                     return a.price - b.price;
                 case "price-high":
                     return b.price - a.price;
-                case "rating":
-                    return b.rating - a.rating;
                 case "date":
                 default:
                     return compareDates(a.date, b.date);
@@ -90,7 +57,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
         });
 
     // Obtener icono de categoría
-    const getCategoryIcon = (iconName: string) => {
+    const getCategoryIcon = (iconName: string | undefined) => {
+        if (!iconName) return Music;
         return iconMap[iconName as keyof typeof iconMap] || Music;
     };
 
@@ -239,7 +207,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category)?.icon || 'music'
+                                            categories.find(c => c.id === event.category.id)?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -248,8 +216,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                             >
                                                 <div className="relative">
                                                     <img
-                                                        src={event.image}
-                                                        alt={event.title}
+                                                        src={event.image_url ?? event.image}
+                                                        alt={event.name}
                                                         className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                                     />
                                                     {event.featured && (
@@ -263,7 +231,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
 
                                                 </div>
                                                 <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
-                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.title}</h4>
+                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
                                                     <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
                                                         <div className="flex items-center text-foreground/80">
                                                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
@@ -314,7 +282,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category)?.icon || 'music'
+                                            categories.find(c => c.id === event.category.id)?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -325,8 +293,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                     <div className=" flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
                                                         <div className="relative w-16 h-48 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-l-lg sm:rounded-lg overflow-hidden flex-shrink-0">
                                                             <img
-                                                                src={event.image}
-                                                                alt={event.title}
+                                                                src={event.image_url ?? event.image}
+                                                                alt={event.name}
                                                                 className="w-full h-full object-cover"
                                                             />
                                                             <div className="absolute top-1 sm:top-2 right-1 sm:right-2 p-1 rounded-full bg-primary">
@@ -337,7 +305,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                         <div className="flex-1 min-w-0 ">
                                                             <div className="flex flex-col  sm:flex-row sm:items-start sm:justify-between">
                                                                 <div className="min-w-0 flex-1 ">
-                                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.title}</h4>
+                                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
                                                                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
                                                                         <div className="flex items-center space-x-1">
                                                                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />

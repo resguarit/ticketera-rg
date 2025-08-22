@@ -41,8 +41,9 @@ import { useDebounce } from 'use-debounce';
 // Components
 import { AdminDashboardLayout } from '@/components/admin/AdminDashboardLayout';
 import type { StatCardProps, FilterConfig } from '@/types/admin';
+import { Organizer } from '@/types';
+import { PaginatedResponse } from '@/types/ui/ui';
 
-// 1. Interfaces ajustadas a los datos reales del backend
 interface Stat {
     total_organizers: number;
     active_organizers: number;
@@ -50,26 +51,12 @@ interface Stat {
     total_revenue: number;
 }
 
-interface Organizer {
-    id: number;
-    name: string;
-    email: string;
-    referring: string;
-    phone: string;
+interface OrganizerIndex extends Organizer {
     events_count: number; // de withCount('events')
-    logo_url: string;
-    image_url: string;
-    created_at: string;
-}
-
-interface PaginatedOrganizers {
-    data: Organizer[];
-    links: { url: string | null; label: string; active: boolean }[];
-    total: number;
 }
 
 interface PageProps {
-    organizers: PaginatedOrganizers;
+    organizers: PaginatedResponse<OrganizerIndex>;
     stats: Stat;
     filters: {
         search: string;

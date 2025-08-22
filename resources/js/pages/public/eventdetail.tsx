@@ -12,51 +12,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-interface TicketType {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    available: number;
-    quantity: number;
-    quantity_sold: number;
-    sales_start_date: string;
-    sales_end_date: string;
-    is_hidden: boolean;
-    color?: string;
-}
-
-interface EventFunction {
-    id: number;
-    name: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-    date: string;
-    time: string;
-    day_name: string;
-    is_active: boolean;
-    ticketTypes: TicketType[];
-}
-
-interface EventData {
-    id: number;
-    title: string;
-    description: string;
-    image: string;
-    date: string; // Para compatibilidad
-    time: string; // Para compatibilidad
-    location: string;
-    city: string;
-    province?: string; // NUEVO: agregar provincia
-    full_address?: string;
-    category: string;
-    rating: number;
-    reviews: number;
-    duration: string;
-    ageRestriction: string;
-    functions: EventFunction[];
-}
+import {
+    EventData
+} from '@/types'
 
 interface EventDetailProps {
     eventData: EventData;

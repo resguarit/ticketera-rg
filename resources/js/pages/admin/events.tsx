@@ -25,63 +25,17 @@ import { Head, Link, usePage } from '@inertiajs/react';
 // Importar las utilidades de fecha
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
 
-// Interfaces para datos reales
-interface EventOrganizer {
-    id: number;
-    name: string;
-    email: string;
-}
-
-interface EventData {
-    id: number;
-    title: string;
-    organizer: EventOrganizer;
-    category: string;
-    date: string | null; // Ya formateada como Y-m-d
-    time: string | null;
-    datetime?: string | null; // Para comparaciones si es necesario
-    location: string;
-    city: string;
-    province?: string;
-    status: string;
-    tickets_sold: number;
-    total_tickets: number;
-    revenue: number;
-    price_range: string;
-    created_at: string; // Ya formateada como Y-m-d
-    created_datetime?: string | null; // Para comparaciones si es necesario
-    image: string | null;
-    featured: boolean;
-    functions_count: number;
-}
-
-interface EventStats {
-    total: number;
-    active: number;
-    inactive: number;
-    finished: number;
-    draft: number;
-    totalTicketsSold: number;
-    totalRevenue: number;
-}
-
-interface PaginatedEvents {
-    data: EventData[];
-    links: { url: string | null; label: string; active: boolean }[];
-    total: number;
-}
+import {
+    AdminEvent,
+    EventStats,
+    PaginatedEvents,
+    EventFilters
+} from '@/types'
 
 interface PageProps {
-    events: PaginatedEvents;
+    events: PaginatedEvents<AdminEvent>;
     stats: EventStats;
-    filters: {
-        search: string;
-        status: string;
-        category: string;
-        city: string;
-        sort_by: string;
-        sort_direction: string;
-    };
+    filters: EventFilters;
     categories: string[];
     cities: string[];
     [key: string]: any;
@@ -274,10 +228,10 @@ export default function Events({ auth }: any) {
                                     <div className="flex items-center space-x-6">
                                         {/* Event Image */}
                                         <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                                            {event.image ? (
+                                            {event.image_url ? (
                                                 <img 
-                                                    src={event.image}
-                                                    alt={event.title} 
+                                                    src={event.image_url}
+                                                    alt={event.name} 
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
                                                         e.currentTarget.style.display = 'none';
@@ -285,7 +239,7 @@ export default function Events({ auth }: any) {
                                                     }}
                                                 />
                                             ) : null}
-                                            <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${event.image ? 'hidden' : ''}`}>
+                                            <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${event.image_url ? 'hidden' : ''}`}>
                                                 <Calendar className="w-8 h-8 text-gray-600" />
                                             </div>
                                         </div>
@@ -295,7 +249,7 @@ export default function Events({ auth }: any) {
                                             <div className="flex items-start justify-between mb-2">
                                                 <div>
                                                     <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
-                                                        <span>{event.title}</span>
+                                                        <span>{event.name}</span>
                                                         {event.featured && (
                                                             <Badge className="bg-primary text-white border-0 text-xs">
                                                                 Destacado
@@ -345,7 +299,7 @@ export default function Events({ auth }: any) {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4 text-xs text-gray-500">
                                                     <span>Rango: ${event.price_range} ARS</span>
-                                                    <span>Categoría: {event.category}</span>
+                                                    <span>Categoría: {event.category.name}</span>
                                                     <span>Funciones: {event.functions_count}</span>
                                                     <span>Creado: {formatRelativeTime(event.created_at)}</span>
                                                 </div>
