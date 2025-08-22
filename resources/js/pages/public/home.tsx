@@ -185,11 +185,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     ))}
                                 </SelectContent>
                             </Select>
-
-                            <Button className="bg-primary hover:bg-primary-hover text-white text-xs sm:text-base h-7 sm:h-10 px-3 sm:px-4">
-                                <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                Filtrar
-                            </Button>
                         </div>
                     </div>
                 </section>

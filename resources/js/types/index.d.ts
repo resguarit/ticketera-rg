@@ -23,7 +23,9 @@ export * from './models/user';
 export * from './models/venue';
 
 // export de las vistas
-export * from './views/event.views'; 
+export * from './ui/event.views'; 
+
+export * from './ui';
 
 
 export interface Auth {

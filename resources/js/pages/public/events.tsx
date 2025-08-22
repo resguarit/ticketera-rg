@@ -11,21 +11,39 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-import {
-    PublicEventsPageProps
-} from '@/types';
+import {    
+  Event,
+  Category,
+  Ciudad,
+  Venue
+} from '@/types/models';
 
-// Mapeo de iconos (igual que en home)
-const iconMap = {
-    music: Music,
-    theater: Theater,
-    trophy: Trophy,
-    presentation: Presentation,
-    utensils: Utensils,
-    palette: Palette,
-    laugh: Laugh,
-    users: Users,
-};
+import {
+  getCategoryIcon,  
+} from '@/types/ui'
+
+interface EventDetail extends Event {
+    date: string;
+    time?: string;
+    location: string;
+    city?: string;
+    province?: string; 
+    category: string;
+    price: number;
+    venue: Venue;
+}
+
+interface PublicEventsPageProps {
+    events: EventDetail[];
+    categories: Category[];
+    cities: Ciudad[];
+    filters: {
+        search: string;
+        category: string;
+        city: string;
+        sortBy: string;
+    };
+}
 
 export default function Events({ events, categories, cities, filters }: PublicEventsPageProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search);
@@ -33,6 +51,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
     const [selectedCity, setSelectedCity] = useState(filters.city);
     const [sortBy, setSortBy] = useState(filters.sortBy);
     const [viewMode, setViewMode] = useState("grid");
+    console.log(events)
 
     // Filtrar y ordenar eventos en el frontend
     const filteredEvents = events
@@ -40,8 +59,8 @@ export default function Events({ events, categories, cities, filters }: PublicEv
             const matchesSearch =
                 event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || event.category.name === selectedCategory;
-            const matchesCity = selectedCity === "all" || event.venue.city === selectedCity;
+            const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
+            const matchesCity = selectedCity === "all" || event.city === selectedCity;
             return matchesSearch && matchesCategory && matchesCity;
         })
         .sort((a, b) => {
@@ -55,29 +74,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                     return compareDates(a.date, b.date);
             }
         });
-
-    // Obtener icono de categoría
-    const getCategoryIcon = (iconName: string | undefined) => {
-        if (!iconName) return Music;
-        return iconMap[iconName as keyof typeof iconMap] || Music;
-    };
-
-    const getCategoryColor = (category: string) => {
-        return "primary"; // Por ahora todos primary
-    };
-
-    // Aplicar filtros via servidor (opcional)
-    const applyFilters = () => {
-        router.get('/events', {
-            search: searchTerm,
-            category: selectedCategory,
-            city: selectedCity,
-            sortBy: sortBy,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
 
     return (
         <>
@@ -118,8 +114,8 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 <SelectContent>
                                     <SelectItem value="all">Todas las categorías</SelectItem>
                                     {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.label}
+                                        <SelectItem key={category.id} value={category.name}>
+                                            {category.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -131,9 +127,9 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todas las ciudades</SelectItem>
-                                    {cities.map((city) => (
-                                        <SelectItem key={city} value={city}>
-                                            {city}
+                                    {cities.map((city, id) => (
+                                        <SelectItem key={id} value={city.name}>
+                                            {city.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -147,7 +143,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                     <SelectItem value="date">Fecha</SelectItem>
                                     <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
                                     <SelectItem value="price-high">Precio: Mayor a Menor</SelectItem>
-                                    <SelectItem value="rating">Mejor Valorados</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -178,12 +173,12 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                             key={category.id}
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => setSelectedCategory(category.id)}
-                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === category.id ? "bg-primary text-white" : ""}`}
+                                            onClick={() => setSelectedCategory(category.name)}
+                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === category.name ? "bg-primary text-white" : ""}`}
                                         >
                                             <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                            <span className="hidden sm:inline">{category.label}</span>
-                                            <span className="sm:hidden">{category.label.substring(0, 3)}</span>
+                                            <span className="hidden sm:inline">{category.name}</span>
+                                            <span className="sm:hidden">{category.name.substring(0, 3)}</span>
                                         </Button>
                                     );
                                 })}
@@ -207,7 +202,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category.id)?.icon || 'music'
+                                            categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -216,7 +211,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                             >
                                                 <div className="relative">
                                                     <img
-                                                        src={event.image_url ?? event.image}
+                                                        src={event.image_url || "/placeholder.svg?height=400&width=800"}
                                                         alt={event.name}
                                                         className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                                     />
@@ -282,7 +277,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category.id)?.icon || 'music'
+                                            categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -293,7 +288,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                     <div className=" flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
                                                         <div className="relative w-16 h-48 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-l-lg sm:rounded-lg overflow-hidden flex-shrink-0">
                                                             <img
-                                                                src={event.image_url ?? event.image}
+                                                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
                                                                 alt={event.name}
                                                                 className="w-full h-full object-cover"
                                                             />
