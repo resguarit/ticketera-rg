@@ -1,6 +1,31 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
 
+// Re-export all models types
+export * from './common';
+export * from './admin';
+export * from './models/assistant';
+export * from './models/category';
+export * from './models/ciudad';
+export * from './models/discountCode';
+export * from './models/event';
+export * from './models/eventFunction';
+export * from './models/eventFunctionSeat';
+export * from './models/issuedTicket';
+export * from './models/order';
+export * from './models/organizer';
+export * from './models/person';
+export * from './models/provincia';
+export * from './models/seat';
+export * from './models/sector';
+export * from './models/ticketType';
+export * from './models/user';
+export * from './models/venue';
+
+// export de las vistas
+export * from './views/event.views'; 
+
+
 export interface Auth {
     user: User;
 }
