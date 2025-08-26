@@ -252,7 +252,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                                     <p className="font-semibold text-foreground">{auth.user.email}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-foreground/60">Contraseña temporal:</p>
+                                                    <p className="text-foreground/60">Contraseña temporal (Tu DNI):</p>
                                                     <p className="font-semibold text-foreground">{auth.user.person.dni ?? '12345678'}</p>
                                                 </div>
                                             </div>
