@@ -3,7 +3,7 @@ import type { Order } from './order';
 import type { Assistant } from './assistant';
 import type { User } from './user';
 
-export type IssuedTicketStatus = 'available' | 'used' | 'canceled' | 'reprinted';
+export type IssuedTicketStatus = 'available' | 'used' | 'cancelled' | 'reprinted';
 
 export interface IssuedTicket {
     id: number;
