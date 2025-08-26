@@ -108,9 +108,9 @@ class EventController extends Controller
 
         $eventData = [
             'id' => $event->id,
-            'title' => $event->name,
+            'name' => $event->name,
             'description' => $event->description,
-            'image' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
+            'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
             'location' => $event->venue->name,
             // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
