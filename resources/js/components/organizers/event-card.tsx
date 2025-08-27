@@ -145,7 +145,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`#`}>
+                        <Link href={route('organizer.events.manage', event.id)}>
                             <Settings className="w-4 h-4 mr-1" />
                             Gestionar
                         </Link>

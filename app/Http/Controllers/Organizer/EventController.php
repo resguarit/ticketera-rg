@@ -44,7 +44,7 @@ class EventController extends Controller
                             'date' => $function->start_time?->format('d M Y'),
                             'time' => $function->start_time?->format('H:i'),
                             'formatted_date' => $function->start_time?->format('Y-m-d'),
-                            'day_name' => $function->start_time?->format('l'),
+                            'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                             'is_active' => $function->is_active,
                         ];
                     }),
@@ -141,5 +141,51 @@ class EventController extends Controller
             
             return back()->withErrors(['error' => 'Error al crear el evento: ' . $e->getMessage()]);
         }
+    }
+
+    public function manage(Event $event): Response
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para gestionar este evento');
+        }
+
+        // Cargar el evento con todas sus relaciones
+        $event->load(['category', 'venue', 'organizer', 'functions']);
+
+        // Formatear los datos del evento
+        $eventData = [
+            'id' => $event->id,
+            'name' => $event->name,
+            'description' => $event->description,
+            'image_url' => $event->image_url,
+            'featured' => $event->featured,
+            'category' => $event->category,
+            'venue' => $event->venue,
+            'organizer' => $event->organizer,
+            'created_at' => $event->created_at,
+            'updated_at' => $event->updated_at,
+            'functions' => $event->functions->map(function($function) {
+                return [
+                    'id' => $function->id,
+                    'name' => $function->name,
+                    'description' => $function->description,
+                    'start_time' => $function->start_time,
+                    'end_time' => $function->end_time,
+                    'date' => $function->start_time?->format('d M Y'),
+                    'time' => $function->start_time?->format('H:i'),
+                    'formatted_date' => $function->start_time?->format('Y-m-d'),
+                    'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
+                    'is_active' => $function->is_active,
+                ];
+            }),
+        ];
+
+        return Inertia::render('organizer/events/manage', [
+            'event' => $eventData,
+            'currentDateTime' => now()->toISOString(),
+        ]);
     }
 }
