@@ -47,7 +47,7 @@ export default function EventManagementLayout({
             name: 'Entradas', 
             id: 'tickets', 
             icon: Ticket, 
-            href: `#tickets` // TODO: Agregar ruta cuando esté disponible
+            href: route('organizer.events.tickets', event.id)
         },
         { 
             name: 'Asistentes', 

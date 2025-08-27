@@ -10,6 +10,9 @@ export interface TicketType {
     sales_end_date: string;
     quantity: number;
     quantity_sold: number;
+    quantity_available: number;
+    sold_percentage: number;
+    total_income: number;
     is_hidden: boolean;
     created_at: string;
     updated_at: string;
