@@ -40,7 +40,7 @@ class EventController extends Controller
                             'name' => $function->name,
                             'description' => $function->description,
                             'start_time' => $function->start_time, // Raw para compatibilidad
-                            'end_time' => $function->end_time,     // Raw para compatibilidad
+                            'end_time' => $function->end_time ? $function->end_time : null,     // Raw para compatibilidad
                             'date' => $function->start_time?->format('d M Y'),
                             'time' => $function->start_time?->format('H:i'),
                             'formatted_date' => $function->start_time?->format('Y-m-d'),

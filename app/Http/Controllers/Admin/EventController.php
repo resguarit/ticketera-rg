@@ -235,9 +235,9 @@ class EventController extends Controller
                     'start_time' => $function->start_time->format('Y-m-d H:i:s'),
                     'start_date' => $function->start_time->format('Y-m-d'),
                     'start_time_only' => $function->start_time->format('H:i'),
-                    'end_time' => $function->end_time->format('Y-m-d H:i:s'),
-                    'end_date' => $function->end_time->format('Y-m-d'),
-                    'end_time_only' => $function->end_time->format('H:i'),
+                    'end_time' => $function->end_time ? $function->end_time->format('Y-m-d H:i:s') : null,
+                    'end_date' => $function->end_time ? $function->end_time->format('Y-m-d') : null,
+                    'end_time_only' => $function->end_time ? $function->end_time->format('H:i') : null,
                     'is_active' => $function->is_active,
                     'ticket_types' => $function->ticketTypes->map(function($ticketType) {
                         return [

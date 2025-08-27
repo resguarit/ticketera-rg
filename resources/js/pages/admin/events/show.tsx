@@ -204,10 +204,6 @@ export default function Show({ auth }: any) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="bg-white">
-                                    <DropdownMenuItem className="text-gray-700 hover:bg-gray-50">
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Exportar datos
-                                    </DropdownMenuItem>
                                         <DropdownMenuItem className="text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
                                             <Eye className="w-4 h-4 mr-2" />
                                             Ver como público
@@ -432,11 +428,6 @@ export default function Show({ auth }: any) {
                                             >
                                                 <Star className="w-4 h-4 mr-2" />
                                                 {event.featured ? 'Quitar destacado' : 'Marcar destacado'}
-                                            </Button>
-                                            
-                                            <Button variant="outline" className="w-full border-gray-300">
-                                                <Download className="w-4 h-4 mr-2" />
-                                                Descargar reporte
                                             </Button>
                                             
                                             <Button variant="outline" className="w-full border-gray-300" onClick={handleViewPublic}>

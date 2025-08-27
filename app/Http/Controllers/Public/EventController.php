@@ -83,7 +83,7 @@ class EventController extends Controller
                 'name' => $function->name,
                 'description' => $function->description,
                 'start_time' => $function->start_time,
-                'end_time' => $function->end_time,
+                'end_time' => $function->end_time ? $function->end_time : null,
                 'date' => $function->start_time?->format('d M Y'),
                 'time' => $function->start_time?->format('H:i'),
                 'day_name' => $function->start_time?->format('l'),
