@@ -174,7 +174,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         <>
             <Head title="Confirmar Compra - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">

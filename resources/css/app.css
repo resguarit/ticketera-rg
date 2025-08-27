@@ -67,12 +67,16 @@
 
 :root {
     /* Primary Colors */
-    --primary: #3b82f6;
+    /*--primary: #3b82f6;*/
+    --primary: #09093b;
+
     --primary-foreground: #ffffff;
-    --primary-hover: #2563eb;
+    --primary-hover: #141484;
     
     /* Secondary Colors */
-    --secondary: #f3f4f6;
+    /*--secondary: #f3f4f6;*/
+    --secondary: #24c6be;
+
     --secondary-foreground: #4b5563;
     
     /* Accent Colors */

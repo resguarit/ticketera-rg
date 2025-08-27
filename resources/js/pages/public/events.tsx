@@ -79,7 +79,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
         <>
             <Head title="Eventos - Ticketera RG" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
 

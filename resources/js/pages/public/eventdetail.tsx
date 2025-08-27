@@ -125,7 +125,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         <>
             <Head title={`${eventData.name} - TicketMax`} />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
 

@@ -79,7 +79,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             <Head title="Ticketera RG - Eventos" />
             <Header className="" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Solo eventos destacados */}
                 <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (

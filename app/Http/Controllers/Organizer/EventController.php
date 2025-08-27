@@ -27,7 +27,7 @@ class EventController extends Controller
                     'id' => $event->id,
                     'name' => $event->name,
                     'description' => $event->description,
-                    'banner_url' => $event->image_url,
+                    'image_url' => $event->image_url,
                     'featured' => $event->featured,
                     'category' => $event->category,
                     'venue' => $event->venue,
@@ -89,7 +89,7 @@ class EventController extends Controller
             'functions.*.name' => 'required|string|max:255',
             'functions.*.description' => 'nullable|string',
             'functions.*.start_time' => 'required|date',
-            'functions.*.end_time' => 'required|date|after:functions.*.start_time',
+            'functions.*.end_time' => 'nullable|date|after:functions.*.start_time',
         ]);
 
         try {

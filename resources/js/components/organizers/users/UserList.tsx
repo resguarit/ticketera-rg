@@ -1,8 +1,8 @@
-import { UserItem } from '@/types/organizer';
+import { User } from '@/types';
 import { UserCard } from '@/components/organizers/users/UserCard';
 import { UserCheck } from 'lucide-react';
 
-interface Props { users: UserItem[]; onRemove(userId: number): void; removingIds: Record<number, boolean>; onViewCredentials?(user: UserItem): void }
+interface Props { users: User[]; onRemove(userId: number): void; removingIds: Record<number, boolean>; onViewCredentials?(user: User): void }
 
 export function UserList({ users, onRemove, onViewCredentials }: Props) {
   if (users.length === 0) {

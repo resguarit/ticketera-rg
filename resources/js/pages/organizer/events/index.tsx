@@ -3,41 +3,29 @@ import { Head, Link } from '@inertiajs/react';
 import OrganizerEventCard from '@/components/organizers/event-card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { Event, Category, Venue, Organizer, EventFunction } from '@/types';
 
-interface Event {
-    id: number;
-    name: string;
-    description: string;
-    image_url: string | null;
-    featured: boolean;
-    category: {
-        id: number;
-        name: string;
-    };
-    venue: {
-        id: number;
-        name: string;
-        address: string;
-    };
-    organizer: {
-        id: number;
-        name: string;
-    };
-    functions: Array<{
-        id: number;
-        name: string;
-        start_time: string;
-        end_time: string;
-        is_active: boolean;
-    }>;
+interface EventFunctionDetail extends EventFunction {
+    date: string;       
+    time: string;       
+    formatted_date: string; 
+    day_name: string;
+}
+
+interface EventDetail extends Event {
+    category: Category;
+    venue: Venue;
+    organizer: Organizer;
+    functions: EventFunctionDetail[];
 }
 
 export default function EventsIndex({ auth, organizer, events }: { 
     auth: any; 
     organizer: any; 
-    events: Event[] 
+    events: EventDetail[] 
 }) {
     const { user } = auth;
+    console.log(events)
 
     return (
         <>

@@ -135,7 +135,7 @@ class EventController extends Controller
 
             return [
                 'id' => $event->id,
-                'title' => $event->name,
+                'name' => $event->name,
                 'organizer' => [
                     'id' => $event->organizer->id,
                     'name' => $event->organizer->name,
@@ -157,7 +157,7 @@ class EventController extends Controller
                 'price_range' => $priceRange,
                 'created_at' => $event->created_at->format('Y-m-d'),
                 'created_datetime' => $event->created_at->toISOString(),
-                'image' => $event->image_url,
+                'image_url' => $event->image_url,
                 'featured' => $event->featured,
                 'functions_count' => $event->functions->count(),
             ];

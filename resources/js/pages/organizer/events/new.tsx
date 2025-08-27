@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { ArrowLeft, Save, Plus, Trash2, Calendar } from 'lucide-react';
+import { isDateAfter, formatDateForInput, isValidDate, formatDate } from '@/lib/dateHelpers';
 
 interface EventFunction {
     id: string;
     name: string;
     description: string;
     start_time: string;
-    end_time: string;
+    end_time?: string;
 }
 
 interface Category {
@@ -62,6 +63,42 @@ export default function EventsNew({ categories, venues }: Props) {
         featured: false,
     });
 
+    // Helper functions for date formatting
+    const formatDisplayDate = (dateString: string): string => {
+        try {
+            return new Date(dateString).toLocaleDateString('es-ES');
+        } catch {
+            return 'Fecha inválida';
+        }
+    };
+
+    const formatDisplayTime = (dateString: string): string => {
+        try {
+            return new Date(dateString).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        } catch {
+            return 'Hora inválida';
+        }
+    };
+
+    const formatDateTimeForInput = (dateString: string | undefined): string => {
+        if (!dateString) return '';
+        try {
+            // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        } catch {
+            return '';
+        }
+    };
+
     // Load sectors when venue changes
     const loadSectors = async (venueId: string) => {
         if (!venueId) {
@@ -86,14 +123,6 @@ export default function EventsNew({ categories, venues }: Props) {
     const handleVenueChange = (venueId: string) => {
         setData('venue_id', venueId);
         loadSectors(venueId);
-        
-        // Clear sector selections in ticket types
-        const updatedFunctions = functions.map(f => ({
-            ...f,
-            ticket_types: f.ticket_types.map(tt => ({ ...tt, sector_id: '' }))
-        }));
-        setFunctions(updatedFunctions);
-        setData('functions', updatedFunctions);
     };
 
     useEffect(() => {
@@ -118,15 +147,29 @@ export default function EventsNew({ categories, venues }: Props) {
     };
 
     const addFunction = () => {
-        // Validate current function form
-        if (!functionForm.name || !functionForm.start_time || !functionForm.end_time) {
+        // Validate required fields
+        if (!functionForm.name || !functionForm.start_time) {
             alert('Debe completar todos los campos obligatorios de la función.');
             return;
         }
 
-        if (new Date(functionForm.start_time) >= new Date(functionForm.end_time)) {
-            alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+        // Validate start_time is a valid date
+        if (!isValidDate(functionForm.start_time)) {
+            alert('La fecha de inicio no es válida.');
             return;
+        }
+
+        // Only validate end_time if it's provided
+        if (functionForm.end_time) {
+            if (!isValidDate(functionForm.end_time)) {
+                alert('La fecha de fin no es válida.');
+                return;
+            }
+            
+            if (!isDateAfter(functionForm.end_time, functionForm.start_time)) {
+                alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+                return;
+            }
         }
 
         const newFunction: EventFunction = {
@@ -134,7 +177,7 @@ export default function EventsNew({ categories, venues }: Props) {
             name: functionForm.name,
             description: functionForm.description,
             start_time: functionForm.start_time,
-            end_time: functionForm.end_time,
+            end_time: functionForm.end_time || undefined,
         };
 
         if (editingFunction) {
@@ -163,8 +206,8 @@ export default function EventsNew({ categories, venues }: Props) {
         setFunctionForm({
             name: functionToEdit.name,
             description: functionToEdit.description,
-            start_time: functionToEdit.start_time,
-            end_time: functionToEdit.end_time
+            start_time: formatDateTimeForInput(functionToEdit.start_time),
+            end_time: formatDateTimeForInput(functionToEdit.end_time)
         });
         setEditingFunction(functionToEdit);
     };
@@ -209,7 +252,7 @@ export default function EventsNew({ categories, venues }: Props) {
             name: func.name,
             description: func.description,
             start_time: func.start_time,
-            end_time: func.end_time
+            end_time: func.end_time || null
         }));
         
         // Use Inertia router directly
@@ -424,13 +467,12 @@ export default function EventsNew({ categories, venues }: Props) {
                                             </div>
 
                                             <div>
-                                                <Label className="text-card-foreground">Fecha y Hora de Fin *</Label>
+                                                <Label className="text-card-foreground">Fecha y Hora de Fin (Opcional)</Label>
                                                 <Input 
                                                     type="datetime-local"
                                                     value={functionForm.end_time} 
                                                     onChange={(e) => setFunctionForm(prev => ({ ...prev, end_time: e.target.value }))}
                                                     className="bg-background border-border text-foreground"
-                                                    required
                                                 />
                                             </div>
 
@@ -482,19 +524,27 @@ export default function EventsNew({ categories, venues }: Props) {
                                                                 </div>
                                                                 <div className="col-span-3 text-foreground">
                                                                     <div className="text-xs">
-                                                                        {new Date(func.start_time).toLocaleDateString('es-ES')}
+                                                                        {formatDisplayDate(func.start_time)}
                                                                     </div>
                                                                     <div className="text-xs text-muted-foreground">
-                                                                        {new Date(func.start_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                                                        {formatDisplayTime(func.start_time)}
                                                                     </div>
                                                                 </div>
                                                                 <div className="col-span-3 text-foreground">
-                                                                    <div className="text-xs">
-                                                                        {new Date(func.end_time).toLocaleDateString('es-ES')}
-                                                                    </div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {new Date(func.end_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                                                    </div>
+                                                                    {func.end_time ? (
+                                                                        <>
+                                                                            <div className="text-xs">
+                                                                                {formatDisplayDate(func.end_time)}
+                                                                            </div>
+                                                                            <div className="text-xs text-muted-foreground">
+                                                                                {formatDisplayTime(func.end_time)}
+                                                                            </div>
+                                                                        </>
+                                                                    ) : (
+                                                                        <div className="text-xs text-muted-foreground">
+                                                                            Sin fecha de fin
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                                 <div className="col-span-3 flex gap-1">
                                                                     <Button 

@@ -78,6 +78,7 @@ export interface User {
         id: number;
         name: string;
         logo_url?: string;
+        image_url?: string;
         referring?: string;
         email?: string;
         phone?: string;

@@ -26,14 +26,42 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
 
 import {
-    AdminEvent,
-    EventStats,
-    PaginatedEvents,
+    Event,
+    Organizer,
+    PaginatedResponse,
     EventFilters
 } from '@/types'
 
+interface AdminEvent extends Event {
+    organizer: Organizer;
+    category: string;
+    date: string | null;
+    time: string | null;
+    datetime: string;
+    location: string;
+    city: string;
+    province: string;
+    status: string;
+    tickets_sold: number;
+    total_tickets: number;
+    revenue: number;
+    price_range: string;
+    created_datetime: string;
+    functions_count: number;
+}
+
+interface EventStats {
+    total: number;
+    active: number;
+    inactive: number;
+    finished: number;
+    draft: number;
+    totalTicketsSold: number;
+    totalRevenue: number;
+}
+
 interface PageProps {
-    events: PaginatedEvents<AdminEvent>;
+    events: PaginatedResponse<AdminEvent>;
     stats: EventStats;
     filters: EventFilters;
     categories: string[];
@@ -299,7 +327,7 @@ export default function Events({ auth }: any) {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4 text-xs text-gray-500">
                                                     <span>Rango: ${event.price_range} ARS</span>
-                                                    <span>Categoría: {event.category.name}</span>
+                                                    <span>Categoría: {event.category}</span>
                                                     <span>Funciones: {event.functions_count}</span>
                                                     <span>Creado: {formatRelativeTime(event.created_at)}</span>
                                                 </div>
