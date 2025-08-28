@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
 use App\Models\Ciudad;
+use App\Models\Provincia; // Importar Provincia
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,19 +38,42 @@ class VenueController extends Controller
                 ];
             });
         
-        // CORREGIDO: Apuntar a la vista index dentro de la carpeta venues
         return Inertia::render('organizer/venues/index', [
             'venues' => $venues
         ]);
     }
 
+    private function getFormData(): array
+    {
+        return [
+            'provincias' => Provincia::orderBy('name')->get(),
+            'ciudades' => Ciudad::orderBy('name')->get(),
+        ];
+    }
+
     public function create(): Response
     {
-        $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
-        
-        return Inertia::render('organizer/venues/create', [
-            'ciudades' => $ciudades
-        ]);
+        return Inertia::render('organizer/venues/create', $this->getFormData());
+    }
+
+    private function getOrCreateCiudad(Request $request): int
+    {
+        $provincia_input = $request->input('provincia_id_or_name');
+        $ciudad_input = $request->input('ciudad_name');
+
+        // Si el input de provincia es numérico, es un ID. Si no, es un nombre para crear.
+        if (is_numeric($provincia_input)) {
+            $provincia = Provincia::findOrFail($provincia_input);
+        } else {
+            $provincia = Provincia::firstOrCreate(['name' => $provincia_input]);
+        }
+
+        // Buscar o crear la ciudad asociada a esa provincia
+        $ciudad = Ciudad::firstOrCreate(
+            ['name' => $ciudad_input, 'provincia_id' => $provincia->id]
+        );
+
+        return $ciudad->id;
     }
 
     public function store(Request $request): RedirectResponse
@@ -57,14 +81,16 @@ class VenueController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
-            'ciudad_id' => 'required|exists:ciudades,id',
+            'provincia_id_or_name' => 'required|string|max:255',
+            'ciudad_name' => 'required|string|max:255',
             'coordinates' => 'nullable|string|max:100',
-            'banner' => 'nullable|image|max:2048', // CORREGIDO: Validación de imagen
+            'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000'
         ]);
 
+        $validated['ciudad_id'] = $this->getOrCreateCiudad($request);
+
         if ($request->hasFile('banner')) {
-            // ACTUALIZADO: Cambiar 'venues' por 'recintos'
             $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
         }
 
@@ -86,44 +112,42 @@ class VenueController extends Controller
     public function edit(Venue $venue): Response
     {
         $venue->load('ciudad.provincia');
-        $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
         
-        // Mapear el venue para asegurar que el accesor image_url se aplique
         $venueData = [
             'id' => $venue->id,
             'name' => $venue->name,
             'address' => $venue->address,
             'ciudad_id' => $venue->ciudad_id,
+            'provincia_id' => $venue->ciudad->provincia_id, // Añadir provincia_id
             'coordinates' => $venue->coordinates,
-            'banner_url' => $venue->image_url, // Usar el accesor
+            'banner_url' => $venue->image_url,
             'referring' => $venue->referring,
             'ciudad' => $venue->ciudad,
         ];
 
-        return Inertia::render('organizer/venues/edit', [
-            'venue' => $venueData,
-            'ciudades' => $ciudades
-        ]);
+        return Inertia::render('organizer/venues/edit', array_merge($this->getFormData(), [
+            'venue' => $venueData
+        ]));
     }
 
-    // CORREGIDO: El método update ahora maneja la carga de archivos
     public function update(Request $request, Venue $venue): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
-            'ciudad_id' => 'required|exists:ciudades,id',
+            'provincia_id_or_name' => 'required|string|max:255',
+            'ciudad_name' => 'required|string|max:255',
             'coordinates' => 'nullable|string|max:100',
-            'banner' => 'nullable|image|max:2048', // Validación de imagen
+            'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000'
         ]);
 
+        $validated['ciudad_id'] = $this->getOrCreateCiudad($request);
+
         if ($request->hasFile('banner')) {
-            // Eliminar el banner anterior si existe
             if ($venue->banner_url) {
                 Storage::disk('public')->delete($venue->banner_url);
             }
-            // ACTUALIZADO: Cambiar 'venues' por 'recintos'
             $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
         }
 
@@ -139,7 +163,6 @@ class VenueController extends Controller
             return redirect()->back()->with('error', 'No se puede eliminar un recinto que tiene eventos asociados');
         }
 
-        // Eliminar el banner si existe
         if ($venue->banner_url) {
             Storage::disk('public')->delete($venue->banner_url);
         }

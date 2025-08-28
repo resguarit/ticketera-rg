@@ -4,21 +4,23 @@ import { FormEventHandler } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageProps } from '@/types/ui/ui';
-import { Ciudad, Venue } from '@/types';
+import { Ciudad, Provincia, Venue } from '@/types';
 import VenueForm from './VenueForm';
 
 interface EditVenueProps extends PageProps {
-    venue: Venue;
-    ciudades: (Ciudad & { provincia: { name: string } })[];
+    venue: Venue & { provincia_id: number, ciudad: Ciudad };
+    provincias: Provincia[];
+    ciudades: Ciudad[];
 }
 
 export default function EditVenue() {
-    const { venue, ciudades } = usePage<EditVenueProps>().props;
+    const { venue, provincias, ciudades } = usePage<EditVenueProps>().props;
     const { data, setData, post, processing, errors, progress } = useForm({
-        _method: 'PUT', // Importante para que Laravel trate el POST como PUT
+        _method: 'PUT',
         name: venue.name || '',
         address: venue.address || '',
-        ciudad_id: venue.ciudad_id?.toString() || '',
+        provincia_id_or_name: venue.provincia_id?.toString() || '',
+        ciudad_name: venue.ciudad?.name || '',
         coordinates: venue.coordinates || '',
         banner: null as File | null,
         referring: venue.referring || '',
@@ -26,8 +28,6 @@ export default function EditVenue() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        // Usamos 'post' porque Inertia maneja la carga de archivos (multipart/form-data)
-        // solo con POST. El campo '_method: PUT' le dice a Laravel que lo trate como una solicitud PUT.
         post(route('organizer.venues.update', venue.id));
     };
 
@@ -47,9 +47,10 @@ export default function EditVenue() {
                             errors={errors}
                             processing={processing}
                             onSubmit={submit}
+                            provincias={provincias}
                             ciudades={ciudades}
                             submitText="Guardar Cambios"
-                            venue={venue} // Pasamos el venue para la vista previa de la imagen
+                            venue={venue}
                             progress={progress}
                         />
                     </CardContent>

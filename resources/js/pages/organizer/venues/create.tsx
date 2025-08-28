@@ -4,19 +4,21 @@ import { FormEventHandler } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageProps } from '@/types/ui/ui';
-import { Ciudad } from '@/types';
+import { Ciudad, Provincia } from '@/types';
 import VenueForm from './VenueForm';
 
 interface CreateVenueProps extends PageProps {
-    ciudades: (Ciudad & { provincia: { name: string } })[];
+    provincias: Provincia[];
+    ciudades: Ciudad[];
 }
 
 export default function CreateVenue() {
-    const { ciudades } = usePage<CreateVenueProps>().props;
+    const { provincias, ciudades } = usePage<CreateVenueProps>().props;
     const { data, setData, post, processing, errors, progress } = useForm({
         name: '',
         address: '',
-        ciudad_id: '',
+        provincia_id_or_name: '',
+        ciudad_name: '',
         coordinates: '',
         banner: null as File | null,
         referring: '',
@@ -43,6 +45,7 @@ export default function CreateVenue() {
                             errors={errors}
                             processing={processing}
                             onSubmit={submit}
+                            provincias={provincias}
                             ciudades={ciudades}
                             submitText="Crear Recinto"
                             progress={progress}

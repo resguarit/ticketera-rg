@@ -1,4 +1,4 @@
-import { useState, FormEventHandler, useEffect } from 'react';
+import { useState, FormEventHandler, useEffect, useMemo } from 'react';
 import { Link } from '@inertiajs/react';
 import { Check, ChevronsUpDown, UploadCloud, X } from 'lucide-react';
 
@@ -8,14 +8,15 @@ import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Ciudad, Venue } from '@/types';
+import { Ciudad, Provincia, Venue } from '@/types';
 
 interface VenueFormData {
     name: string;
     address: string;
-    ciudad_id: string;
+    provincia_id_or_name: string;
+    ciudad_name: string;
     coordinates: string;
     banner: File | null;
     referring: string;
@@ -23,22 +24,37 @@ interface VenueFormData {
 
 interface VenueFormProps {
     data: VenueFormData;
-    setData: (key: keyof VenueFormData, value: any) => void;
+    setData: (key: keyof VenueFormData | any, value: any) => void;
     errors: Partial<Record<keyof VenueFormData, string>>;
     processing: boolean;
     onSubmit: FormEventHandler;
-    ciudades: (Ciudad & { provincia: { name: string } })[];
+    provincias: Provincia[];
+    ciudades: Ciudad[];
     submitText: string;
-    venue?: Venue; // Opcional, para la vista previa de la imagen existente
+    venue?: Venue & { provincia_id?: number };
     progress?: { percentage: number } | null;
 }
 
-export default function VenueForm({ data, setData, errors, processing, onSubmit, ciudades, submitText, venue, progress }: VenueFormProps) {
+export default function VenueForm({ data, setData, errors, processing, onSubmit, provincias, ciudades, submitText, venue, progress }: VenueFormProps) {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [provinciaPopover, setProvinciaPopover] = useState(false);
+    const [ciudadPopover, setCiudadPopover] = useState(false);
+    
+    // NUEVO: Estado para el texto de búsqueda de la provincia
+    const [provinciaSearch, setProvinciaSearch] = useState(
+        provincias.find(p => p.id.toString() === data.provincia_id_or_name)?.name || data.provincia_id_or_name || ''
+    );
+    // NUEVO: Estado para el texto de búsqueda de la ciudad
+    const [ciudadSearch, setCiudadSearch] = useState(data.ciudad_name || '');
+
+    const filteredCiudades = useMemo(() => {
+        if (!data.provincia_id_or_name || !isFinite(parseInt(data.provincia_id_or_name))) {
+            return [];
+        }
+        return ciudades.filter(c => c.provincia_id.toString() === data.provincia_id_or_name);
+    }, [data.provincia_id_or_name, ciudades]);
 
     useEffect(() => {
-        // Si estamos editando y hay un banner_url, lo mostramos
         if (venue?.banner_url) {
             setBannerPreview(venue.banner_url);
         }
@@ -50,7 +66,6 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
         if (file) {
             setBannerPreview(URL.createObjectURL(file));
         } else {
-            // Si se cancela la selección, volvemos a la imagen original si existe
             setBannerPreview(venue?.banner_url || null);
         }
     };
@@ -58,53 +73,109 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
     const removeBanner = () => {
         setBannerPreview(null);
         setData('banner', null);
-        // Si estamos en modo edición, necesitamos una forma de decirle al backend que elimine la imagen.
-        // Inertia no maneja bien `null` para archivos, pero al no enviar el campo 'banner', el backend no lo actualizará.
-        // Para una eliminación explícita, se necesitaría un campo adicional como 'remove_banner'. Por ahora, esto solo lo quita de la subida actual.
     };
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="name">Nombre del Recinto</Label>
+                <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
+                <InputError message={errors.name} />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Nombre del Recinto</Label>
-                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
-                    <InputError message={errors.name} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="ciudad_id">Ciudad</Label>
-                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <Label htmlFor="provincia">Provincia</Label>
+                    <Popover open={provinciaPopover} onOpenChange={setProvinciaPopover}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" aria-expanded={popoverOpen} className="w-full justify-between">
-                                {data.ciudad_id
-                                    ? `${ciudades.find(c => c.id.toString() === data.ciudad_id)?.name}, ${ciudades.find(c => c.id.toString() === data.ciudad_id)?.provincia.name}`
-                                    : "Seleccionar ciudad..."}
+                            <Button variant="outline" role="combobox" className="w-full justify-between">
+                                <span className="truncate">
+                                    {provinciaSearch || "Seleccionar provincia..."}
+                                </span>
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Buscar ciudad..." />
-                                <CommandEmpty>No se encontró la ciudad.</CommandEmpty>
-                                <CommandGroup className="max-h-60 overflow-y-auto">
-                                    {ciudades.map((ciudad) => (
-                                        <CommandItem
-                                            key={ciudad.id}
-                                            value={`${ciudad.name}, ${ciudad.provincia.name}`}
-                                            onSelect={() => {
-                                                setData('ciudad_id', ciudad.id.toString());
-                                                setPopoverOpen(false);
-                                            }}
-                                        >
-                                            <Check className={cn("mr-2 h-4 w-4", data.ciudad_id === ciudad.id.toString() ? "opacity-100" : "opacity-0")} />
-                                            {ciudad.name}, {ciudad.provincia.name}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
+                            <Command shouldFilter={false}>
+                                <CommandInput 
+                                    placeholder="Buscar o crear provincia..." 
+                                    value={provinciaSearch}
+                                    onValueChange={(search) => {
+                                        setProvinciaSearch(search);
+                                        setData('provincia_id_or_name', search);
+                                    }} 
+                                />
+                                <CommandList>
+                                    <CommandEmpty>No se encontró. Presiona Enter para crear.</CommandEmpty>
+                                    <CommandGroup>
+                                        {provincias.filter(p => p.name.toLowerCase().includes(provinciaSearch.toLowerCase())).map((provincia) => (
+                                            <CommandItem
+                                                key={provincia.id}
+                                                value={provincia.name}
+                                                onSelect={(currentValue) => {
+                                                    setProvinciaSearch(currentValue);
+                                                    setData('provincia_id_or_name', provincia.id.toString());
+                                                    setData('ciudad_name', '');
+                                                    setCiudadSearch('');
+                                                    setProvinciaPopover(false);
+                                                }}
+                                            >
+                                                <Check className={cn("mr-2 h-4 w-4", data.provincia_id_or_name === provincia.id.toString() ? "opacity-100" : "opacity-0")} />
+                                                {provincia.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
                             </Command>
                         </PopoverContent>
                     </Popover>
-                    <InputError message={errors.ciudad_id} />
+                    <InputError message={errors.provincia_id_or_name} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="ciudad">Ciudad</Label>
+                    <Popover open={ciudadPopover} onOpenChange={setCiudadPopover}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" role="combobox" className="w-full justify-between" disabled={!data.provincia_id_or_name}>
+                                <span className="truncate">
+                                    {ciudadSearch || "Seleccionar ciudad..."}
+                                </span>
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command shouldFilter={false}>
+                                <CommandInput 
+                                    placeholder="Buscar o crear ciudad..." 
+                                    value={ciudadSearch}
+                                    onValueChange={(search) => {
+                                        setCiudadSearch(search);
+                                        setData('ciudad_name', search);
+                                    }}
+                                />
+                                <CommandList>
+                                    <CommandEmpty>No se encontró. Presiona Enter para crear.</CommandEmpty>
+                                    <CommandGroup>
+                                        {filteredCiudades.filter(c => c.name.toLowerCase().includes(ciudadSearch.toLowerCase())).map((ciudad) => (
+                                            <CommandItem
+                                                key={ciudad.id}
+                                                value={ciudad.name}
+                                                onSelect={(currentValue) => {
+                                                    setCiudadSearch(currentValue);
+                                                    setData('ciudad_name', currentValue);
+                                                    setCiudadPopover(false);
+                                                }}
+                                            >
+                                                <Check className={cn("mr-2 h-4 w-4", data.ciudad_name === ciudad.name ? "opacity-100" : "opacity-0")} />
+                                                {ciudad.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <InputError message={errors.ciudad_name} />
                 </div>
             </div>
 
