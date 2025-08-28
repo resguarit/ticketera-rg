@@ -1,6 +1,7 @@
-import { useState, FormEventHandler, useEffect, useMemo } from 'react';
+import { useState, FormEventHandler, useEffect, useMemo, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
 import { Check, ChevronsUpDown, UploadCloud, X } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,17 +36,52 @@ interface VenueFormProps {
     progress?: { percentage: number } | null;
 }
 
+// Componente interno para manejar eventos del mapa
+function MapEvents({ onMapClick, onMarkerDragEnd }: { onMapClick: (latlng: L.LatLng) => void, onMarkerDragEnd: (latlng: L.LatLng) => void }) {
+    useMapEvents({
+        click(e) {
+            onMapClick(e.latlng);
+        },
+    });
+
+    return null; // Este componente no renderiza nada
+}
+
 export default function VenueForm({ data, setData, errors, processing, onSubmit, provincias, ciudades, submitText, venue, progress }: VenueFormProps) {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [provinciaPopover, setProvinciaPopover] = useState(false);
     const [ciudadPopover, setCiudadPopover] = useState(false);
-    
-    // NUEVO: Estado para el texto de búsqueda de la provincia
     const [provinciaSearch, setProvinciaSearch] = useState(
         provincias.find(p => p.id.toString() === data.provincia_id_or_name)?.name || data.provincia_id_or_name || ''
     );
-    // NUEVO: Estado para el texto de búsqueda de la ciudad
     const [ciudadSearch, setCiudadSearch] = useState(data.ciudad_name || '');
+
+    const initialCenter = useMemo((): [number, number] => {
+        if (data.coordinates) {
+            const [lat, lng] = data.coordinates.split(',').map(Number);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                return [lat, lng];
+            }
+        }
+        return [-34.6037, -58.3816]; // Default a Buenos Aires
+    }, []);
+
+    const [markerPosition, setMarkerPosition] = useState<[number, number]>(initialCenter);
+
+    const handleMapClick = useCallback((latlng: L.LatLng) => {
+        const { lat, lng } = latlng;
+        setMarkerPosition([lat, lng]);
+        setData('coordinates', `${lat},${lng}`);
+    }, [setData]);
+
+    const handleMarkerDragEnd = useCallback((e: L.LeafletEvent) => {
+        const marker = e.target;
+        if (marker != null) {
+            const { lat, lng } = marker.getLatLng();
+            setMarkerPosition([lat, lng]);
+            setData('coordinates', `${lat},${lng}`);
+        }
+    }, [setData]);
 
     const filteredCiudades = useMemo(() => {
         if (!data.provincia_id_or_name || !isFinite(parseInt(data.provincia_id_or_name))) {
@@ -183,6 +219,43 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                 <Label htmlFor="address">Dirección</Label>
                 <Textarea id="address" value={data.address} onChange={e => setData('address', e.target.value)} required />
                 <InputError message={errors.address} />
+            </div>
+
+            <div className="space-y-2">
+                <Label>Ubicación en el Mapa</Label>
+                <div className="h-96 w-full rounded-lg overflow-hidden border z-0">
+                    <MapContainer center={initialCenter} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker 
+                            position={markerPosition} 
+                            draggable={true}
+                            eventHandlers={{
+                                dragend: handleMarkerDragEnd,
+                            }}
+                        />
+                        <MapEvents onMapClick={handleMapClick} onMarkerDragEnd={handleMarkerDragEnd} />
+                    </MapContainer>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="coordinates">Coordenadas (Lat, Lng)</Label>
+                <Input 
+                    id="coordinates" 
+                    value={data.coordinates} 
+                    onChange={e => {
+                        setData('coordinates', e.target.value);
+                        const [lat, lng] = e.target.value.split(',').map(Number);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            setMarkerPosition([lat, lng]);
+                        }
+                    }} 
+                    placeholder="Ej: -34.6037,-58.3816"
+                />
+                <InputError message={errors.coordinates} />
             </div>
 
             <div className="space-y-2">
