@@ -1,6 +1,10 @@
 import { useState, FormEventHandler } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import {Plus, Edit, Trash2, MoreVertical, Tag, Palette, Smile, AlertCircle,} from 'lucide-react';
+import {
+    Plus, Edit, Trash2, MoreVertical, Tag, Palette, Smile, AlertCircle,
+    LucideIcon, Music, Theater, Trophy, Presentation, Utensils, Laugh, Users,
+    Palette as PaletteIcon, // Alias para el icono de la categoría
+} from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -37,6 +41,24 @@ import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Category } from '@/types';
 import { PageProps } from '@/types/ui/ui';
+
+// Helper para mapear nombres de iconos a componentes de Lucide
+const iconMap: { [key: string]: LucideIcon } = {
+    music: Music,
+    theater: Theater,
+    trophy: Trophy,
+    presentation: Presentation,
+    utensils: Utensils,
+    palette: PaletteIcon,
+    laugh: Laugh,
+    users: Users,
+};
+
+const DynamicIcon = ({ name, ...props }: { name: string } & React.ComponentProps<LucideIcon>) => {
+    // Usar el icono 'Tag' como fallback si el nombre no se encuentra
+    const IconComponent = iconMap[name] || Tag;
+    return <IconComponent {...props} />;
+};
 
 interface CategoryWithCount extends Category {
     events_count: number;
@@ -181,9 +203,11 @@ export default function CategoriesIndex() {
                                     <div key={category.id} className="flex items-center justify-between py-4">
                                         <div className="flex items-center gap-4">
                                             <div
-                                                className="w-8 h-8 rounded-full flex-shrink-0"
+                                                className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
                                                 style={{ backgroundColor: category.color }}
-                                            />
+                                            >
+                                                <DynamicIcon name={category.icon} className="w-4 h-4 text-white" />
+                                            </div>
                                             <div>
                                                 <p className="font-medium text-black">{category.name}</p>
                                                 <p className="text-sm text-gray-500">
