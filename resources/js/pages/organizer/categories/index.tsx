@@ -152,14 +152,24 @@ export default function CategoriesIndex() {
                                         <InputError message={errors.name} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="icon" className="text-black">Icono (Opcional)</Label>
-                                        <Input
-                                            id="icon"
-                                            value={data.icon}
-                                            onChange={(e) => setData('icon', e.target.value)}
-                                            className="bg-white border-gray-300 text-black"
-                                            placeholder="Ej: 'music', 'theater' (de Lucide)"
-                                        />
+                                        <Label className="text-black">Icono (Opcional)</Label>
+                                        <div className="grid grid-cols-6 gap-2 p-2 border rounded-md bg-gray-50">
+                                            {Object.keys(iconMap).map((iconName) => (
+                                                <button
+                                                    type="button"
+                                                    key={iconName}
+                                                    onClick={() => setData('icon', data.icon === iconName ? '' : iconName)}
+                                                    className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                                                        data.icon === iconName
+                                                            ? 'bg-indigo-600 text-white'
+                                                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                    }`}
+                                                    title={iconName.charAt(0).toUpperCase() + iconName.slice(1)}
+                                                >
+                                                    <DynamicIcon name={iconName} className="w-5 h-5" />
+                                                </button>
+                                            ))}
+                                        </div>
                                         <InputError message={errors.icon} />
                                     </div>
                                     <div className="space-y-2">
@@ -193,8 +203,8 @@ export default function CategoriesIndex() {
                 </div>
 
                 <Card className="bg-white shadow-lg border-gray-200">
-                    <CardHeader>
-                        <CardTitle className="text-black">Lista de Categorías</CardTitle>
+                    <CardHeader className="pb-0">
+                        <CardTitle className="text-black text-xl">Lista de Categorías</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {categories.length > 0 ? (
