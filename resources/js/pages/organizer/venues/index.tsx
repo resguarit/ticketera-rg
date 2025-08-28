@@ -60,12 +60,12 @@ export default function VenuesIndex() {
                 {venues.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {venues.map((venue) => (
-                            <Card key={venue.id} className="bg-white shadow-lg border-gray-200 flex flex-col">
-                                <CardHeader className="relative">
+                            <Card key={venue.id} className="bg-white shadow-lg border-gray-200 flex flex-col pt-0 pb-6">
+                                <CardHeader className="relative px-0 pb-0">
                                     <img
                                         src={venue.banner_url || 'https://via.placeholder.com/400x200?text=Sin+Imagen'}
                                         alt={`Banner de ${venue.name}`}
-                                        className="w-full h-40 object-cover rounded-t-lg"
+                                        className="w-full h-48 object-cover rounded-t-lg"
                                     />
                                     <div className="absolute top-4 right-4">
                                         <AlertDialog>
