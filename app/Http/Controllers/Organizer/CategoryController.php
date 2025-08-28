@@ -16,7 +16,7 @@ class CategoryController extends Controller
     {
         $categories = Category::withCount('events')->get();
         
-        return Inertia::render('organizer/categories', [
+        return Inertia::render('organizer/categories/index', [
             'categories' => $categories
         ]);
     }
@@ -25,10 +25,11 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories',
-            'icon' => 'nullable|string|max:50'
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7'
         ]);
 
-        Category::create($request->only(['name', 'icon']));
+        Category::create($request->only(['name', 'icon', 'color']));
 
         return redirect()->back()->with('success', 'Categoría creada exitosamente');
     }
@@ -37,10 +38,11 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'icon' => 'nullable|string|max:50'
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7'
         ]);
 
-        $category->update($request->only(['name', 'icon']));
+        $category->update($request->only(['name', 'icon', 'color']));
 
         return redirect()->back()->with('success', 'Categoría actualizada exitosamente');
     }
@@ -60,7 +62,7 @@ class CategoryController extends Controller
     // API endpoint para select options
     public function getForSelect()
     {
-        $categories = Category::select('id', 'name', 'icon')->get();
+        $categories = Category::select('id', 'name', 'icon', 'color')->get();
         
         return response()->json($categories);
     }
