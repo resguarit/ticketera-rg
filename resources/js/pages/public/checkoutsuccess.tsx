@@ -12,8 +12,8 @@ import { type SharedData } from '@/types';
 interface PurchaseData {
     orderId: string;
     event: {
-        title: string;
-        image: string;
+        name: string;
+        image_url: string;
         date: string;
         time: string;
         location: string;
@@ -107,13 +107,13 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                 <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                                         <img
-                                            src={purchaseData.event.image}
-                                            alt={purchaseData.event.title}
+                                            src={purchaseData.event.image_url}
+                                            alt={purchaseData.event.name}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-foreground mb-1">{purchaseData.event.title}</h3>
+                                        <h3 className="text-lg font-bold text-foreground mb-1">{purchaseData.event.name}</h3>
                                         {/* Mostrar información de la función si existe */}
                                         {purchaseData.event.function && (
                                             <div className="mb-2">
@@ -252,8 +252,8 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                                     <p className="font-semibold text-foreground">{auth.user.email}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-foreground/60">Contraseña temporal:</p>
-                                                    <p className="font-semibold text-foreground">12345678</p>
+                                                    <p className="text-foreground/60">Contraseña temporal (Tu DNI):</p>
+                                                    <p className="font-semibold text-foreground">{auth.user.person.dni ?? '12345678'}</p>
                                                 </div>
                                             </div>
                                         </div>

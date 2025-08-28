@@ -2,12 +2,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Mail, Phone, Key } from 'lucide-react';
-import { UserItem } from '@/types/organizer';
+import { User } from '@/types';
 import { getRoleText, getUserFullName, formatDate } from '@/utils/userFormat';
 import { getUserInitials } from '@/lib/userHelpers';
 import RemoveUserDialog from '@/components/organizers/users/RemoveUserDialog';
 
-interface Props { user: UserItem; onRemove(): void; onViewCredentials?(): void }
+interface Props { user: User; onRemove(): void; onViewCredentials?(): void }
 
 export function UserCard({ user, onRemove, onViewCredentials }: Props) {
   return (

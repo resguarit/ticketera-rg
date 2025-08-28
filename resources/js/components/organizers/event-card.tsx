@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { 
     Calendar, 
@@ -14,39 +14,23 @@ import {
 } from 'lucide-react';
 import { formatDate, formatDateReadable, formatRelativeTime, formatDateForCard } from '@/lib/dateHelpers';
 
-interface Event {
-    id: number;
-    name: string;
-    description: string;
-    image_url: string | null;
-    featured: boolean;
-    category: {
-        id: number;
-        name: string;
-    };
-    venue: {
-        id: number;
-        name: string;
-        address: string;
-    };
-    organizer: {
-        id: number;
-        name: string;
-    };
-    functions: Array<{
-        id: number;
-        name: string;
-        start_time: string; // Raw datetime para compatibilidad
-        end_time: string;   // Raw datetime para compatibilidad
-        date: string;       // Formato: "23 ago 2025"
-        time: string;       // Formato: "20:00"
-        formatted_date: string; // Formato: "2025-08-23"
-        day_name: string;   // Formato: "Saturday"
-        is_active: boolean;
-    }>;
+import { Event, Category, Venue, Organizer, EventFunction } from '@/types';
+
+interface EventFunctionDetail extends EventFunction {
+    date: string;       
+    time: string;       
+    formatted_date: string; 
+    day_name: string;
 }
 
-export default function OrganizerEventCard({ event }: { event: Event }) {
+interface EventDetail extends Event {
+    category: Category;
+    venue: Venue;
+    organizer: Organizer;
+    functions: EventFunctionDetail[];
+}
+
+export default function OrganizerEventCard({ event }: { event: EventDetail }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     // Obtener la próxima función
@@ -55,6 +39,10 @@ export default function OrganizerEventCard({ event }: { event: Event }) {
         : null;
 
     const { month, day } = nextFunction ? formatDateForCard(nextFunction.date) : { month: '', day: '' };
+
+    const handleViewPublic = () => {
+            router.visit(route('event.detail', event.id));
+    };
 
     return (
         <Card className="bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -106,14 +94,11 @@ export default function OrganizerEventCard({ event }: { event: Event }) {
                     )}
                 </div>
 
-                {/* Descripción */}
                 <div className="mb-4">
                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
                         {event.description}
                     </p>
                 </div>
-
-                {console.log(event)}
 
                 {/* Banner si existe */}
                 {event.image_url && (
@@ -160,7 +145,7 @@ export default function OrganizerEventCard({ event }: { event: Event }) {
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`#`}>
+                        <Link href={route('organizer.events.manage', event.id)}>
                             <Settings className="w-4 h-4 mr-1" />
                             Gestionar
                         </Link>
@@ -177,17 +162,11 @@ export default function OrganizerEventCard({ event }: { event: Event }) {
                         {dropdownOpen && (
                             <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                                 <div className="py-1">
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                        Ver estadísticas
-                                    </button>
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                        Duplicar evento
-                                    </button>
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                        Exportar datos
+                                    <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
+                                        Ver como público
                                     </button>
                                     <hr className="my-1" />
-                                    <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50">
+                                    <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50">
                                         Archivar evento
                                     </button>
                                 </div>

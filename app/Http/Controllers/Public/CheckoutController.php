@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 
 class CheckoutController extends Controller
 {
@@ -23,7 +25,7 @@ class CheckoutController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function confirm(Request $request, Event $event): Response
+    public function confirm(Request $request, Event $event): RedirectResponse | Response
     {
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
@@ -68,27 +70,13 @@ class CheckoutController extends Controller
                     }
                 }
             }
-        } else {
-            // Si no hay tickets, usar datos de ejemplo para testing
-            if ($selectedFunction->ticketTypes->isNotEmpty()) {
-                $tickets = $selectedFunction->ticketTypes->take(2);
-                foreach ($tickets as $index => $ticket) {
-                    $selectedTickets[] = [
-                        'id' => $ticket->id,
-                        'type' => $ticket->name,
-                        'price' => $ticket->price,
-                        'quantity' => $index === 0 ? 2 : 1,
-                        'description' => $ticket->description,
-                    ];
-                }
-            }
         }
 
         // Preparar datos del evento para el checkout
         $eventData = [
             'id' => $event->id,
-            'title' => $event->name,
-            'image' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
+            'name' => $event->name,
+            'image_url' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
             'date' => $selectedFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
             'time' => $selectedFunction->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
@@ -98,13 +86,7 @@ class CheckoutController extends Controller
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'selectedTickets' => $selectedTickets,
-            'function' => [
-                'id' => $selectedFunction->id,
-                'name' => $selectedFunction->name,
-                'description' => $selectedFunction->description,
-                'start_time' => $selectedFunction->start_time,
-                'end_time' => $selectedFunction->end_time,
-            ]
+            'function' => $selectedFunction
         ];
 
         return Inertia::render('public/checkoutconfirm', [
@@ -116,7 +98,7 @@ class CheckoutController extends Controller
     public function processPayment(Request $request): RedirectResponse
     {
         // Log de debug al inicio
-        \Log::info('=== PROCESANDO CHECKOUT ===', [
+        Log::info('=== PROCESANDO CHECKOUT ===', [
             'url' => $request->url(),
             'method' => $request->method(),
             'all_data' => $request->all(),
@@ -142,10 +124,10 @@ class CheckoutController extends Controller
                 'agreements.privacy' => 'required|boolean|accepted',
             ]);
             
-            \Log::info('Validación exitosa');
+            Log::info('Validación exitosa');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Error de validación', [
+            Log::error('Error de validación', [
                 'errors' => $e->errors(),
                 'input' => $request->all()
             ]);
@@ -196,7 +178,7 @@ class CheckoutController extends Controller
             }
 
         } catch (\Exception $e) {
-            \Log::error('Error en checkout: ' . $e->getMessage(), [
+            Log::error('Error en checkout: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'event_id' => $validated['event_id'],
                 'error' => $e->getMessage(),
@@ -209,7 +191,7 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Request $request): Response
+    public function success(Request $request): Response | RedirectResponse
     {
         $orderId = $request->query('order');
         $accountCreated = $request->query('account_created', false);
@@ -237,8 +219,8 @@ class CheckoutController extends Controller
         $purchaseData = [
             'orderId' => $orderSummary['order_number'],
             'event' => [
-                'title' => $event->name,
-                'image' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
+                'name' => $event->name,
+                'image_url' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,

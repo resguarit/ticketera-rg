@@ -11,33 +11,32 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-// Tipos de datos que llegan del backend
-interface Event {
-    id: number;
-    title: string;
-    image: string;
+import {    
+  Event,
+  Category,
+  Ciudad,
+  Venue
+} from '@/types/models';
+
+import {
+  getCategoryIcon,  
+} from '@/types/ui'
+
+interface EventDetail extends Event {
     date: string;
-    time: string;
+    time?: string;
     location: string;
-    city: string;
-    province?: string;
+    city?: string;
+    province?: string; 
     category: string;
     price: number;
-    rating: number;
-    featured: boolean;
+    venue: Venue;
 }
 
-interface Category {
-    id: string;
-    label: string;
-    icon: string;
-    color: string;
-}
-
-interface EventsProps {
-    events: Event[];
+interface PublicEventsPageProps {
+    events: EventDetail[];
     categories: Category[];
-    cities: string[];
+    cities: Ciudad[];
     filters: {
         search: string;
         category: string;
@@ -46,32 +45,21 @@ interface EventsProps {
     };
 }
 
-// Mapeo de iconos (igual que en home)
-const iconMap = {
-    music: Music,
-    theater: Theater,
-    trophy: Trophy,
-    presentation: Presentation,
-    utensils: Utensils,
-    palette: Palette,
-    laugh: Laugh,
-    users: Users,
-};
-
-export default function Events({ events, categories, cities, filters }: EventsProps) {
+export default function Events({ events, categories, cities, filters }: PublicEventsPageProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search);
     const [selectedCategory, setSelectedCategory] = useState(filters.category);
     const [selectedCity, setSelectedCity] = useState(filters.city);
     const [sortBy, setSortBy] = useState(filters.sortBy);
     const [viewMode, setViewMode] = useState("grid");
+    console.log(events)
 
     // Filtrar y ordenar eventos en el frontend
     const filteredEvents = events
         .filter((event) => {
             const matchesSearch =
-                event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                event.location.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
+                event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
             const matchesCity = selectedCity === "all" || event.city === selectedCity;
             return matchesSearch && matchesCategory && matchesCity;
         })
@@ -81,41 +69,17 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                     return a.price - b.price;
                 case "price-high":
                     return b.price - a.price;
-                case "rating":
-                    return b.rating - a.rating;
                 case "date":
                 default:
                     return compareDates(a.date, b.date);
             }
         });
 
-    // Obtener icono de categoría
-    const getCategoryIcon = (iconName: string) => {
-        return iconMap[iconName as keyof typeof iconMap] || Music;
-    };
-
-    const getCategoryColor = (category: string) => {
-        return "primary"; // Por ahora todos primary
-    };
-
-    // Aplicar filtros via servidor (opcional)
-    const applyFilters = () => {
-        router.get('/events', {
-            search: searchTerm,
-            category: selectedCategory,
-            city: selectedCity,
-            sortBy: sortBy,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
-
     return (
         <>
             <Head title="Eventos - Ticketera RG" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
 
@@ -150,8 +114,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 <SelectContent>
                                     <SelectItem value="all">Todas las categorías</SelectItem>
                                     {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.label}
+                                        <SelectItem key={category.id} value={category.name}>
+                                            {category.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -163,9 +127,9 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todas las ciudades</SelectItem>
-                                    {cities.map((city) => (
-                                        <SelectItem key={city} value={city}>
-                                            {city}
+                                    {cities.map((city, id) => (
+                                        <SelectItem key={id} value={city.name}>
+                                            {city.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -179,7 +143,6 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                     <SelectItem value="date">Fecha</SelectItem>
                                     <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
                                     <SelectItem value="price-high">Precio: Mayor a Menor</SelectItem>
-                                    <SelectItem value="rating">Mejor Valorados</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -210,12 +173,12 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                             key={category.id}
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => setSelectedCategory(category.id)}
-                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === category.id ? "bg-primary text-white" : ""}`}
+                                            onClick={() => setSelectedCategory(category.name)}
+                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === category.name ? "bg-primary text-white" : ""}`}
                                         >
                                             <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                            <span className="hidden sm:inline">{category.label}</span>
-                                            <span className="sm:hidden">{category.label.substring(0, 3)}</span>
+                                            <span className="hidden sm:inline">{category.name}</span>
+                                            <span className="sm:hidden">{category.name.substring(0, 3)}</span>
                                         </Button>
                                     );
                                 })}
@@ -239,7 +202,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category)?.icon || 'music'
+                                            categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -248,8 +211,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                             >
                                                 <div className="relative">
                                                     <img
-                                                        src={event.image}
-                                                        alt={event.title}
+                                                        src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                                        alt={event.name}
                                                         className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                                     />
                                                     {event.featured && (
@@ -263,7 +226,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
 
                                                 </div>
                                                 <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
-                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.title}</h4>
+                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
                                                     <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
                                                         <div className="flex items-center text-foreground/80">
                                                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
@@ -314,7 +277,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredEvents.map((event) => {
                                         const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.id === event.category)?.icon || 'music'
+                                            categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
                                             <Card
@@ -325,8 +288,8 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                     <div className=" flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
                                                         <div className="relative w-16 h-48 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-l-lg sm:rounded-lg overflow-hidden flex-shrink-0">
                                                             <img
-                                                                src={event.image}
-                                                                alt={event.title}
+                                                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                                                alt={event.name}
                                                                 className="w-full h-full object-cover"
                                                             />
                                                             <div className="absolute top-1 sm:top-2 right-1 sm:right-2 p-1 rounded-full bg-primary">
@@ -337,7 +300,7 @@ export default function Events({ events, categories, cities, filters }: EventsPr
                                                         <div className="flex-1 min-w-0 ">
                                                             <div className="flex flex-col  sm:flex-row sm:items-start sm:justify-between">
                                                                 <div className="min-w-0 flex-1 ">
-                                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.title}</h4>
+                                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
                                                                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
                                                                         <div className="flex items-center space-x-1">
                                                                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />

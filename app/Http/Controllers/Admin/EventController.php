@@ -135,7 +135,7 @@ class EventController extends Controller
 
             return [
                 'id' => $event->id,
-                'title' => $event->name,
+                'name' => $event->name,
                 'organizer' => [
                     'id' => $event->organizer->id,
                     'name' => $event->organizer->name,
@@ -157,7 +157,7 @@ class EventController extends Controller
                 'price_range' => $priceRange,
                 'created_at' => $event->created_at->format('Y-m-d'),
                 'created_datetime' => $event->created_at->toISOString(),
-                'image' => $event->image_url,
+                'image_url' => $event->image_url,
                 'featured' => $event->featured,
                 'functions_count' => $event->functions->count(),
             ];
@@ -235,9 +235,9 @@ class EventController extends Controller
                     'start_time' => $function->start_time->format('Y-m-d H:i:s'),
                     'start_date' => $function->start_time->format('Y-m-d'),
                     'start_time_only' => $function->start_time->format('H:i'),
-                    'end_time' => $function->end_time->format('Y-m-d H:i:s'),
-                    'end_date' => $function->end_time->format('Y-m-d'),
-                    'end_time_only' => $function->end_time->format('H:i'),
+                    'end_time' => $function->end_time ? $function->end_time->format('Y-m-d H:i:s') : null,
+                    'end_date' => $function->end_time ? $function->end_time->format('Y-m-d') : null,
+                    'end_time_only' => $function->end_time ? $function->end_time->format('H:i') : null,
                     'is_active' => $function->is_active,
                     'ticket_types' => $function->ticketTypes->map(function($ticketType) {
                         return [

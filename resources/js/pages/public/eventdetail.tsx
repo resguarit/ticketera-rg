@@ -12,50 +12,33 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-interface TicketType {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    available: number;
-    quantity: number;
-    quantity_sold: number;
-    sales_start_date: string;
-    sales_end_date: string;
-    is_hidden: boolean;
-    color?: string;
+import {
+    Event,
+    EventFunction,
+    TicketType
+} from '@/types/'
+
+interface TicketTypeData extends TicketType {
+    available: number; 
+    color: string;
 }
 
-interface EventFunction {
-    id: number;
-    name: string;
-    description: string;
-    start_time: string;
-    end_time: string;
+interface EventFunctionData extends EventFunction {
     date: string;
     time: string;
     day_name: string;
-    is_active: boolean;
-    ticketTypes: TicketType[];
+    ticketTypes: TicketTypeData[];
 }
 
-interface EventData {
-    id: number;
-    title: string;
-    description: string;
-    image: string;
-    date: string; // Para compatibilidad
-    time: string; // Para compatibilidad
+interface EventData extends Event {
     location: string;
     city: string;
-    province?: string; // NUEVO: agregar provincia
-    full_address?: string;
+    province: string | null;
+    full_address: string;
     category: string;
-    rating: number;
-    reviews: number;
-    duration: string;
-    ageRestriction: string;
-    functions: EventFunction[];
+    functions: EventFunctionData[];
+    date: string;
+    time: string;
 }
 
 interface EventDetailProps {
@@ -140,9 +123,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
     return (
         <>
-            <Head title={`${eventData.title} - TicketMax`} />
+            <Head title={`${eventData.name} - TicketMax`} />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
 
@@ -164,8 +147,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             {/* Hero Image */}
                             <div className="relative h-48 sm:h-64 lg:h-80 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
                                 <img 
-                                    src={eventData.image} 
-                                    alt={eventData.title} 
+                                    src={eventData.image_url || '/placeholder.jpg'} 
+                                    alt={eventData.name} 
                                     className="w-full h-full object-cover" 
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -174,15 +157,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         {eventData.category.toUpperCase()}
                                     </Badge>
                                     <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-1 sm:mb-2 leading-tight">
-                                        {eventData.title}
+                                        {eventData.name}
                                     </h1>
-                                    <div className="flex items-center space-x-2 sm:space-x-4 text-white/90">
-                                        <div className="flex items-center space-x-1">
-                                            <Star className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-yellow-400 fill-current" />
-                                            <span className="font-semibold text-sm sm:text-base">{eventData.rating}</span>
-                                            <span className="text-xs sm:text-sm">({eventData.reviews} reseñas)</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -254,22 +230,6 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-foreground text-sm sm:text-base">Duración</p>
-                                                <p className="text-xs sm:text-sm">{eventData.duration}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-semibold text-foreground text-sm sm:text-base">Restricción</p>
-                                                <p className="text-xs sm:text-sm">{eventData.ageRestriction}</p>
-                                            </div>
-                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -280,8 +240,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             {/* Hero Image Mobile */}
                             <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg">
                                 <img 
-                                    src={eventData.image} 
-                                    alt={eventData.title} 
+                                    src={eventData.image_url || '/placeholder.jpg'} 
+                                    alt={eventData.name} 
                                     className="w-full h-full object-cover" 
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -290,15 +250,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         {eventData.category.toUpperCase()}
                                     </Badge>
                                     <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2 leading-tight">
-                                        {eventData.title}
+                                        {eventData.name}
                                     </h1>
-                                    <div className="flex items-center space-x-2 text-white/90">
-                                        <div className="flex items-center space-x-1">
-                                            <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                                            <span className="font-semibold text-sm">{eventData.rating}</span>
-                                            <span className="text-xs sm:text-sm">({eventData.reviews})</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -528,22 +481,6 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     <div>
                                                         <p className="font-semibold text-foreground text-sm sm:text-base">Ubicación</p>
                                                         <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
-                                                    <div>
-                                                        <p className="font-semibold text-foreground text-sm sm:text-base">Duración</p>
-                                                        <p className="text-xs sm:text-sm">{eventData.duration}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" />
-                                                    <div>
-                                                        <p className="font-semibold text-foreground text-sm sm:text-base">Restricción</p>
-                                                        <p className="text-xs sm:text-sm">{eventData.ageRestriction}</p>
                                                     </div>
                                                 </div>
                                             </div>

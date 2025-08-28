@@ -45,6 +45,8 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
 
     const getStatusColor = (status: string) => {
         switch (status) {
+            case "available":
+                return "bg-blue-500";
             case "confirmed":
                 return "bg-green-500";
             case "pending":
@@ -58,6 +60,8 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
 
     const getStatusText = (status: string) => {
         switch (status) {
+            case "available":
+                return "Disponible";
             case "confirmed":
                 return "Confirmado";
             case "pending":

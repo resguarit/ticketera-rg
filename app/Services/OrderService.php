@@ -33,12 +33,10 @@ class OrderService
                     // Crear nuevo usuario
                     $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
                     $accountCreated = true;
+                    Auth::loginUsingId($userId);
                 } else {
                     $userId = $existingUser->id;
                 }
-    
-                // Autenticar automáticamente al usuario recién creado
-                Auth::loginUsingId($userId);
             } else {
                 $userId = Auth::id();
             }
@@ -104,7 +102,7 @@ class OrderService
         }
 
         // Contraseña por defecto
-        $defaultPassword = '12345678';
+        $defaultPassword = $billingInfo['documentNumber'] ?? '12345678';
         
         // Crear el registro de persona
         $person = Person::create([

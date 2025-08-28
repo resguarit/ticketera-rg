@@ -4,10 +4,12 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\Category;
 use App\Models\Ciudad;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +37,6 @@ class EventController extends Controller
             });
         }
 
-        // ACTUALIZADO: filtro por ciudad usando la nueva relación
         if ($request->filled('city') && $request->get('city') !== 'all') {
             $city = $request->get('city');
             $query->whereHas('venue.ciudad', function($q) use ($city) {
@@ -43,49 +44,22 @@ class EventController extends Controller
             });
         }
 
-        $events = $query->get()->map(function($event) {
-            $firstFunction = $event->functions->first();
-            $minPrice = 0;
-            
-            // Obtener precio mínimo si hay funciones y tickets
-            if ($event->functions->isNotEmpty()) {
-                $allTickets = $event->functions->flatMap(fn($func) => $func->ticketTypes ?? collect());
-                $minPrice = $allTickets->where('quantity_sold', '<', 'quantity')->min('price') ?? 0;
-            }
-            
-            return [
-                'id' => $event->id,
-                'title' => $event->name,
-                'image' => $event->image_url ?: "/placeholder.svg?height=300&width=400",
-                'date' => $firstFunction?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-                'time' => $firstFunction?->start_time?->format('H:i') ?? '',
-                'location' => $event->venue->name,
-                // ACTUALIZADO: usar la nueva estructura
-                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
-                    $event->venue->ciudad->provincia->name : null,
-                'category' => strtolower($event->category->name),
-                'price' => $minPrice,
-                'rating' => 4.5 + (rand(0, 8) / 10),
-                'featured' => false,
-            ];
-        });
+        $events = $query->get();
 
         // Categorías para filtros
         $categories = Category::all()->map(function($category) {
             return [
-                'id' => strtolower($category->name),
-                'label' => $category->name,
-                'icon' => $this->getCategoryIcon($category->name),
+                'id' => $category->id,
+                'name' => $category->name,
+                'icon' => $category->icon ?: 'default',
                 'color' => 'primary',
             ];
         });
 
-        // ACTUALIZADO: ciudades desde la tabla ciudades
-        $cities = Ciudad::orderBy('name')->pluck('name');
+        $cities = Ciudad::orderBy('name')->get();
 
         return Inertia::render('public/events', [
-            'events' => $events,
+            'events' => EventResource::collection($events),
             'categories' => $categories,
             'cities' => $cities,
             'filters' => [
@@ -109,7 +83,7 @@ class EventController extends Controller
                 'name' => $function->name,
                 'description' => $function->description,
                 'start_time' => $function->start_time,
-                'end_time' => $function->end_time,
+                'end_time' => $function->end_time ? $function->end_time : null,
                 'date' => $function->start_time?->format('d M Y'),
                 'time' => $function->start_time?->format('H:i'),
                 'day_name' => $function->start_time?->format('l'),
@@ -134,9 +108,9 @@ class EventController extends Controller
 
         $eventData = [
             'id' => $event->id,
-            'title' => $event->name,
+            'name' => $event->name,
             'description' => $event->description,
-            'image' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
+            'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
             'location' => $event->venue->name,
             // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
@@ -144,7 +118,6 @@ class EventController extends Controller
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'category' => strtolower($event->category->name),
-            'rating' => 4.8,
             'reviews' => 1247,
             'duration' => '8 horas',
             'ageRestriction' => '18+',
@@ -157,21 +130,5 @@ class EventController extends Controller
         return Inertia::render('public/eventdetail', [
             'eventData' => $eventData
         ]);
-    }
-
-    private function getCategoryIcon(string $categoryName): string
-    {
-        $iconMap = [
-            'Música' => 'music',
-            'Teatro' => 'theater',
-            'Deportes' => 'trophy',
-            'Conferencias' => 'presentation',
-            'Gastronómico' => 'utensils',
-            'Cultural' => 'palette',
-            'Comedia' => 'laugh',
-            'Familiar' => 'users',
-        ];
-
-        return $iconMap[$categoryName] ?? 'music';
     }
 }

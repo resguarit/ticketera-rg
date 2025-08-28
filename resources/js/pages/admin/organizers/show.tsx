@@ -5,10 +5,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building, Mail, Users, Calendar, Eye, Edit, Star, MapPin, Ticket, Calendar as CalendarIcon } from 'lucide-react';
-import { OrganizerItem, EventItem, CredentialsFlash } from '@/types/organizer';
+import { CredentialsFlash, Organizer, Event, User, Category, Venue } from '@/types';
 import OrganizerUsersTab from '@/components/organizers/OrganizerUsersTab';
 import { formatDate } from '@/utils/userFormat';
 import { getVenueLocation } from '@/lib/venueHelpers';
+
+interface EventItem extends Event {
+  category: Category;
+  venue: Venue;
+}
+
+interface OrganizerItem extends Organizer {
+  events: EventItem[];
+  users: User[];
+}
 
 interface PageProps extends Record<string, any> { organizer: OrganizerItem; flash?: { success?: string; error?: string }; credentials?: CredentialsFlash | null }
 
@@ -88,7 +98,7 @@ export default function Show() {
                               <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border">
                                 {event.banner_url ? (
                                   <img
-                                    src={event.banner_url.startsWith('/') ? event.banner_url : `/images/events/${event.banner_url}`}
+                                    src={event.image_url || "/placeholder.svg?height=200&width=300"}
                                     alt={event.name}
                                     className="w-full h-full object-cover"
                                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
