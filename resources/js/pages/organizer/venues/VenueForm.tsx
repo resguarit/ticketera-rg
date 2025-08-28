@@ -18,6 +18,7 @@ interface VenueFormData {
     address: string;
     provincia_id_or_name: string;
     ciudad_name: string;
+    capacity: number | string; // <-- AÑADIR CAMPO
     coordinates: string;
     banner: File | null;
     referring: string;
@@ -32,7 +33,7 @@ interface VenueFormProps {
     provincias: Provincia[];
     ciudades: Ciudad[];
     submitText: string;
-    venue?: Venue & { provincia_id?: number };
+    venue?: Venue & { provincia_id?: number, capacity?: number }; // <-- AÑADIR capacity
     progress?: { percentage: number } | null;
 }
 
@@ -113,10 +114,24 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
-            <div className="space-y-2">
-                <Label htmlFor="name">Nombre del Recinto</Label>
-                <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
-                <InputError message={errors.name} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="name">Nombre del Recinto</Label>
+                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
+                    <InputError message={errors.name} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="capacity">Capacidad Total</Label>
+                    <Input 
+                        id="capacity" 
+                        type="number"
+                        value={data.capacity} 
+                        onChange={e => setData('capacity', e.target.value)} 
+                        required 
+                        min="1"
+                    />
+                    <InputError message={errors.capacity} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

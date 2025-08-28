@@ -8,7 +8,7 @@ import { Ciudad, Provincia, Venue } from '@/types';
 import VenueForm from './VenueForm';
 
 interface EditVenueProps extends PageProps {
-    venue: Venue & { provincia_id: number, ciudad: Ciudad };
+    venue: Venue & { provincia_id: number, ciudad: Ciudad, capacity: number }; // <-- AÑADIR capacity
     provincias: Provincia[];
     ciudades: Ciudad[];
 }
@@ -21,6 +21,7 @@ export default function EditVenue() {
         address: venue.address || '',
         provincia_id_or_name: venue.provincia_id?.toString() || '',
         ciudad_name: venue.ciudad?.name || '',
+        capacity: venue.capacity || '', // <-- AÑADIR CAMPO
         coordinates: venue.coordinates || '',
         banner: null as File | null,
         referring: venue.referring || '',

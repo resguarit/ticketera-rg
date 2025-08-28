@@ -6,7 +6,8 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
 use App\Models\Ciudad;
-use App\Models\Provincia; // Importar Provincia
+use App\Models\Provincia;
+use App\Models\Sector; // <-- AÑADIR ESTO
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -83,18 +84,26 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000'
         ]);
 
-        $validated['ciudad_id'] = $this->getOrCreateCiudad($request);
+        $venueData = $request->except('capacity'); // Excluir capacidad de los datos del venue
+        $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
-            $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
+            $venueData['banner_url'] = $request->file('banner')->store('recintos', 'public');
         }
 
-        Venue::create($validated);
+        $venue = Venue::create($venueData);
+
+        // Crear el sector "General" con la capacidad proporcionada
+        $venue->sectors()->create([
+            'name' => 'General',
+            'capacity' => $request->input('capacity')
+        ]);
 
         return redirect()->route('organizer.venues.index')
             ->with('success', 'Recinto creado exitosamente');
@@ -111,18 +120,20 @@ class VenueController extends Controller
 
     public function edit(Venue $venue): Response
     {
-        $venue->load('ciudad.provincia');
+        $venue->load('ciudad.provincia', 'sectors'); // Cargar la relación de sectores
         
         $venueData = [
             'id' => $venue->id,
             'name' => $venue->name,
             'address' => $venue->address,
             'ciudad_id' => $venue->ciudad_id,
-            'provincia_id' => $venue->ciudad->provincia_id, // Añadir provincia_id
+            'provincia_id' => $venue->ciudad->provincia_id,
             'coordinates' => $venue->coordinates,
             'banner_url' => $venue->image_url,
             'referring' => $venue->referring,
             'ciudad' => $venue->ciudad,
+            // Obtener la capacidad del primer sector (asumimos que es el "General")
+            'capacity' => $venue->sectors->first()->capacity ?? 0,
         ];
 
         return Inertia::render('organizer/venues/edit', array_merge($this->getFormData(), [
@@ -137,21 +148,29 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000'
         ]);
 
-        $validated['ciudad_id'] = $this->getOrCreateCiudad($request);
+        $venueData = $request->except('capacity');
+        $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
             if ($venue->banner_url) {
                 Storage::disk('public')->delete($venue->banner_url);
             }
-            $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
+            $venueData['banner_url'] = $request->file('banner')->store('recintos', 'public');
         }
 
-        $venue->update($validated);
+        $venue->update($venueData);
+
+        // Actualizar o crear el sector "General"
+        $venue->sectors()->updateOrCreate(
+            ['name' => 'General'], // Condición para buscar
+            ['capacity' => $request->input('capacity')] // Datos para actualizar o crear
+        );
 
         return redirect()->route('organizer.venues.index')
             ->with('success', 'Recinto actualizado exitosamente');
