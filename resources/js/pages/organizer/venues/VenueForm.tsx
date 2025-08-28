@@ -18,10 +18,16 @@ interface VenueFormData {
     address: string;
     provincia_id_or_name: string;
     ciudad_name: string;
-    capacity: number | string; // <-- AÑADIR CAMPO
+    capacity: number | string;
     coordinates: string;
     banner: File | null;
     referring: string;
+}
+
+// Extender el tipo base para el formulario
+interface VenueForForm extends Venue {
+    provincia_id?: number;
+    capacity?: number;
 }
 
 interface VenueFormProps {
@@ -33,7 +39,7 @@ interface VenueFormProps {
     provincias: Provincia[];
     ciudades: Ciudad[];
     submitText: string;
-    venue?: Venue & { provincia_id?: number, capacity?: number }; // <-- AÑADIR capacity
+    venue?: VenueForForm;
     progress?: { percentage: number } | null;
 }
 

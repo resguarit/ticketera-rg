@@ -7,8 +7,15 @@ import { PageProps } from '@/types/ui/ui';
 import { Ciudad, Provincia, Venue } from '@/types';
 import VenueForm from './VenueForm';
 
+// Extender el tipo base Venue para la edición
+interface VenueForEdit extends Venue {
+    provincia_id: number;
+    ciudad: Ciudad; // Hacemos que ciudad sea obligatoria en este contexto
+    capacity: number;
+}
+
 interface EditVenueProps extends PageProps {
-    venue: Venue & { provincia_id: number, ciudad: Ciudad, capacity: number }; // <-- AÑADIR capacity
+    venue: VenueForEdit;
     provincias: Provincia[];
     ciudades: Ciudad[];
 }

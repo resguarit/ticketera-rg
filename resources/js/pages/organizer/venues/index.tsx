@@ -25,12 +25,15 @@ import {
 import { PageProps } from '@/types/ui/ui';
 import { Venue } from '@/types';
 
+// Extender el tipo base Venue para la lista
+interface VenueIndexItem extends Venue {
+    full_address: string;
+    eventos_count: number;
+    sectors_count: number;
+}
+
 interface VenueIndexProps extends PageProps {
-    venues: (Venue & {
-        full_address: string;
-        eventos_count: number;
-        sectors_count: number;
-    })[];
+    venues: VenueIndexItem[];
 }
 
 export default function VenuesIndex() {
