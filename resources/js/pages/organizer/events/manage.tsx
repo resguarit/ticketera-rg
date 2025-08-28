@@ -147,10 +147,11 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                         </div>
                     </Card>
                 </div>
-
+                
+                <div className='flex gap-4'>
                 {/* Próxima función */}
                 {nextFunction && (
-                    <Card className="p-6">
+                    <Card className="p-6 w-1/2">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Próxima Función</h3>
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                             <div className="flex items-center justify-between">
@@ -181,7 +182,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                 )}
 
                 {/* Lista de todas las funciones */}
-                <Card className="p-6">
+                <Card className="p-6 w-1/2">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Todas las Funciones</h3>
                     <div className="space-y-3">
                         {event.functions && event.functions.length > 0 ? (
@@ -218,6 +219,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                         )}
                     </div>
                 </Card>
+                </div>
             </div>
         </EventManagementLayout>
     );
