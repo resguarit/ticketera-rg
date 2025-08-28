@@ -226,16 +226,18 @@ export default function VenuesIndex() {
                                         </AlertDialog>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="flex-grow pt-0 px-4 pb-4">
-                                    <CardTitle className="text-lg font-bold text-black">{venue.name}</CardTitle>
-                                    <CardDescription className="flex flex-col items-start text-sm text-gray-600 mt-1">
-                                        <span>{venue.referring}</span>
-                                        <div className="flex items-start mt-2">
-                                        <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>{venue.full_address}</span>
-                                        </div>
-                                    </CardDescription>
-                                    <div className="flex justify-between text-sm text-gray-500 mt-4 pt-4 border-t">
+                                <CardContent className="flex-grow pt-0 px-4 pb-4 flex flex-col">
+                                    <div>
+                                        <CardTitle className="text-lg font-bold text-black">{venue.name}</CardTitle>
+                                        <CardDescription className="flex flex-col items-start text-sm text-gray-600 mt-1">
+                                            <span>{venue.referring}</span>
+                                            <div className="flex items-start mt-2">
+                                            <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                                            <span>{venue.full_address}</span>
+                                            </div>
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-gray-500 mt-auto pt-4 border-t">
                                         <div className="flex items-center">
                                             <Calendar className="w-4 h-4 mr-2" /> {venue.eventos_count} Evento(s)
                                         </div>
