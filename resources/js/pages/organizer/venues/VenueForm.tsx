@@ -243,6 +243,17 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
             </div>
 
             <div className="space-y-2">
+                <Label htmlFor="referring">Descripción (Opcional)</Label>
+                <Textarea
+                    id="referring"
+                    value={data.referring}
+                    onChange={e => setData('referring', e.target.value)}
+                    placeholder="Información adicional sobre el recinto, como puntos de referencia, indicaciones de llegada, etc."
+                />
+                <InputError message={errors.referring} />
+            </div>
+
+            <div className="space-y-2">
                 <Label>Ubicación en el Mapa</Label>
                 <div className="h-96 w-full rounded-lg overflow-hidden border z-0">
                     <MapContainer center={initialCenter} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
