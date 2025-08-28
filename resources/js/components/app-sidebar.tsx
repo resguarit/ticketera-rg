@@ -16,7 +16,8 @@ import {
     Building,
     Ticket,
     UserCheck,
-    Tag
+    Tag,
+    Building2
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -73,6 +74,11 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     title: 'Categorías',
                     href: '/organizer/categories',
                     icon: Tag,
+                },
+                {
+                    title: 'Recintos',
+                    href: '/organizer/venues',
+                    icon: Building2,
                 }
             ];
         

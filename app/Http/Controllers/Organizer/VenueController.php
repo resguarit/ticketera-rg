@@ -10,12 +10,12 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 
 class VenueController extends Controller
 {
     public function index(): Response
     {
-        // ACTUALIZADO: incluir ciudad y provincia
         $venues = Venue::with(['ciudad.provincia'])
             ->withCount(['eventos', 'sectors'])
             ->latest()
@@ -32,19 +32,19 @@ class VenueController extends Controller
                     'eventos_count' => $venue->eventos_count,
                     'sectors_count' => $venue->sectors_count,
                     'coordinates' => $venue->coordinates,
-                    'banner_url' => $venue->image_url,
+                    'banner_url' => $venue->image_url, // Usa el accesor del modelo
                     'referring' => $venue->referring,
                 ];
             });
         
-        return Inertia::render('organizer/venues', [
+        // CORREGIDO: Apuntar a la vista index dentro de la carpeta venues
+        return Inertia::render('organizer/venues/index', [
             'venues' => $venues
         ]);
     }
 
     public function create(): Response
     {
-        // Obtener ciudades para el select
         $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
         
         return Inertia::render('organizer/venues/create', [
@@ -54,37 +54,28 @@ class VenueController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
-            'ciudad_id' => 'required|exists:ciudades,id', // NUEVO: validar ciudad
+            'ciudad_id' => 'required|exists:ciudades,id',
             'coordinates' => 'nullable|string|max:100',
-            'banner_url' => 'nullable|string|max:255',
+            'banner' => 'nullable|image|max:2048', // CORREGIDO: Validación de imagen
             'referring' => 'nullable|string|max:1000'
         ]);
 
-        if ($request->hasFile('banner_url')) {
-            $request->merge([
-                'banner_url' => $request->file('banner_url')->store('venues', 'public')
-            ]);
+        if ($request->hasFile('banner')) {
+            // ACTUALIZADO: Cambiar 'venues' por 'recintos'
+            $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
         }
 
-        Venue::create($request->only([
-            'name', 
-            'address', 
-            'ciudad_id', // NUEVO: incluir ciudad_id
-            'coordinates', 
-            'banner_url', 
-            'referring'
-        ]));
+        Venue::create($validated);
 
         return redirect()->route('organizer.venues.index')
-            ->with('success', 'Venue creado exitosamente');
+            ->with('success', 'Recinto creado exitosamente');
     }
 
     public function show(Venue $venue): Response
     {
-        // ACTUALIZADO: cargar ciudad y provincia
         $venue->load(['eventos', 'sectors', 'ciudad.provincia']);
         
         return Inertia::render('organizer/venues/show', [
@@ -94,10 +85,7 @@ class VenueController extends Controller
 
     public function edit(Venue $venue): Response
     {
-        // Cargar ciudad y provincia del venue
         $venue->load('ciudad.provincia');
-        
-        // Obtener todas las ciudades para el select
         $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
         
         return Inertia::render('organizer/venues/edit', [
@@ -106,47 +94,52 @@ class VenueController extends Controller
         ]);
     }
 
+    // CORREGIDO: El método update ahora maneja la carga de archivos
     public function update(Request $request, Venue $venue): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
-            'ciudad_id' => 'required|exists:ciudades,id', // NUEVO: validar ciudad
+            'ciudad_id' => 'required|exists:ciudades,id',
             'coordinates' => 'nullable|string|max:100',
-            'banner_url' => 'nullable|string|max:255',
+            'banner' => 'nullable|image|max:2048', // Validación de imagen
             'referring' => 'nullable|string|max:1000'
         ]);
 
-        $venue->update($request->only([
-            'name', 
-            'address', 
-            'ciudad_id', // NUEVO: incluir ciudad_id
-            'coordinates', 
-            'banner_url', 
-            'referring'
-        ]));
+        if ($request->hasFile('banner')) {
+            // Eliminar el banner anterior si existe
+            if ($venue->banner_url) {
+                Storage::disk('public')->delete($venue->banner_url);
+            }
+            // ACTUALIZADO: Cambiar 'venues' por 'recintos'
+            $validated['banner_url'] = $request->file('banner')->store('recintos', 'public');
+        }
+
+        $venue->update($validated);
 
         return redirect()->route('organizer.venues.index')
-            ->with('success', 'Venue actualizado exitosamente');
+            ->with('success', 'Recinto actualizado exitosamente');
     }
 
     public function destroy(Venue $venue): RedirectResponse
     {
-        // Verificar si tiene eventos asociados
         if ($venue->eventos()->count() > 0) {
-            return redirect()->back()->with('error', 'No se puede eliminar un venue que tiene eventos asociados');
+            return redirect()->back()->with('error', 'No se puede eliminar un recinto que tiene eventos asociados');
+        }
+
+        // Eliminar el banner si existe
+        if ($venue->banner_url) {
+            Storage::disk('public')->delete($venue->banner_url);
         }
 
         $venue->delete();
 
         return redirect()->route('organizer.venues.index')
-            ->with('success', 'Venue eliminado exitosamente');
+            ->with('success', 'Recinto eliminado exitosamente');
     }
 
-    // API endpoint para select options
     public function getForSelect()
     {
-        // ACTUALIZADO: incluir ciudad
         $venues = Venue::with('ciudad')
             ->select('id', 'name', 'address', 'ciudad_id')
             ->get()
