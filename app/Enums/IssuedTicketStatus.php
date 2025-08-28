@@ -6,6 +6,6 @@ enum IssuedTicketStatus: string
 {
     case AVAILABLE = 'available';
     case USED = 'used';
-    case CANCELED = 'canceled';
+    case CANCELLED = 'cancelled';
     case REPRINTED = 'reprinted';
 }

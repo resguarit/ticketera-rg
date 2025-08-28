@@ -14,6 +14,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
+import { Event, EventFunction } from '@/types';
+
 // Tipos de datos que llegan del backend
 interface SelectedTicket {
     id: number;
@@ -23,26 +25,15 @@ interface SelectedTicket {
     description: string;
 }
 
-interface EventFunction {
-    id: number;
-    name: string;
-    description: string;
-    start_time: string;
-    end_time: string;
-}
-
-interface EventData {
-    id: number;
-    title: string;
-    image: string;
+interface EventData extends Event {
     date: string;
     time: string;
     location: string;
     city: string;
-    province?: string; // NUEVO: agregar provincia
+    province?: string;
     full_address?: string;
     selectedTickets: SelectedTicket[];
-    function?: EventFunction; // Agregar información de la función
+    function?: EventFunction;
 }
 
 interface CheckoutConfirmProps {
@@ -156,8 +147,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         };
 
         try {
-            // CAMBIAR LA RUTA AQUÍ
-            router.post(route('checkout.process'), formData);
+            router.post(route('checkout.process'), formData as any);
         } catch (error) {
             console.error('Error procesando el pago:', error);
             setIsLoading(false);
@@ -184,7 +174,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         <>
             <Head title="Confirmar Compra - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
@@ -244,13 +234,13 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     <div className="flex items-center space-x-4">
                                         <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                                             <img
-                                                src={eventData.image}
-                                                alt={eventData.title}
+                                                src={eventData.image_url || "/placeholder.svg?height=200&width=300"}
+                                                alt={eventData.name}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-foreground mb-2">{eventData.title}</h3>
+                                            <h3 className="text-lg font-bold text-foreground mb-2">{eventData.name}</h3>
                                             {/* Mostrar información de la función si existe */}
                                             {eventData.function && (
                                                 <div className="mb-2">

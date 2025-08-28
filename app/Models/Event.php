@@ -41,6 +41,23 @@ class Event extends Model
         );
     }
 
+    protected function firstFunction(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->functions()->orderBy('start_time', 'asc')->first()
+        );
+    }
+
+    protected function minPrice(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $allTickets = $this->functions->flatMap(fn($func) => $func->ticketTypes ?? collect());
+                return $allTickets->where('quantity_sold', '<', 'quantity')->min('price') ?? 0;
+            }
+        );
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

@@ -11,11 +11,11 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import Header from '@/components/header';
 
+import { Event, Category } from '@/types/models';
+import { getCategoryIcon } from '@/types/ui';
+
 // Definir los tipos de datos que llegan del backend
-interface Event {
-    id: number;
-    title: string;
-    image: string;
+interface EventDetail extends Event {
     date: string;
     time?: string;
     location: string;
@@ -23,19 +23,11 @@ interface Event {
     province?: string; 
     category: string;
     price?: number;
-    featured?: boolean;
-}
-
-interface Category {
-    id: string;
-    label: string;
-    icon: string;
-    color: string;
 }
 
 interface HomeProps {
-    featuredEvents: Event[];
-    events: Event[];
+    featuredEvents: EventDetail[];
+    events: EventDetail[];
     categories: Category[];
 }
 
@@ -45,18 +37,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/',
     },
 ];
-
-// Mapeo de iconos ampliado
-const iconMap = {
-    music: Music,
-    theater: Theater,
-    trophy: Trophy,
-    presentation: Presentation,
-    utensils: Utensils,
-    palette: Palette,
-    laugh: Laugh,
-    users: Users,
-};
 
 export default function Home({ featuredEvents, events, categories }: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
@@ -77,22 +57,17 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     // Filtrar eventos basado en los criterios de búsqueda
     const filteredEvents = events.filter((event) => {
         const matchesSearch =
-            event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory;
+            event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
         const matchesCity = selectedCity === "all" || event.city === selectedCity;
 
         return matchesSearch && matchesCategory && matchesCity;
     });
 
-    // Obtener icono de categoría
-    const getCategoryIcon = (iconName: string) => {
-        return iconMap[iconName as keyof typeof iconMap] || Music;
-    };
-
     // Obtener color de categoría
     const getCategoryColor = (categoryName: string) => {
-        const category = categories.find(c => c.id === categoryName.toLowerCase());
+        const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
         return category?.color || '#3b82f6';
     };
 
@@ -104,15 +79,15 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             <Head title="Ticketera RG - Eventos" />
             <Header className="" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Solo eventos destacados */}
                 <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
                             <img
-                                src={featuredEvents[currentSlide]?.image || "/placeholder.svg?height=400&width=800"}
-                                alt={featuredEvents[currentSlide]?.title || "Evento"}
+                                src={featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
+                                alt={featuredEvents[currentSlide]?.name || "Evento"}
                                 className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 z-20 flex items-center">
@@ -122,7 +97,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             Evento Destacado
                                         </Badge>
                                         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 sm:mb-4 text-white font-bold leading-tight">
-                                            {featuredEvents[currentSlide]?.title}
+                                            {featuredEvents[currentSlide]?.name}
                                         </h2>
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-white mb-4 sm:mb-6 text-sm sm:text-base">
                                             <div className="flex items-center space-x-1 sm:space-x-2">
@@ -190,8 +165,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 <SelectContent>
                                     <SelectItem value="all">Todas las categorías</SelectItem>
                                     {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.label}
+                                        <SelectItem key={category.id} value={category.name}>
+                                            {category.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -210,11 +185,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     ))}
                                 </SelectContent>
                             </Select>
-
-                            <Button className="bg-primary hover:bg-primary-hover text-white text-xs sm:text-base h-7 sm:h-10 px-3 sm:px-4">
-                                <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                Filtrar
-                            </Button>
                         </div>
                     </div>
                 </section>
@@ -226,7 +196,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-12">
                             {filteredEvents.map((event) => {
                                 const IconComponent = getCategoryIcon(
-                                    categories.find(c => c.id === event.category.toLowerCase())?.icon || 'music'
+                                    categories.find(c => c.name.toLocaleLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                 );
                                 const categoryColor = getCategoryColor(event.category);
                                 
@@ -237,8 +207,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     >
                                         <div className="relative">
                                             <img
-                                                src={event.image}
-                                                alt={event.title}
+                                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                                alt={event.name}
                                                 className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                             />
                                             {/* Icono de categoría con color de la BD */}
@@ -257,7 +227,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                         </div>
                                         <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
                                             <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">
-                                                {event.title}
+                                                {event.name}
                                             </h4>
                                             <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
                                                 <div className="flex items-center text-foreground/80">

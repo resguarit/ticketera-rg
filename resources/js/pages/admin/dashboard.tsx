@@ -30,6 +30,8 @@ import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 
+import { EventWithDetails } from '@/types/ui/event.views';
+
 // Interfaces para TypeScript
 interface DashboardStat {
     title: string;
@@ -39,18 +41,12 @@ interface DashboardStat {
     description: string;
 }
 
-interface RecentEvent {
-    id: number;
-    name: string;
-    organizer: string;
-    date: string;
+interface RecentEvent extends EventWithDetails {
     status: string;
+    date: string;
     tickets_sold: number;
     total_tickets: number;
     revenue: number;
-    venue?: string; // NUEVO: agregar venue
-    city?: string; // NUEVO: agregar city
-    province?: string; 
 }
 
 interface RecentUser {
@@ -303,7 +299,7 @@ export default function AdminDashboard({
                                                         {getStatusBadge(event.status)}
                                                     </div>
                                                     <p className="text-gray-600 text-sm mb-2">
-                                                        Por: {event.organizer} • {formatDate(event.date)}
+                                                        Por: {event.organizer.name} • {formatDate(event.date)}
                                                     </p>
                                                     <div className="flex items-center space-x-4 text-sm">
                                                         <span className="text-gray-700">

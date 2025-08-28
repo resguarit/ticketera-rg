@@ -146,7 +146,7 @@ export function AppSidebar() {
             case 'organizer':
                 return {
                     title: auth.user?.organizer?.name || 'Organizador',
-                    logoUrl: auth.user?.organizer?.logo_url
+                    logoUrl: auth.user?.organizer?.image_url
                 };
             default:
                 return {

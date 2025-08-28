@@ -2,12 +2,16 @@ import { useState, useCallback, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { OrganizerItem, CredentialsFlash } from '@/types/organizer';
+import { Organizer, CredentialsFlash, User } from '@/types';
 import { UserList } from './users/UserList';
 import AddUserModal from './users/AddUserModal';
 import ViewCredentialsModal from '@/components/organizers/users/ViewCredentialsModal';
 import { useOrganizerUserActions } from '@/hooks/useOrganizerUserActions';
 import { useFlashToasts } from '@/hooks/useFlashToasts';
+
+interface OrganizerItem extends Organizer {
+  users: User[];
+}
 
 interface Props { organizer: OrganizerItem; flash?: { success?: string; error?: string }; credentials?: CredentialsFlash | null }
 
