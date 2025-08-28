@@ -88,8 +88,20 @@ class VenueController extends Controller
         $venue->load('ciudad.provincia');
         $ciudades = Ciudad::with('provincia')->orderBy('name')->get();
         
+        // Mapear el venue para asegurar que el accesor image_url se aplique
+        $venueData = [
+            'id' => $venue->id,
+            'name' => $venue->name,
+            'address' => $venue->address,
+            'ciudad_id' => $venue->ciudad_id,
+            'coordinates' => $venue->coordinates,
+            'banner_url' => $venue->image_url, // Usar el accesor
+            'referring' => $venue->referring,
+            'ciudad' => $venue->ciudad,
+        ];
+
         return Inertia::render('organizer/venues/edit', [
-            'venue' => $venue,
+            'venue' => $venueData,
             'ciudades' => $ciudades
         ]);
     }
