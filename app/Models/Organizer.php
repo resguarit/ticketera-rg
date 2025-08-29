@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Services\RevenueService;
+use Carbon\Carbon;
 use Dom\Attr;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -51,5 +54,15 @@ class Organizer extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function issuedTickets(): HasManyThrough
+    {
+        return $this->hasManyThrough(IssuedTicket::class, Event::class);
+    }
+
+    public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        return app(RevenueService::class)->forOrganizer($this, $startDate, $endDate);
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Services\RevenueService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EventFunction extends Model
@@ -37,5 +40,15 @@ class EventFunction extends Model
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class);
+    }
+
+    public function issuedTickets(): HasManyThrough
+    {
+        return $this->hasManyThrough(IssuedTicket::class, TicketType::class);
+    }
+
+    public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        return app(RevenueService::class)->forFunction($this, $startDate, $endDate);
     }
 }

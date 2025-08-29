@@ -37,4 +37,9 @@ class Order extends Model
     {
         return $this->hasMany(IssuedTicket::class);
     }
+
+    public function issuedTickets()
+    {
+        return $this->hasMany(IssuedTicket::class);
+    }
 }

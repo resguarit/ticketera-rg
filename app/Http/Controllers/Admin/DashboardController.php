@@ -7,20 +7,27 @@ use App\Models\User;
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\IssuedTicket;
+use App\Services\RevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
+    public function __construct(private RevenueService $revenueService)
+    {
+    }
+
     public function __invoke(Request $request): Response
     {
         // Obtener rango de tiempo (por defecto 7 días)
         $timeRange = $request->get('timeRange', '7d');
         $startDate = $this->getStartDate($timeRange);
+        Log::debug('Start Date: ' . $startDate);
 
         // Estadísticas principales
         $stats = $this->getDashboardStats($startDate);
@@ -60,10 +67,8 @@ class DashboardController extends Controller
 
     private function getDashboardStats(Carbon $startDate): array
     {
-        // Total de usuarios CLIENTES únicamente
         $totalUsers = User::where('role', 'CLIENT')->count();
-        $newUsersThisPeriod = User::where('role', 'CLIENT')
-            ->where('created_at', '>=', $startDate)->count();
+        $newUsersThisPeriod = User::where('role', 'CLIENT')->where('created_at', '>=', $startDate)->count();
         $previousPeriodUsers = User::where('role', 'CLIENT')
             ->where('created_at', '<', $startDate)
             ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
@@ -77,28 +82,17 @@ class DashboardController extends Controller
         $activeEvents = Event::whereHas('functions', function($query) {
             $query->where('start_time', '>=', Carbon::now());
         })->count();
-
         $newEventsThisPeriod = Event::where('created_at', '>=', $startDate)->count();
         
-        // Ingresos totales (usando el enum de OrderStatus)
-        $totalRevenue = Order::where('status', 'PAID')
-            ->where('created_at', '>=', $startDate)
-            ->sum('total_amount');
-
-        $previousRevenue = Order::where('status', 'PAID')
-            ->where('created_at', '<', $startDate)
-            ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
-            ->sum('total_amount');
+        // Ingresos totales
+        $totalRevenue = $this->revenueService->forPlatform($startDate, Carbon::now());
+        $previousRevenue = $this->revenueService->forPlatform($startDate->copy()->subDays($startDate->diffInDays(Carbon::now())), $startDate);
 
         $revenueGrowth = $previousRevenue > 0 
             ? round((($totalRevenue - $previousRevenue) / $previousRevenue) * 100)
             : 0;
 
-        // Tickets vendidos (usando IssuedTicket)
-        $ticketsSold = IssuedTicket::whereHas('order', function($query) use ($startDate) {
-            $query->where('status', 'PAID')
-                  ->where('created_at', '>=', $startDate);
-        })->count();
+        $ticketsSold = $this->revenueService->ticketsSold($startDate);
 
         return [
             [
@@ -117,7 +111,7 @@ class DashboardController extends Controller
             ],
             [
                 'title' => 'Ingresos Totales',
-                'value' => '$' . number_format($totalRevenue / 1000, 1) . 'K',
+                'value' => number_format($totalRevenue, 2),
                 'change' => ($revenueGrowth >= 0 ? '+' : '') . $revenueGrowth . '%',
                 'changeType' => $revenueGrowth >= 0 ? 'positive' : 'negative',
                 'description' => 'Ingresos en el periodo'
@@ -147,11 +141,7 @@ class DashboardController extends Controller
                 $soldTickets = $event->functions->sum(function($func) {
                     return $func->ticketTypes->sum('quantity_sold');
                 });
-                $revenue = $event->functions->sum(function($func) {
-                    return $func->ticketTypes->sum(function($ticket) {
-                        return $ticket->quantity_sold * $ticket->price;
-                    });
-                });
+                $revenue = $event->getRevenue();
 
                 // Determinar status basado en las fechas de las funciones
                 $status = 'draft';
