@@ -104,4 +104,31 @@ class TicketTypeController extends Controller
 
         return redirect()->route('organizer.events.tickets', $event->id);
     }
+
+    /**
+     * Duplica un tipo de entrada en todas las funciones de un evento, excepto en la función original.
+     */
+    public function duplicateAll(Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
+    {
+        $functions = $event->functions()->get();
+
+        foreach ($functions as $func) {
+            if ($func->id === $ticketType->event_function_id) continue;
+
+            TicketType::create([
+                'name' => $ticketType->name,
+                'description' => $ticketType->description,
+                'price' => $ticketType->price,
+                'quantity' => $ticketType->quantity,
+                'sector_id' => $ticketType->sector_id,
+                'sales_start_date' => $ticketType->sales_start_date,
+                'sales_end_date' => $ticketType->sales_end_date,
+                'is_hidden' => $ticketType->is_hidden,
+                'event_function_id' => $func->id,
+            ]);
+        }
+
+        return redirect()->route('organizer.events.tickets', $event->id)
+            ->with('success', 'Tipo de entrada duplicado en todas las funciones.');
+    }
 }

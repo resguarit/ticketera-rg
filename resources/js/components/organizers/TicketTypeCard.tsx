@@ -16,16 +16,24 @@ interface TicketTypeCardProps {
   ticket: TicketType;
   onToggleVisibility?: (ticketId: number) => void;
   onEdit?: (ticketId: number) => void;
+  onDuplicateAll?: (ticket: TicketType) => void; // NUEVO
 }
 
 export const TicketTypeCard = ({ 
   ticket, 
   onToggleVisibility, 
-  onEdit 
+  onEdit,
+  onDuplicateAll // NUEVO
 }: TicketTypeCardProps) => {
   const handleButtonClick = () => {
     if (onToggleVisibility) {
       onToggleVisibility(ticket.id);
+    }
+  };
+
+  const handleDuplicateAll = () => {
+    if (onDuplicateAll) {
+      onDuplicateAll(ticket);
     }
   };
 
@@ -109,7 +117,14 @@ export const TicketTypeCard = ({
             </>
           )}
         </Button>
-        
+        <Button 
+          variant="secondary"
+          size="sm"
+          onClick={handleDuplicateAll}
+          className="px-3"
+        >
+          Duplicar
+        </Button>
         {onEdit && (
           <Button 
             variant="ghost" 

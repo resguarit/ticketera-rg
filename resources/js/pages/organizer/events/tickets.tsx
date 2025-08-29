@@ -89,6 +89,25 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         router.get(route('organizer.events.functions.ticket-types.create', { event: event.id, function: functionId }));
     };
 
+    const handleDuplicateTicketAll = (ticket: TicketType) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.post(
+            route('organizer.events.functions.ticket-types.duplicateAll', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticket.id,
+            }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: mostrar toast o refrescar
+                },
+            }
+        );
+    };
+
     return (
         <EventManagementLayout event={event} activeTab="tickets">
             <div className="space-y-6">
@@ -213,7 +232,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     key={ticket.id}
                                                     ticket={ticket}
                                                     onToggleVisibility={handleToggleTicketVisibility}
-                                                    onEdit={() => handleEditTicket(ticket.id)} // <-- PASA EL ID CORRECTO
+                                                    onEdit={() => handleEditTicket(ticket.id)}
+                                                    onDuplicateAll={handleDuplicateTicketAll} // NUEVO
                                                 />
                                             ))
                                         ) : (
