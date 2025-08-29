@@ -89,4 +89,19 @@ class TicketTypeController extends Controller
         return redirect()->route('organizer.events.tickets', $event->id)
             ->with('success', 'Tipo de entrada actualizado exitosamente.');
     }
+
+    /**
+     * Cambia la visibilidad de un tipo de entrada (oculto/visible).
+     */
+    public function toggleVisibility(Event $event, EventFunction $function, TicketType $ticketType)
+    {
+        $ticketType->is_hidden = !$ticketType->is_hidden;
+        $ticketType->save();
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'is_hidden' => $ticketType->is_hidden]);
+        }
+
+        return redirect()->route('organizer.events.tickets', $event->id);
+    }
 }

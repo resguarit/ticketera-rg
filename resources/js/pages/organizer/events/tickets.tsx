@@ -54,9 +54,24 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         };
     };
 
-    const handleToggleTicketVisibility = (ticketId: number) => {
-        // TODO: Implementar llamada a la API para cambiar visibilidad
-        console.log('Toggle visibility for ticket:', ticketId);
+    const handleToggleTicketVisibility = async (ticketId: number) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+
+        router.patch(
+            route('organizer.events.functions.ticket-types.toggleVisibility', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticketId,
+            }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: puedes mostrar un toast o refrescar la lista si no se actualiza automáticamente
+                },
+            }
+        );
     };
 
     const handleEditTicket = (ticketId: number) => {

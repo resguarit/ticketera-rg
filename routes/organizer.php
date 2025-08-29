@@ -26,6 +26,7 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
             Route::post('/', [TicketTypeController::class, 'store'])->name('store');
             Route::get('/{ticketType}/edit', [TicketTypeController::class, 'edit'])->name('edit');
             Route::put('/{ticketType}', [TicketTypeController::class, 'update'])->name('update'); // <-- AGREGA ESTA LÍNEA
+            Route::patch('/{ticketType}/toggle-visibility', [TicketTypeController::class, 'toggleVisibility'])->name('toggleVisibility');
         });
     });
     
