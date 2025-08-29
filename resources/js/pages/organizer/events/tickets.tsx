@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react'; // <-- IMPORTAR ROUTER
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -64,8 +65,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
     };
 
     const handleCreateTicket = (functionId: number) => {
-        // TODO: Implementar navegación a creación de entrada
-        console.log('Create ticket for function:', functionId);
+        router.get(route('organizer.events.functions.ticket-types.create', { event: event.id, function: functionId }));
     };
 
     return (
