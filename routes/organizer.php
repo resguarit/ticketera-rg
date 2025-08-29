@@ -28,6 +28,7 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
             Route::put('/{ticketType}', [TicketTypeController::class, 'update'])->name('update'); // <-- AGREGA ESTA LÍNEA
             Route::patch('/{ticketType}/toggle-visibility', [TicketTypeController::class, 'toggleVisibility'])->name('toggleVisibility');
             Route::post('/{ticketType}/duplicate-all', [TicketTypeController::class, 'duplicateAll'])->name('duplicateAll'); // <-- CORRECTO
+            Route::delete('/{ticketType}', [TicketTypeController::class, 'destroy'])->name('destroy');
         });
     });
     

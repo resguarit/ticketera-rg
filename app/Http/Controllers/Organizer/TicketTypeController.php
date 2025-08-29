@@ -131,4 +131,15 @@ class TicketTypeController extends Controller
         return redirect()->route('organizer.events.tickets', $event->id)
             ->with('success', 'Tipo de entrada duplicado en todas las funciones.');
     }
+
+    /**
+     * Elimina un tipo de entrada de la base de datos.
+     */
+    public function destroy(Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
+    {
+        $ticketType->delete();
+
+        return redirect()->route('organizer.events.tickets', $event->id)
+            ->with('success', 'Tipo de entrada eliminado exitosamente.');
+    }
 }

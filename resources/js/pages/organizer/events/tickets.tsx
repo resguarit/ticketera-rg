@@ -108,6 +108,24 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         );
     };
 
+    const handleDeleteTicket = (ticketId: number) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.delete(
+            route('organizer.events.functions.ticket-types.destroy', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticketId,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: mostrar toast o refrescar
+                },
+            }
+        );
+    };
+
     return (
         <EventManagementLayout event={event} activeTab="tickets">
             <div className="space-y-6">
@@ -233,7 +251,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     ticket={ticket}
                                                     onToggleVisibility={handleToggleTicketVisibility}
                                                     onEdit={() => handleEditTicket(ticket.id)}
-                                                    onDuplicateAll={handleDuplicateTicketAll} // NUEVO
+                                                    onDuplicateAll={handleDuplicateTicketAll}
+                                                    onDelete={handleDeleteTicket}
                                                 />
                                             ))
                                         ) : (

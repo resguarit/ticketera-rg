@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, MoreVertical, Trash2, Copy, Edit2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
 
@@ -16,14 +17,16 @@ interface TicketTypeCardProps {
   ticket: TicketType;
   onToggleVisibility?: (ticketId: number) => void;
   onEdit?: (ticketId: number) => void;
-  onDuplicateAll?: (ticket: TicketType) => void; // NUEVO
+  onDuplicateAll?: (ticket: TicketType) => void;
+  onDelete?: (ticketId: number) => void; // NUEVO
 }
 
 export const TicketTypeCard = ({ 
   ticket, 
   onToggleVisibility, 
   onEdit,
-  onDuplicateAll // NUEVO
+  onDuplicateAll,
+  onDelete // NUEVO
 }: TicketTypeCardProps) => {
   const handleButtonClick = () => {
     if (onToggleVisibility) {
@@ -37,9 +40,21 @@ export const TicketTypeCard = ({
     }
   };
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(ticket.id);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(ticket.id);
+    }
+  };
+
   return (
-    <Card className="w-80 hover:shadow-md transition-shadow">
-      <CardHeader>
+    <Card className="w-80 hover:shadow-md transition-shadow relative">
+      <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <CardTitle className="text-lg">{ticket.name}</CardTitle>
@@ -52,6 +67,24 @@ export const TicketTypeCard = ({
           <span className="text-xl font-bold text-primary">
             {formatPrice(ticket.price)}
           </span>
+          {/* Submenú de tres puntitos */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="absolute top-0.5 -right-0.5">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleDuplicateAll}>
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicar en todas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEdit}>
+                <Edit2 className="w-4 h-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       
@@ -118,23 +151,14 @@ export const TicketTypeCard = ({
           )}
         </Button>
         <Button 
-          variant="secondary"
+          variant="destructive"
           size="sm"
-          onClick={handleDuplicateAll}
+          onClick={handleDelete}
           className="px-3"
         >
-          Duplicar
+          <Trash2 className="w-4 h-4 mr-1" />
+          Eliminar
         </Button>
-        {onEdit && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onEdit(ticket.id)}
-            className="px-3"
-          >
-            Editar
-          </Button>
-        )}
       </CardFooter>
     </Card>
   );
