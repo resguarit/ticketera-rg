@@ -10,15 +10,21 @@ use App\Models\Venue;
 use App\Models\Ciudad;
 use App\Models\Order;
 use App\Models\IssuedTicket;
+use App\Services\RevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
+    public function __construct(private RevenueService $revenueService)
+    {
+    }
+
     public function index(Request $request): Response
     {
         // Obtener filtros
@@ -121,11 +127,7 @@ class EventController extends Controller
             $soldTickets = $event->functions->sum(function($func) {
                 return $func->ticketTypes->sum('quantity_sold');
             });
-            $revenue = $event->functions->sum(function($func) {
-                return $func->ticketTypes->sum(function($ticket) {
-                    return $ticket->quantity_sold * $ticket->price;
-                });
-            });
+            $revenue = $event->getRevenue();
 
             // Determinar estado basado en funciones
             $status = $this->determineEventStatus($event);
@@ -208,6 +210,7 @@ class EventController extends Controller
             'description' => $event->description,
             'banner_url' => $event->image_url,
             'featured' => $event->featured,
+            'total_revenue' => $event->getRevenue(),
             'organizer' => [
                 'id' => $event->organizer->id,
                 'name' => $event->organizer->name,
@@ -239,6 +242,8 @@ class EventController extends Controller
                     'end_date' => $function->end_time ? $function->end_time->format('Y-m-d') : null,
                     'end_time_only' => $function->end_time ? $function->end_time->format('H:i') : null,
                     'is_active' => $function->is_active,
+                    'total_tickets' => $function->ticketTypes->sum('quantity'),
+                    'function_revenue' => $function->getRevenue(),
                     'ticket_types' => $function->ticketTypes->map(function($ticketType) {
                         return [
                             'id' => $ticketType->id,
@@ -246,6 +251,7 @@ class EventController extends Controller
                             'price' => $ticketType->price,
                             'quantity' => $ticketType->quantity,
                             'quantity_sold' => $ticketType->quantity_sold,
+                            'ticket_revenue' => $ticketType->getRevenue(),
                             'available' => $ticketType->quantity - $ticketType->quantity_sold,
                         ];
                     }),
@@ -312,18 +318,10 @@ class EventController extends Controller
         $draftEvents = Event::whereDoesntHave('functions')->count();
 
         // Calcular tickets vendidos totales
-        $totalTicketsSold = DB::table('ticket_types')
-            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-            ->join('events', 'event_functions.event_id', '=', 'events.id')
-            ->whereNull('events.deleted_at')
-            ->sum('ticket_types.quantity_sold');
+        $totalTicketsSold = $this->revenueService->ticketsSold();
 
         // Calcular ingresos totales
-        $totalRevenue = DB::table('ticket_types')
-            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-            ->join('events', 'event_functions.event_id', '=', 'events.id')
-            ->whereNull('events.deleted_at')
-            ->sum(DB::raw('ticket_types.quantity_sold * ticket_types.price'));
+        $totalRevenue = $this->revenueService->forPlatform();
 
         return [
             'total' => $totalEvents,

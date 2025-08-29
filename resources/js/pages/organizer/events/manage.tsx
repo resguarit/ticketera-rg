@@ -14,16 +14,20 @@ import {
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
 import { compareDates, isDateAfter } from '@/lib/dateHelpers';
+import { formatCurrency } from '@/lib/currencyHelpers';
 
 interface EventFunctionDetail extends EventFunction {
     date: string;       
     time: string;       
     formatted_date: string; 
     day_name: string;
+    tickets_sold: number;
 }
 
 interface EventWithDetails extends Event, EventRelations {
     functions: EventFunctionDetail[];
+    total_revenue: number;
+    tickets_sold: number;
 }
 
 interface EventManageProps {
@@ -125,8 +129,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Entradas Vendidas</p>
-                                <p className="text-2xl font-bold text-gray-900">0</p>
-                                <p className="text-xs text-gray-500">Proximamente</p>
+                                <p className="text-2xl font-bold text-gray-900">{event.tickets_sold}</p>
                             </div>
                             <div className="bg-purple-100 p-3 rounded-full">
                                 <Ticket className="w-6 h-6 text-purple-600" />
@@ -138,8 +141,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                                <p className="text-2xl font-bold text-gray-900">$0</p>
-                                <p className="text-xs text-gray-500">Proximamente</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
                             </div>
                             <div className="bg-yellow-100 p-3 rounded-full">
                                 <DollarSign className="w-6 h-6 text-yellow-600" />
@@ -207,7 +209,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">0 entradas vendidas</span>
+                                        <span className="text-sm text-gray-500">{func.tickets_sold} entradas vendidas</span>
                                     </div>
                                 </div>
                             ))

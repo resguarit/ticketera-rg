@@ -62,6 +62,8 @@ interface EventFunction {
     end_date: string;
     end_time_only: string;
     is_active: boolean;
+    total_tickets: number;
+    function_revenue: number;
     ticket_types: TicketType[];
 }
 
@@ -71,6 +73,7 @@ interface TicketType {
     price: number;
     quantity: number;
     quantity_sold: number;
+    ticket_revenue: number;
     available: number;
 }
 
@@ -80,6 +83,7 @@ interface EventData {
     description: string;
     image_url: string;
     featured: boolean;
+    total_revenue: number;
     organizer: {
         id: number;
         name: string;
@@ -120,7 +124,8 @@ export default function Show({ auth }: any) {
         sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + ticket.quantity_sold, 0), 0
     );
 
-    const totalRevenue = calculateTotalRevenue(event.functions);
+    //const totalRevenue = calculateTotalRevenue(event.functions);
+    const totalRevenue = event.total_revenue;
 
     const salesProgress = calculateSalesPercentage(soldTickets, totalTickets);
 
@@ -618,7 +623,6 @@ export default function Show({ auth }: any) {
                                         <div className="space-y-3">
                                             {event.functions.map((func) => {
                                                 const funcTickets = func.ticket_types.reduce((sum, t) => sum + t.quantity_sold, 0);
-                                                const funcRevenue = calculateTotalRevenue([func]);
                                                 
                                                 return (
                                                     <div key={func.id} className="p-3 bg-gray-50 rounded-lg">
@@ -635,7 +639,7 @@ export default function Show({ auth }: any) {
                                                             </div>
                                                             <div>
                                                                 <span className="text-gray-600">Ingresos: </span>
-                                                                <span className="font-medium text-black">${funcRevenue.toLocaleString()}</span>
+                                                                <span className="font-medium text-black">${func.function_revenue.toLocaleString()}</span>
                                                             </div>
                                                         </div>
                                                     </div>

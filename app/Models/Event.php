@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Ticket;
 
 class Event extends Model
 {
@@ -61,6 +62,9 @@ class Event extends Model
         );
     }
 
+    /**
+     * Relations
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -86,11 +90,14 @@ class Event extends Model
         return $this->hasMany(DiscountCode::class);
     }
 
-    public function issuedTickets(): HasManyThrough
+    public function ticketTypes(): HasManyThrough
     {
-        return $this->hasManyThrough(IssuedTicket::class, EventFunction::class);
+        return $this->hasManyThrough(TicketType::class, EventFunction::class);
     }
 
+    /**
+     * Class methods
+     */
     public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float
     {
         return app(RevenueService::class)->forEvent($this, $startDate, $endDate);

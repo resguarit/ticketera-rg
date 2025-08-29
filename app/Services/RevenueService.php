@@ -114,4 +114,32 @@ class RevenueService
 
         return $query->count();
     }
+
+    public function ticketsSoldByEvent(Event $event, ?Carbon $startDate = null): int
+    {
+        $query = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
+            $query->where('status', OrderStatus::PAID);
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+        })->whereHas('ticketType.eventFunction', function ($q) use ($event) {
+            $q->where('event_id', $event->id);
+        });
+
+        return $query->count();
+    }
+
+    public function ticketsSoldByFunction(EventFunction $eventFunction, ?Carbon $startDate = null): int
+    {
+        $query = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
+            $query->where('status', OrderStatus::PAID);
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+        })->whereHas('ticketType.eventFunction', function ($q) use ($eventFunction) {
+            $q->where('id', $eventFunction->id);
+        });
+
+        return $query->count();
+    }
 }

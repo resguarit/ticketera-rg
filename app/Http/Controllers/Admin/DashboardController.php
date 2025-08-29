@@ -27,8 +27,6 @@ class DashboardController extends Controller
         // Obtener rango de tiempo (por defecto 7 días)
         $timeRange = $request->get('timeRange', '7d');
         $startDate = $this->getStartDate($timeRange);
-        Log::debug('Start Date: ' . $startDate);
-
         // Estadísticas principales
         $stats = $this->getDashboardStats($startDate);
         
