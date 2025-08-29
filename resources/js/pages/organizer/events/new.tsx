@@ -10,6 +10,16 @@ import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { ArrowLeft, Save, Plus, Trash2, Calendar } from 'lucide-react';
 import { isDateAfter, formatDateForInput, isValidDate, formatDate } from '@/lib/dateHelpers';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+    DialogDescription,
+} from '@/components/ui/dialog';
+import { Category } from '@/types';
 
 interface EventFunction {
     id: string;
@@ -41,6 +51,8 @@ interface Props {
     venues: Venue[];
 }
 
+
+
 export default function EventsNew({ categories, venues }: Props) {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [sectors, setSectors] = useState<Sector[]>([]);
@@ -53,6 +65,14 @@ export default function EventsNew({ categories, venues }: Props) {
         start_time: '',
         end_time: ''
     });
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [categoryForm, setCategoryForm] = useState({
+        name: '',
+        icon: '',
+        color: '#3b82f6',
+    });
+    const [categoryErrors, setCategoryErrors] = useState<{ [key: string]: string }>({});
+    const [categoryProcessing, setCategoryProcessing] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -269,6 +289,28 @@ export default function EventsNew({ categories, venues }: Props) {
         });
     };
 
+    const handleCreateCategory = (e: React.FormEvent) => {
+        e.preventDefault();
+        setCategoryProcessing(true);
+        setCategoryErrors({});
+        router.post(
+            route('organizer.categories.store'),
+            categoryForm,
+            {
+                onSuccess: () => {
+                    setIsCategoryModalOpen(false);
+                    setCategoryForm({ name: '', icon: '', color: '#3b82f6' });
+                    router.reload({ only: ['categories'] });
+                },
+                onError: (errors) => {
+                    setCategoryErrors(errors || {});
+                },
+                onFinish: () => setCategoryProcessing(false),
+                preserveScroll: true,
+            }
+        );
+    };
+
     return (
         <>
             <Head title='Crear Evento' />
@@ -328,9 +370,72 @@ export default function EventsNew({ categories, venues }: Props) {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            <Button type="button" variant="outline" size="icon">
-                                                <Plus className="w-4 h-4" />
-                                            </Button>
+                                            <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button type="button" variant="outline" size="icon" onClick={() => setIsCategoryModalOpen(true)}>
+                                                        <Plus className="w-4 h-4" />
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-[425px] bg-white">
+                                                    <DialogHeader>
+                                                        <DialogTitle className="text-black">
+                                                            Crear Nueva Categoría
+                                                        </DialogTitle>
+                                                        <DialogDescription>
+                                                            Completa el formulario para añadir una nueva categoría.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <form onSubmit={handleCreateCategory}>
+                                                        <div className="grid gap-4 py-4">
+                                                            <div className="space-y-2">
+                                                                <Label htmlFor="cat-name" className="text-black">Nombre</Label>
+                                                                <Input
+                                                                    id="cat-name"
+                                                                    value={categoryForm.name}
+                                                                    onChange={(e) => setCategoryForm(f => ({ ...f, name: e.target.value }))}
+                                                                    className="bg-white border-gray-300 text-black"
+                                                                    required
+                                                                />
+                                                                {categoryErrors.name && <div className="text-red-600 text-xs">{categoryErrors.name}</div>}
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label className="text-black">Icono (Opcional)</Label>
+                                                                <Input
+                                                                    value={categoryForm.icon}
+                                                                    onChange={(e) => setCategoryForm(f => ({ ...f, icon: e.target.value }))}
+                                                                    className="bg-white border-gray-300 text-black"
+                                                                    placeholder="Ej: music, theater, trophy..."
+                                                                />
+                                                                {categoryErrors.icon && <div className="text-red-600 text-xs">{categoryErrors.icon}</div>}
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label htmlFor="cat-color" className="text-black">Color</Label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Input
+                                                                        id="cat-color"
+                                                                        type="color"
+                                                                        value={categoryForm.color}
+                                                                        onChange={(e) => setCategoryForm(f => ({ ...f, color: e.target.value }))}
+                                                                        className="p-1 h-10 w-14 block bg-white border-gray-300 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+                                                                    />
+                                                                    <Input
+                                                                        type="text"
+                                                                        value={categoryForm.color}
+                                                                        onChange={(e) => setCategoryForm(f => ({ ...f, color: e.target.value }))}
+                                                                        className="bg-white border-gray-300 text-black"
+                                                                    />
+                                                                </div>
+                                                                {categoryErrors.color && <div className="text-red-600 text-xs">{categoryErrors.color}</div>}
+                                                            </div>
+                                                        </div>
+                                                        <DialogFooter>
+                                                            <Button type="submit" disabled={categoryProcessing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                                {categoryProcessing ? 'Guardando...' : 'Guardar Categoría'}
+                                                            </Button>
+                                                        </DialogFooter>
+                                                    </form>
+                                                </DialogContent>
+                                            </Dialog>
                                         </div>
                                         <InputError message={errors.category_id} className="mt-1" />
                                     </div>
