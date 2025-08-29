@@ -1,4 +1,5 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
+import { Eye, EyeOff, MoreVertical, Trash2, Copy, Edit2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,19 +10,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface TicketTypeCardProps {
   ticket: TicketType;
   onToggleVisibility?: (ticketId: number) => void;
   onEdit?: (ticketId: number) => void;
+  onDuplicateAll?: (ticket: TicketType, functionIds: number[]) => void; // MODIFICADO
+  onDelete?: (ticketId: number) => void;
+  allFunctions?: { id: number; name: string }[]; // NUEVO
+  functionsWithTicket?: number[]; // NUEVO
 }
 
-export const TicketTypeCard = ({ 
-  ticket, 
-  onToggleVisibility, 
-  onEdit 
+export const TicketTypeCard = ({
+  ticket,
+  onToggleVisibility,
+  onEdit,
+  onDuplicateAll,
+  onDelete,
+  allFunctions = [],
+  functionsWithTicket = [],
 }: TicketTypeCardProps) => {
   const handleButtonClick = () => {
     if (onToggleVisibility) {
@@ -29,9 +41,58 @@ export const TicketTypeCard = ({
     }
   };
 
+  // Estado para el modal de duplicar
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [selectedFunctions, setSelectedFunctions] = useState<number[]>([]);
+
+  const handleDuplicateAll = () => {
+    setShowDuplicateModal(true);
+    // Por defecto selecciona todas las funciones posibles
+    setSelectedFunctions(
+      allFunctions
+        .filter(f => !functionsWithTicket.includes(f.id))
+        .map(f => f.id)
+    );
+  };
+
+  const handleConfirmDuplicate = () => {
+    if (onDuplicateAll) {
+      onDuplicateAll(ticket, selectedFunctions);
+    }
+    setShowDuplicateModal(false);
+  };
+
+  const handleToggleFunction = (funcId: number) => {
+    setSelectedFunctions((prev) =>
+      prev.includes(funcId)
+        ? prev.filter(id => id !== funcId)
+        : [...prev, funcId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedFunctions(
+      allFunctions
+        .filter(f => !functionsWithTicket.includes(f.id))
+        .map(f => f.id)
+    );
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(ticket.id);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(ticket.id);
+    }
+  };
+
   return (
-    <Card className="w-80 hover:shadow-md transition-shadow">
-      <CardHeader>
+    <Card className="w-80 hover:shadow-md transition-shadow relative">
+      <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <CardTitle className="text-lg">{ticket.name}</CardTitle>
@@ -44,6 +105,24 @@ export const TicketTypeCard = ({
           <span className="text-xl font-bold text-primary">
             {formatPrice(ticket.price)}
           </span>
+          {/* Submenú de tres puntitos */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="absolute top-0.5 -right-0.5">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleDuplicateAll}>
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicar en funciones
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEdit}>
+                <Edit2 className="w-4 h-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       
@@ -109,18 +188,50 @@ export const TicketTypeCard = ({
             </>
           )}
         </Button>
-        
-        {onEdit && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onEdit(ticket.id)}
-            className="px-3"
-          >
-            Editar
-          </Button>
-        )}
+        <Button 
+          variant="destructive"
+          size="sm"
+          onClick={handleDelete}
+          className="px-3"
+        >
+          <Trash2 className="w-4 h-4 mr-1" />
+          Eliminar
+        </Button>
       </CardFooter>
+
+      <Dialog open={showDuplicateModal} onOpenChange={(open) => setShowDuplicateModal(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicar entrada en funciones</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {allFunctions.map(func => {
+              const exists = functionsWithTicket.includes(func.id);
+              return (
+                <div key={func.id} className={`flex items-center gap-2 ${exists ? 'opacity-50' : ''}`}>
+                  <Checkbox
+                    checked={selectedFunctions.includes(func.id)}
+                    onCheckedChange={() => handleToggleFunction(func.id)}
+                    disabled={exists}
+                  />
+                  <span>{func.name}</span>
+                  {exists && (
+                    <span className="text-xs text-muted-foreground ml-2">(Ya existe)</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter className="flex justify-between mt-4">
+            <Button variant="outline" onClick={() => setShowDuplicateModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmDuplicate} disabled={selectedFunctions.length === 0}>
+              Duplicar ({selectedFunctions.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

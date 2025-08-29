@@ -5,6 +5,7 @@ use App\Http\Controllers\Organizer\CategoryController;
 use App\Http\Controllers\Organizer\VenueController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Organizer\EventController;
+use App\Http\Controllers\Organizer\TicketTypeController; // <-- AÑADIR ESTA LÍNEA
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -18,6 +19,17 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::post('/', [EventController::class, 'store'])->name('store');
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
+
+        // Rutas para Tipos de Entrada (TicketType) anidadas
+        Route::prefix('{event}/functions/{function}/ticket-types')->name('functions.ticket-types.')->group(function () {
+            Route::get('/create', [TicketTypeController::class, 'create'])->name('create');
+            Route::post('/', [TicketTypeController::class, 'store'])->name('store');
+            Route::get('/{ticketType}/edit', [TicketTypeController::class, 'edit'])->name('edit');
+            Route::put('/{ticketType}', [TicketTypeController::class, 'update'])->name('update'); // <-- AGREGA ESTA LÍNEA
+            Route::patch('/{ticketType}/toggle-visibility', [TicketTypeController::class, 'toggleVisibility'])->name('toggleVisibility');
+            Route::post('/{ticketType}/duplicate-all', [TicketTypeController::class, 'duplicateAll'])->name('duplicateAll'); // <-- CORRECTO
+            Route::delete('/{ticketType}', [TicketTypeController::class, 'destroy'])->name('destroy');
+        });
     });
     
     // Gestión de categorías

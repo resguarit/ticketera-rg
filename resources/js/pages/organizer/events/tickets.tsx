@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react'; // <-- IMPORTAR ROUTER
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,19 +54,94 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         };
     };
 
-    const handleToggleTicketVisibility = (ticketId: number) => {
-        // TODO: Implementar llamada a la API para cambiar visibilidad
-        console.log('Toggle visibility for ticket:', ticketId);
+    const handleToggleTicketVisibility = async (ticketId: number) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+
+        router.patch(
+            route('organizer.events.functions.ticket-types.toggleVisibility', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticketId,
+            }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: puedes mostrar un toast o refrescar la lista si no se actualiza automáticamente
+                },
+            }
+        );
     };
 
     const handleEditTicket = (ticketId: number) => {
-        // TODO: Implementar navegación a edición de entrada
-        console.log('Edit ticket:', ticketId);
+        // Busca la función seleccionada
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.get(route('organizer.events.functions.ticket-types.edit', {
+            event: event.id,
+            function: func.id,
+            ticketType: ticketId,
+        }));
     };
 
     const handleCreateTicket = (functionId: number) => {
-        // TODO: Implementar navegación a creación de entrada
-        console.log('Create ticket for function:', functionId);
+        router.get(route('organizer.events.functions.ticket-types.create', { event: event.id, function: functionId }));
+    };
+
+    const handleDuplicateTicketAll = (ticket: TicketType) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.post(
+            route('organizer.events.functions.ticket-types.duplicateAll', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticket.id,
+            }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: mostrar toast o refrescar
+                },
+            }
+        );
+    };
+
+    const handleDeleteTicket = (ticketId: number) => {
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.delete(
+            route('organizer.events.functions.ticket-types.destroy', {
+                event: event.id,
+                function: func.id,
+                ticketType: ticketId,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: mostrar toast o refrescar
+                },
+            }
+        );
+    };
+
+    const handleDuplicateTicketSelected = (ticket: TicketType, functionIds: number[]) => {
+        // Enviar los IDs seleccionados al backend
+        router.post(
+            route('organizer.events.functions.ticket-types.duplicateAll', {
+                event: event.id,
+                function: selectedFunction,
+                ticketType: ticket.id,
+            }),
+            { functions: functionIds }, // Enviar como payload
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Opcional: mostrar toast o refrescar
+                },
+            }
+        );
     };
 
     return (
@@ -192,7 +268,14 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     key={ticket.id}
                                                     ticket={ticket}
                                                     onToggleVisibility={handleToggleTicketVisibility}
-                                                    onEdit={handleEditTicket}
+                                                    onEdit={() => handleEditTicket(ticket.id)}
+                                                    onDuplicateAll={handleDuplicateTicketAll}
+                                                    onDelete={handleDeleteTicket}
+                                                    allFunctions={event.functions.map(f => ({ id: f.id, name: f.name }))}
+                                                    functionsWithTicket={event.functions
+                                                        .filter(f => f.ticketTypes.some(t => t.name === ticket.name && t.sector_id === ticket.sector_id))
+                                                        .map(f => f.id)
+                                                    }
                                                 />
                                             ))
                                         ) : (
