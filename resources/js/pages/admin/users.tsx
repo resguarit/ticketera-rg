@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatNumber } from '@/lib/currencyHelpers';
+import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { 
     UserPlus, 
     Eye, 
@@ -31,7 +31,7 @@ interface UserData {
     created_at: string;
     last_login: string;
     total_purchases: number;
-    total_spent: number;
+    total_spent: string;
     last_purchase: string | null;
 }
 
@@ -193,6 +193,8 @@ export default function Users({ auth }: any) {
         }
     };
 
+    console.log(users.data);
+
     return (
         <>
             <Head title="Gestión de Usuarios - Panel Admin" />
@@ -250,7 +252,7 @@ export default function Users({ auth }: any) {
                                                                 {user.total_purchases} compras
                                                             </p>
                                                             <p className="text-sm text-gray-600">
-                                                                {formatNumber(user.total_spent)} gastados
+                                                                {formatCurrency(parseFloat(user.total_spent))} gastados
                                                             </p>
                                                         </div>
 

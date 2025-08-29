@@ -4,7 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Services\RevenueService;
+use Carbon\Carbon;
 
 class TicketType extends Model
 {
@@ -42,5 +45,15 @@ class TicketType extends Model
     public function sector()
     {
         return $this->belongsTo(Sector::class);
+    }
+
+    public function issuedTickets(): HasMany
+    {
+        return $this->hasMany(IssuedTicket::class);
+    }
+
+    public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        return app(RevenueService::class)->forTicketType($this, $startDate, $endDate);
     }
 }

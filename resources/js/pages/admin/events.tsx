@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
-import { formatNumber } from '@/lib/currencyHelpers';
+import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { 
     Eye, 
     Calendar, 
@@ -311,7 +311,7 @@ export default function Events({ auth }: any) {
                                                 </div>
                                                 <div className="flex items-center text-gray-700 text-sm">
                                                     <DollarSign className="w-4 h-4 mr-2 text-primary" />
-                                                    <span>{formatNumber(event.revenue)}</span>
+                                                    <span>{formatCurrency(event.revenue)}</span>
                                                 </div>
                                             </div>
 

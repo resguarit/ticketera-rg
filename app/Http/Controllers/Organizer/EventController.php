@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
+use App\Services\RevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,10 @@ use Inertia\Response;
 
 class EventController extends Controller 
 {
+    public function __construct(private RevenueService $revenueService)
+    {
+    }
+
     public function index(): Response
     {
         $organizer = Auth::user()->organizer;
@@ -167,6 +172,8 @@ class EventController extends Controller
             'organizer' => $event->organizer,
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
+            'total_revenue' => $event->getRevenue(),
+            'tickets_sold' => $this->revenueService->ticketsSoldByEvent($event),
             'functions' => $event->functions->map(function($function) {
                 return [
                     'id' => $function->id,
@@ -179,6 +186,7 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
+                    'tickets_sold' => $this->revenueService->ticketsSoldByFunction($function),
                 ];
             }),
         ];
