@@ -24,6 +24,8 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::prefix('{event}/functions/{function}/ticket-types')->name('functions.ticket-types.')->group(function () {
             Route::get('/create', [TicketTypeController::class, 'create'])->name('create');
             Route::post('/', [TicketTypeController::class, 'store'])->name('store');
+            Route::get('/{ticketType}/edit', [TicketTypeController::class, 'edit'])->name('edit');
+            Route::put('/{ticketType}', [TicketTypeController::class, 'update'])->name('update'); // <-- AGREGA ESTA LÍNEA
         });
     });
     

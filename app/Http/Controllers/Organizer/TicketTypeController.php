@@ -53,4 +53,40 @@ class TicketTypeController extends Controller
         return redirect()->route('organizer.events.tickets', $event->id)
             ->with('success', 'Tipo de entrada creado exitosamente.');
     }
+
+    /**
+     * Muestra el formulario para editar un tipo de entrada existente.
+     */
+    public function edit(Event $event, EventFunction $function, TicketType $ticketType): Response
+    {
+        $event->load('venue.sectors');
+        return Inertia::render('organizer/events/ticket-types/edit', [
+            'event' => $event,
+            'function' => $function,
+            'ticketType' => $ticketType,
+            'sectors' => $event->venue->sectors,
+        ]);
+    }
+
+    /**
+     * Actualiza un tipo de entrada existente en la base de datos.
+     */
+    public function update(Request $request, Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'price' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:1',
+            'sector_id' => 'required|exists:sectors,id',
+            'sales_start_date' => 'required|date',
+            'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
+            'is_hidden' => 'sometimes|boolean',
+        ]);
+
+        $ticketType->update($validated);
+
+        return redirect()->route('organizer.events.tickets', $event->id)
+            ->with('success', 'Tipo de entrada actualizado exitosamente.');
+    }
 }

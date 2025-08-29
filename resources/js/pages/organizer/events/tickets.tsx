@@ -60,8 +60,14 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
     };
 
     const handleEditTicket = (ticketId: number) => {
-        // TODO: Implementar navegación a edición de entrada
-        console.log('Edit ticket:', ticketId);
+        // Busca la función seleccionada
+        const func = event.functions.find(f => f.id.toString() === selectedFunction);
+        if (!func) return;
+        router.get(route('organizer.events.functions.ticket-types.edit', {
+            event: event.id,
+            function: func.id,
+            ticketType: ticketId,
+        }));
     };
 
     const handleCreateTicket = (functionId: number) => {
@@ -192,7 +198,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     key={ticket.id}
                                                     ticket={ticket}
                                                     onToggleVisibility={handleToggleTicketVisibility}
-                                                    onEdit={handleEditTicket}
+                                                    onEdit={() => handleEditTicket(ticket.id)} // <-- PASA EL ID CORRECTO
                                                 />
                                             ))
                                         ) : (
