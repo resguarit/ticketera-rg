@@ -31,6 +31,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 
 import { Category, Event, Venue } from '@/types';
+import { formatCurrency } from '@/lib/currencyHelpers';
 
 // Interfaces para TypeScript
 interface DashboardStat {
@@ -110,6 +111,13 @@ const getStatColor = (title: string) => {
         default: return 'bg-gray-500';
     }
 };
+
+const formatStat = (stat: DashboardStat) => {
+    if (stat.title === 'Ingresos Totales') {
+        return formatCurrency(stat.value as unknown as number);
+    }
+    return stat.value;
+}
 
 export default function AdminDashboard({ 
     auth, 
@@ -262,7 +270,7 @@ export default function AdminDashboard({
                                                 {stat.change}
                                             </Badge>
                                         </div>
-                                        <h3 className="text-2xl font-bold text-black mb-1">{stat.value}</h3>
+                                        <h3 className="text-2xl font-bold text-black mb-1">{formatStat(stat)}</h3>
                                         <p className="text-gray-700 text-sm font-medium mb-1">{stat.title}</p>
                                         <p className="text-gray-500 text-xs">{stat.description}</p>
                                     </CardContent>
@@ -309,7 +317,7 @@ export default function AdminDashboard({
                                                             Tickets: {event.tickets_sold}/{event.total_tickets}
                                                         </span>
                                                         <span className="text-green-600 font-medium">
-                                                            ${event.revenue.toLocaleString()}
+                                                            {formatCurrency(event.revenue)}
                                                         </span>
                                                     </div>
                                                     <Progress 

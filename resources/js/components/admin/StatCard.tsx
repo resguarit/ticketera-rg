@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/currencyHelpers';
 import { StatCardProps, STAT_CARD_VARIANTS } from '@/types/admin';
 
 export function StatCard({ title, value, icon: Icon, variant, format = 'number' }: StatCardProps) {
@@ -7,7 +8,7 @@ export function StatCard({ title, value, icon: Icon, variant, format = 'number' 
     
     switch (format) {
       case 'currency':
-        return `$${numValue.toLocaleString()}`;
+        return formatCurrency(numValue);
       case 'percentage':
         return `${numValue}%`;
       case 'number':
