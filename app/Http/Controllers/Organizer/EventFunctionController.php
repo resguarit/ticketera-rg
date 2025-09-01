@@ -13,6 +13,13 @@ use Illuminate\Http\RedirectResponse;
 
 class EventFunctionController extends Controller
 {
+    private function checkOwnership(Event $event)
+    {
+        if ($event->organizer_id !== Auth::user()->organizer_id) {
+            abort(403);
+        }
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -34,7 +41,7 @@ class EventFunctionController extends Controller
      */
     public function create(Event $event): Response
     {
-        $this->authorize('update', $event);
+        $this->checkOwnership($event);
 
         return Inertia::render('organizer/events/functions/create', [
             'event' => $event,
@@ -46,7 +53,7 @@ class EventFunctionController extends Controller
      */
     public function store(Request $request, Event $event): RedirectResponse
     {
-        $this->authorize('update', $event);
+        $this->checkOwnership($event);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -58,7 +65,7 @@ class EventFunctionController extends Controller
 
         $event->functions()->create($validated);
 
-        return redirect()->route('organizer.events.functions.index', $event->id)
+        return redirect()->route('organizer.events.functions', $event->id)
             ->with('success', 'Función creada exitosamente.');
     }
 
@@ -67,7 +74,7 @@ class EventFunctionController extends Controller
      */
     public function edit(Event $event, EventFunction $function): Response
     {
-        $this->authorize('update', $event);
+        $this->checkOwnership($event);
 
         return Inertia::render('organizer/events/functions/edit', [
             'event' => $event,
@@ -80,7 +87,7 @@ class EventFunctionController extends Controller
      */
     public function update(Request $request, Event $event, EventFunction $function): RedirectResponse
     {
-        $this->authorize('update', $event);
+        $this->checkOwnership($event);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -92,7 +99,7 @@ class EventFunctionController extends Controller
 
         $function->update($validated);
 
-        return redirect()->route('organizer.events.functions.index', $event->id)
+        return redirect()->route('organizer.events.functions', $event->id)
             ->with('success', 'Función actualizada exitosamente.');
     }
 
@@ -101,17 +108,17 @@ class EventFunctionController extends Controller
      */
     public function destroy(Event $event, EventFunction $function): RedirectResponse
     {
-        $this->authorize('update', $event);
+        $this->checkOwnership($event);
 
         // Add logic to check if tickets are sold before deleting
         if ($function->ticketTypes()->where('quantity_sold', '>', 0)->exists()) {
-            return redirect()->route('organizer.events.functions.index', $event->id)
+            return redirect()->route('organizer.events.functions', $event->id)
                 ->with('error', 'No se puede eliminar una función con entradas vendidas.');
         }
 
         $function->delete();
 
-        return redirect()->route('organizer.events.functions.index', $event->id)
+        return redirect()->route('organizer.events.functions', $event->id)
             ->with('success', 'Función eliminada exitosamente.');
     }
 }
