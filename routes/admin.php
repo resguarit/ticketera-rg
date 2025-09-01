@@ -8,9 +8,11 @@ use App\Http\Controllers\Admin\OrganizerController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\CategoryController; // <-- AÑADIR ESTA LÍNEA
-use App\Http\Controllers\Admin\VenueController;    // <-- AÑADIR ESTA LÍNEA
-use App\Http\Controllers\Organizer\SectorController; // <-- MANTENER O MOVER SEGÚN CORRESPONDA
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\Admin\FaqCategoryController;
+use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Organizer\SectorController;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -78,4 +80,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Gestión de sectores
     Route::resource('sectors', SectorController::class);
     Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);
+
+    // Gestión de FAQs
+    Route::resource('faq-categories', FaqCategoryController::class)->except(['show', 'create', 'edit'])->names('faqs.categories');
+    Route::resource('faqs', FaqController::class)->only(['store', 'update', 'destroy']);
+    Route::get('faqs', [FaqCategoryController::class, 'index'])->name('faqs.index');
 });

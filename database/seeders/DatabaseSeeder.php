@@ -42,6 +42,8 @@ class DatabaseSeeder extends Seeder
                 EventSeeder::class,
                 EventFunctionSeeder::class,
                 TicketTypeSeeder::class,
+                FaqCategorySeeder::class, // <-- AÑADIR ESTA LÍNEA
+                FaqSeeder::class,         // <-- AÑADIR ESTA LÍNEA
             ]);
 
             DB::commit();
