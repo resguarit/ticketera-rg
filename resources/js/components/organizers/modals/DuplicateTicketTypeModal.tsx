@@ -1,4 +1,7 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface DuplicateTicketTypeModalProps {
   open: boolean;
@@ -30,64 +33,51 @@ export const DuplicateTicketTypeModal: React.FC<DuplicateTicketTypeModalProps> =
   };
 
   const handleSelectAll = () => {
-    setSelectedFunctions(
-      allFunctions
-        .filter(f => !functionsWithTicket.includes(f.id))
-        .map(f => f.id)
-    );
+    const availableFunctions = allFunctions
+      .filter(f => !functionsWithTicket.includes(f.id))
+      .map(f => f.id);
+    setSelectedFunctions(availableFunctions);
   };
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.3)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
       <div
-        style={{
-          background: "#fff",
-          borderRadius: 8,
-          padding: 24,
-          minWidth: 340,
-          maxWidth: 400,
-          boxShadow: "0 2px 16px rgba(0,0,0,0.15)",
-        }}
+        className="relative z-50 w-full max-w-md p-6 bg-background rounded-lg shadow-lg"
         onClick={e => e.stopPropagation()}
       >
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
-          Duplicar entrada en funciones
-        </h2>
-        <div style={{ marginBottom: 16, maxHeight: '200px', overflowY: 'auto' }}>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">Duplicar entrada en funciones</h3>
+          <p className="text-sm text-muted-foreground">
+            Selecciona las funciones donde quieres crear una copia de esta entrada.
+          </p>
+        </div>
+
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 my-4">
           {allFunctions.map(func => {
             const exists = functionsWithTicket.includes(func.id);
+            const id = `func-${func.id}`;
             return (
               <div
                 key={func.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  opacity: exists ? 0.5 : 1,
-                  marginBottom: 8,
-                }}
+                className={`flex items-center space-x-2 p-2 rounded-md ${exists ? 'opacity-50' : ''}`}
               >
-                <input
-                  type="checkbox"
-                  id={`func-${func.id}`}
+                <Checkbox
+                  id={id}
                   checked={selectedFunctions.includes(func.id)}
-                  onChange={() => handleToggleFunction(func.id)}
+                  onCheckedChange={() => handleToggleFunction(func.id)}
                   disabled={exists}
                 />
-                <label htmlFor={`func-${func.id}`} style={{ cursor: exists ? 'not-allowed' : 'pointer' }}>{func.name}</label>
+                <Label
+                  htmlFor={id}
+                  className={`flex-grow ${exists ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  {func.name}
+                </Label>
                 {exists && (
-                  <span style={{ fontSize: 12, color: "#888", marginLeft: 8 }}>
+                  <span className="text-xs text-muted-foreground">
                     (Ya existe)
                   </span>
                 )}
@@ -95,52 +85,27 @@ export const DuplicateTicketTypeModal: React.FC<DuplicateTicketTypeModalProps> =
             );
           })}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: "6px 16px",
-              borderRadius: 4,
-              border: "1px solid #ccc",
-              background: "#fff",
-              cursor: "pointer",
-            }}
-          >
+
+        <Button
+          variant="link"
+          className="p-0 h-auto justify-start text-sm"
+          onClick={handleSelectAll}
+        >
+          Seleccionar todas las disponibles
+        </Button>
+
+        <div className="flex justify-end gap-2 mt-4">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => onConfirm(selectedFunctions)}
             disabled={selectedFunctions.length === 0}
-            style={{
-              padding: "6px 16px",
-              borderRadius: 4,
-              border: "none",
-              background: selectedFunctions.length === 0 ? "#eee" : "#2563eb",
-              color: selectedFunctions.length === 0 ? "#888" : "#fff",
-              cursor: selectedFunctions.length === 0 ? "not-allowed" : "pointer",
-              fontWeight: 500,
-            }}
           >
             Duplicar ({selectedFunctions.length})
-          </button>
+          </Button>
         </div>
-        <button
-          type="button"
-          onClick={handleSelectAll}
-          style={{
-            marginTop: 12,
-            fontSize: 13,
-            color: "#2563eb",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textDecoration: "underline",
-          }}
-        >
-          Seleccionar todas las disponibles
-        </button>
       </div>
     </div>
   );
