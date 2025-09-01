@@ -21,10 +21,10 @@ interface TicketTypeCardProps {
   ticket: TicketType;
   onToggleVisibility?: (ticketId: number) => void;
   onEdit?: (ticketId: number) => void;
-  onDuplicateAll?: (ticket: TicketType, functionIds: number[]) => void; // MODIFICADO
+  onDuplicateAll?: (ticket: TicketType, functionIds: number[]) => void;
   onDelete?: (ticketId: number) => void;
-  allFunctions?: { id: number; name: string }[]; // NUEVO
-  functionsWithTicket?: number[]; // NUEVO
+  allFunctions?: { id: number; name: string }[];
+  functionsWithTicket?: number[];
 }
 
 export const TicketTypeCard = ({
@@ -46,36 +46,16 @@ export const TicketTypeCard = ({
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [selectedFunctions, setSelectedFunctions] = useState<number[]>([]);
 
-const handleDuplicateAll = () => {
-  setShowDuplicateModal(true);
-  setSelectedFunctions([]); // No seleccionar nada por defecto
-};
-
-
-const handleConfirmDuplicate = (functionIds: number[]) => {
-  console.log("Todas las funciones disponibles:", allFunctions);
-  console.log("Funciones seleccionadas para duplicar:", functionIds); // Debug
-  // Verifica que estos IDs existan en la tabla event_functions
-  if (onDuplicateAll && functionIds.length > 0) {
-    onDuplicateAll(ticket, functionIds);
-  }
-  setShowDuplicateModal(false);
-};
-
-  const handleToggleFunction = (funcId: number) => {
-    setSelectedFunctions((prev) =>
-      prev.includes(funcId)
-        ? prev.filter(id => id !== funcId)
-        : [...prev, funcId]
-    );
+  const handleOpenDuplicateModal = () => {
+    setShowDuplicateModal(true);
+    setSelectedFunctions([]); // Reset selection when opening
   };
 
-  const handleSelectAll = () => {
-    setSelectedFunctions(
-      allFunctions
-        .filter(f => !functionsWithTicket.includes(f.id))
-        .map(f => f.id)
-    );
+  const handleConfirmDuplicate = (functionIds: number[]) => {
+    if (onDuplicateAll && functionIds.length > 0) {
+      onDuplicateAll(ticket, functionIds);
+    }
+    setShowDuplicateModal(false);
   };
 
   const handleEdit = () => {
@@ -113,7 +93,7 @@ const handleConfirmDuplicate = (functionIds: number[]) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDuplicateAll}>
+              <DropdownMenuItem onClick={handleOpenDuplicateModal}>
                 <Copy className="w-4 h-4 mr-2" />
                 Duplicar en funciones
               </DropdownMenuItem>

@@ -64,7 +64,7 @@ export const DuplicateTicketTypeModal: React.FC<DuplicateTicketTypeModalProps> =
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
           Duplicar entrada en funciones
         </h2>
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, maxHeight: '200px', overflowY: 'auto' }}>
           {allFunctions.map(func => {
             const exists = functionsWithTicket.includes(func.id);
             return (
@@ -80,11 +80,12 @@ export const DuplicateTicketTypeModal: React.FC<DuplicateTicketTypeModalProps> =
               >
                 <input
                   type="checkbox"
+                  id={`func-${func.id}`}
                   checked={selectedFunctions.includes(func.id)}
                   onChange={() => handleToggleFunction(func.id)}
                   disabled={exists}
                 />
-                <span>{func.name}</span>
+                <label htmlFor={`func-${func.id}`} style={{ cursor: exists ? 'not-allowed' : 'pointer' }}>{func.name}</label>
                 {exists && (
                   <span style={{ fontSize: 12, color: "#888", marginLeft: 8 }}>
                     (Ya existe)
@@ -138,7 +139,7 @@ export const DuplicateTicketTypeModal: React.FC<DuplicateTicketTypeModalProps> =
             textDecoration: "underline",
           }}
         >
-          Seleccionar todas
+          Seleccionar todas las disponibles
         </button>
       </div>
     </div>

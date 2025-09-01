@@ -89,16 +89,17 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         router.get(route('organizer.events.functions.ticket-types.create', { event: event.id, function: functionId }));
     };
 
-    const handleDuplicateTicketAll = (ticket: TicketType) => {
+    const handleDuplicateTicketAll = (ticket: TicketType, functionIds: number[]) => {
         const func = event.functions.find(f => f.id.toString() === selectedFunction);
         if (!func) return;
+        
         router.post(
             route('organizer.events.functions.ticket-types.duplicateAll', {
                 event: event.id,
                 function: func.id,
                 ticketType: ticket.id,
             }),
-            {},
+            { functions: functionIds }, // Enviar los IDs de las funciones seleccionadas
             {
                 preserveScroll: true,
                 onSuccess: () => {

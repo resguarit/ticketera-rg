@@ -110,30 +110,29 @@ class TicketTypeController extends Controller
      */
     public function duplicateAll(Request $request, Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
     {
-        \Log::info('duplicateAll called', [
-            'event_id' => $event->id,
-            'function_id' => $function->id,
-            'ticket_type_id' => $ticketType->id,
-            'request_functions' => $request->input('functions', [])
+        $validated = $request->validate([
+            'functions' => 'required|array',
+            'functions.*' => 'integer|exists:event_functions,id',
         ]);
 
-        $functionIds = $request->input('functions', []);
-        $functions = EventFunction::where('event_id', $event->id)
+        $functionIds = $validated['functions'];
+
+        $functionsToDuplicateIn = EventFunction::where('event_id', $event->id)
             ->whereIn('id', $functionIds)
             ->get();
 
-        \Log::info('Functions to duplicate to', [
-            'function_ids' => $functionIds,
-            'functions_found' => $functions->pluck('id')->toArray()
-        ]);
+        foreach ($functionsToDuplicateIn as $func) {
+            // Evitar duplicar en la función original o si ya existe un ticket con el mismo nombre y sector
+            $exists = TicketType::where('event_function_id', $func->id)
+                ->where('name', $ticketType->name)
+                ->where('sector_id', $ticketType->sector_id)
+                ->exists();
 
-        foreach ($functions as $func) {
-            if ($func->id === $ticketType->event_function_id) {
-                \Log::info('Skipping original function', ['function_id' => $func->id]);
+            if ($func->id === $ticketType->event_function_id || $exists) {
                 continue;
             }
 
-            $newTicketType = TicketType::create([
+            TicketType::create([
                 'name' => $ticketType->name,
                 'description' => $ticketType->description,
                 'price' => $ticketType->price,
@@ -144,14 +143,7 @@ class TicketTypeController extends Controller
                 'is_hidden' => $ticketType->is_hidden,
                 'event_function_id' => $func->id,
             ]);
-
-            \Log::info('TicketType duplicated', [
-                'new_ticket_type_id' => $newTicketType->id,
-                'duplicated_to_function_id' => $func->id
-            ]);
         }
-
-        \Log::info('duplicateAll finished');
 
         return redirect()->route('organizer.events.tickets', $event->id)
             ->with('success', 'Tipo de entrada duplicado en las funciones seleccionadas.');
