@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\CheckoutController;
+use App\Http\Controllers\Public\HelpController;
 
 use App\Http\Controllers\User\TicketController as UserTicketController;
 
@@ -39,9 +40,7 @@ Route::post('/checkout/process-payment', [CheckoutController::class, 'processPay
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/checkout/{event}', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
 
-Route::get('/help', function () {
-    return Inertia::render('public/help');
-})->name('help');
+Route::get('/help', [HelpController::class, 'index'])->name('help');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

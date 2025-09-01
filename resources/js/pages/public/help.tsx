@@ -20,106 +20,31 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import Header from '@/components/header';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import { Faq, FaqCategory as FaqCategoryModel } from '@/types/models';
 
-const faqCategories = [
-    {
-        id: "tickets",
-        title: "Compra de Tickets",
-        icon: Ticket,
-        color: "primary",
-        faqs: [
-            {
-                question: "¿Cómo puedo comprar tickets?",
-                answer:
-                    "Puedes comprar tickets navegando por nuestros eventos, seleccionando el que te interese y siguiendo el proceso de compra. Aceptamos tarjetas de crédito, débito y transferencias bancarias.",
-            },
-            {
-                question: "¿Puedo cancelar mi compra?",
-                answer:
-                    "Sí, puedes cancelar tu compra hasta 24 horas antes del evento. El reembolso se procesará en 5-7 días hábiles a tu método de pago original.",
-            },
-            {
-                question: "¿Los precios incluyen impuestos?",
-                answer: "Sí, todos los precios mostrados incluyen impuestos y tasas de servicio. No hay costos ocultos.",
-            },
-            {
-                question: "¿Hay límite de tickets por persona?",
-                answer:
-                    "Sí, generalmente hay un límite de 10 tickets por persona por evento para garantizar disponibilidad para todos.",
-            },
-        ],
-    },
-    {
-        id: "payment",
-        title: "Pagos y Facturación",
-        icon: CreditCard,
-        color: "red-500",
-        faqs: [
-            {
-                question: "¿Qué métodos de pago aceptan?",
-                answer:
-                    "Aceptamos todas las tarjetas de crédito y débito principales (Visa, Mastercard, American Express), transferencias bancarias y billeteras digitales como MercadoPago.",
-            },
-            {
-                question: "¿Es seguro pagar en línea?",
-                answer:
-                    "Absolutamente. Utilizamos encriptación SSL de 256 bits y cumplimos con los estándares PCI DSS para proteger tu información financiera.",
-            },
-            {
-                question: "¿Puedo obtener una factura?",
-                answer:
-                    "Sí, recibirás automáticamente una factura por email después de completar tu compra. También puedes descargarla desde tu cuenta.",
-            },
-        ],
-    },
-    {
-        id: "events",
-        title: "Eventos",
-        icon: Users,
-        color: "orange-500",
-        faqs: [
-            {
-                question: "¿Qué pasa si se cancela un evento?",
-                answer:
-                    "Si un evento se cancela, recibirás un reembolso completo automáticamente. Te notificaremos por email y SMS sobre la cancelación.",
-            },
-            {
-                question: "¿Puedo transferir mis tickets a otra persona?",
-                answer:
-                    "Sí, puedes transferir tus tickets a través de tu cuenta. La persona que recibe debe tener una cuenta en TicketMax.",
-            },
-            {
-                question: "¿Qué pasa si llego tarde al evento?",
-                answer:
-                    "Esto depende de la política del organizador del evento. Algunos eventos permiten entrada tardía, otros no. Revisa los detalles del evento.",
-            },
-        ],
-    },
-    {
-        id: "account",
-        title: "Cuenta y Perfil",
-        icon: Shield,
-        color: "green-500",
-        faqs: [
-            {
-                question: "¿Cómo creo una cuenta?",
-                answer:
-                    "Puedes crear una cuenta haciendo clic en 'Iniciar Sesión' y luego en 'Crear cuenta'. Solo necesitas tu email y una contraseña segura.",
-            },
-            {
-                question: "¿Olvidé mi contraseña, qué hago?",
-                answer:
-                    "Haz clic en '¿Olvidaste tu contraseña?' en la página de inicio de sesión. Te enviaremos un enlace para restablecerla.",
-            },
-            {
-                question: "¿Puedo cambiar mi información personal?",
-                answer:
-                    "Sí, puedes actualizar tu información personal en cualquier momento desde la configuración de tu cuenta.",
-            },
-        ],
-    },
-];
+// Mapa para convertir el nombre del icono (string) en un componente de React
+const iconMap: { [key: string]: React.ElementType } = {
+    Ticket,
+    CreditCard,
+    Users,
+    Shield,
+};
+
+const DynamicIcon = ({ name, ...props }: { name: string | null } & React.ComponentProps<typeof Shield>) => {
+    if (!name) return <HelpCircle {...props} />;
+    const Icon = iconMap[name] || HelpCircle;
+    return <Icon {...props} />;
+};
+
+interface FaqCategory extends FaqCategoryModel {
+    faqs: Faq[];
+}
+
+interface HelpPageProps extends PageProps {
+    faqCategories: FaqCategory[];
+}
 
 const contactOptions = [
     {
@@ -149,6 +74,9 @@ const contactOptions = [
 ];
 
 export default function Help() {
+    // Obtener las categorías desde las props pasadas por el controlador
+    const { faqCategories } = usePage<HelpPageProps>().props;
+
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
     const [contactForm, setContactForm] = useState({
@@ -253,9 +181,10 @@ export default function Help() {
                                         <CardHeader className="pb-3 sm:pb-4">
                                             <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-foreground">
                                                 <div
-                                                    className={`w-8 h-8 sm:w-10 sm:h-10 bg-${category.color} rounded-lg flex items-center justify-center`}
+                                                    style={{ backgroundColor: category.color || '#64748b' }}
+                                                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center`}
                                                 >
-                                                    <category.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                                    <DynamicIcon name={category.icon} className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                                 </div>
                                                 <span className="text-lg sm:text-xl">{category.title}</span>
                                             </CardTitle>
@@ -319,7 +248,8 @@ export default function Help() {
                                             <Input
                                                 placeholder="Tu nombre"
                                                 value={contactForm.name}
-                                                onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
+                                                onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))
+                                                }
                                                 className="bg-white border-gray-200 shadow-sm border text-foreground placeholder:text-foreground/60 h-9 sm:h-10 text-sm sm:text-base"
                                                 required
                                             />
@@ -329,7 +259,8 @@ export default function Help() {
                                                 type="email"
                                                 placeholder="Tu email"
                                                 value={contactForm.email}
-                                                onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
+                                                onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))
+                                                }
                                                 className="bg-white border-gray-200 shadow-sm border text-foreground placeholder:text-foreground/60 h-9 sm:h-10 text-sm sm:text-base"
                                                 required
                                             />
@@ -338,7 +269,8 @@ export default function Help() {
                                             <Input
                                                 placeholder="Asunto"
                                                 value={contactForm.subject}
-                                                onChange={(e) => setContactForm((prev) => ({ ...prev, subject: e.target.value }))}
+                                                onChange={(e) => setContactForm((prev) => ({ ...prev, subject: e.target.value }))
+                                                }
                                                 className="bg-white border-gray-200 shadow-sm border text-foreground placeholder:text-foreground/60 h-9 sm:h-10 text-sm sm:text-base"
                                                 required
                                             />
@@ -347,7 +279,8 @@ export default function Help() {
                                             <Textarea
                                                 placeholder="Describe tu consulta..."
                                                 value={contactForm.message}
-                                                onChange={(e) => setContactForm((prev) => ({ ...prev, message: e.target.value }))}
+                                                onChange={(e) => setContactForm((prev) => ({ ...prev, message: e.target.value }))
+                                                }
                                                 className="bg-white border-gray-200 shadow-sm border text-foreground placeholder:text-foreground/60 min-h-[100px] sm:min-h-[120px] text-sm sm:text-base resize-none"
                                                 required
                                             />
