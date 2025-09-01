@@ -1,9 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import OrganizerEventCard from '@/components/organizers/event-card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Event, Category, Venue, Organizer, EventFunction } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface EventFunctionDetail extends EventFunction {
     date: string;       
@@ -19,13 +21,25 @@ interface EventDetail extends Event {
     functions: EventFunctionDetail[];
 }
 
-export default function EventsIndex({ auth, organizer, events }: { 
-    auth: any; 
-    organizer: any; 
-    events: EventDetail[] 
-}) {
+interface EventsIndexProps {
+    auth: any;
+    events: EventDetail[];
+    filters: {
+        include_archived: boolean;
+    };
+}
+
+export default function EventsIndex({ auth, events, filters }: EventsIndexProps) {
     const { user } = auth;
-    console.log(events)
+
+    const handleToggleArchived = (checked: boolean | 'indeterminate') => {
+        router.get(route('organizer.events.index'), {
+            include_archived: checked
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
 
     return (
         <>
@@ -33,7 +47,7 @@ export default function EventsIndex({ auth, organizer, events }: {
 
             <div className="container mx-auto p-6">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-start mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Mis Eventos</h1>
                         <p className="text-gray-600 mt-1">
@@ -48,6 +62,19 @@ export default function EventsIndex({ auth, organizer, events }: {
                     </Link>
                 </div>
 
+                {/* Filters */}
+                <div className="flex items-center space-x-2 mb-6">
+                    <Checkbox
+                        id="include_archived"
+                        checked={filters.include_archived}
+                        onCheckedChange={handleToggleArchived}
+                    />
+                    <Label htmlFor="include_archived" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Mostrar eventos archivados
+                    </Label>
+                </div>
+
+
                 {/* Events Grid */}
                 {events.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -59,10 +86,13 @@ export default function EventsIndex({ auth, organizer, events }: {
                     <div className="text-center py-12">
                         <div className="bg-gray-50 rounded-lg p-8">
                             <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                No tienes eventos creados
+                                No se encontraron eventos
                             </h3>
                             <p className="text-gray-600 mb-4">
-                                Comienza creando tu primer evento para gestionar tus presentaciones
+                                {filters.include_archived 
+                                    ? "No tienes ningún evento, ni siquiera archivado."
+                                    : "No tienes eventos activos. Intenta crear uno nuevo o revisa tus eventos archivados."
+                                }
                             </p>
                             <Link href={route('organizer.events.create')}>
                                 <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">

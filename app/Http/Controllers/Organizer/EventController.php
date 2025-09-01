@@ -19,12 +19,15 @@ class EventController extends Controller
     {
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $organizer = Auth::user()->organizer;
+        $includeArchived = $request->boolean('include_archived');
 
         $events = $organizer->events()
-            ->where('is_archived', false) // <-- ADD THIS LINE
+            ->when(!$includeArchived, function ($query) {
+                $query->where('is_archived', false);
+            })
             ->with(['category', 'venue', 'organizer', 'functions'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -35,6 +38,7 @@ class EventController extends Controller
                     'description' => $event->description,
                     'image_url' => $event->image_url,
                     'featured' => $event->featured,
+                    'is_archived' => $event->is_archived,
                     'category' => $event->category,
                     'venue' => $event->venue,
                     'organizer' => $event->organizer,
@@ -59,6 +63,7 @@ class EventController extends Controller
 
         return Inertia::render('organizer/events/index', [
             'events' => $events,
+            'filters' => ['include_archived' => $includeArchived],
         ]);
     }
 
