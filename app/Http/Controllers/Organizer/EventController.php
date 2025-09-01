@@ -24,6 +24,7 @@ class EventController extends Controller
         $organizer = Auth::user()->organizer;
 
         $events = $organizer->events()
+            ->where('is_archived', false) // <-- ADD THIS LINE
             ->with(['category', 'venue', 'organizer', 'functions'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -221,6 +222,18 @@ class EventController extends Controller
             
             return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()]);
         }
+    }
+
+    public function toggleArchive(Event $event)
+    {
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para archivar este evento');
+        }
+
+        $event->update(['is_archived' => !$event->is_archived]);
+
+        return redirect()->back()->with('success', 'El estado del evento ha sido actualizado.');
     }
 
     public function manage(Event $event): Response

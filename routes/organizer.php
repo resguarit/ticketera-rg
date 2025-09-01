@@ -20,6 +20,7 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::post('/', [EventController::class, 'store'])->name('store');
         Route::get('/{event}/edit', [EventController::class, 'edit'])->name('edit');
         Route::put('/{event}', [EventController::class, 'update'])->name('update');
+        Route::patch('/{event}/archive', [EventController::class, 'toggleArchive'])->name('toggleArchive');
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
 

@@ -28,10 +28,12 @@ class Event extends Model
         'description',
         'banner_url',
         'featured',
+        'is_archived',
     ];
 
     protected $casts = [
         'featured' => 'boolean',
+        'is_archived' => 'boolean',
     ];
 
     protected $appends = ['image_url'];
