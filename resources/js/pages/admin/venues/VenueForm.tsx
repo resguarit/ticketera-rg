@@ -1,6 +1,6 @@
 import { useState, FormEventHandler, useEffect, useMemo, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
-import { Check, ChevronsUpDown, UploadCloud, X } from 'lucide-react';
+import { Check, ChevronsUpDown, UploadCloud, X, Plus, Trash2, Edit, Building } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 
 import { Button } from '@/components/ui/button';
@@ -11,29 +11,30 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Ciudad, Provincia, Venue } from '@/types';
+import { Ciudad, Provincia, Venue, Sector } from '@/types';
+import SectorFormModal from '@/components/admin/modals/SectorFormModal';
 
 interface VenueFormData {
     name: string;
     address: string;
     provincia_id_or_name: string;
     ciudad_name: string;
-    capacity: number | string;
     coordinates: string;
     banner: File | null;
     referring: string;
+    sectors: Sector[];
 }
 
 // Extender el tipo base para el formulario
 interface VenueForForm extends Venue {
     provincia_id?: number;
-    capacity?: number;
+    sectors?: Sector[];
 }
 
 interface VenueFormProps {
     data: VenueFormData;
     setData: (key: keyof VenueFormData | any, value: any) => void;
-    errors: Partial<Record<keyof VenueFormData, string>>;
+    errors: Partial<Record<keyof VenueFormData | 'sectors' | `sectors.${number}.name`, string>>;
     processing: boolean;
     onSubmit: FormEventHandler;
     provincias: Provincia[];
@@ -62,6 +63,8 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
         provincias.find(p => p.id.toString() === data.provincia_id_or_name)?.name || data.provincia_id_or_name || ''
     );
     const [ciudadSearch, setCiudadSearch] = useState(data.ciudad_name || '');
+    const [isSectorModalOpen, setIsSectorModalOpen] = useState(false);
+    const [editingSector, setEditingSector] = useState<Sector | null>(null);
 
     const initialCenter = useMemo((): [number, number] => {
         if (data.coordinates) {
@@ -118,6 +121,31 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
         setData('banner', null);
     };
 
+    const totalCapacity = useMemo(() => {
+        return data.sectors.reduce((acc, sector) => acc + (Number(sector.capacity) || 0), 0);
+    }, [data.sectors]);
+
+    const openSectorModal = (sector: Sector | null) => {
+        setEditingSector(sector);
+        setIsSectorModalOpen(true);
+    };
+
+    const handleSectorSubmit = (sector: Sector) => {
+        const newSectors = [...data.sectors];
+        const index = newSectors.findIndex(s => s.id === sector.id);
+
+        if (index > -1) {
+            newSectors[index] = sector; // Update
+        } else {
+            newSectors.push(sector); // Add
+        }
+        setData('sectors', newSectors);
+    };
+
+    const removeSector = (sectorId: number) => {
+        setData('sectors', data.sectors.filter(s => s.id !== sectorId));
+    };
+
     return (
         <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -127,16 +155,49 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                     <InputError message={errors.name} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="capacity">Capacidad Total</Label>
-                    <Input 
-                        id="capacity" 
-                        type="number"
-                        value={data.capacity} 
-                        onChange={e => setData('capacity', e.target.value)} 
-                        required 
-                        min="1"
-                    />
-                    <InputError message={errors.capacity} />
+                    <Label>Capacidad Total</Label>
+                    <Input value={totalCapacity} readOnly disabled className="bg-gray-100" />
+                    <p className="text-sm text-gray-500">Calculada por la suma de los sectores.</p>
+                </div>
+            </div>
+
+            {/* Sectors Management */}
+            <div className="space-y-4 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-medium">Sectores del Recinto</h3>
+                        <p className="text-sm text-muted-foreground">Define las áreas y sus capacidades.</p>
+                    </div>
+                    <Button type="button" variant="outline" onClick={() => openSectorModal(null)}>
+                        <Plus className="mr-2 h-4 w-4" /> Agregar Sector
+                    </Button>
+                </div>
+                <InputError message={errors.sectors} className="mt-2" />
+
+                <div className="space-y-2">
+                    {data.sectors.length > 0 ? (
+                        data.sectors.map((sector, index) => (
+                            <div key={sector.id} className="flex items-center justify-between rounded-md border p-3">
+                                <div className="flex items-center gap-3">
+                                    <Building className="h-5 w-5 text-gray-500" />
+                                    <div>
+                                        <p className="font-semibold">{sector.name}</p>
+                                        <p className="text-sm text-muted-foreground">Capacidad: {sector.capacity}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => openSectorModal(sector)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button type="button" variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => removeSector(sector.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-sm text-muted-foreground py-4">Aún no has agregado ningún sector.</p>
+                    )}
                 </div>
             </div>
 
@@ -332,6 +393,13 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                     {processing ? 'Guardando...' : submitText}
                 </Button>
             </div>
+
+            <SectorFormModal
+                isOpen={isSectorModalOpen}
+                onClose={() => setIsSectorModalOpen(false)}
+                onSubmit={handleSectorSubmit}
+                sector={editingSector}
+            />
         </form>
     );
 }

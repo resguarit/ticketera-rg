@@ -72,6 +72,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Gestión de venues
     Route::resource('venues', VenueController::class);
+    Route::post('/venues/{venue}/sectors', [SectorController::class, 'store'])->name('venues.sectors.store');
     Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
     
     // Gestión de sectores

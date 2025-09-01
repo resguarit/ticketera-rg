@@ -84,13 +84,16 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
-            'referring' => 'nullable|string|max:1000'
+            'referring' => 'nullable|string|max:1000',
+            'sectors' => 'required|array|min:1',
+            'sectors.*.name' => 'required|string|max:255',
+            'sectors.*.capacity' => 'required|integer|min:0',
+            'sectors.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $venueData = $request->except('capacity'); // Excluir capacidad de los datos del venue
+        $venueData = $request->except(['sectors', 'banner']);
         $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
@@ -99,11 +102,10 @@ class VenueController extends Controller
 
         $venue = Venue::create($venueData);
 
-        // Crear el sector "General" con la capacidad proporcionada
-        $venue->sectors()->create([
-            'name' => 'General',
-            'capacity' => $request->input('capacity')
-        ]);
+        // Crear los sectores
+        foreach ($validated['sectors'] as $sectorData) {
+            $venue->sectors()->create($sectorData);
+        }
 
         return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto creado exitosamente');
@@ -132,8 +134,7 @@ class VenueController extends Controller
             'banner_url' => $venue->image_url,
             'referring' => $venue->referring,
             'ciudad' => $venue->ciudad,
-            // Obtener la capacidad del primer sector (asumimos que es el "General")
-            'capacity' => $venue->sectors->first()->capacity ?? 0,
+            'sectors' => $venue->sectors, // Pasar la colección de sectores
         ];
 
         return Inertia::render('admin/venues/edit', array_merge($this->getFormData(), [
@@ -148,13 +149,17 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
-            'referring' => 'nullable|string|max:1000'
+            'referring' => 'nullable|string|max:1000',
+            'sectors' => 'required|array|min:1',
+            'sectors.*.id' => 'nullable|exists:sectors,id',
+            'sectors.*.name' => 'required|string|max:255',
+            'sectors.*.capacity' => 'required|integer|min:0',
+            'sectors.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $venueData = $request->except('capacity');
+        $venueData = $request->except(['sectors', 'banner']);
         $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
@@ -166,11 +171,26 @@ class VenueController extends Controller
 
         $venue->update($venueData);
 
-        // Actualizar o crear el sector "General"
-        $venue->sectors()->updateOrCreate(
-            ['name' => 'General'], // Condición para buscar
-            ['capacity' => $request->input('capacity')] // Datos para actualizar o crear
-        );
+        // Sincronizar sectores
+        $existingSectorIds = $venue->sectors()->pluck('id')->toArray();
+        $incomingSectorIds = [];
+
+        foreach ($validated['sectors'] as $sectorData) {
+            $sector = $venue->sectors()->updateOrCreate(
+                ['id' => $sectorData['id'] ?? null],
+                [
+                    'name' => $sectorData['name'],
+                    'capacity' => $sectorData['capacity'],
+                    'description' => $sectorData['description'],
+                ]
+            );
+            $incomingSectorIds[] = $sector->id;
+        }
+
+        $sectorsToDelete = array_diff($existingSectorIds, $incomingSectorIds);
+        if (!empty($sectorsToDelete)) {
+            Sector::destroy($sectorsToDelete);
+        }
 
         return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto actualizado exitosamente');

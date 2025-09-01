@@ -11,7 +11,7 @@ import VenueForm from './VenueForm';
 interface VenueForEdit extends Venue {
     provincia_id: number;
     ciudad: Ciudad; // Hacemos que ciudad sea obligatoria en este contexto
-    capacity: number;
+    sectors: Sector[];
 }
 
 interface EditVenueProps extends PageProps {
@@ -28,10 +28,10 @@ export default function EditVenue() {
         address: venue.address || '',
         provincia_id_or_name: venue.provincia_id?.toString() || '',
         ciudad_name: venue.ciudad?.name || '',
-        capacity: venue.capacity || '', // <-- AÑADIR CAMPO
         coordinates: venue.coordinates || '',
         banner: null as File | null,
         referring: venue.referring || '',
+        sectors: venue.sectors || [], // <-- AÑADIR CAMPO
     });
 
     const submit: FormEventHandler = (e) => {
