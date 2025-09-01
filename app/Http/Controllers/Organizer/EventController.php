@@ -271,4 +271,44 @@ class EventController extends Controller
             'event' => $eventData,
         ]);
     }
+
+    /**
+     * Show the functions management page for an event.
+     */
+    public function functions(Event $event): Response
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para gestionar este evento');
+        }
+
+        // Cargar el evento con sus funciones
+        $event->load(['functions' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }]);
+
+        // Formatear los datos del evento
+        $eventData = [
+            'id' => $event->id,
+            'name' => $event->name,
+            'description' => $event->description,
+            'image_url' => $event->image_url,
+            'functions' => $event->functions->map(function($function) {
+                return [
+                    'id' => $function->id,
+                    'name' => $function->name,
+                    'description' => $function->description,
+                    'start_time' => $function->start_time,
+                    'end_time' => $function->end_time,
+                    'is_active' => $function->is_active,
+                ];
+            }),
+        ];
+
+        return Inertia::render('organizer/events/functions', [
+            'event' => $eventData,
+        ]);
+    }
 }

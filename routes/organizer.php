@@ -5,7 +5,8 @@ use App\Http\Controllers\Organizer\CategoryController;
 use App\Http\Controllers\Organizer\VenueController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Organizer\EventController;
-use App\Http\Controllers\Organizer\TicketTypeController; // <-- AÑADIR ESTA LÍNEA
+use App\Http\Controllers\Organizer\TicketTypeController;
+use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -19,6 +20,13 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::post('/', [EventController::class, 'store'])->name('store');
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
+
+        // Rutas para Funciones (EventFunction) anidadas
+        Route::get('/functions/{event}', [EventController::class, 'functions'])->name('functions');
+        Route::resource('{event}/functions', EventFunctionController::class)
+            ->except(['show', 'index'])
+            ->names('functions');
+
 
         // Rutas para Tipos de Entrada (TicketType) anidadas
         Route::prefix('{event}/functions/{function}/ticket-types')->name('functions.ticket-types.')->group(function () {
