@@ -10,14 +10,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Event, Category, Venue, EventFunction } from '@/types';
 import InputError from '@/components/input-error';
+import { useEffect, useState } from 'react';
 
 interface EditEventProps {
-    event: Event & { functions: EventFunction[] };
+    event: Event & { functions: EventFunction[], image_url?: string };
     categories: Category[];
     venues: Venue[];
 }
 
 export default function EditEvent({ event, categories, venues }: EditEventProps) {
+    const [bannerPreview, setBannerPreview] = useState<string | null>(event.image_url || null);
+
     const { data, setData, put, processing, errors, wasSuccessful } = useForm({
         _method: 'PUT',
         name: event.name || '',
@@ -27,6 +30,29 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
         featured: event.featured || false,
         banner_url: null as File | null,
     });
+
+    useEffect(() => {
+        return () => {
+            if (bannerPreview && bannerPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(bannerPreview);
+            }
+        };
+    }, [bannerPreview]);
+
+    function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0] || null;
+        setData('banner_url', file);
+
+        if (bannerPreview && bannerPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(bannerPreview);
+        }
+
+        if (file) {
+            setBannerPreview(URL.createObjectURL(file));
+        } else {
+            setBannerPreview(event.image_url || null);
+        }
+    }
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -131,10 +157,15 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                 </div>
                                 <div>
                                     <Label htmlFor="banner_url">Banner del Evento (Opcional)</Label>
+                                    {bannerPreview && (
+                                        <div className="mt-2 mb-4">
+                                            <img src={bannerPreview} alt="Vista previa del banner" className="w-full h-32 object-cover rounded-md border" />
+                                        </div>
+                                    )}
                                     <Input
                                         id="banner_url"
                                         type="file"
-                                        onChange={(e) => setData('banner_url', e.target.files ? e.target.files[0] : null)}
+                                        onChange={handleBannerChange}
                                         className="mt-1"
                                         accept="image/*"
                                     />
