@@ -181,9 +181,15 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                                         Ver como público
                                     </button>
                                     <hr className="my-1" />
-                                    <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
-                                        Archivar evento
-                                    </button>
+                                    {event.is_archived ? (
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={handleArchive}>
+                                            Desarchivar evento
+                                        </button>
+                                    ) : (
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
+                                            Archivar evento
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
