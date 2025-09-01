@@ -13,6 +13,17 @@ interface EditTicketTypeProps {
     sectors: Sector[];
 }
 
+/**
+ * Formatea una cadena de fecha ISO a 'YYYY-MM-DDTHH:mm' para el input datetime-local.
+ * @param dateString La cadena de fecha del backend.
+ * @returns La cadena de fecha formateada o una cadena vacía.
+ */
+const formatDateTimeForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return '';
+    // Crea un objeto Date y extrae los primeros 16 caracteres del formato ISO (YYYY-MM-DDTHH:mm)
+    return new Date(dateString).toISOString().slice(0, 16);
+};
+
 export default function EditTicketType() {
     const { event, function: eventFunction, ticketType, sectors } = usePage<EditTicketTypeProps>().props;
 
@@ -22,8 +33,8 @@ export default function EditTicketType() {
         price: ticketType.price,
         quantity: ticketType.quantity,
         sector_id: ticketType.sector_id,
-        sales_start_date: ticketType.sales_start_date,
-        sales_end_date: ticketType.sales_end_date,
+        sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
+        sales_end_date: formatDateTimeForInput(ticketType.sales_end_date),
         is_hidden: ticketType.is_hidden,
     });
 
