@@ -326,7 +326,7 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
 
             <div className="flex items-center justify-end gap-4 pt-4">
                 <Button variant="outline" asChild>
-                    <Link href={route('organizer.venues.index')}>Cancelar</Link>
+                    <Link href={route('admin.venues.index')}>Cancelar</Link>
                 </Button>
                 <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700">
                     {processing ? 'Guardando...' : submitText}

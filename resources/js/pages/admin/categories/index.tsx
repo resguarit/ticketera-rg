@@ -99,8 +99,8 @@ export default function CategoriesIndex() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         const routeName = editingCategory
-            ? route('organizer.categories.update', editingCategory.id)
-            : route('organizer.categories.store');
+            ? route('admin.categories.update', editingCategory.id)
+            : route('admin.categories.store');
         const method = editingCategory ? 'put' : 'post';
 
         (method === 'post' ? post : put)(routeName, {
@@ -120,87 +120,86 @@ export default function CategoriesIndex() {
                             Crea y administra las categorías para tus eventos.
                         </p>
                     </div>
-                    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                        <DialogTrigger asChild>
-                            <Button onClick={openCreateModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Crear Categoría
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] bg-white">
-                            <DialogHeader>
-                                <DialogTitle className="text-black">
-                                    {editingCategory ? 'Editar Categoría' : 'Crear Nueva Categoría'}
-                                </DialogTitle>
-                                <DialogDescription>
-                                    {editingCategory
-                                        ? 'Actualiza los detalles de la categoría.'
-                                        : 'Completa el formulario para añadir una nueva categoría.'}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={submit}>
-                                <div className="grid gap-4 py-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name" className="text-black">Nombre</Label>
-                                        <Input
-                                            id="name"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            className="bg-white border-gray-300 text-black"
-                                            required
-                                        />
-                                        <InputError message={errors.name} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-black">Icono (Opcional)</Label>
-                                        <div className="grid grid-cols-6 gap-2 p-2 border rounded-md bg-gray-50">
-                                            {Object.keys(iconMap).map((iconName) => (
-                                                <button
-                                                    type="button"
-                                                    key={iconName}
-                                                    onClick={() => setData('icon', data.icon === iconName ? '' : iconName)}
-                                                    className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                                                        data.icon === iconName
-                                                            ? 'bg-indigo-600 text-white'
-                                                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                                                    }`}
-                                                    title={iconName.charAt(0).toUpperCase() + iconName.slice(1)}
-                                                >
-                                                    <DynamicIcon name={iconName} className="w-5 h-5" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <InputError message={errors.icon} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="color" className="text-black">Color</Label>
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                id="color"
-                                                type="color"
-                                                value={data.color}
-                                                onChange={(e) => setData('color', e.target.value)}
-                                                className="p-1 h-10 w-14 block bg-white border border-gray-300 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
-                                            />
-                                            <Input
-                                                type="text"
-                                                value={data.color}
-                                                onChange={(e) => setData('color', e.target.value)}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
-                                        <InputError message={errors.color} />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                        {processing ? 'Guardando...' : 'Guardar Cambios'}
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button onClick={openCreateModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear Categoría
+                    </Button>
                 </div>
+
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogContent className="sm:max-w-[425px] bg-white">
+                        <DialogHeader>
+                            <DialogTitle className="text-black">
+                                {editingCategory ? 'Editar Categoría' : 'Crear Nueva Categoría'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {editingCategory
+                                    ? 'Actualiza los detalles de la categoría.'
+                                    : 'Completa el formulario para añadir una nueva categoría.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={submit}>
+                            <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name" className="text-black">Nombre</Label>
+                                    <Input
+                                        id="name"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        className="bg-white border-gray-300 text-black"
+                                        required
+                                    />
+                                    <InputError message={errors.name} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-black">Icono (Opcional)</Label>
+                                    <div className="grid grid-cols-6 gap-2 p-2 border rounded-md bg-gray-50">
+                                        {Object.keys(iconMap).map((iconName) => (
+                                            <button
+                                                type="button"
+                                                key={iconName}
+                                                onClick={() => setData('icon', data.icon === iconName ? '' : iconName)}
+                                                className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                                                    data.icon === iconName
+                                                        ? 'bg-indigo-600 text-white'
+                                                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                }`}
+                                                title={iconName.charAt(0).toUpperCase() + iconName.slice(1)}
+                                            >
+                                                <DynamicIcon name={iconName} className="w-5 h-5" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.icon} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="color" className="text-black">Color</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="color"
+                                            type="color"
+                                            value={data.color}
+                                            onChange={(e) => setData('color', e.target.value)}
+                                            className="p-1 h-10 w-14 block bg-white border border-gray-300 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={data.color}
+                                            onChange={(e) => setData('color', e.target.value)}
+                                            className="bg-white border-gray-300 text-black"
+                                        />
+                                    </div>
+                                    <InputError message={errors.color} />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    {processing ? 'Guardando...' : 'Guardar Cambios'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
 
                 <Card className="bg-white shadow-lg border-gray-200">
                     <CardHeader className="pb-0">
@@ -260,7 +259,7 @@ export default function CategoriesIndex() {
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                     <AlertDialogAction
-                                                        onClick={() => deleteCategory(route('organizer.categories.destroy', category.id))}
+                                                        onClick={() => deleteCategory(route('admin.categories.destroy', category.id))}
                                                         className="bg-red-600 hover:bg-red-700 text-white"
                                                     >
                                                         Sí, eliminar

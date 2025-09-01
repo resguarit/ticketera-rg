@@ -36,7 +36,7 @@ export default function EditVenue() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('organizer.venues.update', venue.id));
+        post(route('admin.venues.update', venue.id));
     };
 
     return (

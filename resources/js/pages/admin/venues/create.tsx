@@ -27,7 +27,7 @@ export default function CreateVenue() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('organizer.venues.store'));
+        post(route('admin.venues.store'));
     };
 
     return (

@@ -1,7 +1,7 @@
 <?php
-// filepath: app/Http/Controllers/Organizer/VenueController.php
+// filepath: app/Http/Controllers/Admin/VenueController.php
 
-namespace App\Http\Controllers\Organizer;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
@@ -38,8 +38,8 @@ class VenueController extends Controller
                     'referring' => $venue->referring,
                 ];
             });
-        
-        return Inertia::render('organizer/venues/index', [
+
+        return Inertia::render('admin/venues/index', [
             'venues' => $venues
         ]);
     }
@@ -54,7 +54,7 @@ class VenueController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('organizer/venues/create', $this->getFormData());
+        return Inertia::render('admin/venues/create', $this->getFormData());
     }
 
     private function getOrCreateCiudad(Request $request): int
@@ -105,15 +105,15 @@ class VenueController extends Controller
             'capacity' => $request->input('capacity')
         ]);
 
-        return redirect()->route('organizer.venues.index')
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto creado exitosamente');
     }
 
     public function show(Venue $venue): Response
     {
         $venue->load(['eventos', 'sectors', 'ciudad.provincia']);
-        
-        return Inertia::render('organizer/venues/show', [
+
+        return Inertia::render('admin/venues/show', [
             'venue' => $venue
         ]);
     }
@@ -136,7 +136,7 @@ class VenueController extends Controller
             'capacity' => $venue->sectors->first()->capacity ?? 0,
         ];
 
-        return Inertia::render('organizer/venues/edit', array_merge($this->getFormData(), [
+        return Inertia::render('admin/venues/edit', array_merge($this->getFormData(), [
             'venue' => $venueData
         ]));
     }
@@ -172,7 +172,7 @@ class VenueController extends Controller
             ['capacity' => $request->input('capacity')] // Datos para actualizar o crear
         );
 
-        return redirect()->route('organizer.venues.index')
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto actualizado exitosamente');
     }
 
@@ -188,7 +188,7 @@ class VenueController extends Controller
 
         $venue->delete();
 
-        return redirect()->route('organizer.venues.index')
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto eliminado exitosamente');
     }
 

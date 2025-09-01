@@ -7,7 +7,10 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrganizerController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\ReportController; // Agregar esta línea
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\CategoryController; // <-- AÑADIR ESTA LÍNEA
+use App\Http\Controllers\Admin\VenueController;    // <-- AÑADIR ESTA LÍNEA
+use App\Http\Controllers\Organizer\SectorController; // <-- MANTENER O MOVER SEGÚN CORRESPONDA
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -62,4 +65,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             return Inertia::render('admin/settings');
         })->name('index');
     });
+
+        // Gestión de categorías
+    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
+    
+    // Gestión de venues
+    Route::resource('venues', VenueController::class);
+    Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
+    
+    // Gestión de sectores
+    Route::resource('sectors', SectorController::class);
+    Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);
 });
