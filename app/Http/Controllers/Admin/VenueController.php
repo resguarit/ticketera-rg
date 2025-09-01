@@ -152,14 +152,14 @@ class VenueController extends Controller
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000',
-            'sectors' => 'required|array|min:1',
-            'sectors.*.id' => 'nullable|exists:sectors,id',
+            'sectors' => 'present|array', // 'present' asegura que el campo sectors venga, aunque esté vacío
+            'sectors.*.id' => 'nullable|integer', // No necesita 'exists' aquí, lo manejaremos nosotros
             'sectors.*.name' => 'required|string|max:255',
             'sectors.*.capacity' => 'required|integer|min:0',
             'sectors.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $venueData = $request->except(['sectors', 'banner']);
+        $venueData = $request->except(['sectors', 'banner', '_method']);
         $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
@@ -172,12 +172,16 @@ class VenueController extends Controller
         $venue->update($venueData);
 
         // Sincronizar sectores
-        $existingSectorIds = $venue->sectors()->pluck('id')->toArray();
+        $incomingSectors = $validated['sectors'] ?? [];
         $incomingSectorIds = [];
 
-        foreach ($validated['sectors'] as $sectorData) {
+        foreach ($incomingSectors as $sectorData) {
+            // Si el ID es real (no el timestamp de JS), lo usamos para actualizar.
+            // Si no, creamos uno nuevo.
             $sector = $venue->sectors()->updateOrCreate(
-                ['id' => $sectorData['id'] ?? null],
+                [
+                    'id' => isset($sectorData['id']) && Sector::find($sectorData['id']) ? $sectorData['id'] : null
+                ],
                 [
                     'name' => $sectorData['name'],
                     'capacity' => $sectorData['capacity'],
@@ -187,10 +191,8 @@ class VenueController extends Controller
             $incomingSectorIds[] = $sector->id;
         }
 
-        $sectorsToDelete = array_diff($existingSectorIds, $incomingSectorIds);
-        if (!empty($sectorsToDelete)) {
-            Sector::destroy($sectorsToDelete);
-        }
+        // Eliminar sectores que ya no están en la petición
+        $venue->sectors()->whereNotIn('id', $incomingSectorIds)->delete();
 
         return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto actualizado exitosamente');
