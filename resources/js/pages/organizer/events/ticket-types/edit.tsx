@@ -1,4 +1,4 @@
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,6 +26,19 @@ export default function EditTicketType() {
         sales_end_date: ticketType.sales_end_date,
         is_hidden: ticketType.is_hidden,
     });
+
+    // Lógica para actualizar la cantidad si el usuario cambia de sector
+    useEffect(() => {
+        const selectedSector = sectors.find(s => s.id === data.sector_id);
+        // Solo actualiza si el sector cambia a uno diferente del original
+        if (selectedSector && selectedSector.id !== ticketType.sector_id) {
+            setData('quantity', selectedSector.capacity);
+        }
+    }, [data.sector_id]);
+
+    const maxQuantity = useMemo(() => {
+        return sectors.find(s => s.id === data.sector_id)?.capacity;
+    }, [data.sector_id, sectors]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -56,6 +69,7 @@ export default function EditTicketType() {
                         sectors={sectors}
                         submitText="Guardar Cambios"
                         cancelUrl={route('organizer.events.tickets', event.id)}
+                        maxQuantity={maxQuantity}
                     />
                 </CardContent>
             </Card>

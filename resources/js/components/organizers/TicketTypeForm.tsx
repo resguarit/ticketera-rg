@@ -17,16 +17,19 @@ export interface TicketTypeFormData extends Partial<TicketType> {
 
 interface TicketTypeFormProps {
     data: TicketTypeFormData;
-    setData: (key: keyof TicketTypeFormData, value: any) => void;
+    setData: (key: keyof TicketTypeFormData | any, value: any) => void;
     errors: Partial<Record<keyof TicketTypeFormData, string>>;
     processing: boolean;
     onSubmit: FormEventHandler;
     sectors: Sector[];
     submitText: string;
     cancelUrl: string;
+    maxQuantity?: number; // <-- AÑADIR NUEVA PROP
 }
 
-export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, submitText, cancelUrl }: TicketTypeFormProps) {
+export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, submitText, cancelUrl, maxQuantity }: TicketTypeFormProps) {
+    const selectedSector = sectors.find(s => s.id.toString() === data.sector_id?.toString());
+
     return (
         <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -65,7 +68,20 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="quantity">Cantidad Disponible</Label>
-                    <Input id="quantity" type="number" value={data.quantity} onChange={e => setData('quantity', e.target.value)} required min="1" />
+                    <Input
+                        id="quantity"
+                        type="number"
+                        value={data.quantity}
+                        onChange={e => setData('quantity', e.target.value)}
+                        required
+                        min="1"
+                        max={maxQuantity} // <-- AÑADIR LÍMITE MÁXIMO
+                    />
+                    {selectedSector && (
+                        <p className="text-sm text-muted-foreground">
+                            Capacidad máxima del sector: {selectedSector.capacity}
+                        </p>
+                    )}
                     <InputError message={errors.quantity} />
                 </div>
             </div>
