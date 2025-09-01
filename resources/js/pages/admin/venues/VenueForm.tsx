@@ -174,29 +174,34 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                 </div>
                 <InputError message={errors.sectors} className="mt-2" />
 
-                <div className="space-y-2">
+                <div className="mt-4">
                     {data.sectors.length > 0 ? (
-                        data.sectors.map((sector, index) => (
-                            <div key={sector.id} className="flex items-center justify-between rounded-md border p-3">
-                                <div className="flex items-center gap-3">
-                                    <Building className="h-5 w-5 text-gray-500" />
-                                    <div>
-                                        <p className="font-semibold">{sector.name}</p>
-                                        <p className="text-sm text-muted-foreground">Capacidad: {sector.capacity}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {data.sectors.map((sector) => (
+                                <div key={sector.id} className="rounded-md border p-3 flex flex-col justify-between hover:shadow-md transition-shadow">
+                                    <div className="flex items-start gap-3">
+                                        <Building className="h-5 w-5 text-gray-500 mt-1 flex-shrink-0" />
+                                        <div className="flex-grow">
+                                            <p className="font-semibold break-words">{sector.name}</p>
+                                            <p className="text-sm text-muted-foreground">Capacidad: {sector.capacity}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-1 mt-2">
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => openSectorModal(sector)}>
+                                            <Edit className="h-4 w-4 mr-1" /> Editar
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => removeSector(sector.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => openSectorModal(sector)}>
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button type="button" variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => removeSector(sector.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     ) : (
-                        <p className="text-center text-sm text-muted-foreground py-4">Aún no has agregado ningún sector.</p>
+                        <div className="text-center text-sm text-muted-foreground py-8 border-2 border-dashed rounded-lg">
+                            <p>Aún no has agregado ningún sector.</p>
+                            <p className="mt-1 text-xs">Haz clic en "Agregar Sector" para comenzar.</p>
+                        </div>
                     )}
                 </div>
             </div>
