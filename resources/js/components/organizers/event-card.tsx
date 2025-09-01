@@ -139,7 +139,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                 {/* Botones de acción */}
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`#`}>
+                        <Link href={route('organizer.events.edit', event.id)}>
                             <Edit className="w-4 h-4 mr-1" />
                             Editar
                         </Link>

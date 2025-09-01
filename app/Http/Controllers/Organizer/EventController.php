@@ -148,6 +148,81 @@ class EventController extends Controller
         }
     }
 
+    public function edit(Event $event): Response
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para editar este evento');
+        }
+
+        // Cargar relaciones
+        $event->load(['functions']);
+
+        // Get categories for select
+        $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
+            
+        // Get venues for select
+        $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
+
+        return Inertia::render('organizer/events/edit', [
+            'event' => $event,
+            'categories' => $categories,
+            'venues' => $venues,
+        ]);
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para actualizar este evento');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'banner_url' => 'nullable|image|max:2048',
+            'category_id' => 'required|exists:categories,id',
+            'venue_id' => 'required|exists:venues,id',
+            'featured' => 'boolean',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $bannerPath = $event->banner_url;
+            if ($request->hasFile('banner_url')) {
+                // Delete old banner if it exists
+                if ($bannerPath) {
+                    Storage::disk('public')->delete($bannerPath);
+                }
+                $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
+            }
+
+            // Update event
+            $event->update([
+                'category_id' => $validated['category_id'],
+                'venue_id' => $validated['venue_id'],
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'banner_url' => $bannerPath,
+                'featured' => $validated['featured'] ?? false,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('organizer.events.index')
+                ->with('success', 'Evento actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()]);
+        }
+    }
+
     public function manage(Event $event): Response
     {
         // Verificar que el evento pertenezca al organizador autenticado

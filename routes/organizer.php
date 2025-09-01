@@ -18,6 +18,8 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::get('/', [EventController::class, 'index'])->name('index');
         Route::get('/create', [EventController::class, 'create'])->name('create');
         Route::post('/', [EventController::class, 'store'])->name('store');
+        Route::get('/{event}/edit', [EventController::class, 'edit'])->name('edit');
+        Route::put('/{event}', [EventController::class, 'update'])->name('update');
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
 
