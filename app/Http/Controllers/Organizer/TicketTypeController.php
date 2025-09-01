@@ -110,13 +110,30 @@ class TicketTypeController extends Controller
      */
     public function duplicateAll(Request $request, Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
     {
+        \Log::info('duplicateAll called', [
+            'event_id' => $event->id,
+            'function_id' => $function->id,
+            'ticket_type_id' => $ticketType->id,
+            'request_functions' => $request->input('functions', [])
+        ]);
+
         $functionIds = $request->input('functions', []);
-        $functions = $event->functions()->whereIn('id', $functionIds)->get();
+        $functions = EventFunction::where('event_id', $event->id)
+            ->whereIn('id', $functionIds)
+            ->get();
+
+        \Log::info('Functions to duplicate to', [
+            'function_ids' => $functionIds,
+            'functions_found' => $functions->pluck('id')->toArray()
+        ]);
 
         foreach ($functions as $func) {
-            if ($func->id === $ticketType->event_function_id) continue;
+            if ($func->id === $ticketType->event_function_id) {
+                \Log::info('Skipping original function', ['function_id' => $func->id]);
+                continue;
+            }
 
-            TicketType::create([
+            $newTicketType = TicketType::create([
                 'name' => $ticketType->name,
                 'description' => $ticketType->description,
                 'price' => $ticketType->price,
@@ -127,7 +144,14 @@ class TicketTypeController extends Controller
                 'is_hidden' => $ticketType->is_hidden,
                 'event_function_id' => $func->id,
             ]);
+
+            \Log::info('TicketType duplicated', [
+                'new_ticket_type_id' => $newTicketType->id,
+                'duplicated_to_function_id' => $func->id
+            ]);
         }
+
+        \Log::info('duplicateAll finished');
 
         return redirect()->route('organizer.events.tickets', $event->id)
             ->with('success', 'Tipo de entrada duplicado en las funciones seleccionadas.');

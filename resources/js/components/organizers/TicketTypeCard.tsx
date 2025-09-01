@@ -15,6 +15,7 @@ import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DuplicateTicketTypeModal } from "./modals/DuplicateTicketTypeModal";
 
 interface TicketTypeCardProps {
   ticket: TicketType;
@@ -45,22 +46,21 @@ export const TicketTypeCard = ({
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [selectedFunctions, setSelectedFunctions] = useState<number[]>([]);
 
-  const handleDuplicateAll = () => {
-    setShowDuplicateModal(true);
-    // Por defecto selecciona todas las funciones posibles
-    setSelectedFunctions(
-      allFunctions
-        .filter(f => !functionsWithTicket.includes(f.id))
-        .map(f => f.id)
-    );
-  };
+const handleDuplicateAll = () => {
+  setShowDuplicateModal(true);
+  setSelectedFunctions([]); // No seleccionar nada por defecto
+};
 
-  const handleConfirmDuplicate = () => {
-    if (onDuplicateAll) {
-      onDuplicateAll(ticket, selectedFunctions);
-    }
-    setShowDuplicateModal(false);
-  };
+
+const handleConfirmDuplicate = (functionIds: number[]) => {
+  console.log("Todas las funciones disponibles:", allFunctions);
+  console.log("Funciones seleccionadas para duplicar:", functionIds); // Debug
+  // Verifica que estos IDs existan en la tabla event_functions
+  if (onDuplicateAll && functionIds.length > 0) {
+    onDuplicateAll(ticket, functionIds);
+  }
+  setShowDuplicateModal(false);
+};
 
   const handleToggleFunction = (funcId: number) => {
     setSelectedFunctions((prev) =>
@@ -199,39 +199,16 @@ export const TicketTypeCard = ({
         </Button>
       </CardFooter>
 
-      <Dialog open={showDuplicateModal} onOpenChange={(open) => setShowDuplicateModal(open)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Duplicar entrada en funciones</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {allFunctions.map(func => {
-              const exists = functionsWithTicket.includes(func.id);
-              return (
-                <div key={func.id} className={`flex items-center gap-2 ${exists ? 'opacity-50' : ''}`}>
-                  <Checkbox
-                    checked={selectedFunctions.includes(func.id)}
-                    onCheckedChange={() => handleToggleFunction(func.id)}
-                    disabled={exists}
-                  />
-                  <span>{func.name}</span>
-                  {exists && (
-                    <span className="text-xs text-muted-foreground ml-2">(Ya existe)</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <DialogFooter className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => setShowDuplicateModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirmDuplicate} disabled={selectedFunctions.length === 0}>
-              Duplicar ({selectedFunctions.length})
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Reemplaza el Dialog por el nuevo modal */}
+      <DuplicateTicketTypeModal
+        open={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        onConfirm={handleConfirmDuplicate}
+        allFunctions={allFunctions}
+        functionsWithTicket={functionsWithTicket}
+        selectedFunctions={selectedFunctions}
+        setSelectedFunctions={setSelectedFunctions}
+      />
     </Card>
   );
 };
