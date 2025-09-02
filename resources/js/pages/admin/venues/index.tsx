@@ -91,7 +91,7 @@ export default function VenuesIndex() {
                         </p>
                     </div>
                     <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <Link href={route('organizer.venues.create')}>
+                        <Link href={route('admin.venues.create')}>
                             <Plus className="w-4 h-4 mr-2" />
                             Crear Recinto
                         </Link>
@@ -188,7 +188,7 @@ export default function VenuesIndex() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-white">
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={route('organizer.venues.edit', venue.id)}>
+                                                        <Link href={route('admin.venues.edit', venue.id)}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             <span>Editar</span>
                                                         </Link>
@@ -216,7 +216,7 @@ export default function VenuesIndex() {
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                     <AlertDialogAction
-                                                        onClick={() => deleteVenue(route('organizer.venues.destroy', venue.id))}
+                                                        onClick={() => deleteVenue(route('admin.venues.destroy', venue.id))}
                                                         className="bg-red-600 hover:bg-red-700"
                                                     >
                                                         Sí, eliminar
@@ -258,7 +258,7 @@ export default function VenuesIndex() {
                                 Comienza creando tu primer recinto para poder asociarlo a tus eventos.
                             </p>
                             <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Link href={route('organizer.venues.create')}>
+                                <Link href={route('admin.venues.create')}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Crear tu primer recinto
                                 </Link>

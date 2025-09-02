@@ -1,4 +1,4 @@
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -24,19 +24,30 @@ interface CreateTicketTypeProps extends PageProps {
 export default function CreateTicketType() {
     const { event, function: eventFunction, sectors } = usePage<CreateTicketTypeProps>().props;
 
-    const { data, setData, post, processing, errors } = useForm<TicketTypeFormData>(
-        'createTicketType',
-        {
-            name: '',
-            description: '',
-            price: 0,
-            quantity: 0,
-            sector_id: sectors?.[0]?.id ?? undefined,
-            sales_start_date: '',
-            sales_end_date: '',
-            is_hidden: false,
+    const { data, setData, post, processing, errors } = useForm<TicketTypeFormData>({
+        name: '',
+        description: '',
+        price: 0,
+        // Iniciar con la capacidad del primer sector si existe
+        quantity: sectors?.[0]?.capacity ?? 0,
+        sector_id: sectors?.[0]?.id ?? undefined,
+        sales_start_date: '',
+        sales_end_date: '',
+        is_hidden: false,
+    });
+
+    // Lógica para actualizar la cantidad cuando cambia el sector
+    useEffect(() => {
+        const selectedSector = sectors.find(s => s.id === data.sector_id);
+        if (selectedSector) {
+            // Actualiza la cantidad al máximo del sector seleccionado
+            setData('quantity', selectedSector.capacity);
         }
-    );
+    }, [data.sector_id]); // Se ejecuta cada vez que data.sector_id cambia
+
+    const maxQuantity = useMemo(() => {
+        return sectors.find(s => s.id === data.sector_id)?.capacity;
+    }, [data.sector_id, sectors]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -63,6 +74,7 @@ export default function CreateTicketType() {
                         sectors={sectors}
                         submitText="Crear Entrada"
                         cancelUrl={route('organizer.events.tickets', event.id)}
+                        maxQuantity={maxQuantity}
                     />
                 </CardContent>
             </Card>

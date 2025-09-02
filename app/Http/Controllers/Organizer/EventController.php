@@ -19,11 +19,15 @@ class EventController extends Controller
     {
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $organizer = Auth::user()->organizer;
+        $includeArchived = $request->boolean('include_archived');
 
         $events = $organizer->events()
+            ->when(!$includeArchived, function ($query) {
+                $query->where('is_archived', false);
+            })
             ->with(['category', 'venue', 'organizer', 'functions'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -34,6 +38,7 @@ class EventController extends Controller
                     'description' => $event->description,
                     'image_url' => $event->image_url,
                     'featured' => $event->featured,
+                    'is_archived' => $event->is_archived,
                     'category' => $event->category,
                     'venue' => $event->venue,
                     'organizer' => $event->organizer,
@@ -58,6 +63,7 @@ class EventController extends Controller
 
         return Inertia::render('organizer/events/index', [
             'events' => $events,
+            'filters' => ['include_archived' => $includeArchived],
         ]);
     }
 
@@ -146,6 +152,93 @@ class EventController extends Controller
             
             return back()->withErrors(['error' => 'Error al crear el evento: ' . $e->getMessage()]);
         }
+    }
+
+    public function edit(Event $event): Response
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para editar este evento');
+        }
+
+        // Cargar relaciones
+        $event->load(['functions']);
+
+        // Get categories for select
+        $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
+            
+        // Get venues for select
+        $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
+
+        return Inertia::render('organizer/events/edit', [
+            'event' => $event,
+            'categories' => $categories,
+            'venues' => $venues,
+        ]);
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para actualizar este evento');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'banner_url' => 'nullable|image|max:2048',
+            'category_id' => 'required|exists:categories,id',
+            'venue_id' => 'required|exists:venues,id',
+            'featured' => 'boolean',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $bannerPath = $event->banner_url;
+            if ($request->hasFile('banner_url')) {
+                // Delete old banner if it exists
+                if ($bannerPath) {
+                    Storage::disk('public')->delete($bannerPath);
+                }
+                $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
+            }
+
+            // Update event
+            $event->update([
+                'category_id' => $validated['category_id'],
+                'venue_id' => $validated['venue_id'],
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'banner_url' => $bannerPath,
+                'featured' => $validated['featured'] ?? false,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('organizer.events.index')
+                ->with('success', 'Evento actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()]);
+        }
+    }
+
+    public function toggleArchive(Event $event)
+    {
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para archivar este evento');
+        }
+
+        $event->update(['is_archived' => !$event->is_archived]);
+
+        return redirect()->back()->with('success', 'El estado del evento ha sido actualizado.');
     }
 
     public function manage(Event $event): Response
@@ -268,6 +361,46 @@ class EventController extends Controller
         ];
 
         return Inertia::render('organizer/events/tickets', [
+            'event' => $eventData,
+        ]);
+    }
+
+    /**
+     * Show the functions management page for an event.
+     */
+    public function functions(Event $event): Response
+    {
+        // Verificar que el evento pertenezca al organizador autenticado
+        $organizer = Auth::user()->organizer;
+        
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para gestionar este evento');
+        }
+
+        // Cargar el evento con sus funciones
+        $event->load(['functions' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }]);
+
+        // Formatear los datos del evento
+        $eventData = [
+            'id' => $event->id,
+            'name' => $event->name,
+            'description' => $event->description,
+            'image_url' => $event->image_url,
+            'functions' => $event->functions->map(function($function) {
+                return [
+                    'id' => $function->id,
+                    'name' => $function->name,
+                    'description' => $function->description,
+                    'start_time' => $function->start_time,
+                    'end_time' => $function->end_time,
+                    'is_active' => $function->is_active,
+                ];
+            }),
+        ];
+
+        return Inertia::render('organizer/events/functions', [
             'event' => $eventData,
         ]);
     }

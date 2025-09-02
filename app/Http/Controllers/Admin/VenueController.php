@@ -1,7 +1,7 @@
 <?php
-// filepath: app/Http/Controllers/Organizer/VenueController.php
+// filepath: app/Http/Controllers/Admin/VenueController.php
 
-namespace App\Http\Controllers\Organizer;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Venue;
@@ -38,8 +38,8 @@ class VenueController extends Controller
                     'referring' => $venue->referring,
                 ];
             });
-        
-        return Inertia::render('organizer/venues/index', [
+
+        return Inertia::render('admin/venues/index', [
             'venues' => $venues
         ]);
     }
@@ -54,7 +54,7 @@ class VenueController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('organizer/venues/create', $this->getFormData());
+        return Inertia::render('admin/venues/create', $this->getFormData());
     }
 
     private function getOrCreateCiudad(Request $request): int
@@ -84,13 +84,16 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
-            'referring' => 'nullable|string|max:1000'
+            'referring' => 'nullable|string|max:1000',
+            'sectors' => 'required|array|min:1',
+            'sectors.*.name' => 'required|string|max:255',
+            'sectors.*.capacity' => 'required|integer|min:0',
+            'sectors.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $venueData = $request->except('capacity'); // Excluir capacidad de los datos del venue
+        $venueData = $request->except(['sectors', 'banner']);
         $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
@@ -99,21 +102,20 @@ class VenueController extends Controller
 
         $venue = Venue::create($venueData);
 
-        // Crear el sector "General" con la capacidad proporcionada
-        $venue->sectors()->create([
-            'name' => 'General',
-            'capacity' => $request->input('capacity')
-        ]);
+        // Crear los sectores
+        foreach ($validated['sectors'] as $sectorData) {
+            $venue->sectors()->create($sectorData);
+        }
 
-        return redirect()->route('organizer.venues.index')
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto creado exitosamente');
     }
 
     public function show(Venue $venue): Response
     {
         $venue->load(['eventos', 'sectors', 'ciudad.provincia']);
-        
-        return Inertia::render('organizer/venues/show', [
+
+        return Inertia::render('admin/venues/show', [
             'venue' => $venue
         ]);
     }
@@ -132,11 +134,10 @@ class VenueController extends Controller
             'banner_url' => $venue->image_url,
             'referring' => $venue->referring,
             'ciudad' => $venue->ciudad,
-            // Obtener la capacidad del primer sector (asumimos que es el "General")
-            'capacity' => $venue->sectors->first()->capacity ?? 0,
+            'sectors' => $venue->sectors, // Pasar la colección de sectores
         ];
 
-        return Inertia::render('organizer/venues/edit', array_merge($this->getFormData(), [
+        return Inertia::render('admin/venues/edit', array_merge($this->getFormData(), [
             'venue' => $venueData
         ]));
     }
@@ -148,13 +149,17 @@ class VenueController extends Controller
             'address' => 'required|string|max:500',
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1', // <-- AÑADIR VALIDACIÓN
             'coordinates' => 'nullable|string|max:100',
             'banner' => 'nullable|image|max:2048',
-            'referring' => 'nullable|string|max:1000'
+            'referring' => 'nullable|string|max:1000',
+            'sectors' => 'present|array', // 'present' asegura que el campo sectors venga, aunque esté vacío
+            'sectors.*.id' => 'nullable|integer', // No necesita 'exists' aquí, lo manejaremos nosotros
+            'sectors.*.name' => 'required|string|max:255',
+            'sectors.*.capacity' => 'required|integer|min:0',
+            'sectors.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $venueData = $request->except('capacity');
+        $venueData = $request->except(['sectors', 'banner', '_method']);
         $venueData['ciudad_id'] = $this->getOrCreateCiudad($request);
 
         if ($request->hasFile('banner')) {
@@ -166,13 +171,30 @@ class VenueController extends Controller
 
         $venue->update($venueData);
 
-        // Actualizar o crear el sector "General"
-        $venue->sectors()->updateOrCreate(
-            ['name' => 'General'], // Condición para buscar
-            ['capacity' => $request->input('capacity')] // Datos para actualizar o crear
-        );
+        // Sincronizar sectores
+        $incomingSectors = $validated['sectors'] ?? [];
+        $incomingSectorIds = [];
 
-        return redirect()->route('organizer.venues.index')
+        foreach ($incomingSectors as $sectorData) {
+            // Si el ID es real (no el timestamp de JS), lo usamos para actualizar.
+            // Si no, creamos uno nuevo.
+            $sector = $venue->sectors()->updateOrCreate(
+                [
+                    'id' => isset($sectorData['id']) && Sector::find($sectorData['id']) ? $sectorData['id'] : null
+                ],
+                [
+                    'name' => $sectorData['name'],
+                    'capacity' => $sectorData['capacity'],
+                    'description' => $sectorData['description'],
+                ]
+            );
+            $incomingSectorIds[] = $sector->id;
+        }
+
+        // Eliminar sectores que ya no están en la petición
+        $venue->sectors()->whereNotIn('id', $incomingSectorIds)->delete();
+
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto actualizado exitosamente');
     }
 
@@ -188,7 +210,7 @@ class VenueController extends Controller
 
         $venue->delete();
 
-        return redirect()->route('organizer.venues.index')
+        return redirect()->route('admin.venues.index')
             ->with('success', 'Recinto eliminado exitosamente');
     }
 

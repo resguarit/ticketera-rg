@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\TicketType;
+use App\Models\Sector; // <-- AÑADIR ESTO
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,8 +39,18 @@ class TicketTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:1',
             'sector_id' => 'required|exists:sectors,id',
+            'quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                function ($attribute, $value, $fail) use ($request) {
+                    $sector = Sector::find($request->input('sector_id'));
+                    if ($sector && $value > $sector->capacity) {
+                        $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    }
+                },
+            ],
             'sales_start_date' => 'required|date',
             'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
@@ -77,8 +88,18 @@ class TicketTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:1',
             'sector_id' => 'required|exists:sectors,id',
+            'quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                function ($attribute, $value, $fail) use ($request) {
+                    $sector = Sector::find($request->input('sector_id'));
+                    if ($sector && $value > $sector->capacity) {
+                        $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    }
+                },
+            ],
             'sales_start_date' => 'required|date',
             'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
@@ -110,11 +131,27 @@ class TicketTypeController extends Controller
      */
     public function duplicateAll(Request $request, Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
     {
-        $functionIds = $request->input('functions', []);
-        $functions = $event->functions()->whereIn('id', $functionIds)->get();
+        $validated = $request->validate([
+            'functions' => 'required|array',
+            'functions.*' => 'integer|exists:event_functions,id',
+        ]);
 
-        foreach ($functions as $func) {
-            if ($func->id === $ticketType->event_function_id) continue;
+        $functionIds = $validated['functions'];
+
+        $functionsToDuplicateIn = EventFunction::where('event_id', $event->id)
+            ->whereIn('id', $functionIds)
+            ->get();
+
+        foreach ($functionsToDuplicateIn as $func) {
+            // Evitar duplicar en la función original o si ya existe un ticket con el mismo nombre y sector
+            $exists = TicketType::where('event_function_id', $func->id)
+                ->where('name', $ticketType->name)
+                ->where('sector_id', $ticketType->sector_id)
+                ->exists();
+
+            if ($func->id === $ticketType->event_function_id || $exists) {
+                continue;
+            }
 
             TicketType::create([
                 'name' => $ticketType->name,

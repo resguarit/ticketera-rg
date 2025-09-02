@@ -1,4 +1,4 @@
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +13,17 @@ interface EditTicketTypeProps {
     sectors: Sector[];
 }
 
+/**
+ * Formatea una cadena de fecha ISO a 'YYYY-MM-DDTHH:mm' para el input datetime-local.
+ * @param dateString La cadena de fecha del backend.
+ * @returns La cadena de fecha formateada o una cadena vacía.
+ */
+const formatDateTimeForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return '';
+    // Crea un objeto Date y extrae los primeros 16 caracteres del formato ISO (YYYY-MM-DDTHH:mm)
+    return new Date(dateString).toISOString().slice(0, 16);
+};
+
 export default function EditTicketType() {
     const { event, function: eventFunction, ticketType, sectors } = usePage<EditTicketTypeProps>().props;
 
@@ -22,10 +33,23 @@ export default function EditTicketType() {
         price: ticketType.price,
         quantity: ticketType.quantity,
         sector_id: ticketType.sector_id,
-        sales_start_date: ticketType.sales_start_date,
-        sales_end_date: ticketType.sales_end_date,
+        sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
+        sales_end_date: formatDateTimeForInput(ticketType.sales_end_date),
         is_hidden: ticketType.is_hidden,
     });
+
+    // Lógica para actualizar la cantidad si el usuario cambia de sector
+    useEffect(() => {
+        const selectedSector = sectors.find(s => s.id === data.sector_id);
+        // Solo actualiza si el sector cambia a uno diferente del original
+        if (selectedSector && selectedSector.id !== ticketType.sector_id) {
+            setData('quantity', selectedSector.capacity);
+        }
+    }, [data.sector_id]);
+
+    const maxQuantity = useMemo(() => {
+        return sectors.find(s => s.id === data.sector_id)?.capacity;
+    }, [data.sector_id, sectors]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -56,6 +80,7 @@ export default function EditTicketType() {
                         sectors={sectors}
                         submitText="Guardar Cambios"
                         cancelUrl={route('organizer.events.tickets', event.id)}
+                        maxQuantity={maxQuantity}
                     />
                 </CardContent>
             </Card>

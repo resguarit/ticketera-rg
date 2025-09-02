@@ -41,7 +41,7 @@ export default function EventManagementLayout({
             name: 'Funciones', 
             id: 'functions', 
             icon: Calendar, 
-            href: `#functions` // TODO: Agregar ruta cuando esté disponible
+            href: route('organizer.events.functions', event.id)
         },
         { 
             name: 'Entradas', 

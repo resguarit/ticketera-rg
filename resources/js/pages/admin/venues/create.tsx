@@ -19,15 +19,15 @@ export default function CreateVenue() {
         address: '',
         provincia_id_or_name: '',
         ciudad_name: '',
-        capacity: '', // <-- AÑADIR CAMPO
         coordinates: '',
         banner: null as File | null,
         referring: '',
+        sectors: [], // <-- AÑADIR CAMPO
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('organizer.venues.store'));
+        post(route('admin.venues.store'));
     };
 
     return (

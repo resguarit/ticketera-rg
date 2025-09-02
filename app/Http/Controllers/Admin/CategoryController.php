@@ -1,7 +1,7 @@
 <?php
-// filepath: app/Http/Controllers/Organizer/CategoryController.php
+// filepath: app/Http/Controllers/Admin/CategoryController.php
 
-namespace App\Http\Controllers\Organizer;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -15,11 +15,11 @@ class CategoryController extends Controller
     public function index(): Response
     {
         $categories = Category::withCount('events')->get();
-        
-        return Inertia::render('organizer/categories/index', [
+
+        return Inertia::render('admin/categories/index', [
             'categories' => $categories
         ]);
-    }
+    } /*----------------------------------------------------------------*/
 
     public function store(Request $request): RedirectResponse
     {

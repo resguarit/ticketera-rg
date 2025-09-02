@@ -10,6 +10,7 @@ use App\Models\TicketType;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RevenueService
 {
@@ -94,7 +95,7 @@ class RevenueService
         $query = Order::query()->where('status', OrderStatus::PAID);
 
         if ($startDate) {
-            $query->whereBetween('order_date', [$startDate, $endDate]);
+            $query->whereBetween('order_date', [$startDate, $endDate ?? Carbon::now()]);
         }
 
         return $query->sum('total_amount');
@@ -129,6 +130,20 @@ class RevenueService
         return $query->count();
     }
 
+    public function ticketsSoldByOrganizer(Organizer $organizer, ?Carbon $startDate = null): int
+    {
+        $query = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
+            $query->where('status', OrderStatus::PAID);
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+        })->whereHas('ticketType.eventFunction.event', function ($q) use ($organizer) {
+            $q->where('organizer_id', $organizer->id);
+        });
+
+        return $query->count();
+    }
+
     public function ticketsSoldByFunction(EventFunction $eventFunction, ?Carbon $startDate = null): int
     {
         $query = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
@@ -136,10 +151,42 @@ class RevenueService
             if ($startDate) {
                 $query->where('created_at', '>=', $startDate);
             }
-        })->whereHas('ticketType.eventFunction', function ($q) use ($eventFunction) {
-            $q->where('id', $eventFunction->id);
+        })->whereHas('ticketType', function ($q) use ($eventFunction) {
+            $q->where('event_function_id', $eventFunction->id);
         });
 
         return $query->count();
+    }
+
+    /**
+     * Obtiene los datos de ingresos de un organizador a lo largo del tiempo para un gráfico.
+     */
+    public function getOrganizerRevenueOverTime(Organizer $organizer, int $days): array
+    {
+        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+
+        $revenueData = Order::query()
+            ->select(DB::raw('DATE(order_date) as date'), DB::raw('SUM(total_amount) as revenue'))
+            ->where('status', OrderStatus::PAID)
+            ->whereBetween('order_date', [$startDate, $endDate])
+            ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
+                $q->where('organizer_id', $organizer->id);
+            })
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->pluck('revenue', 'date');
+
+        // Rellenar los días sin ingresos
+        $chartData = [];
+        for ($i = 0; $i < $days; $i++) {
+            $date = $startDate->copy()->addDays($i)->format('Y-m-d');
+            $chartData[] = [
+                'date' => Carbon::parse($date)->format('d M'),
+                'revenue' => $revenueData[$date] ?? 0,
+            ];
+        }
+
+        return $chartData;
     }
 }

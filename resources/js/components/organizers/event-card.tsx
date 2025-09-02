@@ -44,10 +44,16 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
             router.visit(route('event.detail', event.id));
     };
 
+    const handleArchive = () => {
+        router.patch(route('organizer.events.toggleArchive', event.id), {}, {
+            preserveScroll: true,
+        });
+    };
+
     return (
-        <Card className="bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-            {/* Header con fecha y título */}
-            <div className="bg-indigo-600 text-white px-4 py-3 rounded-t-lg relative">
+        <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0">
+            {/* Header con fecha y título (altura fija) */}
+            <div className="bg-indigo-600 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {nextFunction && (
@@ -70,76 +76,85 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                 </div>
             </div>
 
-            {/* Contenido principal */}
-            <div className="p-4">
-                {/* Información del evento */}
-                <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span>{event.category.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.venue.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        <span>{event.functions?.length || 0} función{event.functions?.length !== 1 ? 'es' : ''}</span>
-                    </div>
-                    {nextFunction && (
+            {/* Contenido principal (se expandirá para llenar el espacio) */}
+            <div className="p-4 flex flex-col flex-grow">
+                {/* Wrapper para el contenido variable que crece */}
+                <div className="flex-grow">
+                    {/* Información del evento */}
+                    <div className="space-y-2 mb-4">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Clock className="w-4 h-4" />
-                            <span>Próxima: {nextFunction.date} • {nextFunction.time}</span>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>{event.category.name}</span>
                         </div>
-                    )}
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>{event.venue.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="w-4 h-4" />
+                            <span>{event.functions?.length || 0} función{event.functions?.length !== 1 ? 'es' : ''}</span>
+                        </div>
+                        {nextFunction && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Clock className="w-4 h-4" />
+                                <span>Próxima: {nextFunction.date} • {nextFunction.time}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Descripción (con altura mínima para 2 líneas) */}
+                    <div className="mb-4 min-h-[44px]">
+                        <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                            {event.description}
+                        </p>
+                    </div>
+
+                    {/* Banner (con altura mínima para mantener el espacio) */}
+                    <div className="mb-4 min-h-[108px]">
+                        {event.image_url && (
+                            <>
+                                <div className="text-sm font-medium text-gray-700 mb-2">Banner</div>
+                                <img
+                                    src={event.image_url}
+                                    alt={`Banner de ${event.name}`}
+
+                                    className="w-full h-20 object-cover rounded border"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                    }}
+                                />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Funciones */}
+                    <div className="mb-4">
+                        {event.functions && event.functions.length > 0 && (
+                            <>
+                                <div className="text-sm font-medium text-gray-700 mb-2">Funciones</div>
+                                <div className="space-y-1">
+                                    {event.functions.slice(0, 3).map((func) => (
+                                        <div key={func.id} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
+                                            <span className="font-medium">{func.name}</span>
+                                            <span className="text-gray-600">{func.date} • {func.time}</span>
+                                        </div>
+                                    ))}
+                                    {event.functions.length > 3 && (
+                                        <div className="text-xs text-gray-500 text-center">
+                                            +{event.functions.length - 3} funciones más
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                <div className="mb-4">
-                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
-                        {event.description}
-                    </p>
-                </div>
-
-                {/* Banner si existe */}
-                {event.image_url && (
-                    <div className="mb-4">
-                        <div className="text-sm font-medium text-gray-700 mb-2">Banner</div>
-                        <img
-                            src={event.image_url}
-                            alt={`Banner de ${event.name}`}
-                            className="w-full h-20 object-cover rounded border"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                            }}
-                        />
-                    </div>
-                )}
-
-                {/* Funciones */}
-                {event.functions && event.functions.length > 0 && (
-                    <div className="mb-4">
-                        <div className="text-sm font-medium text-gray-700 mb-2">Funciones</div>
-                        <div className="space-y-1">
-                            {event.functions.slice(0, 3).map((func) => (
-                                <div key={func.id} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
-                                    <span className="font-medium">{func.name}</span>
-                                    <span className="text-gray-600">{func.date} • {func.time}</span>
-                                </div>
-                            ))}
-                            {event.functions.length > 3 && (
-                                <div className="text-xs text-gray-500 text-center">
-                                    +{event.functions.length - 3} funciones más
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Botones de acción */}
-                <div className="flex gap-2">
+                {/* Botones de acción (se alinearán en la parte inferior) */}
+                <div className="flex gap-2 mt-auto pt-4">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`#`}>
+                        <Link href={route('organizer.events.edit', event.id)}>
                             <Edit className="w-4 h-4 mr-1" />
                             Editar
                         </Link>
@@ -166,9 +181,15 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                                         Ver como público
                                     </button>
                                     <hr className="my-1" />
-                                    <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50">
-                                        Archivar evento
-                                    </button>
+                                    {event.is_archived ? (
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={handleArchive}>
+                                            Desarchivar evento
+                                        </button>
+                                    ) : (
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
+                                            Archivar evento
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
