@@ -83,7 +83,7 @@ export const TicketTypeCard = ({
             )}
           </div>
           <span className="text-xl font-bold text-primary">
-            {formatPrice(ticket.price)}
+            {formatPrice(ticket.price || 0)}
           </span>
           {/* Submenú de tres puntitos */}
           <DropdownMenu>
@@ -131,7 +131,7 @@ export const TicketTypeCard = ({
         <div className="text-center">
           <div className="text-sm text-muted-foreground">Ingresos generados</div>
           <div className="text-lg font-bold text-green-600">
-            {formatCurrency(ticket.total_income)}
+            {formatCurrency(ticket.total_income || 0)}
           </div>
         </div>
 

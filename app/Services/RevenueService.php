@@ -20,17 +20,19 @@ class RevenueService
      */
     public function forTicketType(TicketType $ticketType, ?Carbon $startDate = null, ?Carbon $endDate = null): float
     {
-        $query = Order::query()
-            ->where('status', OrderStatus::PAID)
-            ->whereHas('issuedTickets', function ($q) use ($ticketType) {
-                $q->where('ticket_type_id', $ticketType->id);
+        $query = IssuedTicket::query()
+            ->where('ticket_type_id', $ticketType->id)
+            ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->where('status', OrderStatus::PAID);
+                if ($startDate && $endDate) {
+                    $q->whereBetween('order_date', [$startDate, $endDate]);
+                }
             });
 
-        if ($startDate && $endDate) {
-            $query->whereBetween('order_date', [$startDate, $endDate]);
-        }
-
-        return $query->sum('total_amount');
+        // Sumamos el precio del ticket type multiplicado por la cantidad de tickets emitidos
+        $ticketCount = $query->count();
+        
+        return (float) ($ticketCount * $ticketType->price);
     }
 
     /**
@@ -48,7 +50,7 @@ class RevenueService
             $query->whereBetween('order_date', [$startDate, $endDate]);
         }
 
-        return $query->sum('total_amount');
+        return (float) ($query->sum('total_amount') ?? 0);
     }
 
     /**
@@ -66,7 +68,7 @@ class RevenueService
             $query->whereBetween('order_date', [$startDate, $endDate]);
         }
 
-        return $query->sum('total_amount');
+        return (float) ($query->sum('total_amount') ?? 0);
     }
 
     /**
@@ -84,7 +86,7 @@ class RevenueService
             $query->whereBetween('order_date', [$startDate, $endDate]);
         }
 
-        return $query->sum('total_amount');
+        return (float) ($query->sum('total_amount') ?? 0);
     }
 
     /**
@@ -98,7 +100,7 @@ class RevenueService
             $query->whereBetween('order_date', [$startDate, $endDate ?? Carbon::now()]);
         }
 
-        return $query->sum('total_amount');
+        return (float) ($query->sum('total_amount') ?? 0);
     }
 
     /**
@@ -154,6 +156,18 @@ class RevenueService
         })->whereHas('ticketType', function ($q) use ($eventFunction) {
             $q->where('event_function_id', $eventFunction->id);
         });
+
+        return $query->count();
+    }
+
+    public function ticketsSoldByTicketType(TicketType $ticketType, ?Carbon $startDate = null): int
+    {
+        $query = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
+            $query->where('status', OrderStatus::PAID);
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+        })->where('ticket_type_id', $ticketType->id);
 
         return $query->count();
     }
