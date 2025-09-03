@@ -16,7 +16,7 @@ export interface TicketType {
     is_hidden: boolean;
     created_at: string;
     updated_at: string;
-    deleted_at: string | null;
+    deleted_at?: string | null;
 
     // Claves foráneas
     event_function_id: number;

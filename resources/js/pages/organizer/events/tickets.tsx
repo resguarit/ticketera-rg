@@ -34,25 +34,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
         event.functions?.[0]?.id.toString() || '1'
     );
 
-    // Función para calcular estadísticas por función usando datos del backend
-    const getFunctionStats = (functionData: EventFunctionDetail) => {
-        const ticketTypes = functionData.ticketTypes || [];
-        
-        const totalTickets = ticketTypes.reduce((sum, ticket) => sum + ticket.quantity, 0);
-        const soldTickets = ticketTypes.reduce((sum, ticket) => sum + ticket.quantity_sold, 0);
-        const availableTickets = ticketTypes.reduce((sum, ticket) => sum + ticket.quantity_available, 0);
-        const totalRevenue = ticketTypes.reduce((sum, ticket) => sum + ticket.total_income, 0);
-        const visibleTickets = ticketTypes.filter(ticket => !ticket.is_hidden).length;
-
-        return {
-            totalTickets,
-            soldTickets,
-            availableTickets,
-            totalRevenue,
-            visibleTickets,
-            totalTypes: ticketTypes.length
-        };
-    };
+    
 
     const handleToggleTicketVisibility = async (ticketId: number) => {
         const func = event.functions.find(f => f.id.toString() === selectedFunction);
@@ -185,7 +167,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                         </div>
 
                         {event.functions.map((func) => {
-                            const stats = getFunctionStats(func);
+                            const stats = func.stats; // Usar las estadísticas que vienen del backend
                             
                             return (
                                 <TabsContent key={func.id} value={func.id.toString()} className="space-y-6">
@@ -200,8 +182,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     </div>
                                                     <span className="text-xs font-medium">Total</span>
                                                 </div>
-                                                <div className="text-lg font-bold text-foreground">{formatNumber(stats.totalTickets)}</div>
-                                                <div className="text-xs text-muted-foreground">{stats.totalTypes} tipos</div>
+                                                <div className="text-lg font-bold text-foreground">{formatNumber(stats?.totalTickets || 0)}</div>
+                                                <div className="text-xs text-muted-foreground">{stats?.totalTypes || 0} tipos</div>
                                             </div>
                                             
                                             <div className="text-center">
@@ -211,8 +193,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     </div>
                                                     <span className="text-xs font-medium">Vendidas</span>
                                                 </div>
-                                                <div className="text-lg font-bold text-primary">{formatNumber(stats.soldTickets)}</div>
-                                                <div className="text-xs text-muted-foreground">{formatNumber(stats.availableTickets)} disponibles</div>
+                                                <div className="text-lg font-bold text-primary">{formatNumber(stats?.soldTickets || 0)}</div>
+                                                <div className="text-xs text-muted-foreground">{formatNumber(stats?.availableTickets || 0)} disponibles</div>
                                             </div>
                                             
                                             <div className="text-center">
@@ -223,7 +205,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     <span className="text-xs font-medium">Ingresos</span>
                                                 </div>
                                                 <div className="text-lg font-bold text-secondary">
-                                                    {formatCurrency(stats.totalRevenue)}
+                                                    {formatCurrency(stats?.totalRevenue || 0)}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">ARS</div>
                                             </div>
@@ -235,8 +217,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     </div>
                                                     <span className="text-xs font-medium">Visibles</span>
                                                 </div>
-                                                <div className="text-lg font-bold text-accent-foreground">{stats.visibleTickets}</div>
-                                                <div className="text-xs text-muted-foreground">de {stats.totalTypes}</div>
+                                                <div className="text-lg font-bold text-accent-foreground">{stats?.visibleTickets || 0}</div>
+                                                <div className="text-xs text-muted-foreground">de {stats?.totalTypes || 0}</div>
                                             </div>
                                         </div>
                                     </div>
