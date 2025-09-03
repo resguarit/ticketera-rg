@@ -320,6 +320,18 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'functions' => $event->functions->map(function($function) {
+                // Calcular estadísticas de la función usando los métodos del modelo y service
+                $ticketTypes = $function->ticketTypes;
+                $totalTickets = (int) $ticketTypes->sum('quantity');
+                $soldTickets = (int) $this->revenueService->ticketsSoldByFunction($function);
+                $availableTickets = max(0, $totalTickets - $soldTickets);
+                $totalRevenue = $function->getRevenue();
+                if ($totalRevenue === null) {
+                    $totalRevenue = 0.0;
+                }
+                $visibleTickets = (int) $ticketTypes->where('is_hidden', false)->count();
+                $totalTypes = (int) $ticketTypes->count();
+
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -331,24 +343,39 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
+                    // Estadísticas calculadas en el backend
+                    'stats' => [
+                        'totalTickets' => $totalTickets,
+                        'soldTickets' => $soldTickets,
+                        'availableTickets' => $availableTickets,
+                        'totalRevenue' => (float) $totalRevenue,
+                        'visibleTickets' => $visibleTickets,
+                        'totalTypes' => $totalTypes,
+                    ],
                     'ticketTypes' => $function->ticketTypes->map(function($ticketType) {
-                        $availableTickets = $ticketType->quantity - $ticketType->quantity_sold;
-                        $soldPercentage = $ticketType->quantity > 0 ? ($ticketType->quantity_sold / $ticketType->quantity) * 100 : 0;
-                        $totalIncome = $ticketType->quantity_sold * $ticketType->price;
+                        $actualSoldTickets = $this->revenueService->ticketsSoldByTicketType($ticketType);
+                        $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
+                        $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
+                        $totalIncome = $ticketType->getRevenue();
+                        
+                        // Debug: verificar que los valores no sean null
+                        if ($totalIncome === null) {
+                            $totalIncome = 0.0;
+                        }
                         
                         return [
                             'id' => $ticketType->id,
                             'name' => $ticketType->name,
                             'description' => $ticketType->description,
-                            'price' => $ticketType->price,
+                            'price' => (float) ($ticketType->price ?? 0),
                             'sales_start_date' => $ticketType->sales_start_date,
                             'sales_end_date' => $ticketType->sales_end_date,
-                            'quantity' => $ticketType->quantity,
-                            'quantity_sold' => $ticketType->quantity_sold,
-                            'quantity_available' => $availableTickets,
+                            'quantity' => (int) ($ticketType->quantity ?? 0),
+                            'quantity_sold' => (int) $actualSoldTickets,
+                            'quantity_available' => (int) $availableTickets,
                             'sold_percentage' => round($soldPercentage, 1),
-                            'total_income' => $totalIncome,
-                            'is_hidden' => $ticketType->is_hidden,
+                            'total_income' => (float) $totalIncome,
+                            'is_hidden' => (bool) $ticketType->is_hidden,
                             'event_function_id' => $ticketType->event_function_id,
                             'sector_id' => $ticketType->sector_id,
                             'sector' => $ticketType->sector,

@@ -15,6 +15,16 @@ export interface EventFunction {
     // Claves foráneas
     event_id: number;
     ticketTypes: TicketType[];
+    
+    // Estadísticas calculadas (opcional, solo cuando se incluyen)
+    stats?: {
+        totalTickets: number;
+        soldTickets: number;
+        availableTickets: number;
+        totalRevenue: number;
+        visibleTickets: number;
+        totalTypes: number;
+    };
 }
 
 export interface EventFunctionRelations {
