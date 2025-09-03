@@ -60,6 +60,7 @@ class OrderService
                 'tax' => $totals['tax'],
                 'service_fee' => $totals['service_fee'],
                 'total_amount' => $totals['total_amount'],
+                'order_details' => $totals['order_details'],
             ]);
     
             // Crear los tickets individuales y verificar disponibilidad
@@ -257,11 +258,20 @@ class OrderService
     public function calculateOrderTotals(array $selectedTickets, float $discount = 0, float $tax = 0): array
     {
         $subtotal = 0;
+        $orderDetails = [];
         
         foreach ($selectedTickets as $ticket) {
             $ticketType = TicketType::find($ticket['id']);
             if ($ticketType) {
-                $subtotal += $ticketType->price * (int)$ticket['quantity'];
+                $ticketSubtotal = $ticketType->price * (int)$ticket['quantity'];
+                $subtotal += $ticketSubtotal;
+
+                $orderDetails[] = [
+                    'ticket_type_id' => $ticketType->id,
+                    'price' => $ticketType->price,
+                    'quantity' => (int)$ticket['quantity'],
+                    'subtotal' => $ticketSubtotal,
+                ];
             }
         }
         
@@ -275,6 +285,7 @@ class OrderService
             'tax' => $tax,
             'service_fee' => $serviceFee,
             'total_amount' => $totalAmount,
+            'order_details' => $orderDetails,
         ];
     }
 }

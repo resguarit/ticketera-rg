@@ -27,6 +27,7 @@ class Order extends Model
         'service_fee',
         'total_amount',
         'discount_code_id', // Clave foránea para el código de descuento
+        'order_details',
     ];
 
     protected $casts = [
@@ -37,6 +38,7 @@ class Order extends Model
         'tax' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'order_details' => 'json',
     ];
 
     public function client()
