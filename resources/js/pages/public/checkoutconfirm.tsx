@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-import { Event, EventFunction } from '@/types';
+import { Event, EventFunction, Organizer } from '@/types';
 
 // Tipos de datos que llegan del backend
 interface SelectedTicket {
@@ -34,6 +34,7 @@ interface EventData extends Event {
     full_address?: string;
     selectedTickets: SelectedTicket[];
     function?: EventFunction;
+    organizer?: Organizer; // <-- AÑADIR ESTO
 }
 
 interface CheckoutConfirmProps {
@@ -107,7 +108,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const getServiceFee = () => {
-        return Math.round(getTotalPrice() * 0.05); // 5% service fee
+        const taxRate = eventData.organizer?.tax ? parseFloat(eventData.organizer.tax) / 100 : 0;
+        return getTotalPrice() * taxRate;
     };
 
     const getFinalTotal = () => {
