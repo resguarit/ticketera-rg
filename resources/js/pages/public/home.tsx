@@ -57,8 +57,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     // Filtrar eventos basado en los criterios de búsqueda
     const filteredEvents = events.filter((event) => {
         const matchesSearch =
-            event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+            event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            event.location.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
         const matchesCity = selectedCity === "all" || event.city === selectedCity;
 
