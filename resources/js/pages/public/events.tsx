@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { compareDates } from '@/lib/dateHelpers';
 import { formatPrice } from '@/lib/currencyHelpers';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Star, Grid, List, BringToFront, Presentation, Utensils, Palette, Laugh, Users } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Star, Grid, List, BringToFront, Presentation, Utensils, Palette, Laugh, Users, Ticket, XCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,12 +15,21 @@ import {
   Event,
   Category,
   Ciudad,
-  Venue
+  Venue,
+  EventFunction, // Asegúrate de que este tipo esté definido y sea importado
 } from '@/types/models';
 
 import {
   getCategoryIcon,  
 } from '@/types/ui'
+
+// Definir los estados basados en el Enum del backend
+const eventStatuses = [
+    { value: 'on_sale', label: 'A la venta', icon: Ticket },
+    { value: 'upcoming', label: 'Próximas', icon: Calendar },
+    { value: 'sold_out', label: 'Agotadas', icon: XCircle },
+    { value: 'finished', label: 'Finalizadas', icon: CheckCircle },
+];
 
 interface EventDetail extends Event {
     date: string;
@@ -31,6 +40,8 @@ interface EventDetail extends Event {
     category: string;
     price: number;
     venue: Venue;
+    status: string; // <-- AÑADIR: Estado consolidado del evento
+    functions: EventFunction[];
 }
 
 interface PublicEventsPageProps {
@@ -49,6 +60,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
     const [searchTerm, setSearchTerm] = useState(filters.search);
     const [selectedCategory, setSelectedCategory] = useState(filters.category);
     const [selectedCity, setSelectedCity] = useState(filters.city);
+    const [selectedStatus, setSelectedStatus] = useState('all'); // <-- AÑADIR: Nuevo estado para el filtro de estado
     const [sortBy, setSortBy] = useState(filters.sortBy);
     const [viewMode, setViewMode] = useState("grid");
     console.log(events)
@@ -61,7 +73,10 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                 event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
             const matchesCity = selectedCity === "all" || event.city === selectedCity;
-            return matchesSearch && matchesCategory && matchesCity;
+            // <-- MODIFICAR: Usar el nuevo campo de estado del evento
+            const matchesStatus = selectedStatus === 'all' || event.status === selectedStatus;
+            
+            return matchesSearch && matchesCategory && matchesCity && matchesStatus;
         })
         .sort((a, b) => {
             switch (sortBy) {
@@ -166,30 +181,30 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-foreground space-y-3 sm:space-y-0">
                             <span className="text-sm sm:text-base">{filteredEvents.length} eventos encontrados</span>
                             <div className="flex flex-wrap gap-1 sm:gap-2">
-                                {categories.slice(0, 4).map((category) => {
-                                    const IconComponent = getCategoryIcon(category.icon);
+                                {eventStatuses.map((status) => {
+                                    const IconComponent = status.icon;
                                     return (
                                         <Button
-                                            key={category.id}
+                                            key={status.value}
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => setSelectedCategory(category.name)}
-                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === category.name ? "bg-primary text-white" : ""}`}
+                                            onClick={() => setSelectedStatus(status.value)}
+                                            className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedStatus === status.value ? "bg-primary text-white" : ""}`}
                                         >
                                             <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                            <span className="hidden sm:inline">{category.name}</span>
-                                            <span className="sm:hidden">{category.name.substring(0, 3)}</span>
+                                            <span className="hidden sm:inline">{status.label}</span>
+                                            <span className="sm:hidden">{status.label.substring(0, 3)}</span>
                                         </Button>
                                     );
                                 })}
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setSelectedCategory("all")}
-                                    className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedCategory === "all" ? "bg-primary text-white" : ""}`}
+                                    onClick={() => setSelectedStatus("all")}
+                                    className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedStatus === "all" ? "bg-primary text-white" : ""}`}
                                 >
                                     <BringToFront className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
-                                    Todas
+                                    Todos
                                 </Button>
                             </div>
                         </div>
