@@ -7,6 +7,7 @@ use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Organizer\EventController;
 use App\Http\Controllers\Organizer\TicketTypeController;
 use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
+use App\Http\Controllers\Organizer\AssistantController;
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -23,6 +24,16 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::patch('/{event}/archive', [EventController::class, 'toggleArchive'])->name('toggleArchive');
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
+        Route::get('/attendees/{event}', [AssistantController::class, 'index'])->name('attendees');
+        
+        // Rutas para gestión de asistentes
+        Route::prefix('{event}/attendees')->name('attendees.')->group(function () {
+            Route::post('/', [AssistantController::class, 'store'])->name('store');
+            Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
+            Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
+            Route::get('/order/{order}/details', [AssistantController::class, 'showOrderDetails'])->name('order.details');
+            Route::get('/assistant/{assistant}/details', [AssistantController::class, 'showAssistantDetails'])->name('assistant.details');
+        });
 
         // Rutas para Funciones (EventFunction) anidadas
         Route::get('/functions/{event}', [EventController::class, 'functions'])->name('functions');
@@ -40,6 +51,13 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
             Route::patch('/{ticketType}/toggle-visibility', [TicketTypeController::class, 'toggleVisibility'])->name('toggleVisibility');
             Route::post('/{ticketType}/duplicate-all', [TicketTypeController::class, 'duplicateAll'])->name('duplicateAll'); // <-- CORRECTO
             Route::delete('/{ticketType}', [TicketTypeController::class, 'destroy'])->name('destroy');
+        });
+
+        // Rutas para Asistentes (Assistants) anidadas
+        Route::prefix('{event}/assistants')->name('assistants.')->group(function () {
+            Route::post('/', [AssistantController::class, 'store'])->name('store');
+            Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
+            Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
         });
     });
     
