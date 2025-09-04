@@ -86,7 +86,8 @@ class CheckoutController extends Controller
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'selectedTickets' => $selectedTickets,
-            'function' => $selectedFunction
+            'function' => $selectedFunction,
+            'organizer' => $event->organizer, // <-- AÑADIR ESTO
         ];
 
         return Inertia::render('public/checkoutconfirm', [
@@ -138,8 +139,12 @@ class CheckoutController extends Controller
         }
 
         try {
+            // Obtener el evento para acceder al tax del organizador
+            $event = Event::with('organizer')->findOrFail($validated['event_id']);
+            $organizerTax = $event->organizer ? ($event->organizer->tax / 100) : 0; // Convertir a decimal
+
             // Calcular totales usando el servicio
-            $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets']);
+            $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets'], 0, $organizerTax);
 
             // Preparar datos para crear la orden
             $orderData = [
@@ -149,6 +154,7 @@ class CheckoutController extends Controller
                 'total_amount' => $totals['total_amount'],
                 'payment_method' => $validated['payment_info']['method'],
                 'billing_info' => $validated['billing_info'],
+                'tax' => $organizerTax, // <-- AÑADIR ESTO
             ];
 
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)

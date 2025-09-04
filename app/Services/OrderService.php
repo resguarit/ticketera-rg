@@ -41,14 +41,26 @@ class OrderService
                 $userId = Auth::id();
             }
     
+            // Calcular totales
+            $totals = $this->calculateOrderTotals(
+                $orderData['selected_tickets'],
+                $orderData['discount'] ?? 0, // Pasamos el descuento
+                $orderData['tax'] ?? 0 // Pasamos el tax del organizador
+            );
+
             // Crear la orden principal
             $order = Order::create([
                 'client_id' => $userId,
                 'order_date' => now(),
-                'total_amount' => $orderData['total_amount'],
                 'status' => OrderStatus::PENDING,
                 'payment_method' => $orderData['payment_method'],
                 'transaction_id' => null,
+                'subtotal' => $totals['subtotal'],
+                'discount' => $totals['discount'],
+                'tax' => $totals['tax'],
+                'service_fee' => $totals['service_fee'],
+                'total_amount' => $totals['total_amount'],
+                'order_details' => $totals['order_details'],
             ]);
     
             // Crear los tickets individuales y verificar disponibilidad
@@ -243,26 +255,37 @@ class OrderService
         }
     }
 
-    // FIX: Corregir el método calculateOrderTotals para manejar strings
-    public function calculateOrderTotals(array $selectedTickets): array
+    public function calculateOrderTotals(array $selectedTickets, float $discount = 0, float $tax = 0): array
     {
         $subtotal = 0;
+        $orderDetails = [];
         
         foreach ($selectedTickets as $ticket) {
-            // Convertir price a float si viene como string
-            $price = is_string($ticket['price']) ? (float)$ticket['price'] : $ticket['price'];
-            $quantity = (int)$ticket['quantity'];
-            
-            $subtotal += $price * $quantity;
+            $ticketType = TicketType::find($ticket['id']);
+            if ($ticketType) {
+                $ticketSubtotal = $ticketType->price * (int)$ticket['quantity'];
+                $subtotal += $ticketSubtotal;
+
+                $orderDetails[] = [
+                    'ticket_type_id' => $ticketType->id,
+                    'price' => $ticketType->price,
+                    'quantity' => (int)$ticket['quantity'],
+                    'subtotal' => $ticketSubtotal,
+                ];
+            }
         }
         
-        $serviceFee = round($subtotal * 0.05); // 5% de cargo por servicio
-        $total = $subtotal + $serviceFee;
+        $subtotalAfterDiscount = $subtotal * (1 - $discount);
+        $serviceFee = $subtotalAfterDiscount * $tax;
+        $totalAmount = $subtotalAfterDiscount + $serviceFee;
         
         return [
             'subtotal' => $subtotal,
+            'discount' => $discount,
+            'tax' => $tax,
             'service_fee' => $serviceFee,
-            'total_amount' => $total,
+            'total_amount' => $totalAmount,
+            'order_details' => $orderDetails,
         ];
     }
 }

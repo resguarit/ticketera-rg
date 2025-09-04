@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 
-import { Event, EventFunction } from '@/types';
+import { Event, EventFunction, Organizer } from '@/types';
 
 // Tipos de datos que llegan del backend
 interface SelectedTicket {
@@ -34,6 +34,7 @@ interface EventData extends Event {
     full_address?: string;
     selectedTickets: SelectedTicket[];
     function?: EventFunction;
+    organizer?: Organizer; // <-- AÑADIR ESTO
 }
 
 interface CheckoutConfirmProps {
@@ -106,12 +107,16 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         return eventData.selectedTickets.reduce((total, ticket) => total + ticket.quantity, 0);
     };
 
-    const getServiceFee = () => {
-        return Math.round(getTotalPrice() * 0.05); // 5% service fee
+    const getServiceFeeDetails = () => {
+        const taxRate = eventData.organizer?.tax ? parseFloat(eventData.organizer.tax) / 100 : 0;
+        const fee = getTotalPrice() * taxRate;
+        return { fee, taxRate };
     };
 
+    const serviceFeeDetails = getServiceFeeDetails();
+
     const getFinalTotal = () => {
-        return getTotalPrice() + getServiceFee();
+        return getTotalPrice() + serviceFeeDetails.fee;
     };
 
     const handleNextStep = () => {
@@ -223,7 +228,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Event Summary */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
+                            <Card className="bg-white border-gray-200 shadow-lg gap-2">
                                 <CardHeader>
                                     <CardTitle className="text-foreground flex items-center space-x-3">
                                         <Ticket className="w-6 h-6 text-primary" />
@@ -631,8 +636,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                             <span>{formatPrice(getTotalPrice())}</span>
                                         </div>
                                         <div className="flex justify-between text-foreground/80">
-                                            <span>Cargo por servicio</span>
-                                            <span>{formatPrice(getServiceFee())}</span>
+                                            <span>Cargo por servicio ({ (serviceFeeDetails.taxRate * 100).toFixed(0) }%)</span>
+                                            <span>{formatPrice(serviceFeeDetails.fee)}</span>
                                         </div>
                                         <Separator className="bg-gray-200" />
                                         <div className="flex justify-between text-foreground text-xl font-bold">

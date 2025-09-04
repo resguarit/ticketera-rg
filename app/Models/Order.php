@@ -122,4 +122,5 @@ class Order extends Model
         }
         return $value;
     }
+
 }
