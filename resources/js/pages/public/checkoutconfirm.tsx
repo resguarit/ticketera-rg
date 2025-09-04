@@ -82,6 +82,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [showCVV, setShowCVV] = useState(false);
+    const [errors, setErrors] = useState<Partial<Record<keyof typeof billingInfo, string>>>({});
 
     // --- NUEVO: Estados para el modal de verificación ---
     const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
@@ -138,14 +139,33 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const handleNextStep = () => {
-        // --- MODIFICADO: Lógica para abrir el modal si es invitado ---
-        if (currentStep === 1 && !auth.user) {
-            if (!billingInfo.email || !billingInfo.firstName || !billingInfo.lastName || !billingInfo.documentNumber) {
-                alert('Por favor, completa todos los campos obligatorios (*) antes de continuar.');
-                return;
+        // --- MODIFICADO: Validación de campos con feedback visual ---
+        if (currentStep === 1) {
+            const newErrors: Partial<Record<keyof typeof billingInfo, string>> = {};
+            if (!billingInfo.firstName) newErrors.firstName = 'El nombre es obligatorio.';
+            if (!billingInfo.lastName) newErrors.lastName = 'El apellido es obligatorio.';
+            if (!billingInfo.email) {
+                newErrors.email = 'El email es obligatorio.';
+            } else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) {
+                newErrors.email = 'El formato del email no es válido.';
             }
-            setVerificationStep('prompt'); // Reiniciar el modal al estado inicial
-            setVerificationModalOpen(true);
+            if (!billingInfo.phone) newErrors.phone = 'El teléfono es obligatorio.';
+            if (!billingInfo.documentNumber) newErrors.documentNumber = 'El número de documento es obligatorio.';
+
+            setErrors(newErrors);
+
+            if (Object.keys(newErrors).length > 0) {
+                return; // Detener si hay errores
+            }
+
+            // Si la validación es exitosa, limpiar errores y continuar
+            setErrors({});
+            if (!auth.user) {
+                setVerificationStep('prompt'); // Reiniciar el modal al estado inicial
+                setVerificationModalOpen(true);
+            } else {
+                setCurrentStep(currentStep + 1);
+            }
         } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
@@ -339,10 +359,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="firstName"
                                                         value={billingInfo.firstName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, firstName: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.firstName ? 'border-red-500' : ''}`}
+
                                                         placeholder="Tu nombre"
                                                         required
                                                     />
+                                                    {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="lastName" className="text-foreground">
@@ -352,10 +374,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="lastName"
                                                         value={billingInfo.lastName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, lastName: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.lastName ? 'border-red-500' : ''}`}
+
                                                         placeholder="Tu apellido"
                                                         required
                                                     />
+                                                    {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
                                                 </div>
                                             </div>
 
@@ -369,10 +393,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         type="email"
                                                         value={billingInfo.email}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, email: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.email ? 'border-red-500' : ''}`}
+
                                                         placeholder="tu@email.com"
                                                         required
                                                     />
+                                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="phone" className="text-foreground">
@@ -382,10 +408,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="phone"
                                                         value={billingInfo.phone}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, phone: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.phone ? 'border-red-500' : ''}`}
+
                                                         placeholder="+54 11 1234-5678"
                                                         required
                                                     />
+                                                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                                                 </div>
                                             </div>
 
@@ -416,10 +444,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="documentNumber"
                                                         value={billingInfo.documentNumber}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.documentNumber ? 'border-red-500' : ''}`}
+
                                                         placeholder="12345678"
                                                         required
                                                     />
+                                                    {errors.documentNumber && <p className="text-red-500 text-xs mt-1">{errors.documentNumber}</p>}
                                                 </div>
                                             </div>
                                         </form>
