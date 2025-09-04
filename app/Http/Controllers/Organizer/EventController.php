@@ -123,6 +123,7 @@ class EventController extends Controller
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
                 'featured' => $validated['featured'] ?? false,
+                'tax' => $organizer->tax, // <-- AÑADIR ESTA LÍNEA
             ]);
 
             // Create functions only (without ticket types for now)

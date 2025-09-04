@@ -34,7 +34,8 @@ interface EventData extends Event {
     full_address?: string;
     selectedTickets: SelectedTicket[];
     function?: EventFunction;
-    organizer?: Organizer; // <-- AÑADIR ESTO
+    organizer?: Organizer;
+    tax?: number; // <-- AÑADIR ESTO
 }
 
 interface CheckoutConfirmProps {
@@ -108,7 +109,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const getServiceFeeDetails = () => {
-        const taxRate = eventData.organizer?.tax ? parseFloat(eventData.organizer.tax) / 100 : 0;
+        const taxRate = eventData.tax ? eventData.tax / 100 : 0;
         const fee = getTotalPrice() * taxRate;
         return { fee, taxRate };
     };

@@ -80,14 +80,14 @@ class CheckoutController extends Controller
             'date' => $selectedFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
             'time' => $selectedFunction->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
-            // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
             'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'selectedTickets' => $selectedTickets,
             'function' => $selectedFunction,
-            'organizer' => $event->organizer, // <-- AÑADIR ESTO
+            'organizer' => $event->organizer,
+            'tax' => $event->tax, // <-- AÑADIR ESTO
         ];
 
         return Inertia::render('public/checkoutconfirm', [
@@ -139,12 +139,12 @@ class CheckoutController extends Controller
         }
 
         try {
-            // Obtener el evento para acceder al tax del organizador
-            $event = Event::with('organizer')->findOrFail($validated['event_id']);
-            $organizerTax = $event->organizer ? ($event->organizer->tax / 100) : 0; // Convertir a decimal
+            // Obtener el evento para acceder al tax
+            $event = Event::findOrFail($validated['event_id']);
+            $eventTax = $event->tax ? ($event->tax / 100) : 0; // Convertir a decimal
 
             // Calcular totales usando el servicio
-            $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets'], 0, $organizerTax);
+            $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets'], 0, $eventTax);
 
             // Preparar datos para crear la orden
             $orderData = [
@@ -154,7 +154,7 @@ class CheckoutController extends Controller
                 'total_amount' => $totals['total_amount'],
                 'payment_method' => $validated['payment_info']['method'],
                 'billing_info' => $validated['billing_info'],
-                'tax' => $organizerTax, // <-- AÑADIR ESTO
+                'tax' => $eventTax, // <-- AÑADIR ESTO
             ];
 
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)

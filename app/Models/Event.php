@@ -29,6 +29,7 @@ class Event extends Model
         'banner_url',
         'featured',
         'is_archived',
+        'tax',
     ];
 
     protected $casts = [
