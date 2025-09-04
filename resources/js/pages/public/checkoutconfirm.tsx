@@ -12,7 +12,17 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Mail, KeyRound } from 'lucide-react';
 
 import { Event, EventFunction, Organizer } from '@/types';
 
@@ -68,17 +78,24 @@ const paymentMethods = [
 ];
 
 export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmProps) {
+    const { auth } = usePage<SharedData>().props;
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [showCVV, setShowCVV] = useState(false);
 
+    // --- NUEVO: Estados para el modal de verificación ---
+    const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
+    const [verificationStep, setVerificationStep] = useState<'prompt' | 'code'>('prompt');
+    const [verificationCode, setVerificationCode] = useState('');
+    // --- FIN NUEVO ---
+
     const [billingInfo, setBillingInfo] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
+        firstName: auth.user?.person?.name ?? "",
+        lastName: auth.user?.person?.last_name ?? "",
+        email: auth.user?.email ?? "",
+        phone: auth.user?.person?.phone ?? "",
         documentType: "DNI",
-        documentNumber: "",
+        documentNumber: auth.user?.person?.dni ?? "",
         address: "",
         city: "",
         postalCode: "",
@@ -121,9 +138,18 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const handleNextStep = () => {
-        if (currentStep < 3) {
+        // --- MODIFICADO: Lógica para abrir el modal si es invitado ---
+        if (currentStep === 1 && !auth.user) {
+            if (!billingInfo.email || !billingInfo.firstName || !billingInfo.lastName || !billingInfo.documentNumber) {
+                alert('Por favor, completa todos los campos obligatorios (*) antes de continuar.');
+                return;
+            }
+            setVerificationStep('prompt'); // Reiniciar el modal al estado inicial
+            setVerificationModalOpen(true);
+        } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
+        // --- FIN MODIFICADO ---
     };
 
     const handlePrevStep = () => {
@@ -131,6 +157,24 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
             setCurrentStep(currentStep - 1);
         }
     };
+
+    // --- NUEVO: Manejadores para el modal de verificación ---
+    const handleConfirmEmail = () => {
+        // Simula el envío de un email y pasa al paso de introducir el código
+        setVerificationStep('code');
+    };
+
+    const handleVerifyCode = () => {
+        // Simula la validación del código. Como es hardcodeado, cualquier valor es válido.
+        if (!verificationCode) {
+            alert('Por favor, introduce el código de verificación.');
+            return;
+        }
+        // Cierra el modal y avanza al siguiente paso (pago)
+        setVerificationModalOpen(false);
+        setCurrentStep(2);
+    };
+    // --- FIN NUEVO ---
 
     const handleSubmitPayment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -662,6 +706,50 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                     </div>
                 </div>
             </div>
+
+            {/* --- NUEVO: Modal de Verificación de Email --- */}
+            <Dialog open={isVerificationModalOpen} onOpenChange={setVerificationModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Email</DialogTitle>
+                        <DialogDescription>
+                            {verificationStep === 'prompt'
+                                ? 'Para continuar, necesitamos verificar tu dirección de email. La compra quedará asociada a esta dirección.'
+                                : 'Hemos enviado un código a tu email. Introdúcelo a continuación para validar tu cuenta.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {verificationStep === 'prompt' ? (
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground">Se asociará la compra a:</p>
+                                <p className="font-semibold text-lg">{billingInfo.email}</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <Label htmlFor="verification-code">Código de Verificación</Label>
+                                <Input
+                                    id="verification-code"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    placeholder="Escribe cualquier código para continuar"
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        {verificationStep === 'prompt' ? (
+                            <Button onClick={handleConfirmEmail} className="w-full">
+                                <Mail className="mr-2 h-4 w-4" /> Confirmar Email
+                            </Button>
+                        ) : (
+                            <Button onClick={handleVerifyCode} className="w-full">
+                                <KeyRound className="mr-2 h-4 w-4" /> Validar y Continuar
+                            </Button>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* --- FIN NUEVO --- */}
         </>
     );
 }

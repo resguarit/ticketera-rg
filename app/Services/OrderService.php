@@ -33,9 +33,19 @@ class OrderService
                     // Crear nuevo usuario
                     $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
                     $accountCreated = true;
-                    Auth::loginUsingId($userId);
+                    // Auth::loginUsingId($userId); // Eliminado para no loguear al usuario
                 } else {
                     $userId = $existingUser->id;
+                    // Si el usuario existe, nos aseguramos de que los datos de la persona estén actualizados si es necesario.
+                    $user = User::with('person')->find($userId);
+                    if ($user->person) {
+                        $user->person->update([
+                            'name' => $orderData['billing_info']['firstName'],
+                            'last_name' => $orderData['billing_info']['lastName'],
+                            'phone' => $orderData['billing_info']['phone'],
+                            'dni' => $orderData['billing_info']['documentNumber'],
+                        ]);
+                    }
                 }
             } else {
                 $userId = Auth::id();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatNumber, formatPriceWithCurrency } from '@/lib/currencyHelpers';
 import { calculateTicketSubtotal } from '@/lib/ticketHelpers';
-import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket } from 'lucide-react';
+import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket, LogIn, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +43,6 @@ interface CheckoutSuccessProps {
 export default function CheckoutSuccess({ purchaseData, accountCreated = false }: CheckoutSuccessProps) {
     const [showConfetti, setShowConfetti] = useState(true);
     
-    // ✅ Obtener auth usando usePage hook
     const { auth } = usePage<SharedData>().props;
 
     useEffect(() => {
@@ -90,6 +89,57 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                 Tu compra ha sido procesada correctamente. Recibirás un email de confirmación en breve.
                             </p>
                         </div>
+
+                        {/* --- NUEVO: Bloques condicionales para creación/asociación de cuenta --- */}
+                        {/* Caso 1: Usuario invitado, se le CREÓ una cuenta nueva */}
+                        {!auth.user && accountCreated && (
+                            <Card className="mb-6 bg-blue-50 border-blue-200">
+                                <CardHeader className="flex-row items-center gap-4">
+                                    <UserCheck className="w-8 h-8 text-blue-500" />
+                                    <div>
+                                        <CardTitle>¡Tu cuenta ha sido creada!</CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Inicia sesión para gestionar tus tickets y futuras compras.
+                                        </p>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm">
+                                        Puedes acceder a tu cuenta usando tu email y tu número de documento como contraseña por defecto. Te recomendamos cambiarla después de tu primer inicio de sesión.
+                                    </p>
+                                    <Link href={route('login')} className="mt-4 block">
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                                            <LogIn className="w-4 h-4 mr-2" />
+                                            Iniciar Sesión
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Caso 2: Usuario invitado, YA TENÍA una cuenta con ese email */}
+                        {!auth.user && !accountCreated && (
+                             <Card className="mb-6 bg-green-50 border-green-200">
+                                <CardHeader className="flex-row items-center gap-4">
+                                    <UserCheck className="w-8 h-8 text-green-600" />
+                                    <div>
+                                        <CardTitle>Compra asociada a tu cuenta</CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Hemos añadido estos tickets a tu cuenta existente.
+                                        </p>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Link href={route('login')} className="mt-2 block">
+                                        <Button className="w-full bg-green-600 hover:bg-green-700">
+                                            <LogIn className="w-4 h-4 mr-2" />
+                                            Iniciar Sesión para ver tus Tickets
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {/* --- FIN NUEVO --- */}
 
                         {/* Order Details */}
                         <Card className="bg-white border-gray-200 shadow-lg mb-6">
@@ -182,14 +232,16 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                 <Share2 className="w-4 h-4 mr-2" />
                                 Compartir
                             </Button>
-                            <Link href={route('my-tickets')}>
+                            {/* --- MODIFICADO: Botón condicional a "Mis Tickets" o "Inicio" --- */}
+                            <Link href={auth.user ? route('my-tickets') : route('home')}>
                                 <Button
                                     variant="outline"
                                     className="w-full border-gray-300 text-foreground hover:bg-gray-50"
                                 >
-                                    Ver Mis Tickets
+                                    {auth.user ? 'Ver Mis Tickets' : 'Volver al Inicio'}
                                 </Button>
                             </Link>
+                            {/* --- FIN MODIFICADO --- */}
                         </div>
 
                         {/* Important Information */}
@@ -233,74 +285,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                             </div>
                         </div>
 
-                        {/* Account Information - Solo si se creó una cuenta nueva */}
-                        {auth.user && accountCreated && (
-                            <Card className="bg-blue-50 border-blue-200 shadow-lg mt-6">
-                                <CardContent className="p-6">
-                                    <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
-                                        <User className="w-5 h-5 text-blue-500" />
-                                        <span>¡Cuenta Creada!</span>
-                                    </h4>
-                                    <div className="space-y-3">
-                                        <p className="text-foreground/80 text-sm">
-                                            Hemos creado una cuenta para ti para que puedas gestionar tus tickets:
-                                        </p>
-                                        <div className="bg-white p-4 rounded-lg border border-blue-200">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <p className="text-foreground/60">Email:</p>
-                                                    <p className="font-semibold text-foreground">{auth.user.email}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-foreground/60">Contraseña temporal (Tu DNI):</p>
-                                                    <p className="font-semibold text-foreground">{auth.user.person.dni ?? '12345678'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-foreground/70 text-xs">
-                                            💡 Te recomendamos cambiar tu contraseña en "Mi Cuenta" por seguridad
-                                        </p>
-                                        <div className="pt-2">
-                                            <Link href={route('profile.edit')}>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                                                >
-                                                    Ir a Mi Cuenta
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Si el usuario ya tenía cuenta, mostrar solo el mensaje de mis tickets */}
-                        {auth.user && !accountCreated && (
-                            <Card className="bg-green-50 border-green-200 shadow-lg mt-6">
-                                <CardContent className="p-6">
-                                    <h4 className="text-foreground font-bold mb-4 flex items-center space-x-2">
-                                        <Ticket className="w-5 h-5 text-green-500" />
-                                        <span>Tus Tickets</span>
-                                    </h4>
-                                    <div className="space-y-3">
-                                        <p className="text-foreground/80 text-sm">
-                                            Puedes encontrar todos tus tickets en la sección "Mis Tickets" de tu cuenta.
-                                        </p>
-                                        <div className="pt-2">
-                                            <Link href={route('my-tickets')}>
-                                                <Button 
-                                                    className="bg-green-500 hover:bg-green-600 text-white"
-                                                >
-                                                    Ver Mis Tickets
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                        {/* --- ELIMINADO: Se movió la lógica de cuenta creada/existente al principio --- */}
                     </div>
                 </div>
             </div>
