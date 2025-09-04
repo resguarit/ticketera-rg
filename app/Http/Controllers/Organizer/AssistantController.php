@@ -78,12 +78,70 @@ class AssistantController extends Controller
         // Obtener los asistentes basados en issued_tickets
         $attendees = $this->getAttendeesFromIssuedTickets($event, $functionId);
         
+        // Ordenar los asistentes por fecha (más recientes primero)
+        $attendees = $attendees->sortByDesc(function ($attendee) {
+            return $attendee['type'] === 'buyer' 
+                ? $attendee['purchased_at'] 
+                : $attendee['invited_at'];
+        });
+        
         // Calcular estadísticas
         $stats = $this->calculateStats($attendees);
+        
+        // Paginar los resultados
+        $perPage = 10; // Número de resultados por página
+        $currentPage = request()->input('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+        
+        // Asegurarnos de que paginatedItems sea un array
+        $paginatedItems = $attendees->slice($offset, $perPage)->values()->all();
+        $totalItems = $attendees->count();
+        
+        // Crear los enlaces de paginación manualmente
+        $lastPage = ceil($totalItems / $perPage);
+        $links = [];
+        
+        // Enlace anterior
+        $links[] = [
+            'url' => $currentPage > 1 ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage - 1])) : null,
+            'label' => '&laquo; Anterior',
+            'active' => false,
+        ];
+        
+        // Enlaces numéricos
+        $startPage = max(1, $currentPage - 2);
+        $endPage = min($lastPage, $currentPage + 2);
+        
+        for ($i = $startPage; $i <= $endPage; $i++) {
+            $links[] = [
+                'url' => url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $i])),
+                'label' => (string)$i,
+                'active' => $i === (int)$currentPage,
+            ];
+        }
+        
+        // Enlace siguiente
+        $links[] = [
+            'url' => $currentPage < $lastPage ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage + 1])) : null,
+            'label' => 'Siguiente &raquo;',
+            'active' => false,
+        ];
+        
+        // Estructura de paginación compatible con PaginatedResponse
+        $attendeesPaginated = [
+            'data' => $paginatedItems,
+            'links' => $links,
+            'total' => $totalItems,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+            'from' => ($currentPage - 1) * $perPage + 1,
+            'to' => min($currentPage * $perPage, $totalItems),
+        ];
 
         return Inertia::render('organizer/events/attendees', [
             'event' => $eventData,
-            'attendees' => $attendees,
+            'attendees' => $attendeesPaginated,
             'functions' => $functions,
             'selectedFunctionId' => $functionId,
             'stats' => $stats,
@@ -325,9 +383,11 @@ class AssistantController extends Controller
 
         // Calcular totales usando los campos de la orden
         $orderSubtotal = $order->subtotal ?? $perType->sum('subtotal');
-        $discountAmount = $orderSubtotal * ($order->discount ?? 0);
+        $discountPercentage = $order->discount ?? 0; // Ya viene como decimal (0.15 = 15%)
+        $discountAmount = $orderSubtotal * $discountPercentage;
         $subtotalAfterDiscount = $orderSubtotal - $discountAmount;
         $serviceFeeAmount = $order->service_fee ?? 0;
+        $taxPercentage = $order->tax ?? 0; // Ya viene como decimal (0.05 = 5%)
         $totalPaid = $order->total_amount;
 
         return response()->json([
@@ -348,16 +408,18 @@ class AssistantController extends Controller
             'per_type' => $perType,
             'totals' => [
                 'subtotal' => round($orderSubtotal, 2),
-                'discount_percentage' => round(($order->discount ?? 0) * 100, 1),
+                'discount_percentage' => round($discountPercentage * 100, 1), // Convertir a porcentaje para mostrar (0.15 -> 15.0%)
                 'discount_amount' => round($discountAmount, 2),
                 'subtotal_after_discount' => round($subtotalAfterDiscount, 2),
                 'service_fee_amount' => round($serviceFeeAmount, 2),
+                'tax_percentage' => round($taxPercentage * 100, 1), // Convertir a porcentaje para mostrar (0.05 -> 5.0%)
                 'total_paid' => round($totalPaid, 2),
             ],
             'discount_code' => $order->discountCode ? [
                 'code' => $order->discountCode->code,
                 'description' => $order->discountCode->description,
             ] : null,
+            'order_details' => $order->order_details,
         ]);
     }
 
@@ -384,22 +446,32 @@ class AssistantController extends Controller
             ->where('status', '!=', 'cancelled') // Excluir cancelados
             ->groupBy('ticket_type_id');
 
-        $perType = $ticketsByType->map(function ($tickets) {
-            $firstTicket = $tickets->first();
-            $ticketType = $firstTicket->ticketType;
-            $quantity = $tickets->count();
-            $courtesyValue = $ticketType->price; // Valor de cortesía (precio original)
+        $perType = collect(); // Inicializar como colección vacía
+        
+        if ($ticketsByType->count() > 0) {
+            $perType = $ticketsByType->map(function ($tickets) {
+                $firstTicket = $tickets->first();
+                if (!$firstTicket || !$firstTicket->ticketType) {
+                    return null;
+                }
+                
+                $ticketType = $firstTicket->ticketType;
+                $quantity = $tickets->count();
+                $courtesyValue = $ticketType->price; // Valor de cortesía (precio original)
 
-            return [
-                'ticket_type_id' => $ticketType->id,
-                'ticket_type_name' => $ticketType->name,
-                'courtesy_value' => round($courtesyValue, 2),
-                'quantity' => $quantity,
-                'total_courtesy_value' => round($quantity * $courtesyValue, 2),
-                'tickets_used' => $tickets->where('status', 'used')->count(),
-                'tickets_available' => $tickets->where('status', 'available')->count(),
-            ];
-        })->values();
+                return [
+                    'ticket_type_id' => $ticketType->id,
+                    'ticket_type_name' => $ticketType->name,
+                    'courtesy_value' => round($courtesyValue, 2),
+                    'quantity' => $quantity,
+                    'total_courtesy_value' => round($quantity * $courtesyValue, 2),
+                    'tickets_used' => $tickets->where('status', 'used')->count(),
+                    'tickets_available' => $tickets->where('status', 'available')->count(),
+                ];
+            })
+            ->filter() // Eliminar valores nulos
+            ->values();
+        }
 
         // Calcular totales
         $totalTickets = $assistant->issuedTickets->where('status', '!=', 'cancelled')->count();
