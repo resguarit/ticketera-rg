@@ -153,7 +153,7 @@ export type EventSortField = 'name' | 'date' | 'created_at' | 'tickets_sold' | '
 export function hasRequiredEventFields(event: any): boolean {
     return event && 
            typeof event.id === 'number' && 
-           typeof event.title === 'string' || typeof event.name === 'string';
+           typeof event.name === 'string' || typeof event.name === 'string';
 }
 
 export function isEventWithFunctions(event: any): boolean {
