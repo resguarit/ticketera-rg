@@ -106,6 +106,7 @@ export interface OrderTotals {
     discount_amount: number;
     subtotal_after_discount: number;
     service_fee_amount: number;
+    tax_percentage: number;
     total_paid: number;
 }
 
@@ -139,6 +140,7 @@ export interface OrderDetails {
         code: string;
         description: string;
     } | null;
+    order_details: any | null;
 }
 
 export interface AssistantDetails {

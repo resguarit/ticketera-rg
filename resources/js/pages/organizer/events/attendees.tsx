@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router, Head } from '@inertiajs/react';
+import { router, Head, Link } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock, ShoppingCart, UserCheck, DollarSign } from 'lucide-react';
+import { UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock, ShoppingCart, UserCheck, DollarSign, RefreshCw } from 'lucide-react';
 import { AttendeeForTable, AttendeeStats, TicketDetails } from '@/types/models/assistant';
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModal';
+import { PaginatedResponse } from '@/types/ui/ui';
 
 interface EventAttendeeFunction {
     id: number;
@@ -34,7 +35,7 @@ interface EventWithDetails extends Event, EventRelations {
 interface EventAttendeesProps {
     auth: any;
     event: EventWithDetails;
-    attendees: AttendeeForTable[];
+    attendees: PaginatedResponse<AttendeeForTable>;
     functions: EventAttendeeFunction[];
     selectedFunctionId: number | null;
     stats: AttendeeStats;
@@ -70,9 +71,23 @@ export default function EventAttendees({
         );
     };
 
+    const handleRefresh = () => {
+        // Usar visit en lugar de reload para mantener mejor control
+        router.visit(
+            route('organizer.events.attendees', event.id), 
+            { 
+                preserveState: true,
+                preserveScroll: true,
+                only: ['attendees', 'stats'],
+                data: {
+                    function_id: filterFunction !== 'all' ? filterFunction : undefined
+                }
+            }
+        );
+    };
+
     const handleInviteAssistant = () => {
         // TODO: Abrir modal para invitar asistente
-        console.log('Invitar asistente');
     };
 
     const handleViewTickets = async (attendee: AttendeeForTable) => {
@@ -84,21 +99,25 @@ export default function EventAttendees({
 
         try {
             let response;
+            let url;
             
             if (attendee.type === 'buyer') {
-                response = await fetch(route('organizer.events.attendees.order.details', {
+                url = route('organizer.events.attendees.order.details', {
                     event: event.id,
                     order: attendee.order_id
-                }));
+                });
+                response = await fetch(url);
             } else {
-                response = await fetch(route('organizer.events.attendees.assistant.details', {
+                url = route('organizer.events.attendees.assistant.details', {
                     event: event.id,
                     assistant: attendee.assistant_id
-                }));
+                });
+                response = await fetch(url);
             }
 
             if (!response.ok) {
-                throw new Error('Error al cargar los detalles');
+                const errorText = await response.text();
+                throw new Error(`Error ${response.status}: ${errorText || 'Error al cargar los detalles'}`);
             }
 
             const data = await response.json();
@@ -109,13 +128,11 @@ export default function EventAttendees({
                 data: data,
             });
         } catch (error) {
-            console.error('Error loading ticket details:', error);
             setTicketDetailsModal({
                 isOpen: false,
                 loading: false,
                 data: null,
             });
-            // TODO: Mostrar toast de error
         }
     };
 
@@ -129,7 +146,6 @@ export default function EventAttendees({
 
     const handleResendInvitation = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
         if (attendeeType !== 'invited') {
-            console.log('Solo se puede reenviar invitación a asistentes invitados');
             return;
         }
         
@@ -150,7 +166,6 @@ export default function EventAttendees({
 
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
         if (attendeeType === 'buyer') {
-            console.log('No se puede eliminar compradores, solo asistentes invitados');
             return;
         }
         
@@ -282,6 +297,16 @@ export default function EventAttendees({
                         <div className="flex items-center justify-between">
                             <CardTitle>Asistentes</CardTitle>
                             <div className="flex items-center gap-4">
+                                {/* Botón de actualización */}
+                                <Button 
+                                    variant="outline" 
+                                    onClick={handleRefresh} 
+                                    title="Actualizar lista"
+                                >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Actualizar
+                                </Button>
+                                
                                 {/* Filtro por función */}
                                 <Select value={filterFunction} onValueChange={handleFunctionFilter}>
                                     <SelectTrigger className="w-[200px]">
@@ -305,7 +330,7 @@ export default function EventAttendees({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {attendees.length === 0 ? (
+                        {(!attendees.data || attendees.data.length === 0) ? (
                             <div className="text-center py-8">
                                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -335,7 +360,7 @@ export default function EventAttendees({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {attendees.map((attendee: AttendeeForTable) => (
+                                    {Array.isArray(attendees.data) && attendees.data.map((attendee: AttendeeForTable) => (
                                         <TableRow key={`${attendee.type}-${attendee.type === 'invited' ? attendee.assistant_id : attendee.order_id}`}>
                                             <TableCell>
                                                 {getTypeBadge(attendee)}
@@ -422,12 +447,35 @@ export default function EventAttendees({
                                 </TableBody>
                             </Table>
                         )}
+                        
+                        {/* Pagination */}
+                        {attendees.links && Array.isArray(attendees.links) && attendees.links.length > 0 && (
+                            <div className="mt-6 flex justify-center">
+                                <div className="flex items-center space-x-2">
+                                    {attendees.links.map((link, index) => (
+                                        <Link
+                                            key={index}
+                                            href={link.url || '#'}
+                                            className={`px-3 py-2 text-sm rounded-md ${
+                                                link.active
+                                                    ? 'bg-black text-white'
+                                                    : link.url
+                                                    ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
 
             {/* Modal de detalles de tickets */}
             <TicketDetailsModal
+                key={ticketDetailsModal.isOpen ? 'open' : 'closed'}
                 isOpen={ticketDetailsModal.isOpen}
                 onClose={closeTicketDetailsModal}
                 loading={ticketDetailsModal.loading}
