@@ -25,6 +25,7 @@ class TicketType extends Model
         'sales_end_date',
         'quantity',
         'quantity_sold',
+        'max_purchase_quantity', // ← AGREGAR ESTE CAMPO
         'is_hidden',
     ];
 
@@ -32,6 +33,7 @@ class TicketType extends Model
         'price' => 'decimal:2',
         'quantity' => 'integer',
         'quantity_sold' => 'integer',
+        'max_purchase_quantity' => 'integer', // ← AGREGAR ESTE CAST
         'is_hidden' => 'boolean',
         'sales_start_date' => 'datetime',
         'sales_end_date' => 'datetime',

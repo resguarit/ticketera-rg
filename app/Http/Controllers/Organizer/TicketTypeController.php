@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\TicketType;
-use App\Models\Sector; // <-- AÑADIR ESTO
+use App\Models\Sector;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,6 +48,18 @@ class TicketTypeController extends Controller
                     $sector = Sector::find($request->input('sector_id'));
                     if ($sector && $value > $sector->capacity) {
                         $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    }
+                },
+            ],
+            'max_purchase_quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:50', // Límite razonable para evitar compras masivas abusivas
+                function ($attribute, $value, $fail) use ($request) {
+                    $quantity = $request->input('quantity');
+                    if ($quantity && $value > $quantity) {
+                        $fail("El máximo por compra no puede ser mayor que la cantidad total disponible.");
                     }
                 },
             ],
@@ -97,6 +109,18 @@ class TicketTypeController extends Controller
                     $sector = Sector::find($request->input('sector_id'));
                     if ($sector && $value > $sector->capacity) {
                         $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    }
+                },
+            ],
+            'max_purchase_quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:50',
+                function ($attribute, $value, $fail) use ($request) {
+                    $quantity = $request->input('quantity');
+                    if ($quantity && $value > $quantity) {
+                        $fail("El máximo por compra no puede ser mayor que la cantidad total disponible.");
                     }
                 },
             ],
@@ -158,6 +182,7 @@ class TicketTypeController extends Controller
                 'description' => $ticketType->description,
                 'price' => $ticketType->price,
                 'quantity' => $ticketType->quantity,
+                'max_purchase_quantity' => $ticketType->max_purchase_quantity, // ← AGREGAR ESTE CAMPO
                 'sector_id' => $ticketType->sector_id,
                 'sales_start_date' => $ticketType->sales_start_date,
                 'sales_end_date' => $ticketType->sales_end_date,
