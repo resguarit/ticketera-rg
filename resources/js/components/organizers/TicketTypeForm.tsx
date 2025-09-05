@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/input-error';
 import type { TicketType } from '@/types/models/ticketType';
-import type { Sector } from '@/types/models/sector'; // Import the Sector type
+import type { Sector } from '@/types/models/sector';
 
 // Extender el tipo base para el formulario
 export interface TicketTypeFormData extends Partial<TicketType> {
@@ -24,7 +24,7 @@ interface TicketTypeFormProps {
     sectors: Sector[];
     submitText: string;
     cancelUrl: string;
-    maxQuantity?: number; // <-- AÑADIR NUEVA PROP
+    maxQuantity?: number;
 }
 
 export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, submitText, cancelUrl, maxQuantity }: TicketTypeFormProps) {
@@ -75,7 +75,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         onChange={e => setData('quantity', e.target.value)}
                         required
                         min="1"
-                        max={maxQuantity} // <-- AÑADIR LÍMITE MÁXIMO
+                        max={maxQuantity}
                     />
                     {selectedSector && (
                         <p className="text-sm text-muted-foreground">
@@ -83,6 +83,28 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         </p>
                     )}
                     <InputError message={errors.quantity} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="max_purchase_quantity">Máximo por Compra</Label>
+                    <Input
+                        id="max_purchase_quantity"
+                        type="number"
+                        value={data.max_purchase_quantity}
+                        onChange={e => setData('max_purchase_quantity', e.target.value)}
+                        required
+                        min="1"
+                        max="50"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                        Cantidad máxima que puede comprar un cliente en una sola transacción
+                    </p>
+                    <InputError message={errors.max_purchase_quantity} />
+                </div>
+                <div className="space-y-2">
+                    {/* Espacio para mantener el layout */}
                 </div>
             </div>
 

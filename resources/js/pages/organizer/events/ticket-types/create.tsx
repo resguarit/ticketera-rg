@@ -4,10 +4,7 @@ import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TicketTypeForm, TicketTypeFormData } from '@/components/organizers/TicketTypeForm';
 import { Event, EventFunction, Sector } from '@/types';
-// import PageProps from the correct location or define it if missing
-// import { PageProps } from '@/types/ui/ui';
 
-// If PageProps is not available, define a minimal version here:
 interface PageProps {
     auth?: unknown;
     errors?: Record<string, string>;
@@ -28,22 +25,20 @@ export default function CreateTicketType() {
         name: '',
         description: '',
         price: 0,
-        // Iniciar con la capacidad del primer sector si existe
         quantity: sectors?.[0]?.capacity ?? 0,
+        max_purchase_quantity: 10, // Valor por defecto
         sector_id: sectors?.[0]?.id ?? undefined,
         sales_start_date: '',
         sales_end_date: '',
         is_hidden: false,
     });
 
-    // Lógica para actualizar la cantidad cuando cambia el sector
     useEffect(() => {
         const selectedSector = sectors.find(s => s.id === data.sector_id);
         if (selectedSector) {
-            // Actualiza la cantidad al máximo del sector seleccionado
             setData('quantity', selectedSector.capacity);
         }
-    }, [data.sector_id]); // Se ejecuta cada vez que data.sector_id cambia
+    }, [data.sector_id]);
 
     const maxQuantity = useMemo(() => {
         return sectors.find(s => s.id === data.sector_id)?.capacity;

@@ -377,6 +377,7 @@ class EventController extends Controller
                             'sold_percentage' => round($soldPercentage, 1),
                             'total_income' => (float) $totalIncome,
                             'is_hidden' => (bool) $ticketType->is_hidden,
+                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10), // ← AGREGAR ESTA LÍNEA
                             'event_function_id' => $ticketType->event_function_id,
                             'sector_id' => $ticketType->sector_id,
                             'sector' => $ticketType->sector,

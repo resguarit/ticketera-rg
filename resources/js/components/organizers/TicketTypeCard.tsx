@@ -124,6 +124,11 @@ export const TicketTypeCard = ({
             <span className="text-muted-foreground">Vendido:</span>
             <span className="font-medium">{ticket.sold_percentage}%</span>
           </div>
+          <div className="flex justify-between col-span-2">
+            <span className="text-muted-foreground text-xs">Máx. por compra:</span>
+            {console.log(ticket)}
+            <span className="font-medium text-xs text-gray-700">{ticket.max_purchase_quantity}</span>
+          </div>
         </div>
         
         <Separator />

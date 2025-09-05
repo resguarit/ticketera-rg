@@ -32,6 +32,7 @@ export default function EditTicketType() {
         description: ticketType.description ?? '',
         price: ticketType.price,
         quantity: ticketType.quantity,
+        max_purchase_quantity: ticketType.max_purchase_quantity,
         sector_id: ticketType.sector_id,
         sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
         sales_end_date: formatDateTimeForInput(ticketType.sales_end_date),
