@@ -42,7 +42,7 @@ export default function Footer({ className = '' }: FooterProps) {
                         <div className="space-y-2">
                             <div className="flex items-center space-x-2 text-gray-300">
                                 <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                                <span className="text-sm">Río Gallegos, Santa Cruz</span>
+                                <span className="text-sm">La Plata, Buenos Aires</span>
                             </div>
                             <div className="flex items-center space-x-2 text-gray-300">
                                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
@@ -184,7 +184,7 @@ export default function Footer({ className = '' }: FooterProps) {
                         </div>
                         
                         <div className="flex items-center space-x-4 text-gray-400 text-sm">
-                            <span>Hecho con ❤️ en Santa Cruz</span>
+                            <span>Desarrollado por Resguar IT</span>
                             <div className="flex items-center space-x-1">
                                 <span>Powered by</span>
                                 <span className="text-primary font-medium">Laravel + React</span>
