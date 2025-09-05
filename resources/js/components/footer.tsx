@@ -88,21 +88,21 @@ export default function Footer({ className = '' }: FooterProps) {
                         <h4 className="text-lg font-semibold text-white">Legal y Soporte</h4>
                         <nav className="space-y-2">
                             <Link 
-                                href="/terms" 
+                                href={route('terms')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-primary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />
                                 <span>Términos y Condiciones</span>
                             </Link>
                             <Link 
-                                href="/privacy" 
+                                href={route('privacy')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-primary transition-colors text-sm"
                             >
                                 <Shield className="w-4 h-4" />
                                 <span>Política de Privacidad</span>
                             </Link>
                             <Link 
-                                href="/refunds" 
+                                href={route('refunds')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-primary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />
