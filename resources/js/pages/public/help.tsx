@@ -20,6 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Faq, FaqCategory as FaqCategoryModel } from '@/types/models';
@@ -319,6 +320,9 @@ export default function Help() {
                     </div>
                 </div>
             </div>
+            
+            {/* Add Footer */}
+            <Footer />
         </>
     );
 }

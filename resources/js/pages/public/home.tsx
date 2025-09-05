@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 
 import { Event, Category } from '@/types/models';
 import { getCategoryIcon } from '@/types/ui';
@@ -274,6 +275,9 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                     )}
                 </section>
             </div>
+            
+            {/* Add Footer */}
+            <Footer />
         </>
     );
 }

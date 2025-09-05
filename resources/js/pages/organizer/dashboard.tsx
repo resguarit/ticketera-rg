@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -63,6 +63,12 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
+                                        <Link href={route('organizer.events.create')}>
+                                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Crear Evento
+                                            </Button>
+                                        </Link>
                 </div>
 
                 {/* Stat Cards */}
@@ -137,7 +143,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                             <div className="p-3">
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
-                                                <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2 mt-2" />
+                                                <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2 mt-2 bg-white border border-gray-300" />
                                                 <p className="text-xs text-muted-foreground mt-1">{formatNumber(event.tickets_sold)} / {formatNumber(event.total_tickets)}</p>
                                             </div>
                                         </div>

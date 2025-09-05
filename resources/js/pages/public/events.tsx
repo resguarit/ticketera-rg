@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 import { Head, Link, router } from '@inertiajs/react';
 
 import {    
@@ -97,6 +98,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
+                
 
                 <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
                     {/* Page Header */}
@@ -367,6 +369,9 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                     </Tabs>
                 </div>
             </div>
+            
+            {/* Add Footer */}
+            <Footer />
         </>
     );
 }
