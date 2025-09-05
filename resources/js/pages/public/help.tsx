@@ -311,9 +311,6 @@ export default function Help() {
                                     <Link href="/refunds" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Reembolsos
                                     </Link>
-                                    <Link href="/accessibility" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
-                                        Accesibilidad
-                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>
