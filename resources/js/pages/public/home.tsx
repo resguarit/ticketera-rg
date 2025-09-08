@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/lib/currencyHelpers';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -148,45 +148,63 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 {/* Search and Filters */}
                 <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                            <div className="relative lg:col-span-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                                <Input
-                                    placeholder="Buscar eventos..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10"
-                                />
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
+                            {/* Filtros principales */}
+                            <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <Input
+                                        placeholder="Buscar eventos..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10"
+                                    />
+                                </div>
+
+                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectValue placeholder="Categoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas las categorías</SelectItem>
+                                        {categories.map((category) => (
+                                            <SelectItem key={category.id} value={category.name}>
+                                                {category.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={selectedCity} onValueChange={setSelectedCity}>
+                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectValue placeholder="Ciudad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas las ciudades</SelectItem>
+                                        {cities.filter(city => city).map((city) => (
+                                            <SelectItem key={city} value={city!}>
+                                                {city}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
-                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10">
-                                    <SelectValue placeholder="Categoría" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas las categorías</SelectItem>
-                                    {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.name}>
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-xs sm:text-base h-7 sm:h-10">
-                                    <SelectValue placeholder="Ciudad" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas las ciudades</SelectItem>
-                                    {cities.filter(city => city).map((city) => (
-                                        <SelectItem key={city} value={city!}>
-                                            {city}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                            {/* Botón de Arrepentimiento */}
+                            <div className="lg:col-span-1 flex justify-end">
+                                <Link href={route('refunds')}>
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full flex items-center lg:w-auto bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 hover:border-primary text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4"
+                                    >
+                                        <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 " />
+                                        <span className="hidden sm:inline">Botón de</span>
+                                        <span className="sm:hidden">Arrepentimiento</span>
+                                        <span className="">Arrepentimiento</span>
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>              
                     </div>
                 </section>
 
