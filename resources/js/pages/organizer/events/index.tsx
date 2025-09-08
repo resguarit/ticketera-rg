@@ -55,7 +55,7 @@ export default function EventsIndex({ auth, events, filters }: EventsIndexProps)
                         </p>
                     </div>
                     <Link href={route('organizer.events.create')}>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <Button className="bg-primary hover:bg-primary-hover text-white">
                             <Plus className="w-4 h-4 mr-2" />
                             Crear Evento
                         </Button>

@@ -86,6 +86,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                         <Switch
                             id="is_active"
                             checked={data.is_active}
+                            className="bg-primary"
                             onCheckedChange={(checked) => setData('is_active', checked)}
                         />
                         <Label htmlFor="is_active" className="cursor-pointer">
@@ -94,7 +95,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button type="submit" disabled={processing}>
+                        <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover">
                             {processing ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Función')}
                         </Button>
                     </div>

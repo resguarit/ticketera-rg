@@ -208,7 +208,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 <Button variant="outline" asChild>
                     <Link href={cancelUrl}>Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={processing}>
+                <Button type="submit" disabled={processing} className="hover:bg-primary-hover">
                     {processing ? 'Guardando...' : submitText}
                 </Button>
             </div>

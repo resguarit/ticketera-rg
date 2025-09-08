@@ -38,7 +38,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                             </CardDescription>
                         </div>
                         <Link href={route('organizer.events.functions.create', event.id)}>
-                            <Button>
+                            <Button className="bg-primary hover:bg-primary-hover">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Crear Función
                             </Button>

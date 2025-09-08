@@ -107,8 +107,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                 <p className="text-sm font-medium text-gray-600">Total Funciones</p>
                                 <p className="text-2xl font-bold text-gray-900">{totalFunctions}</p>
                             </div>
-                            <div className="bg-blue-100 p-3 rounded-full">
-                                <Calendar className="w-6 h-6 text-blue-600" />
+                            <div className="bg-chart-2/20 p-3 rounded-full">
+                                <Calendar className="w-6 h-6 text-chart-2" />
                             </div>
                         </div>
                     </Card>
@@ -119,8 +119,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                 <p className="text-sm font-medium text-gray-600">Funciones Activas</p>
                                 <p className="text-2xl font-bold text-gray-900">{activeFunctions}</p>
                             </div>
-                            <div className="bg-green-100 p-3 rounded-full">
-                                <TrendingUp className="w-6 h-6 text-green-600" />
+                            <div className="bg-chart-3/20 p-3 rounded-full">
+                                <TrendingUp className="w-6 h-6 text-chart-3" />
                             </div>
                         </div>
                     </Card>
@@ -131,8 +131,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                 <p className="text-sm font-medium text-gray-600">Entradas Vendidas</p>
                                 <p className="text-2xl font-bold text-gray-900">{event.tickets_sold}</p>
                             </div>
-                            <div className="bg-purple-100 p-3 rounded-full">
-                                <Ticket className="w-6 h-6 text-purple-600" />
+                            <div className="bg-chart-4/20 p-3 rounded-full">
+                                <Ticket className="w-6 h-6 text-chart-4" />
                             </div>
                         </div>
                     </Card>
@@ -143,8 +143,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                 <p className="text-sm font-medium text-gray-600">Ingresos</p>
                                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
                             </div>
-                            <div className="bg-yellow-100 p-3 rounded-full">
-                                <DollarSign className="w-6 h-6 text-yellow-600" />
+                            <div className="bg-chart-5/20 p-3 rounded-full">
+                                <DollarSign className="w-6 h-6 text-chart-5" />
                             </div>
                         </div>
                     </Card>

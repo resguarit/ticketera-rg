@@ -47,10 +47,10 @@ interface DashboardProps {
 
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData }: DashboardProps) {
     const statCards = [
-        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-green-500' },
-        { title: 'Tickets Vendidos', value: formatNumber(stats.totalTicketsSold), icon: Ticket, color: 'text-blue-500' },
-        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Activity, color: 'text-orange-500' },
-        { title: 'Total de Eventos', value: formatNumber(stats.totalEventsCount), icon: Calendar, color: 'text-purple-500' },
+        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
+        { title: 'Tickets Vendidos', value: formatNumber(stats.totalTicketsSold), icon: Ticket, color: 'text-chart-3' },
+        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Activity, color: 'text-chart-4' },
+        { title: 'Total de Eventos', value: formatNumber(stats.totalEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
 
     return (
@@ -64,7 +64,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
                                         <Link href={route('organizer.events.create')}>
-                                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                            <Button className="bg-primary hover:bg-primary-hover text-white">
                                                 <Plus className="w-4 h-4 mr-2" />
                                                 Crear Evento
                                             </Button>

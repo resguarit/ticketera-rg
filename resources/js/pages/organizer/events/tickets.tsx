@@ -134,11 +134,10 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <Ticket className="w-6 h-6 text-blue-600" />
+                            <h2 className="text-base font-medium text-gray-800 flex items-center">
                                 Gestión de Entradas
                             </h2>
-                            <p className="text-gray-600 mt-1">
+                            <p className="text-gray-600 text-sm">
                                 Configura y administra los tipos de entradas para cada función de tu evento
                             </p>
                         </div>
@@ -235,7 +234,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                         </div>
                                         <Button 
                                             onClick={() => handleCreateTicket(func.id)}
-                                            className="flex items-center gap-2 shrink-0"
+                                            className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
                                             size="lg"
                                         >
                                             <Plus className="w-4 h-4" />
