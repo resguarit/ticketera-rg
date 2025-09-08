@@ -100,14 +100,6 @@ class CheckoutController extends Controller
 
     public function processPayment(Request $request): RedirectResponse
     {
-        Log::info('=== PROCESANDO CHECKOUT - INICIO ===', [
-            'url' => $request->url(),
-            'method' => $request->method(),
-            'user_agent' => $request->userAgent(),
-            'ip' => $request->ip(),
-            'auth_check' => Auth::check(),
-            'auth_user_id' => Auth::id()
-        ]);
 
         // Log de todos los datos de entrada (sin datos sensibles)
         $allData = $request->all();
@@ -117,10 +109,8 @@ class CheckoutController extends Controller
         if (isset($allData['payment_info']['cvv'])) {
             $allData['payment_info']['cvv'] = '***';
         }
-        Log::info('Datos recibidos en checkout', ['request_data' => $allData]);
 
         try {
-            Log::info('Iniciando validación de datos');
             
             $validated = $request->validate([
                 'event_id' => 'required|exists:events,id',
@@ -140,7 +130,6 @@ class CheckoutController extends Controller
                 'agreements.privacy' => 'required|boolean|accepted',
             ]);
             
-            Log::info('Validación exitosa', ['validated_keys' => array_keys($validated)]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Error de validación en checkout', [
@@ -155,21 +144,15 @@ class CheckoutController extends Controller
         }
 
         try {
-            Log::info('Obteniendo evento para tax calculation', ['event_id' => $validated['event_id']]);
             
             // Obtener el evento para acceder al tax
             $event = Event::findOrFail($validated['event_id']);
             $eventTax = $event->tax ? ($event->tax / 100) : 0; // Convertir a decimal
 
-            Log::info('Event tax calculado', [
-                'event_tax_percent' => $event->tax,
-                'event_tax_decimal' => $eventTax
-            ]);
+
 
             // Calcular totales usando el servicio
-            Log::info('Calculando totales usando OrderService');
             $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets'], 0, $eventTax);
-            Log::info('Totales calculados por OrderService', $totals);
 
             // Preparar datos para crear la orden
             $orderData = [
@@ -182,25 +165,17 @@ class CheckoutController extends Controller
                 'tax' => $eventTax,
             ];
 
-            Log::info('Datos preparados para crear orden', ['order_data' => $orderData]);
 
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
-            Log::info('Llamando a OrderService::createOrder');
             $orderResult = $this->orderService->createOrder($orderData);
             
-            Log::info('OrderService::createOrder completado', [
-                'order_id' => $orderResult['order']->id,
-                'account_created' => $orderResult['account_created']
-            ]);
 
             // Verificar si se creó una nueva cuenta
             $accountCreated = $orderResult['account_created'] ?? false;
             $order = $orderResult['order'];
 
             // Procesar el pago usando el servicio
-            Log::info('Iniciando procesamiento de pago', ['order_id' => $order->id]);
             $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
-            Log::info('Resultado de procesamiento de pago', ['payment_successful' => $paymentSuccessful]);
 
             if ($paymentSuccessful) {
                 $redirectParams = ['order' => $order->id];
@@ -209,12 +184,6 @@ class CheckoutController extends Controller
                 if ($accountCreated) {
                     $redirectParams['account_created'] = '1';
                 }
-
-                Log::info('Pago exitoso, redirigiendo a success', [
-                    'order_id' => $order->id,
-                    'redirect_params' => $redirectParams,
-                    'redirect_route' => route('checkout.success', $redirectParams)
-                ]);
                 
                 return redirect()->route('checkout.success', $redirectParams)
                     ->with('success', '¡Compra realizada exitosamente!');
@@ -244,11 +213,6 @@ class CheckoutController extends Controller
 
     public function success(Request $request): Response | RedirectResponse
     {
-        Log::info('=== CHECKOUT SUCCESS - INICIO ===', [
-            'query_params' => $request->query(),
-            'order_id' => $request->query('order'),
-            'account_created' => $request->query('account_created')
-        ]);
 
         $orderId = $request->query('order');
         $accountCreated = $request->query('account_created', false);
@@ -260,7 +224,6 @@ class CheckoutController extends Controller
         }
 
         try {
-            Log::info('Cargando orden para success page', ['order_id' => $orderId]);
             
             // ACTUALIZADO: Cargar la orden con ciudad y provincia
             $order = Order::with([
@@ -268,29 +231,14 @@ class CheckoutController extends Controller
                 'client.person'
             ])->findOrFail($orderId);
 
-            Log::info('Orden cargada exitosamente', [
-                'order_id' => $order->id,
-                'status' => $order->status,
-                'total_amount' => $order->total_amount,
-                'items_count' => $order->items->count()
-            ]);
-
             // Obtener resumen de la orden usando el servicio
-            Log::info('Obteniendo resumen de orden');
             $orderSummary = $this->orderService->getOrderSummary($order);
-            Log::info('Resumen de orden obtenido', ['summary_keys' => array_keys($orderSummary)]);
 
             // Obtener datos del evento y función
             $firstTicket = $order->items->first();
             $eventFunction = $firstTicket->ticketType->eventFunction;
             $event = $eventFunction->event;
 
-            Log::info('Datos de evento y función obtenidos', [
-                'event_id' => $event->id,
-                'event_name' => $event->name,
-                'function_id' => $eventFunction->id,
-                'function_name' => $eventFunction->name
-            ]);
 
             // Preparar datos para la vista
             $purchaseData = [
@@ -331,13 +279,6 @@ class CheckoutController extends Controller
                 'total' => $order->total_amount,
                 'purchaseDate' => $order->order_date->format('d/m/Y'),
             ];
-
-            Log::info('Purchase data preparado', ['purchase_data_keys' => array_keys($purchaseData)]);
-
-            Log::info('Renderizando success page', [
-                'order_id' => $orderId,
-                'account_created' => (bool) $accountCreated
-            ]);
 
             return Inertia::render('public/checkoutsuccess', [
                 'purchaseData' => $purchaseData,
