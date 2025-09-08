@@ -30,8 +30,8 @@ export default function Footer({ className = '' }: FooterProps) {
                     {/* Company Info */}
                     <div className="space-y-4">
                         <div>
-                            <h3 className="text-xl sm:text-2xl font-bold mb-3">
-                                Ticketera-RG
+                            <h3 className="text-lg sm:text-xl font-bold mb-3">
+                                RG <span className="font-medium">ENTRADAS</span>
                             </h3>
                             <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
                                 Tu plataforma de confianza para los mejores eventos de música, teatro, deportes y entretenimiento en Argentina.
@@ -180,7 +180,7 @@ export default function Footer({ className = '' }: FooterProps) {
                 <div className="container mx-auto px-3 sm:px-4 py-4">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
                         <div className="text-gray-400 text-sm text-center sm:text-left">
-                            © {currentYear} Ticketera-RG. Todos los derechos reservados.
+                            © {currentYear} RG ENTRADAS. Todos los derechos reservados.
                         </div>
                         
                         <div className="flex items-center space-x-4 text-gray-400 text-sm">

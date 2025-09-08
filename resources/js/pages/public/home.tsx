@@ -150,7 +150,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                     <div className="rounded-lg">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
                             {/* Filtros principales */}
-                            <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                                     <Input
@@ -188,22 +188,21 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                         ))}
                                     </SelectContent>
                                 </Select>
-                            </div>
 
-                            {/* Botón de Arrepentimiento */}
-                            <div className="lg:col-span-1 flex justify-end">
                                 <Link href={route('refunds')}>
                                     <Button 
                                         variant="outline" 
-                                        className="w-full flex items-center lg:w-auto bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 hover:border-primary text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4"
+                                        className="w-full bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 hover:border-primary text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2"
                                     >
-                                        <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 " />
-                                        <span className="hidden sm:inline">Botón de</span>
-                                        <span className="sm:hidden">Arrepentimiento</span>
-                                        <span className="">Arrepentimiento</span>
+                                        <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        <span className="">Botón de arrepentimiento</span>
                                     </Button>
                                 </Link>
                             </div>
+
+
+      
+
                         </div>              
                     </div>
                 </section>
