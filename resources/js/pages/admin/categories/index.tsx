@@ -120,7 +120,7 @@ export default function CategoriesIndex() {
                             Crea y administra las categorías para tus eventos.
                         </p>
                     </div>
-                    <Button onClick={openCreateModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button onClick={openCreateModal} className="bg-primary hover:bg-primary-hover text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear Categoría
                     </Button>
@@ -161,7 +161,7 @@ export default function CategoriesIndex() {
                                                 onClick={() => setData('icon', data.icon === iconName ? '' : iconName)}
                                                 className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
                                                     data.icon === iconName
-                                                        ? 'bg-indigo-600 text-white'
+                                                        ? 'bg-secondary text-white'
                                                         : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                                                 }`}
                                                 title={iconName.charAt(0).toUpperCase() + iconName.slice(1)}
@@ -193,7 +193,7 @@ export default function CategoriesIndex() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover text-white">
                                     {processing ? 'Guardando...' : 'Guardar Cambios'}
                                 </Button>
                             </DialogFooter>

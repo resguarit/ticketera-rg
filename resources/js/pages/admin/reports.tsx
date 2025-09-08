@@ -215,7 +215,7 @@ export default function Reports({ auth }: any) {
                             </Button>
                             
                             <Button 
-                                className="bg-black text-white hover:bg-gray-800"
+                                className="bg-primary text-white hover:bg-primary-hover"
                                 onClick={() => handleDownloadReport('complete')}
                                 disabled={isGenerating}
                             >

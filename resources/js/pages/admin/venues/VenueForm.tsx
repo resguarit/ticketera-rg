@@ -370,7 +370,7 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                         <div className="text-center">
                             <UploadCloud className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
                             <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                                <label htmlFor="banner" className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
+                                <label htmlFor="banner" className="relative cursor-pointer rounded-md bg-white font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
                                     <span>Sube un archivo</span>
                                     <input id="banner" name="banner" type="file" className="sr-only" onChange={handleBannerChange} accept="image/*" />
                                 </label>
@@ -394,7 +394,7 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                 <Button variant="outline" asChild>
                     <Link href={route('admin.venues.index')}>Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover">
                     {processing ? 'Guardando...' : submitText}
                 </Button>
             </div>

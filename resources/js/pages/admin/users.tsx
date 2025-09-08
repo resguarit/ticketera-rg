@@ -232,7 +232,7 @@ export default function Users({ auth }: any) {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4 flex-1">
                                             {/* Avatar */}
-                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                                                 <UsersIcon className="w-6 h-6 text-white" />
                                             </div>
 

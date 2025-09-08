@@ -127,7 +127,7 @@ export default function Settings({ auth }: any) {
                             </Button>
                             
                             <Button 
-                                className="bg-black text-white hover:bg-gray-800"
+                                className="bg-primary text-white hover:bg-primary-hover"
                                 onClick={() => handleSaveSettings('all')}
                                 disabled={isLoading}
                             >
@@ -273,7 +273,7 @@ export default function Settings({ auth }: any) {
 
                                         <Button 
                                             onClick={() => handleSaveSettings('general')}
-                                            className="w-full bg-black text-white hover:bg-gray-800"
+                                            className="w-full bg-primary text-white hover:bg-primary-hover"
                                         >
                                             Guardar Configuración General
                                         </Button>
@@ -383,7 +383,7 @@ export default function Settings({ auth }: any) {
                                                 
                                                 <Button 
                                                     onClick={() => handleSaveSettings('email')}
-                                                    className="flex-1 bg-black text-white hover:bg-gray-800"
+                                                    className="flex-1 bg-primary text-white hover:bg-primary-hover"
                                                 >
                                                     Guardar
                                                 </Button>
@@ -502,7 +502,7 @@ export default function Settings({ auth }: any) {
 
                                         <Button 
                                             onClick={() => handleSaveSettings('payments')}
-                                            className="w-full mt-4 bg-black text-white hover:bg-gray-800"
+                                            className="w-full mt-4 bg-primary text-white hover:bg-primary-hover"
                                         >
                                             Guardar Configuración de Pagos
                                         </Button>
@@ -603,7 +603,7 @@ export default function Settings({ auth }: any) {
 
                                         <Button 
                                             onClick={() => handleSaveSettings('security')}
-                                            className="w-full bg-black text-white hover:bg-gray-800"
+                                            className="w-full bg-primary text-white hover:bg-primary-hover"
                                         >
                                             Guardar Configuración de Seguridad
                                         </Button>
@@ -677,7 +677,7 @@ export default function Settings({ auth }: any) {
 
                                     <Button 
                                         onClick={() => handleSaveSettings('notifications')}
-                                        className="w-full mt-6 bg-black text-white hover:bg-gray-800"
+                                        className="w-full mt-6 bg-primary text-white hover:bg-primary-hover"
                                     >
                                         Guardar Configuración de Notificaciones
                                     </Button>

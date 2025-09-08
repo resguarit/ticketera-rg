@@ -287,13 +287,13 @@ export default function AdminDashboard({
                             <Card className="bg-white border-gray-200 shadow-lg">
                                 <CardHeader className="border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-black flex items-center space-x-3">
-                                            <Calendar className="w-6 h-6 text-blue-500" />
+                                        <CardTitle className="text-primary flex items-center space-x-3">
+                                            <Calendar className="w-6 h-6 text-primary" />
                                             <span>Eventos Recientes</span>
                                         </CardTitle>
                                         <div className="flex items-center space-x-2">
                                             <Link href="/admin/events">
-                                                <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
+                                                <Button variant="ghost" size="sm" className="text-primary hover:text-secondary hover:bg-secondary/10">
                                                     Ver todos
                                                 </Button>
                                             </Link>
@@ -343,12 +343,12 @@ export default function AdminDashboard({
                             <Card className="bg-white border-gray-200 shadow-lg gap-2">
                                 <CardHeader className="border-b border-gray-200 ">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-black flex items-center space-x-3">
+                                        <CardTitle className="text-primary flex items-center space-x-3">
                                             <Users className="w-6 h-6 text-primary" />
                                             <span>Usuarios Recientes</span>
                                         </CardTitle>
                                         <Link href="/admin/users">
-                                            <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
+                                            <Button variant="ghost" size="sm" className="text-primary hover:text-secondary hover:bg-secondary/10">
                                                 Ver todos
                                             </Button>
                                         </Link>
@@ -408,8 +408,8 @@ export default function AdminDashboard({
                             {/* System Status */}
                             <Card className="bg-white border-gray-200 shadow-lg">
                                 <CardHeader className="border-b border-gray-200">
-                                    <CardTitle className="text-black flex items-center space-x-3">
-                                        <Activity className="w-6 h-6 text-green-500" />
+                                    <CardTitle className="text-primary flex items-center space-x-3">
+                                        <Activity className="w-6 h-6 text-primary" />
                                         <span>Estado del Sistema</span>
                                     </CardTitle>
                                 </CardHeader>
@@ -436,8 +436,8 @@ export default function AdminDashboard({
                             {/* System Alerts */}
                             <Card className="bg-white border-gray-200 shadow-lg">
                                 <CardHeader className="border-b border-gray-200">
-                                    <CardTitle className="text-black flex items-center space-x-3">
-                                        <AlertTriangle className="w-6 h-6 text-orange-500" />
+                                    <CardTitle className="text-primary flex items-center space-x-3">
+                                        <AlertTriangle className="w-6 h-6 text-primary" />
                                         <span>Alertas del Sistema</span>
                                     </CardTitle>
                                 </CardHeader>
@@ -467,8 +467,8 @@ export default function AdminDashboard({
                             {/* Quick Actions */}
                             <Card className="bg-white border-gray-200 shadow-lg gap-4 py-3">
                                 <CardHeader className="border-b border-gray-200 pb-3">
-                                    <CardTitle className="text-black flex items-center space-x-3">
-                                        <Settings className="w-6 h-6 text-gray-600" />
+                                    <CardTitle className="text-primary flex items-center space-x-3">
+                                        <Settings className="w-6 h-6 text-primary" />
                                         <span>Acciones Rápidas</span>
                                     </CardTitle>
                                 </CardHeader>

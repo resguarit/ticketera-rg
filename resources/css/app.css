@@ -71,7 +71,7 @@
     /* Primary Colors */
     --primary: #08083a;
     --primary-foreground: #ffffff;
-    --primary-hover: #0a0a4d;
+    --primary-hover: #101086;
     
     /* Secondary Colors */
     --secondary: #0dc1ba;
@@ -109,7 +109,7 @@
     /* Chart Colors */
     --chart-1: #08083a;
     --chart-2: #0a0a4d;
-    --chart-3: #0dc1ba;
+    --chart-3: #0c0c60;
     --chart-4: #0e0e73;
     --chart-5: #101086;
     

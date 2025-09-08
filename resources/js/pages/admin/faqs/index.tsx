@@ -73,7 +73,7 @@ export default function FaqsIndex() {
                         <h1 className="text-2xl font-bold text-gray-900">Gestionar Preguntas Frecuentes</h1>
                         <p className="text-gray-600 mt-1">Crea y administra las categorías y preguntas del Centro de Ayuda.</p>
                     </div>
-                    <Button onClick={openNewCategoryModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button onClick={openNewCategoryModal} className="bg-primary hover:bg-primary-hover text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear Categoría
                     </Button>

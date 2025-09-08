@@ -279,7 +279,7 @@ export default function Events({ auth }: any) {
                                                     <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
                                                         <span>{event.name}</span>
                                                         {event.featured && (
-                                                            <Badge className="bg-primary text-white border-0 text-xs">
+                                                            <Badge className="bg-secondary text-white border-0 text-xs">
                                                                 Destacado
                                                             </Badge>
                                                         )}
@@ -347,8 +347,8 @@ export default function Events({ auth }: any) {
                                                         variant={event.featured ? "default" : "outline"}
                                                         size="sm"
                                                         className={event.featured 
-                                                            ? "bg-primary hover:bg-primary-hover text-white" 
-                                                            : "border-gray-200 text-gray-400 hover:text-primary"
+                                                            ? "bg-secondary hover:bg-secondary/50 text-white" 
+                                                            : "border-gray-200 text-gray-400 hover:text-secondary"
                                                         }
                                                     >
                                                         <Star className="w-4 h-4" />

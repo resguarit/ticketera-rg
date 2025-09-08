@@ -90,7 +90,7 @@ export default function VenuesIndex() {
                             Administra los lugares donde se realizarán tus eventos.
                         </p>
                     </div>
-                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button asChild className="bg-primary hover:bg-primary-hover text-white">
                         <Link href={route('admin.venues.create')}>
                             <Plus className="w-4 h-4 mr-2" />
                             Crear Recinto
