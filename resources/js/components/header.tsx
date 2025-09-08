@@ -24,15 +24,17 @@ export default function Header({ className = '' }: HeaderProps) {
 
     return (
         <header className={`bg-white backdrop-blur-md border-b border-white/10 justify-center flex sticky top-0 z-50 w-full ${className}`}>
-            <div className="container py-3 sm:py-4 px-3 sm:px-4 justify-center w-full">
+            <div className=" py-3 sm:py-1 px-4  justify-center w-full">
                 <div className="flex items-center justify-between w-full">
                     {/* Logo */}
                     <Link href={route('home')} className="flex items-center space-x-2">
-                        <div className="w-10 h-8 sm:w-13 sm:h-10 bg-primary rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg sm:text-xl">TRG</span>
-                        </div>
-                        <h1 className="text-xl sm:text-2xl font-bold bg-primary bg-clip-text text-transparent">
-                            <span className="hidden sm:inline">Ticketera-RG</span>
+                            <img 
+                                src="/images/logo_sin_texto.png" 
+                                alt="TRG Logo" 
+                                className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
+                            />
+                        <h1 className="text-lg sm:text-xl font-bold bg-primary bg-clip-text text-transparent">
+                            <span className="hidden sm:inline">RG <span className="font-medium">ENTRADAS</span></span>
                             <span className="sm:hidden">Ticketera</span>
                         </h1>
                     </Link>
