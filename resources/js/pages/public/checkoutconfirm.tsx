@@ -33,6 +33,8 @@ interface SelectedTicket {
     price: number;
     quantity: number;
     description: string;
+    is_bundle?: boolean;
+    bundle_quantity?: number;
 }
 
 interface EventData extends Event {
@@ -123,6 +125,16 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const getTotalTickets = () => {
+        return eventData.selectedTickets.reduce((total, ticket) => {
+            // Si el ticket tiene información de bundle, usar esa lógica
+            if (ticket.is_bundle && ticket.bundle_quantity) {
+                return total + (ticket.quantity * ticket.bundle_quantity);
+            }
+            return total + ticket.quantity;
+        }, 0);
+    };
+
+    const getBundleTicketsCount = () => {
         return eventData.selectedTickets.reduce((total, ticket) => total + ticket.quantity, 0);
     };
 
@@ -692,13 +704,36 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     {eventData.selectedTickets.map((ticket) => (
                                         <div key={ticket.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex-1">
-                                                <h4 className="text-foreground font-semibold">{ticket.type}</h4>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="text-foreground font-semibold">{ticket.type}</h4>
+                                                    {ticket.is_bundle && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            Pack x{ticket.bundle_quantity}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 <p className="text-foreground/60 text-sm">{ticket.description}</p>
-                                                <p className="text-foreground/80 text-sm">Cantidad: {ticket.quantity}</p>
+                                                <div className="text-foreground/80 text-sm">
+                                                    {ticket.is_bundle ? (
+                                                        <div>
+                                                            <div>Cantidad: {ticket.quantity} lotes</div>
+                                                            <div className="text-blue-600">
+                                                                = {ticket.quantity * (ticket.bundle_quantity || 1)} entradas
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>Cantidad: {ticket.quantity}</div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
                                                 <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
+                                                {ticket.is_bundle && (
+                                                    <p className="text-foreground/60 text-xs">
+                                                        {formatPrice(ticket.price / (ticket.bundle_quantity || 1))} por entrada individual
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -707,11 +742,13 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-foreground/80">
-                                            <span>Subtotal ({getTotalTickets()} tickets)</span>
+                                            <span>
+                                                Subtotal ({getBundleTicketsCount()} {getBundleTicketsCount() === 1 ? 'ítem' : 'ítems'}, {getTotalTickets()} entradas)
+                                            </span>
                                             <span>{formatPrice(getTotalPrice())}</span>
                                         </div>
                                         <div className="flex justify-between text-foreground/80">
-                                            <span>Cargo por servicio ({ (serviceFeeDetails.taxRate * 100).toFixed(0) }%)</span>
+                                            <span>Cargo por servicio ({(serviceFeeDetails.taxRate * 100).toFixed(0)}%)</span>
                                             <span>{formatPrice(serviceFeeDetails.fee)}</span>
                                         </div>
                                         <Separator className="bg-gray-200" />

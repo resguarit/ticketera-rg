@@ -66,6 +66,8 @@ class CheckoutController extends Controller
                             'price' => $ticketType->price,
                             'quantity' => (int)$quantity,
                             'description' => $ticketType->description,
+                            'is_bundle' => $ticketType->isBundle(),
+                            'bundle_quantity' => $ticketType->bundle_quantity,
                         ];
                     }
                 }
@@ -98,15 +100,28 @@ class CheckoutController extends Controller
 
     public function processPayment(Request $request): RedirectResponse
     {
-        // Log de debug al inicio
-        Log::info('=== PROCESANDO CHECKOUT ===', [
+        Log::info('=== PROCESANDO CHECKOUT - INICIO ===', [
             'url' => $request->url(),
             'method' => $request->method(),
-            'all_data' => $request->all(),
-            'headers' => $request->headers->all()
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
+            'auth_check' => Auth::check(),
+            'auth_user_id' => Auth::id()
         ]);
 
+        // Log de todos los datos de entrada (sin datos sensibles)
+        $allData = $request->all();
+        if (isset($allData['payment_info']['cardNumber'])) {
+            $allData['payment_info']['cardNumber'] = '**** **** **** ' . substr($allData['payment_info']['cardNumber'], -4);
+        }
+        if (isset($allData['payment_info']['cvv'])) {
+            $allData['payment_info']['cvv'] = '***';
+        }
+        Log::info('Datos recibidos en checkout', ['request_data' => $allData]);
+
         try {
+            Log::info('Iniciando validación de datos');
+            
             $validated = $request->validate([
                 'event_id' => 'required|exists:events,id',
                 'function_id' => 'required|exists:event_functions,id',
@@ -125,12 +140,13 @@ class CheckoutController extends Controller
                 'agreements.privacy' => 'required|boolean|accepted',
             ]);
             
-            Log::info('Validación exitosa');
+            Log::info('Validación exitosa', ['validated_keys' => array_keys($validated)]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Error de validación', [
+            Log::error('Error de validación en checkout', [
                 'errors' => $e->errors(),
-                'input' => $request->all()
+                'failed_rules' => $e->validator->failed(),
+                'input_keys' => array_keys($request->all())
             ]);
             
             return redirect()->back()
@@ -139,12 +155,21 @@ class CheckoutController extends Controller
         }
 
         try {
+            Log::info('Obteniendo evento para tax calculation', ['event_id' => $validated['event_id']]);
+            
             // Obtener el evento para acceder al tax
             $event = Event::findOrFail($validated['event_id']);
             $eventTax = $event->tax ? ($event->tax / 100) : 0; // Convertir a decimal
 
+            Log::info('Event tax calculado', [
+                'event_tax_percent' => $event->tax,
+                'event_tax_decimal' => $eventTax
+            ]);
+
             // Calcular totales usando el servicio
+            Log::info('Calculando totales usando OrderService');
             $totals = $this->orderService->calculateOrderTotals($validated['selected_tickets'], 0, $eventTax);
+            Log::info('Totales calculados por OrderService', $totals);
 
             // Preparar datos para crear la orden
             $orderData = [
@@ -154,18 +179,28 @@ class CheckoutController extends Controller
                 'total_amount' => $totals['total_amount'],
                 'payment_method' => $validated['payment_info']['method'],
                 'billing_info' => $validated['billing_info'],
-                'tax' => $eventTax, // <-- AÑADIR ESTO
+                'tax' => $eventTax,
             ];
 
+            Log::info('Datos preparados para crear orden', ['order_data' => $orderData]);
+
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
+            Log::info('Llamando a OrderService::createOrder');
             $orderResult = $this->orderService->createOrder($orderData);
             
+            Log::info('OrderService::createOrder completado', [
+                'order_id' => $orderResult['order']->id,
+                'account_created' => $orderResult['account_created']
+            ]);
+
             // Verificar si se creó una nueva cuenta
             $accountCreated = $orderResult['account_created'] ?? false;
             $order = $orderResult['order'];
 
             // Procesar el pago usando el servicio
+            Log::info('Iniciando procesamiento de pago', ['order_id' => $order->id]);
             $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
+            Log::info('Resultado de procesamiento de pago', ['payment_successful' => $paymentSuccessful]);
 
             if ($paymentSuccessful) {
                 $redirectParams = ['order' => $order->id];
@@ -174,21 +209,31 @@ class CheckoutController extends Controller
                 if ($accountCreated) {
                     $redirectParams['account_created'] = '1';
                 }
+
+                Log::info('Pago exitoso, redirigiendo a success', [
+                    'order_id' => $order->id,
+                    'redirect_params' => $redirectParams,
+                    'redirect_route' => route('checkout.success', $redirectParams)
+                ]);
                 
                 return redirect()->route('checkout.success', $redirectParams)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
+                Log::error('Pago falló, redirigiendo con error');
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Error al procesar el pago. Por favor intenta de nuevo.');
             }
 
         } catch (\Exception $e) {
-            Log::error('Error en checkout: ' . $e->getMessage(), [
+            Log::error('Error general en checkout', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
                 'user_id' => Auth::id(),
-                'event_id' => $validated['event_id'],
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'event_id' => $validated['event_id'] ?? 'no_event_id',
+                'request_data_keys' => array_keys($request->all())
             ]);
             
             return redirect()->back()
@@ -199,62 +244,117 @@ class CheckoutController extends Controller
 
     public function success(Request $request): Response | RedirectResponse
     {
+        Log::info('=== CHECKOUT SUCCESS - INICIO ===', [
+            'query_params' => $request->query(),
+            'order_id' => $request->query('order'),
+            'account_created' => $request->query('account_created')
+        ]);
+
         $orderId = $request->query('order');
         $accountCreated = $request->query('account_created', false);
         
         if (!$orderId) {
+            Log::error('Order ID no encontrado en success page');
             return redirect()->route('home')
                 ->with('error', 'Orden no encontrada');
         }
 
-        // ACTUALIZADO: Cargar la orden con ciudad y provincia
-        $order = Order::with([
-            'items.ticketType.eventFunction.event.venue.ciudad.provincia',
-            'client.person'
-        ])->findOrFail($orderId);
+        try {
+            Log::info('Cargando orden para success page', ['order_id' => $orderId]);
+            
+            // ACTUALIZADO: Cargar la orden con ciudad y provincia
+            $order = Order::with([
+                'items.ticketType.eventFunction.event.venue.ciudad.provincia',
+                'client.person'
+            ])->findOrFail($orderId);
 
-        // Obtener resumen de la orden usando el servicio
-        $orderSummary = $this->orderService->getOrderSummary($order);
+            Log::info('Orden cargada exitosamente', [
+                'order_id' => $order->id,
+                'status' => $order->status,
+                'total_amount' => $order->total_amount,
+                'items_count' => $order->items->count()
+            ]);
 
-        // Obtener datos del evento y función
-        $firstTicket = $order->items->first();
-        $eventFunction = $firstTicket->ticketType->eventFunction;
-        $event = $eventFunction->event;
+            // Obtener resumen de la orden usando el servicio
+            Log::info('Obteniendo resumen de orden');
+            $orderSummary = $this->orderService->getOrderSummary($order);
+            Log::info('Resumen de orden obtenido', ['summary_keys' => array_keys($orderSummary)]);
 
-        // Preparar datos para la vista
-        $purchaseData = [
-            'orderId' => $orderSummary['order_number'],
-            'event' => [
-                'name' => $event->name,
-                'image_url' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
-                'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-                'time' => $eventFunction->start_time?->format('H:i') ?? '',
-                'location' => $event->venue->name,
-                // ACTUALIZADO: usar la nueva estructura
-                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
-                    $event->venue->ciudad->provincia->name : null,
-                'full_address' => $event->venue->getFullAddressAttribute(),
-                'function' => [
-                    'id' => $eventFunction->id,
-                    'name' => $eventFunction->name,
-                    'description' => $eventFunction->description,
+            // Obtener datos del evento y función
+            $firstTicket = $order->items->first();
+            $eventFunction = $firstTicket->ticketType->eventFunction;
+            $event = $eventFunction->event;
+
+            Log::info('Datos de evento y función obtenidos', [
+                'event_id' => $event->id,
+                'event_name' => $event->name,
+                'function_id' => $eventFunction->id,
+                'function_name' => $eventFunction->name
+            ]);
+
+            // Preparar datos para la vista
+            $purchaseData = [
+                'orderId' => $orderSummary['order_number'],
+                'event' => [
+                    'name' => $event->name,
+                    'image_url' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
+                    'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
+                    'time' => $eventFunction->start_time?->format('H:i') ?? '',
+                    'location' => $event->venue->name,
+                    // ACTUALIZADO: usar la nueva estructura
+                    'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                        $event->venue->ciudad->provincia->name : null,
+                    'full_address' => $event->venue->getFullAddressAttribute(),
+                    'function' => [
+                        'id' => $eventFunction->id,
+                        'name' => $eventFunction->name,
+                        'description' => $eventFunction->description,
+                    ],
                 ],
-            ],
-            'tickets' => $orderSummary['grouped_tickets']->map(function($ticket) {
-                return [
-                    'type' => $ticket['ticket_type_name'],
-                    'quantity' => $ticket['quantity'],
-                    'price' => $ticket['unit_price'],
-                ];
-            })->toArray(),
-            'total' => $order->total_amount,
-            'purchaseDate' => $order->order_date->format('d/m/Y'),
-        ];
+                'tickets' => $orderSummary['grouped_tickets']->map(function($ticket) {
+                    $ticketData = [
+                        'type' => $ticket['ticket_type_name'],
+                        'quantity' => $ticket['quantity'],
+                        'price' => $ticket['unit_price'],
+                    ];
+                    
+                    // Agregar información de bundle si aplica
+                    if (isset($ticket['is_bundle']) && $ticket['is_bundle']) {
+                        $ticketData['is_bundle'] = true;
+                        $ticketData['bundle_quantity'] = $ticket['bundle_quantity'];
+                        $ticketData['total_individual_tickets'] = $ticket['quantity'] * $ticket['bundle_quantity'];
+                    }
+                    
+                    return $ticketData;
+                })->toArray(),
+                'total' => $order->total_amount,
+                'purchaseDate' => $order->order_date->format('d/m/Y'),
+            ];
 
-        return Inertia::render('public/checkoutsuccess', [
-            'purchaseData' => $purchaseData,
-            'accountCreated' => (bool) $accountCreated
-        ]);
+            Log::info('Purchase data preparado', ['purchase_data_keys' => array_keys($purchaseData)]);
+
+            Log::info('Renderizando success page', [
+                'order_id' => $orderId,
+                'account_created' => (bool) $accountCreated
+            ]);
+
+            return Inertia::render('public/checkoutsuccess', [
+                'purchaseData' => $purchaseData,
+                'accountCreated' => (bool) $accountCreated
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error en success page', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('home')
+                ->with('error', 'Error al mostrar la página de éxito');
+        }
     }
 }

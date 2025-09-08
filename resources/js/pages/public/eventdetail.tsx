@@ -65,10 +65,17 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         setSelectedTickets({}); // Limpiar selección de tickets
     };
 
-    const updateTicketQuantity = (ticketId: number, change: number) => {
-        setSelectedTickets((prev) => {
+    const handleQuantityChange = (ticketId: number, change: number) => {
+        setSelectedTickets(prev => {
             const current = prev[ticketId] || 0;
-            const newQuantity = Math.max(0, Math.min(10, current + change));
+            const ticketType = currentTicketTypes.find(t => t.id === ticketId);
+            
+            if (!ticketType) return prev;
+            
+            // Para bundles, el límite es max_purchase_quantity (no multiplicado)
+            const maxAllowed = ticketType.max_purchase_quantity || 10;
+            const newQuantity = Math.max(0, Math.min(maxAllowed, current + change));
+            
             if (newQuantity === 0) {
                 const { [ticketId]: removed, ...rest } = prev;
                 return rest;
@@ -85,7 +92,23 @@ export default function EventDetail({ eventData }: EventDetailProps) {
     };
 
     const getTotalTickets = () => {
-        return Object.values(selectedTickets).reduce((total, quantity) => total + quantity, 0);
+        return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
+            const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
+            if (!ticket) return total;
+            
+            // Si es bundle, mostrar cantidad real de entradas
+            const realQuantity = ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity;
+            return total + realQuantity;
+        }, 0);
+    };
+
+    const getRealTicketCount = () => {
+        return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
+            const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
+            if (!ticket) return total;
+            
+            return total + (ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity);
+        }, 0);
     };
 
     const handlePurchase = () => {
@@ -336,54 +359,72 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                                             {currentTicketTypes
                                                 .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => (
-                                                <div
-                                                    key={ticket.id}
-                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                        <div className="min-w-0 flex-1 mr-2">
-                                                            <h4 className="font-bold text-foreground text-sm sm:text-base">{ticket.name}</h4>
-                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                            <p className="text-foreground/60 text-xs mt-1">
-                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            <p className="text-lg sm:text-xl font-bold text-foreground">
-                                                                {formatPrice(ticket.price)}
-                                                            </p>
-                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                        </div>
-                                                    </div>
+                                                .map((ticket) => {
+                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                    const isBundle = ticket.is_bundle || false;
+                                                    const bundleQuantity = ticket.bundle_quantity || 1;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={ticket.id}
+                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                <div className="min-w-0 flex-1 mr-2">
+                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                    <p className="text-foreground/60 text-xs mt-1">
+                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                        {formatPrice(ticket.price)}
+                                                                    </p>
+                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                </div>
+                                                            </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2 sm:space-x-3">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                                disabled={!selectedTickets[ticket.id]}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <span className="text-foreground font-semibold w-6 sm:w-8 text-center text-sm sm:text-base">
-                                                                {selectedTickets[ticket.id] || 0}
-                                                            </span>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                                disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                        disabled={selectedQuantity === 0}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                                {selectedQuantity > 0 && (
+                                                                    <div className="text-sm text-foreground/60 mt-1">
+                                                                        {isBundle ? (
+                                                                            <div>
+                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div className="text-blue-600">
+                                                                                    = {selectedQuantity * bundleQuantity} entradas
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>{selectedQuantity} entradas</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    );
+                                                })}
                                         </>
                                     ) : selectedFunction && currentTicketTypes.length === 0 ? (
                                         <div className="text-center py-6 sm:py-8">
@@ -532,54 +573,72 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                                             {currentTicketTypes
                                                 .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => (
-                                                <div
-                                                    key={ticket.id}
-                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                        <div className="min-w-0 flex-1 mr-2">
-                                                            <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                            <p className="text-foreground/60 text-xs mt-1">
-                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                {formatPrice(ticket.price)}
-                                                            </p>
-                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                        </div>
-                                                    </div>
+                                                .map((ticket) => {
+                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                    const isBundle = ticket.is_bundle || false;
+                                                    const bundleQuantity = ticket.bundle_quantity || 1;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={ticket.id}
+                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                <div className="min-w-0 flex-1 mr-2">
+                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                    <p className="text-foreground/60 text-xs mt-1">
+                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                        {formatPrice(ticket.price)}
+                                                                    </p>
+                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                </div>
+                                                            </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2 sm:space-x-3">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                                disabled={!selectedTickets[ticket.id]}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <span className="text-foreground font-semibold w-6 sm:w-8 text-center text-sm sm:text-base">
-                                                                {selectedTickets[ticket.id] || 0}
-                                                            </span>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                                disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                        disabled={selectedQuantity === 0}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                                {selectedQuantity > 0 && (
+                                                                    <div className="text-sm text-foreground/60 mt-1">
+                                                                        {isBundle ? (
+                                                                            <div>
+                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div className="text-blue-600">
+                                                                                    = {selectedQuantity * bundleQuantity} entradas
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>{selectedQuantity} entradas</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    );
+                                                })}
                                         </>
                                     ) : selectedFunction && currentTicketTypes.length === 0 ? (
                                         <div className="text-center py-6 sm:py-8">

@@ -18,8 +18,8 @@ interface PurchaseData {
         time: string;
         location: string;
         city: string;
-        province?: string; // NUEVO: agregar provincia
-        full_address?: string; 
+        province?: string;
+        full_address?: string;
         function?: {
             id: number;
             name: string;
@@ -30,7 +30,10 @@ interface PurchaseData {
         type: string;
         quantity: number;
         price: number;
-    }>;
+        is_bundle?: boolean;        // NUEVO
+        bundle_quantity?: number;   // NUEVO
+        total_individual_tickets?: number; // NUEVO
+    }> ;
     total: number;
     purchaseDate: string;
 }
@@ -198,8 +201,26 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                     {purchaseData.tickets.map((ticket, index) => (
                                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div>
-                                                <span className="text-foreground font-medium">{ticket.type}</span>
-                                                <span className="text-foreground/60 ml-2">x{ticket.quantity}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-foreground font-medium">{ticket.type}</span>
+                                                    {ticket.is_bundle && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            Pack x{ticket.bundle_quantity}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <div className="text-foreground/60 text-sm">
+                                                    {ticket.is_bundle ? (
+                                                        <div>
+                                                            <div>{ticket.quantity} lotes</div>
+                                                            <div className="text-blue-600">
+                                                                = {ticket.total_individual_tickets || (ticket.quantity * (ticket.bundle_quantity || 1))} entradas
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span>x{ticket.quantity}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <span className="text-foreground font-bold">
                                                 {formatNumber(calculateTicketSubtotal(ticket.price, ticket.quantity))}
