@@ -10,8 +10,10 @@ export interface TicketType {
     price: number;
     quantity: number;
     quantity_sold: number;
-    max_purchase_quantity: number; // ← AGREGAR ESTE CAMPO
+    max_purchase_quantity: number;
     is_hidden: boolean;
+    is_bundle: boolean;        // ← NUEVO
+    bundle_quantity: number;   // ← NUEVO
     sales_start_date: string;
     sales_end_date: string;
     created_at: string;
@@ -21,6 +23,8 @@ export interface TicketType {
     quantity_available?: number;
     sold_percentage?: number;
     total_income?: number;
+    real_quantity?: number;           // ← NUEVO
+    real_quantity_sold?: number;      // ← NUEVO
 }
 
 export interface TicketTypeRelations {

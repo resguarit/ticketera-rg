@@ -31,17 +31,20 @@ export default function CreateTicketType() {
         sales_start_date: '',
         sales_end_date: '',
         is_hidden: false,
+        is_bundle: false,           // ← NUEVO
+        bundle_quantity: undefined, // ← NUEVO
     });
 
     useEffect(() => {
         const selectedSector = sectors.find(s => s.id === data.sector_id);
         if (selectedSector) {
-            setData('quantity', selectedSector.capacity);
+            setData('quantity', selectedSector.capacity ?? undefined);
         }
     }, [data.sector_id]);
 
     const maxQuantity = useMemo(() => {
-        return sectors.find(s => s.id === data.sector_id)?.capacity;
+        const capacity = sectors.find(s => s.id === data.sector_id)?.capacity;
+        return capacity == null ? undefined : capacity;
     }, [data.sector_id, sectors]);
 
     const submit: FormEventHandler = (e) => {

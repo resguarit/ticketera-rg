@@ -37,6 +37,8 @@ export default function EditTicketType() {
         sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
         sales_end_date: formatDateTimeForInput(ticketType.sales_end_date),
         is_hidden: ticketType.is_hidden,
+        is_bundle: ticketType.is_bundle || false,           // ← NUEVO
+        bundle_quantity: ticketType.bundle_quantity || null, // ← NUEVO
     });
 
     // Lógica para actualizar la cantidad si el usuario cambia de sector
@@ -44,7 +46,7 @@ export default function EditTicketType() {
         const selectedSector = sectors.find(s => s.id === data.sector_id);
         // Solo actualiza si el sector cambia a uno diferente del original
         if (selectedSector && selectedSector.id !== ticketType.sector_id) {
-            setData('quantity', selectedSector.capacity);
+            setData('quantity', selectedSector.capacity ?? undefined);
         }
     }, [data.sector_id]);
 

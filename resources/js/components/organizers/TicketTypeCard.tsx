@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -70,12 +71,24 @@ export const TicketTypeCard = ({
     }
   };
 
+  const isBundle = ticket.is_bundle || false;
+  const bundleQuantity = ticket.bundle_quantity || 1;
+  const realQuantity = isBundle ? ticket.quantity * bundleQuantity : ticket.quantity;
+  const realQuantitySold = isBundle ? ticket.quantity_sold * bundleQuantity : ticket.quantity_sold;
+
   return (
     <Card className="w-80 hover:shadow-md transition-shadow relative">
       <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <CardTitle className="text-lg">{ticket.name}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">{ticket.name}</CardTitle>
+              {isBundle && (
+                <Badge variant="secondary" className="text-xs">
+                  Pack x{bundleQuantity}
+                </Badge>
+              )}
+            </div>
             {ticket.description && (
               <CardDescription className="mt-1 text-sm">
                 {ticket.description}
@@ -84,6 +97,11 @@ export const TicketTypeCard = ({
           </div>
           <span className="text-xl font-bold text-primary">
             {formatPrice(ticket.price || 0)}
+            {isBundle && (
+              <div className="text-xs text-muted-foreground text-right">
+                {formatPrice((ticket.price || 0) / bundleQuantity)} c/u
+              </div>
+            )}
           </span>
           {/* Submenú de tres puntitos */}
           <DropdownMenu>
@@ -109,7 +127,9 @@ export const TicketTypeCard = ({
       <CardContent className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Total:</span>
+            <span className="text-muted-foreground">
+              {isBundle ? 'Lotes:' : 'Total:'}
+            </span>
             <span className="font-medium">{ticket.quantity}</span>
           </div>
           <div className="flex justify-between">
@@ -124,10 +144,29 @@ export const TicketTypeCard = ({
             <span className="text-muted-foreground">Vendido:</span>
             <span className="font-medium">{ticket.sold_percentage}%</span>
           </div>
+          
+          {/* NUEVA FILA: Mostrar entradas reales si es bundle */}
+          {isBundle && (
+            <>
+              <div className="flex justify-between col-span-2 pt-1 border-t">
+                <span className="text-muted-foreground text-xs">Entradas reales:</span>
+                <span className="font-medium text-xs text-blue-700">
+                  {realQuantitySold}/{realQuantity}
+                </span>
+              </div>
+            </>
+          )}
+          
           <div className="flex justify-between col-span-2">
             <span className="text-muted-foreground text-xs">Máx. por compra:</span>
-            {console.log(ticket)}
-            <span className="font-medium text-xs text-gray-700">{ticket.max_purchase_quantity}</span>
+            <span className="font-medium text-xs text-gray-700">
+              {ticket.max_purchase_quantity}
+              {isBundle && (
+                <span className="text-blue-600">
+                  {' '}({ticket.max_purchase_quantity * bundleQuantity} entradas)
+                </span>
+              )}
+            </span>
           </div>
         </div>
         
@@ -149,7 +188,7 @@ export const TicketTypeCard = ({
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${Math.min(ticket.sold_percentage, 100)}%` }}
+              style={{ width: `${Math.min(ticket.sold_percentage ?? 0, 100)}%` }}
             />
           </div>
         </div>
