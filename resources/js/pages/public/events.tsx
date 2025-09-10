@@ -342,7 +342,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                             </div>
 
                                                             <div className="flex-1 min-w-0">
-                                                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                                                <div className="flex flex-col md:flex-row sm:items-start md:justify-between">
                                                                     <div className="min-w-0 flex-1">
                                                                         <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
                                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
@@ -360,7 +360,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-4">
+                                                                    <div className="text-left sm:text-right mt-2 md:mt-0 md:ml-4">
                                                                         {!event.has_ticket_types ? (
                                                                             <div className="text-base sm:text-lg mt-3 font-medium text-foreground/60">
                                                                                 Sin Precio
