@@ -345,7 +345,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                 <div className="flex flex-col md:flex-row sm:items-start md:justify-between">
                                                                     <div className="min-w-0 flex-1">
                                                                         <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
-                                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
+                                                                        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 md:mb-0 space-y-1 md:space-y-0">
                                                                             <div className="flex items-center space-x-1">
                                                                                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                                                                                 <span className="truncate">
@@ -367,10 +367,12 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                             </div>
                                                                         ) : event.price > 0 ? (
                                                                             <>
+                                                                            <div className='flex flex-row items-center gap-1 md:flex-col md:items-end'>
                                                                                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
                                                                                     {formatPrice(event.price)}
                                                                                 </div>
                                                                                 <div className="text-foreground/60 text-xs sm:text-sm">ARS</div>
+                                                                            </div>
                                                                             </>
                                                                         ) : event.has_free_tickets ? (
                                                                             <div className="text-base sm:text-lg font-bold text-green-600">
