@@ -30,6 +30,7 @@ const eventStatuses = [
     { value: 'upcoming', label: 'Próximas', icon: Calendar },
     { value: 'sold_out', label: 'Agotadas', icon: XCircle },
     { value: 'finished', label: 'Finalizadas', icon: CheckCircle },
+    { value: 'featured', label: 'Destacados', icon: Star }, // Agregar el filtro de destacados
 ];
 
 interface EventDetail extends Event {
@@ -89,7 +90,10 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                 event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
             const matchesCity = selectedCity === "all" || event.city === selectedCity;
-            const matchesStatus = selectedStatus === 'all' || event.status === selectedStatus;
+            
+            // Actualizar la lógica para incluir eventos destacados
+            const matchesStatus = selectedStatus === 'all' || 
+                                (selectedStatus === 'featured' ? event.featured === true : event.status === selectedStatus);
             
             return matchesSearch && matchesCategory && matchesCity && matchesStatus;
         })
@@ -263,7 +267,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                             className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
                                                         />
                                                         {event.featured && (
-                                                            <Badge className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-primary text-white border-0 text-xs sm:text-sm">
+                                                            <Badge className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-secondary text-white border-0 text-xs sm:text-sm">
                                                                 Destacado
                                                             </Badge>
                                                         )}
