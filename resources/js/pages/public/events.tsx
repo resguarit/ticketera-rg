@@ -254,69 +254,63 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                             categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
-                                            <Card
-                                                key={event.id}
-                                                className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group flex flex-col"
-                                            >
-                                                <div className="relative">
-                                                    <img
-                                                        src={event.image_url || "/placeholder.svg?height=400&width=800"}
-                                                        alt={event.name}
-                                                        className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    />
-                                                    {event.featured && (
-                                                        <Badge className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-primary text-white border-0 text-xs sm:text-sm">
-                                                            Destacado
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col flex-1">
-                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
-                                                    <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1">
-                                                        <div className="flex items-center text-foreground/80">
-                                                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                            <span className="text-xs sm:text-sm truncate">
-                                                                {event.date} {event.time && `• ${event.time}`}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center text-foreground/80">
-                                                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                            <span className="text-xs sm:text-sm truncate">
-                                                                {event.location}, {event.city}
-                                                            </span>
-                                                        </div>
+                                            <Link key={event.id} href={`/events/${event.id}`} className="block">
+                                                <Card className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group flex flex-col cursor-pointer h-full">
+                                                    <div className="relative">
+                                                        <img
+                                                            src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                                            alt={event.name}
+                                                            className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        />
+                                                        {event.featured && (
+                                                            <Badge className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-primary text-white border-0 text-xs sm:text-sm">
+                                                                Destacado
+                                                            </Badge>
+                                                        )}
                                                     </div>
-                                                    <div className="flex items-center justify-between mt-auto">
-                                                        <div className="min-w-0">
-                                                            {!event.has_ticket_types ? (
-                                                                <span className="text-sm sm:text-base font-medium text-foreground/60">
-                                                                    Sin Precio
+                                                    <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col flex-1">
+                                                        <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
+                                                        <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1">
+                                                            <div className="flex items-center text-foreground/80">
+                                                                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                                                                <span className="text-xs sm:text-sm truncate">
+                                                                    {event.date} {event.time && `• ${event.time}`}
                                                                 </span>
-                                                            ) : event.price > 0 ? (
-                                                                <>
-                                                                    <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                        {formatPrice(event.price)}
+                                                            </div>
+                                                            <div className="flex items-center text-foreground/80">
+                                                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                                                                <span className="text-xs sm:text-sm truncate">
+                                                                    {event.location}, {event.city}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-auto">
+                                                            <div className="">
+                                                                {!event.has_ticket_types ? (
+                                                                    <span className="text-sm sm:text-base font-medium text-foreground/60">
+                                                                        Sin Precio
                                                                     </span>
-                                                                    <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
-                                                                </>
-                                                            ) : event.has_free_tickets ? (
-                                                                <span className="text-sm sm:text-base lg:text-lg font-bold text-green-600">
-                                                                    Gratis
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground/60">
-                                                                    Consultar precio
-                                                                </span>
-                                                            )}
+                                                                ) : event.price > 0 ? (
+                                                                    <>
+                                                                        <span className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
+                                                                            {formatPrice(event.price)}
+                                                                        </span>
+                                                                        <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
+                                                                    </>
+                                                                ) : event.has_free_tickets ? (
+                                                                    <span className="text-sm sm:text-base lg:text-lg font-bold text-green-600">
+                                                                        Gratis
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground/60">
+                                                                        Consultar precio
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <Link href={`/events/${event.id}`}>
-                                                            <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-2 sm:px-2 lg:px-3 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10">
-                                                                Ver Más
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
+                                                    </CardContent>
+                                                </Card>
+                                            </Link>
                                         );
                                     })}
                                 </div>
