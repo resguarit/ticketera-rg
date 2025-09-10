@@ -1,13 +1,12 @@
-import { useState, FormEventHandler, useEffect } from 'react';
+import { useState, FormEventHandler } from 'react';
 import { Link } from '@inertiajs/react';
-import { User, Mail, Phone, CreditCard, MapPin, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, CreditCard, MapPin, Lock, Eye, EyeOff, Save } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 
 interface UserData {
     id?: number;
@@ -19,7 +18,6 @@ interface UserData {
     address: string;
     password?: string;
     password_confirmation?: string;
-    email_verified: boolean;
 }
 
 interface UserFormData {
@@ -31,7 +29,6 @@ interface UserFormData {
     address: string;
     password: string;
     password_confirmation: string;
-    email_verified: boolean;
 }
 
 interface UserFormProps {
@@ -75,25 +72,23 @@ export default function UserForm({
                             {/* Nombre y Apellido */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="firstName" className="text-black">Nombre *</Label>
+                                    <Label htmlFor="firstName">Nombre *</Label>
                                     <Input
                                         id="firstName"
                                         value={data.firstName}
                                         onChange={(e) => setData('firstName', e.target.value)}
                                         placeholder="Ingresa el nombre"
-                                        className="bg-white border-gray-300"
                                         required
                                     />
                                     <InputError message={errors.firstName} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lastName" className="text-black">Apellido *</Label>
+                                    <Label htmlFor="lastName">Apellido *</Label>
                                     <Input
                                         id="lastName"
                                         value={data.lastName}
                                         onChange={(e) => setData('lastName', e.target.value)}
                                         placeholder="Ingresa el apellido"
-                                        className="bg-white border-gray-300"
                                         required
                                     />
                                     <InputError message={errors.lastName} />
@@ -102,69 +97,53 @@ export default function UserForm({
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-black">Email *</Label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
-                                        placeholder="correo@ejemplo.com"
-                                        className="bg-white border-gray-300 pl-10"
-                                        required
-                                    />
-                                </div>
+                                <Label htmlFor="email">Email *</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    placeholder="correo@ejemplo.com"
+                                    required
+                                />
                                 <InputError message={errors.email} />
                             </div>
 
                             {/* DNI y Teléfono */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="dni" className="text-black">DNI *</Label>
-                                    <div className="relative">
-                                        <CreditCard className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                        <Input
-                                            id="dni"
-                                            value={data.dni}
-                                            onChange={(e) => setData('dni', e.target.value)}
-                                            placeholder="12345678"
-                                            className="bg-white border-gray-300 pl-10"
-                                            required
-                                        />
-                                    </div>
+                                    <Label htmlFor="dni">DNI *</Label>
+                                    <Input
+                                        id="dni"
+                                        value={data.dni}
+                                        onChange={(e) => setData('dni', e.target.value)}
+                                        placeholder="12345678"
+                                        required
+                                    />
                                     <InputError message={errors.dni} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone" className="text-black">Teléfono</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                        <Input
-                                            id="phone"
-                                            value={data.phone}
-                                            onChange={(e) => setData('phone', e.target.value)}
-                                            placeholder="+54 11 1234-5678"
-                                            className="bg-white border-gray-300 pl-10"
-                                        />
-                                    </div>
+                                    <Label htmlFor="phone">Teléfono</Label>
+                                    <Input
+                                        id="phone"
+                                        value={data.phone}
+                                        onChange={(e) => setData('phone', e.target.value)}
+                                        placeholder="+54 11 1234-5678"
+                                    />
                                     <InputError message={errors.phone} />
                                 </div>
                             </div>
 
                             {/* Dirección */}
                             <div className="space-y-2">
-                                <Label htmlFor="address" className="text-black">Dirección</Label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                    <Textarea
-                                        id="address"
-                                        value={data.address}
-                                        onChange={(e) => setData('address', e.target.value)}
-                                        placeholder="Dirección completa"
-                                        className="bg-white border-gray-300 pl-10"
-                                        rows={3}
-                                    />
-                                </div>
+                                <Label htmlFor="address">Dirección</Label>
+                                <Textarea
+                                    id="address"
+                                    value={data.address}
+                                    onChange={(e) => setData('address', e.target.value)}
+                                    placeholder="Dirección completa"
+                                    rows={3}
+                                />
                                 <InputError message={errors.address} />
                             </div>
                         </div>
@@ -180,25 +159,26 @@ export default function UserForm({
                         </div>
                         <div className="p-6 space-y-6">
                             {isEditing && (
-                                <p className="text-sm text-gray-600 mb-4">
-                                    Deja estos campos en blanco si no deseas cambiar la contraseña
-                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Nota:</strong> Deja estos campos en blanco si no deseas cambiar la contraseña actual del usuario.
+                                    </p>
+                                </div>
                             )}
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="password" className="text-black">
+                                    <Label htmlFor="password">
                                         {isEditing ? 'Nueva Contraseña' : 'Contraseña *'}
                                     </Label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
-                                            placeholder="Mínimo 8 caracteres"
-                                            className="bg-white border-gray-300 pl-10 pr-10"
+                                            placeholder={isEditing ? "Nueva contraseña (opcional)" : "Mínimo 8 caracteres"}
+                                            className="pr-10"
                                             required={!isEditing}
                                         />
                                         <Button
@@ -218,18 +198,17 @@ export default function UserForm({
                                     <InputError message={errors.password} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="password_confirmation" className="text-black">
+                                    <Label htmlFor="password_confirmation">
                                         {isEditing ? 'Confirmar Nueva Contraseña' : 'Confirmar Contraseña *'}
                                     </Label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                         <Input
                                             id="password_confirmation"
                                             type={showPasswordConfirmation ? "text" : "password"}
                                             value={data.password_confirmation}
                                             onChange={(e) => setData('password_confirmation', e.target.value)}
                                             placeholder={isEditing ? "Confirma la nueva contraseña" : "Confirma la contraseña"}
-                                            className="bg-white border-gray-300 pl-10 pr-10"
+                                            className="pr-10"
                                             required={!isEditing}
                                         />
                                         <Button
@@ -255,38 +234,36 @@ export default function UserForm({
 
                 {/* Panel Lateral */}
                 <div className="space-y-6">
-                    {/* Configuración */}
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <div className="border-b border-gray-200 px-6 py-4">
-                            <h3 className="text-lg font-medium text-black">Configuración</h3>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-black">Email Verificado</Label>
-                                    <p className="text-sm text-gray-500">
-                                        {isEditing ? 'Estado de verificación del email' : 'Marcar si el email está verificado'}
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={data.email_verified}
-                                    onCheckedChange={(checked) => setData('email_verified', checked)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Información del Usuario (solo al editar) */}
                     {isEditing && user && (
                         <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
                             <div className="border-b border-gray-200 px-6 py-4">
-                                <h3 className="text-lg font-medium text-black">Información</h3>
+                                <h3 className="text-lg font-medium text-black">Información del Usuario</h3>
                             </div>
                             <div className="p-6 space-y-3">
                                 <div className="text-sm">
                                     <span className="font-medium text-gray-900">ID:</span>
                                     <span className="ml-2 text-gray-600">#{user.id}</span>
                                 </div>
+                                <div className="text-sm">
+                                    <span className="font-medium text-gray-900">Email actual:</span>
+                                    <span className="ml-2 text-gray-600">{user.email}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Información para creación */}
+                    {!isEditing && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+                            <div className="p-6">
+                                <h3 className="text-lg font-medium text-blue-900 mb-3">Información</h3>
+                                <ul className="text-sm text-blue-800 space-y-2">
+                                    <li>• El usuario será creado como cliente</li>
+                                    <li>• El email no estará verificado inicialmente</li>
+                                    <li>• La contraseña debe tener al menos 8 caracteres</li>
+                                    <li>• El DNI debe ser único en el sistema</li>
+                                </ul>
                             </div>
                         </div>
                     )}
@@ -298,15 +275,16 @@ export default function UserForm({
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-black hover:bg-gray-800 text-white"
+                                    className="w-full hover:bg-primary-hover"
                                 >
+                                    <Save className="w-4 h-4 mr-2" />
                                     {processing ? 'Guardando...' : submitText}
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     asChild
-                                    className="w-full border-gray-300 text-black hover:bg-gray-50"
+                                    className="w-full"
                                 >
                                     <Link href={route('admin.users.index')}>
                                         Cancelar

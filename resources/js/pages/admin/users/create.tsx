@@ -3,7 +3,6 @@ import { FormEventHandler } from 'react';
 import { ArrowLeft } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
 import UserForm from './UserForm';
@@ -18,7 +17,6 @@ export default function CreateUser() {
         address: '',
         password: '',
         password_confirmation: '',
-        email_verified: true,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -62,6 +60,7 @@ export default function CreateUser() {
                         onSubmit={submit}
                         submitText="Crear Usuario"
                         isEditing={false}
+                        // NO pasamos user prop cuando estamos creando
                     />
                 </div>
             </div>

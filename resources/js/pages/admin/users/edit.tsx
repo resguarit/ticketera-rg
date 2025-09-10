@@ -15,7 +15,6 @@ interface UserData {
     phone: string;
     dni: string;
     address: string;
-    email_verified: boolean;
 }
 
 interface PageProps {
@@ -34,7 +33,6 @@ export default function EditUser() {
         address: user.address || '',
         password: '',
         password_confirmation: '',
-        email_verified: user.email_verified || false,
     });
 
     const submit: FormEventHandler = (e) => {
