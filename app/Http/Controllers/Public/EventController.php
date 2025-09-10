@@ -88,6 +88,7 @@ class EventController extends Controller
                 'time' => $function->start_time?->format('H:i'),
                 'day_name' => $function->start_time?->format('l'),
                 'is_active' => $function->is_active,
+                'status' => $function->status->value, // Agregar el estado de la función
                 'ticketTypes' => $function->ticketTypes->map(function($ticket) {
                     return [
                         'id' => $ticket->id,

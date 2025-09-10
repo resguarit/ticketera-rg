@@ -27,6 +27,7 @@ interface EventFunctionData extends EventFunction {
     date: string;
     time: string;
     day_name: string;
+    status: string; // Agregar el campo status
     ticketTypes: TicketTypeData[];
 }
 
@@ -209,15 +210,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
-                                                    <Badge 
-                                                        className={`mt-1 sm:mt-2 text-xs ${
-                                                            selectedFunctionId === func.id 
-                                                                ? 'bg-primary text-white' 
-                                                                : 'bg-gray-100 text-gray-600'
-                                                        }`}
-                                                    >
-                                                        {func.ticketTypes.length} tipos de entrada
-                                                    </Badge>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Badge 
+                                                            className={`text-xs ${
+                                                                selectedFunctionId === func.id 
+                                                                    ? 'bg-primary text-white' 
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                            }`}
+                                                        >
+                                                            {func.ticketTypes.length} tipos de entrada
+                                                        </Badge>
+                                                        <Badge 
+                                                            variant="outline" 
+                                                            className={`text-xs ${
+                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
+                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
+                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
+                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
+                                                                'border-orange-300 text-orange-600'
+                                                            }`}
+                                                        >
+                                                            {func.status === 'on_sale' ? 'En venta' :
+                                                             func.status === 'sold_out' ? 'Agotado' :
+                                                             func.status === 'upcoming' ? 'Próximamente' :
+                                                             func.status === 'finished' ? 'Finalizada' :
+                                                             'Inactiva'}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -302,15 +321,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
-                                                    <Badge 
-                                                        className={`mt-1 sm:mt-2 text-xs ${
-                                                            selectedFunctionId === func.id 
-                                                                ? 'bg-primary text-white' 
-                                                                : 'bg-gray-100 text-gray-600'
-                                                        }`}
-                                                    >
-                                                        {func.ticketTypes.length} tipos de entrada
-                                                    </Badge>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Badge 
+                                                            className={`text-xs ${
+                                                                selectedFunctionId === func.id 
+                                                                    ? 'bg-primary text-white' 
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                            }`}
+                                                        >
+                                                            {func.ticketTypes.length} tipos de entrada
+                                                        </Badge>
+                                                        <Badge 
+                                                            variant="outline" 
+                                                            className={`text-xs ${
+                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
+                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
+                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
+                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
+                                                                'border-orange-300 text-orange-600'
+                                                            }`}
+                                                        >
+                                                            {func.status === 'on_sale' ? 'En venta' :
+                                                             func.status === 'sold_out' ? 'Agotado' :
+                                                             func.status === 'upcoming' ? 'Próximamente' :
+                                                             func.status === 'finished' ? 'Finalizada' :
+                                                             'Inactiva'}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -426,16 +463,61 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     );
                                                 })}
                                         </>
-                                    ) : selectedFunction && currentTicketTypes.length === 0 ? (
+                                    ) : selectedFunction ? (
+                                        // Usar el estado real de la función para mostrar el mensaje apropiado
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">No hay entradas disponibles para esta función</p>
-                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
-                                                Agotado
-                                            </Badge>
+                                            {selectedFunction.status === 'sold_out' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Las entradas para esta función están agotadas
+                                                    </p>
+                                                    <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                        Agotado
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'upcoming' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Las entradas para esta función estarán disponibles próximamente
+                                                    </p>
+                                                    <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                        Próximamente
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'finished' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Esta función ya ha finalizado
+                                                    </p>
+                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                        Finalizada
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'inactive' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Esta función no está activa
+                                                    </p>
+                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                        Inactiva
+                                                    </Badge>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        No hay entradas disponibles para esta función
+                                                    </p>
+                                                    <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                        No disponible
+                                                    </Badge>
+                                                </>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">Selecciona una función para ver las entradas disponibles</p>
+                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                Selecciona una función para ver las entradas disponibles
+                                            </p>
                                             <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
                                                 Selecciona función
                                             </Badge>
