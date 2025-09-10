@@ -269,9 +269,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                             Destacado
                                                         </Badge>
                                                     )}
-                                                    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 p-1.5 sm:p-2 rounded-full bg-primary">
-                                                        <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                                                    </div>
                                                 </div>
                                                 <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col flex-1">
                                                     <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
@@ -350,9 +347,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                 alt={event.name}
                                                                 className="w-full h-full object-cover"
                                                             />
-                                                            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 p-1 rounded-full bg-primary">
-                                                                <IconComponent className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
-                                                            </div>
                                                         </div>
 
                                                         <div className="flex-1 min-w-0 ">
@@ -376,8 +370,8 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                 </div>
                                                                 <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-4">
                                                                     {!event.has_ticket_types ? (
-                                                                        <div className="text-base sm:text-lg font-bold text-foreground/60">
-                                                                            Precio por confirmar
+                                                                        <div className="text-base sm:text-lg mt-3 font-medium text-foreground/60">
+                                                                            Sin Precio
                                                                         </div>
                                                                     ) : event.price > 0 ? (
                                                                         <>
