@@ -45,6 +45,7 @@ interface FaqCategory extends FaqCategoryModel {
 
 interface HelpPageProps extends PageProps {
     faqCategories: FaqCategory[];
+    [key: string]: unknown;
 }
 
 const contactOptions = [

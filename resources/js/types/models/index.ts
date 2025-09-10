@@ -15,3 +15,5 @@ export * from './sector';
 export * from './ticketType';
 export * from './user';
 export * from './venue';
+export * from './faq';
+export * from './faqCategory';
