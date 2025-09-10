@@ -224,7 +224,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                         return (
                                             <Card
                                                 key={event.id}
-                                                className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
+                                                className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group flex flex-col"
                                             >
                                                 <div className="relative">
                                                     <img
@@ -240,11 +240,10 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                     <div className="absolute top-2 sm:top-4 right-2 sm:right-4 p-1.5 sm:p-2 rounded-full bg-primary">
                                                         <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                                     </div>
-
                                                 </div>
-                                                <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
+                                                <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col flex-1">
                                                     <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
-                                                    <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
+                                                    <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1">
                                                         <div className="flex items-center text-foreground/80">
                                                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
                                                             <span className="text-xs sm:text-sm truncate">
@@ -258,7 +257,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex items-center justify-between mt-auto">
                                                         <div className="min-w-0">
                                                             {event.price > 0 ? (
                                                                 <>
