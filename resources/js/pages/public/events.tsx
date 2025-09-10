@@ -41,7 +41,9 @@ interface EventDetail extends Event {
     category: string;
     price: number;
     venue: Venue;
-    status: string; // <-- AÑADIR: Estado consolidado del evento
+    status: string;
+    has_ticket_types: boolean; // Agregar esta propiedad
+    has_free_tickets: boolean; // Agregar esta propiedad
     functions: EventFunction[];
 }
 
@@ -61,20 +63,32 @@ export default function Events({ events, categories, cities, filters }: PublicEv
     const [searchTerm, setSearchTerm] = useState(filters.search);
     const [selectedCategory, setSelectedCategory] = useState(filters.category);
     const [selectedCity, setSelectedCity] = useState(filters.city);
-    const [selectedStatus, setSelectedStatus] = useState('all'); // <-- AÑADIR: Nuevo estado para el filtro de estado
+    const [selectedStatus, setSelectedStatus] = useState('all');
     const [sortBy, setSortBy] = useState(filters.sortBy);
     const [viewMode, setViewMode] = useState("grid");
-    console.log(events)
+    
+    // Agregar debugging y verificación de seguridad
+    console.log('Events data:', events);
+    console.log('Events type:', typeof events);
+    console.log('Events is array:', Array.isArray(events));
+    
+    // Asegurar que events sea un array
+    const eventsArray = Array.isArray(events)
+        ? events
+        : (typeof events === 'object' && events !== null && 'data' in events && Array.isArray((events as any).data)
+            ? (events as { data: EventDetail[] }).data
+            : []);
+    
+    console.log('Events array:', eventsArray);
 
     // Filtrar y ordenar eventos en el frontend
-    const filteredEvents = events
+    const filteredEvents = eventsArray
         .filter((event) => {
             const matchesSearch =
                 event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 event.venue.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
             const matchesCity = selectedCity === "all" || event.city === selectedCity;
-            // <-- MODIFICAR: Usar el nuevo campo de estado del evento
             const matchesStatus = selectedStatus === 'all' || event.status === selectedStatus;
             
             return matchesSearch && matchesCategory && matchesCity && matchesStatus;
@@ -91,15 +105,33 @@ export default function Events({ events, categories, cities, filters }: PublicEv
             }
         });
 
+    // Si no hay datos, mostrar mensaje de carga o error
+    if (!eventsArray || eventsArray.length === 0) {
+        return (
+            <>
+                <Head title="Eventos - Ticketera RG" />
+                <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
+                    <Header />
+                    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
+                        <div className="text-center py-8 sm:py-12">
+                            <p className="text-base sm:text-lg text-foreground/60 px-4">
+                                {eventsArray === null ? 'Cargando eventos...' : 'No hay eventos disponibles en este momento.'}
+                            </p>
+                        </div>
+                    </div>
+                    <Footer />
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title="Eventos - Ticketera RG" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
-                {/* Header */}
                 <Header />
                 
-
                 <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
                     {/* Page Header */}
                     <div className="text-center mb-4 sm:mb-6 lg:mb-8">
@@ -259,15 +291,25 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                     </div>
                                                     <div className="flex items-center justify-between mt-auto">
                                                         <div className="min-w-0">
-                                                            {event.price > 0 ? (
+                                                            {!event.has_ticket_types ? (
+                                                                <span className="text-sm sm:text-base font-medium text-foreground/60">
+                                                                    Sin Precio
+                                                                </span>
+                                                            ) : event.price > 0 ? (
                                                                 <>
                                                                     <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                                                                         {formatPrice(event.price)}
                                                                     </span>
                                                                     <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
                                                                 </>
+                                                            ) : event.has_free_tickets ? (
+                                                                <span className="text-sm sm:text-base lg:text-lg font-bold text-green-600">
+                                                                    Gratis
+                                                                </span>
                                                             ) : (
-                                                                <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground">Gratis</span>
+                                                                <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground/60">
+                                                                    Consultar precio
+                                                                </span>
                                                             )}
                                                         </div>
                                                         <Link href={`/events/${event.id}`}>
@@ -333,15 +375,25 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-4">
-                                                                    {event.price > 0 ? (
+                                                                    {!event.has_ticket_types ? (
+                                                                        <div className="text-base sm:text-lg font-bold text-foreground/60">
+                                                                            Precio por confirmar
+                                                                        </div>
+                                                                    ) : event.price > 0 ? (
                                                                         <>
                                                                             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                                                                                 {formatPrice(event.price)}
                                                                             </div>
                                                                             <div className="text-foreground/60 text-xs sm:text-sm">ARS</div>
                                                                         </>
+                                                                    ) : event.has_free_tickets ? (
+                                                                        <div className="text-base sm:text-lg font-bold text-green-600">
+                                                                            Gratis
+                                                                        </div>
                                                                     ) : (
-                                                                        <div className="text-base sm:text-lg font-bold text-foreground">Gratis</div>
+                                                                        <div className="text-base sm:text-lg font-bold text-foreground/60">
+                                                                            Consultar precio
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -369,7 +421,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                 </div>
             </div>
             
-            {/* Add Footer */}
             <Footer />
         </>
     );

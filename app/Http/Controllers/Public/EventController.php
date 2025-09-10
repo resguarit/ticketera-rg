@@ -59,7 +59,9 @@ class EventController extends Controller
         $cities = Ciudad::orderBy('name')->get();
 
         return Inertia::render('public/events', [
-            'events' => EventResource::collection($events),
+            'events' => EventResource::collection($events)->additional([
+                'with_ticket_info' => true // Agregar flag para incluir info de tickets
+            ]),
             'categories' => $categories,
             'cities' => $cities,
             'filters' => [
