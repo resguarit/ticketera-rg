@@ -263,7 +263,6 @@ export default function Users({ auth }: any) {
                                                 {getStatusIcon(user.status)}
                                                 {user.status === 'active' ? 'Desactivar' : 'Activar'}
                                             </Button>
-                                            {/* Cambiar este botón para usar el modal */}
                                             <Button 
                                                 onClick={() => handleViewUser(user)}
                                                 variant="outline" 
@@ -273,12 +272,15 @@ export default function Users({ auth }: any) {
                                                 <Eye className="w-4 h-4 mr-1" />
                                                 Ver
                                             </Button>
-                                            <Link href={route('admin.users.edit', user.id)}>
-                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                    <Edit className="w-4 h-4 mr-1" />
-                                                    Editar
-                                                </Button>
-                                            </Link>
+                                            <Button 
+                                                onClick={() => router.visit(route('admin.users.edit', user.id))}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                <Edit className="w-4 h-4 mr-1" />
+                                                Editar
+                                            </Button>
                                             <Button 
                                                 onClick={() => handleDeleteUser(user.id)}
                                                 variant="outline" 
