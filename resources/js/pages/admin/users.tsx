@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
-import { 
-    UserPlus, 
-    Eye, 
-    Edit, 
-    Trash2, 
-    Users as UsersIcon,
-    TrendingUp,
-    ShoppingCart,
-    CheckCircle,
-    Clock,
-    XCircle
-} from 'lucide-react';
+import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, UsersIcon, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -231,59 +220,55 @@ export default function Users({ auth }: any) {
                                 <div key={user.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4 flex-1">
-                                            {/* Avatar */}
-                                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                                                <UsersIcon className="w-6 h-6 text-white" />
+                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <User className="w-6 h-6 text-white" />
                                             </div>
-
-                                            {/* User Info */}
                                             <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-black">{user.name}</h3>
-                                                        <p className="text-gray-600 text-sm">{user.email}</p>
-                                                        <p className="text-gray-500 text-xs">DNI: {user.dni} • Tel: {user.phone}</p>
-                                                    </div>
-
-                                                    <div className="flex items-center space-x-4">
-                                                        {/* Stats */}
-                                                        <div className="text-right">
-                                                            <p className="text-sm font-medium text-black">
-                                                                {user.total_purchases} compras
-                                                            </p>
-                                                            <p className="text-sm text-gray-600">
-                                                                {formatCurrency(parseFloat(user.total_spent))} gastados
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Status */}
-                                                        <div className="flex items-center space-x-2">
-                                                            {getStatusIcon(user.status)}
-                                                            {getStatusBadge(user.status)}
-                                                        </div>
-
-                                                        {/* Actions */}
-                                                        <div className="flex items-center space-x-2">
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Eye className="w-4 h-4 mr-1" />
-                                                                Ver
-                                                            </Button>
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Edit className="w-4 h-4 mr-1" />
-                                                                Editar
-                                                            </Button>
-                                                            <Button 
-                                                                onClick={() => handleDeleteUser(user.id)}
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <h3 className="font-semibold text-black">{user.name}</h3>
+                                                    {getStatusBadge(user.status)}
+                                                </div>
+                                                <p className="text-sm text-gray-600">{user.email}</p>
+                                                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                                                    <span>DNI: {user.dni}</span>
+                                                    <span>Tel: {user.phone}</span>
+                                                    <span>Compras: {user.total_purchases}</span>
+                                                    <span>Gastado: ${user.total_spent}</span>
                                                 </div>
                                             </div>
+                                        </div>
+                                        
+                                        {/* Actions */}
+                                        <div className="flex items-center space-x-2">
+                                            <Button 
+                                                onClick={() => handleToggleStatus(user.id)}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                {getStatusIcon(user.status)}
+                                                {user.status === 'active' ? 'Desactivar' : 'Activar'}
+                                            </Button>
+                                            <Link href={route('admin.users.show', user.id)}>
+                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
+                                                    <Eye className="w-4 h-4 mr-1" />
+                                                    Ver
+                                                </Button>
+                                            </Link>
+                                            <Link href={route('admin.users.edit', user.id)}>
+                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
+                                                    <Edit className="w-4 h-4 mr-1" />
+                                                    Editar
+                                                </Button>
+                                            </Link>
+                                            <Button 
+                                                onClick={() => handleDeleteUser(user.id)}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
