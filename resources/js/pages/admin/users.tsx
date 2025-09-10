@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import UserDetailsModal from './users/UserDetailsModal';
 
 interface UserData {
     id: number;
@@ -62,6 +63,10 @@ export default function Users({ auth }: any) {
     // Estado para detectar si hay filtros pendientes de aplicar
     const [hasPendingFilters, setHasPendingFilters] = useState(false);
 
+    // Estados para el modal
+    const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     // Detectar cambios en los filtros para mostrar indicador
     const checkPendingFilters = () => {
         const hasChanges = 
@@ -74,6 +79,17 @@ export default function Users({ auth }: any) {
     useEffect(() => {
         checkPendingFilters();
     }, [searchTerm, selectedStatus]);
+
+    // Funciones para el modal
+    const handleViewUser = (user: UserData) => {
+        setSelectedUser(user);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedUser(null);
+    };
 
     // Configuración de estadísticas para el dashboard
     const userStats: StatCardProps[] = [
@@ -182,8 +198,6 @@ export default function Users({ auth }: any) {
         }
     };
 
-    console.log(users.data);
-
     return (
         <>
             <Head title="Gestión de Usuarios - Panel Admin" />
@@ -249,12 +263,16 @@ export default function Users({ auth }: any) {
                                                 {getStatusIcon(user.status)}
                                                 {user.status === 'active' ? 'Desactivar' : 'Activar'}
                                             </Button>
-                                            <Link href={route('admin.users.show', user.id)}>
-                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                    <Eye className="w-4 h-4 mr-1" />
-                                                    Ver
-                                                </Button>
-                                            </Link>
+                                            {/* Cambiar este botón para usar el modal */}
+                                            <Button 
+                                                onClick={() => handleViewUser(user)}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                <Eye className="w-4 h-4 mr-1" />
+                                                Ver
+                                            </Button>
                                             <Link href={route('admin.users.edit', user.id)}>
                                                 <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
                                                     <Edit className="w-4 h-4 mr-1" />
@@ -310,6 +328,24 @@ export default function Users({ auth }: any) {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* User Details Modal */}
+                {selectedUser && (
+                    <UserDetailsModal 
+                        isOpen={isModalOpen} 
+                        onClose={handleCloseModal} 
+                        user={selectedUser} 
+                        onUserUpdated={(updatedUser) => {
+                            // Actualizar el usuario en la lista sin recargar
+                            const updatedUsers = users.data.map((user) =>
+                                user.id === updatedUser.id ? updatedUser : user
+                            );
+                            // @ts-ignore
+                            router.setData('admin.users.index', { ...users, data: updatedUsers });
+                            handleCloseModal();
+                        }}
+                    />
+                )}
             </AdminDashboardLayout>
         </>
     );
