@@ -58,8 +58,8 @@ class UserController extends Controller
         // Ordenamiento
         switch ($sortBy) {
             case 'name':
-                $query->leftJoin('people', 'users.person_id', '=', 'people.id')
-                      ->orderBy('people.name', $sortDirection)
+                $query->leftJoin('person', 'users.person_id', '=', 'person.id')
+                      ->orderBy('person.name', $sortDirection)
                       ->select('users.*');
                 break;
             case 'email':
@@ -202,7 +202,7 @@ class UserController extends Controller
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'dni' => 'required|string|max:20|unique:people,dni',
+            'dni' => 'required|string|max:20|unique:person,dni',
             'address' => 'nullable|string|max:500',
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
@@ -270,7 +270,7 @@ class UserController extends Controller
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'dni' => 'required|string|max:20|unique:people,dni,' . $user->person->id,
+            'dni' => 'required|string|max:20|unique:person,dni,' . $user->person->id,
             'address' => 'nullable|string|max:500',
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
