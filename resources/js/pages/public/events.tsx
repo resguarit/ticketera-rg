@@ -329,73 +329,65 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                             categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
                                         );
                                         return (
-                                            <Card
-                                                key={event.id}
-                                                className="bg-white py-0 overflow-hidden text-foreground hover:transform hover:scale-105 transition-all duration-300"
-                                            >
-                                                <CardContent className="p-3 pl-0 py-0 sm:p-4 ">
-                                                    <div className=" flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
-                                                        <div className="relative w-16 h-48 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-l-lg sm:rounded-lg overflow-hidden flex-shrink-0">
-                                                            <img
-                                                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
-                                                                alt={event.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
+                                            <Link key={event.id} href={`/events/${event.id}`} className="block">
+                                                <Card className="bg-white py-0 overflow-hidden text-foreground hover:transform hover:scale-105 transition-all duration-300 cursor-pointer">
+                                                    <CardContent className="p-3 pl-0 py-0 sm:p-4">
+                                                        <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
+                                                            <div className="relative w-16 h-48 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-l-lg sm:rounded-lg overflow-hidden flex-shrink-0">
+                                                                <img
+                                                                    src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                                                    alt={event.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
 
-                                                        <div className="flex-1 min-w-0 ">
-                                                            <div className="flex flex-col  sm:flex-row sm:items-start sm:justify-between">
-                                                                <div className="min-w-0 flex-1 ">
-                                                                    <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
-                                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
-                                                                        <div className="flex items-center space-x-1">
-                                                                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                                                                            <span className="truncate">
-                                                                                {event.date} {event.time && `• ${event.time}`}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center space-x-1">
-                                                                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                                                                            <span className="truncate">
-                                                                                {event.location}, {event.city}
-                                                                            </span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">{event.name}</h4>
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm mb-2 sm:mb-0 space-y-1 sm:space-y-0">
+                                                                            <div className="flex items-center space-x-1">
+                                                                                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                                                                                <span className="truncate">
+                                                                                    {event.date} {event.time && `• ${event.time}`}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="flex items-center space-x-1">
+                                                                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                                                                                <span className="truncate">
+                                                                                    {event.location}, {event.city}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                                <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-4">
-                                                                    {!event.has_ticket_types ? (
-                                                                        <div className="text-base sm:text-lg mt-3 font-medium text-foreground/60">
-                                                                            Sin Precio
-                                                                        </div>
-                                                                    ) : event.price > 0 ? (
-                                                                        <>
-                                                                            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                                {formatPrice(event.price)}
+                                                                    <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-4">
+                                                                        {!event.has_ticket_types ? (
+                                                                            <div className="text-base sm:text-lg mt-3 font-medium text-foreground/60">
+                                                                                Sin Precio
                                                                             </div>
-                                                                            <div className="text-foreground/60 text-xs sm:text-sm">ARS</div>
-                                                                        </>
-                                                                    ) : event.has_free_tickets ? (
-                                                                        <div className="text-base sm:text-lg font-bold text-green-600">
-                                                                            Gratis
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="text-base sm:text-lg font-bold text-foreground/60">
-                                                                            Consultar precio
-                                                                        </div>
-                                                                    )}
+                                                                        ) : event.price > 0 ? (
+                                                                            <>
+                                                                                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
+                                                                                    {formatPrice(event.price)}
+                                                                                </div>
+                                                                                <div className="text-foreground/60 text-xs sm:text-sm">ARS</div>
+                                                                            </>
+                                                                        ) : event.has_free_tickets ? (
+                                                                            <div className="text-base sm:text-lg font-bold text-green-600">
+                                                                                Gratis
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-base sm:text-lg font-bold text-foreground/60">
+                                                                                Consultar precio
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-
-                                                        <Link href={`/events/${event.id}`}>
-                                                            <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-3 sm:px-4 lg:px-6 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10 flex-shrink-0">
-                                                                <span className="hidden sm:inline">Ver Detalles</span>
-                                                                <span className="sm:hidden">Ver</span>
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
+                                                    </CardContent>
+                                                </Card>
+                                            </Link>
                                         );
                                     })}
                                 </div>
