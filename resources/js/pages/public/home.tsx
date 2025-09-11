@@ -84,39 +84,13 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
+                            <div className="absolute inset-0  z-10"></div>
                             <img
                                 src={featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
                                 alt={featuredEvents[currentSlide]?.name || "Evento"}
                                 className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 z-20 flex items-center">
-                                <div className="container mx-auto px-3 sm:px-4">
-                                    <div className="max-w-xl lg:max-w-2xl">
-                                        <Badge className="mb-2 sm:mb-4 rounded-sm bg-primary text-white border-0 text-xs sm:text-sm">
-                                            Evento Destacado
-                                        </Badge>
-                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 sm:mb-4 text-white font-bold leading-tight">
-                                            {featuredEvents[currentSlide]?.name}
-                                        </h2>
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-white mb-4 sm:mb-6 text-sm sm:text-base">
-                                            <div className="flex items-center space-x-1 sm:space-x-2">
-                                                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                <span>{featuredEvents[currentSlide]?.date}</span>
-                                            </div>
-                                            <div className="flex items-center space-x-1 sm:space-x-2">
-                                                <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                <span className="truncate">{featuredEvents[currentSlide]?.location}</span>
-                                            </div>
-                                        </div>
-                                        <Link href={`/events/${featuredEvents[currentSlide]?.id}`}>
-                                            <button className="bg-primary hover:bg-primary-hover text-white px-4 sm:px-6 py-2 text-sm sm:text-lg font-medium rounded-md transform hover:scale-105 transition-all duration-200">
-                                                Comprar Entradas
-                                            </button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             {/* Slide indicators */}
                             {featuredEvents.length > 1 && (
