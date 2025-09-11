@@ -37,51 +37,53 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
 
     return (
         <Link href={`/events/${event.id}`} className={`block ${className}`}>
-            <div className="w-70 h-[438px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300">
-                {/* Header section with dark background */}
-                <div className="relative h-[261px]  overflow-hidden">
+            <div className="w-full h-[450px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col">
+                {/* Header section with dark background - altura fija */}
+                <div className="relative h-[260px] overflow-hidden flex-shrink-0">
                     {/* Background image */}
                     <div className="absolute inset-0">
                         <img 
                             src={event.image_url || "/placeholder.svg?height=400&width=800"} 
                             alt={event.name} 
-                            className="w-full h-full object-cover " 
+                            className="w-full h-full object-cover" 
                         />
                     </div>
                 </div>
 
-                {/* Bottom section with white background */}
-                <div className="p-4 bg-white">
-                    {/* Location */}
-                    <div className="flex items-center gap-2 mb-4">
-                        <MapPin className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-600 text-sm font-medium uppercase">
-                            {event.location}{event.city && `, ${event.city}`}
-                        </span>
+                {/* Bottom section with white background - flex para distribuir contenido */}
+                <div className="p-4 bg-white flex-1 flex flex-col justify-between">
+                    <div>
+                        {/* Location - altura fija */}
+                        <div className="flex items-center gap-2 mb-3 h-6">
+                            <MapPin className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                            <span className="text-gray-600 text-sm font-medium uppercase truncate">
+                                {event.location}{event.city && `, ${event.city}`}
+                            </span>
+                        </div>
+
+                        {/* Event title - altura fija con line-clamp */}
+                        <h2 className="text-black text-xl font-bold mb-4 leading-tight uppercase line-clamp-2 min-h-[3.5rem]">
+                            {event.name}
+                        </h2>
                     </div>
 
-                    {/* Event title */}
-                    <h2 className="text-black text-xl font-bold mb-6 leading-tight uppercase">
-                        {event.name}
-                    </h2>
-
-                    {/* Date and time */}
-                    <div className="flex gap-6">
+                    {/* Date and time - siempre al final */}
+                    <div className="flex gap-6 mt-auto">
                         <div className="text-center">
-                            <div className="flex flex-row items-center">
+                            <div className="flex gap-[2px] flex-row items-center">
                                 <div className="text-4xl font-bold text-black">{day}</div>
                                 <div className="gap-0">
-                                    <div className="capitalize font-bold text-black leading-none pt-1">
+                                    <div className="capitalize text-start font-bold text-black leading-none pt-1">
                                         {month}<br />{year}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="flex flex-row items-center">
+                            <div className="flex gap-[2px] flex-row items-center">
                                 <div className="text-4xl font-bold text-black">{timeHour}</div>
                                 <div className="gap-0">
-                                    <div className="capitalize font-bold text-black leading-none pt-1">
+                                    <div className=" text-start font-bold text-black leading-none pt-1">
                                         {timeMinutes}<br />hrs
                                     </div>
                                 </div>
