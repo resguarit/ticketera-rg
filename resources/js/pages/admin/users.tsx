@@ -8,6 +8,7 @@ import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import UserDetailsModal from './users/UserDetailsModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface UserData {
     id: number;
@@ -66,6 +67,10 @@ export default function Users({ auth }: any) {
     // Estados para el modal
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+    // Agregar estado para el usuario a eliminar
+    const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
 
     // Detectar cambios en los filtros para mostrar indicador
     const checkPendingFilters = () => {
@@ -165,7 +170,6 @@ export default function Users({ auth }: any) {
 
     const handleDeleteUser = (userId: number) => {
         router.delete(route('admin.users.destroy', userId), {
-            onBefore: () => confirm('¿Estás seguro de que quieres eliminar este usuario?'),
         });
     };
 
@@ -282,7 +286,10 @@ export default function Users({ auth }: any) {
                                                 Editar
                                             </Button>
                                             <Button 
-                                                onClick={() => handleDeleteUser(user.id)}
+                                                onClick={() => {
+                                                    setUserToDelete(user); // Establecer el usuario antes de abrir el modal
+                                                    setIsConfirmModalOpen(true);
+                                                }}
                                                 variant="outline" 
                                                 size="sm" 
                                                 className="border-red-300 text-red-600 hover:bg-red-50"
@@ -349,6 +356,29 @@ export default function Users({ auth }: any) {
                     />
                 )}
             </AdminDashboardLayout>
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false);
+                    setUserToDelete(null); // Limpiar el usuario al cerrar
+                }}
+                onConfirm={() => {
+                    if (userToDelete) {
+                        handleDeleteUser(userToDelete.id);
+                    }
+                    setIsConfirmModalOpen(false);
+                    setUserToDelete(null);
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="usuario"
+                accionando="eliminando"
+                nombreElemento={userToDelete?.name} // Usar userToDelete en lugar de selectedUser
+                advertencia="Todos los datos asociados al usuario también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+            />
         </>
     );
 }
