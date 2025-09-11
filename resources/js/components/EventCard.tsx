@@ -37,15 +37,15 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
 
     return (
         <Link href={`/events/${event.id}`} className={`block ${className}`}>
-            <div className="w-80 h-[438px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300">
+            <div className="w-70 h-[438px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300">
                 {/* Header section with dark background */}
-                <div className="relative h-[261px] bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 overflow-hidden">
+                <div className="relative h-[261px]  overflow-hidden">
                     {/* Background image */}
                     <div className="absolute inset-0">
                         <img 
                             src={event.image_url || "/placeholder.svg?height=400&width=800"} 
                             alt={event.name} 
-                            className="w-full h-full object-cover opacity-40" 
+                            className="w-full h-full object-cover " 
                         />
                     </div>
                 </div>
