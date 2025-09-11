@@ -23,6 +23,7 @@ import {
 import {
   getCategoryIcon,  
 } from '@/types/ui'
+import EventCard from '@/components/EventCard';
 
 // Definir los estados basados en el Enum del backend
 const eventStatuses = [
@@ -137,18 +138,11 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                 <Header />
                 
                 <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
-                    {/* Page Header */}
-                    <div className="text-center mb-4 sm:mb-6 lg:mb-8">
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-2 sm:mb-4">
-                            Todos los Eventos
-                        </h2>
-                        <p className="text-foreground text-sm sm:text-base lg:text-lg max-w-2xl mx-auto px-4">
-                            Descubre los mejores eventos de música, teatro y deportes en tu ciudad
-                        </p>
-                    </div>
+
+                    
 
                     {/* Filters */}
-                    <div className="mb-4 sm:mb-6 lg:mb-8 w-full">
+                    <div className="mb-4 sm:mb-6 lg:mb-8 w-full mt-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-3 sm:mb-4">
                             <div className="relative lg:col-span-1">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -253,70 +247,9 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                         <TabsContent value="grid">
                             {filteredEvents.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                                    {filteredEvents.map((event) => {
-                                        const IconComponent = getCategoryIcon(
-                                            categories.find(c => c.name.toLowerCase() === event.category.toLowerCase())?.icon || 'music'
-                                        );
-                                        return (
-                                            <Link key={event.id} href={`/events/${event.id}`} className="block">
-                                                <Card className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group flex flex-col cursor-pointer h-full">
-                                                    <div className="relative">
-                                                        <img
-                                                            src={event.image_url || "/placeholder.svg?height=400&width=800"}
-                                                            alt={event.name}
-                                                            className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
-                                                        />
-                                                        {event.featured && (
-                                                            <Badge className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-secondary text-white border-0 text-xs sm:text-sm">
-                                                                Destacado
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                    <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col flex-1">
-                                                        <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">{event.name}</h4>
-                                                        <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1">
-                                                            <div className="flex items-center text-foreground/80">
-                                                                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                                <span className="text-xs sm:text-sm truncate">
-                                                                    {event.date} {event.time && `• ${event.time}`}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center text-foreground/80">
-                                                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                                <span className="text-xs sm:text-sm truncate">
-                                                                    {event.location}, {event.city}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-auto">
-                                                            <div className="">
-                                                                {!event.has_ticket_types ? (
-                                                                    <span className="text-sm sm:text-base font-medium text-foreground/60">
-                                                                        Sin Precio
-                                                                    </span>
-                                                                ) : event.price > 0 ? (
-                                                                    <>
-                                                                        <span className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
-                                                                            {formatPrice(event.price)}
-                                                                        </span>
-                                                                        <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
-                                                                    </>
-                                                                ) : event.has_free_tickets ? (
-                                                                    <span className="text-sm sm:text-base lg:text-lg font-bold text-green-600">
-                                                                        Gratis
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground/60">
-                                                                        Consultar precio
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            </Link>
-                                        );
-                                    })}
+                                    {filteredEvents.map((event) => (
+                                        <EventCard key={event.id} event={event} />
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="text-center py-8 sm:py-12">
