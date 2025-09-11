@@ -11,9 +11,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-
 import { Event, Category } from '@/types/models';
-import { getCategoryIcon } from '@/types/ui';
+import EventCard from '@/components/EventCard';
 
 // Definir los tipos de datos que llegan del backend
 interface EventDetail extends Event {
@@ -211,79 +210,10 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
                     {filteredEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-12">
-                            {filteredEvents.map((event) => {
-                                const IconComponent = getCategoryIcon(
-                                    categories.find(c => c.name.toLocaleLowerCase() === event.category.toLowerCase())?.icon || 'music'
-                                );
-                                const categoryColor = getCategoryColor(event.category);
-                                
-                                return (
-                                    <Card
-                                        key={event.id}
-                                        className="bg-white py-0 gap-1 sm:gap-2 text-foreground overflow-hidden hover:transform hover:scale-105 transition-all duration-300 group"
-                                    >
-                                        <div className="relative">
-                                            <img
-                                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
-                                                alt={event.name}
-                                                className="w-full h-40 sm:h-48 lg:h-52 object-cover group-hover:scale-110 transition-transform duration-300"
-                                            />
-                                            {/* Icono de categoría con color de la BD */}
-                                            <div 
-                                                className="absolute top-2 sm:top-4 left-2 sm:left-4 p-1.5 sm:p-2 rounded-full"
-                                                style={{ backgroundColor: categoryColor }}
-                                            >
-                                                <IconComponent className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                                            </div>
-                                            {/* Estrella para eventos destacados */}
-                                            {event.featured && (
-                                                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex items-center space-x-1 bg-foreground/80 rounded-full p-1.5 sm:p-2">
-                                                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-white fill-current" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <CardContent className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4">
-                                            <h4 className="text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2 line-clamp-2 leading-tight">
-                                                {event.name}
-                                            </h4>
-                                            <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
-                                                <div className="flex items-center text-foreground/80">
-                                                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                    <span className="text-xs sm:text-sm truncate">
-                                                        {event.date} {event.time && `• ${event.time}`}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center text-foreground/80">
-                                                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                                                    <span className="text-xs sm:text-sm truncate">
-                                                        {event.location}{event.city && `, ${event.city}`}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="min-w-0">
-                                                    {event.price ? (
-                                                        <>
-                                                            <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                {formatPrice(event.price)}
-                                                            </span>
-                                                            <span className="text-foreground/60 text-xs sm:text-sm ml-1">ARS</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-sm sm:text-base lg:text-lg font-bold text-foreground">Gratis</span>
-                                                    )}
-                                                </div>
-                                                <Link href={`/events/${event.id}`}>
-                                                    <Button className="bg-primary hover:bg-primary-hover text-white rounded-full px-3 text-xs sm:text-sm lg:text-base h-8 sm:h-9 lg:h-10">
-                                                        Comprar
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
+                            {filteredEvents.map((event) => (
+                                <EventCard key={event.id} event={event} />
+                            ))}
                         </div>
                     ) : (
                         <div className="text-center py-8 sm:py-12">

@@ -15,17 +15,27 @@ class EventResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Calcular el precio mínimo de todas las funciones
-        $minPrice = $this->functions->flatMap(function ($function) {
-            return $function->ticketTypes->where('is_hidden', false);
-        })->min('price') ?? 0;
+        // Obtener la primera función activa para mostrar fecha/hora
+        $firstFunction = $this->functions->where('is_active', true)->sortBy('start_time')->first();
+        
+        // Calcular precio mínimo
+        $minPrice = null;
+        foreach ($this->functions as $function) {
+            foreach ($function->ticketTypes->where('is_hidden', false) as $ticketType) {
+                if ($ticketType->price > 0) {
+                    if ($minPrice === null || $ticketType->price < $minPrice) {
+                        $minPrice = $ticketType->price;
+                    }
+                }
+            }
+        }
 
-        // Verificar si hay tipos de entrada configurados
+        // Verificar si tiene tipos de tickets
         $hasTicketTypes = $this->functions->flatMap(function ($function) {
-            return $function->ticketTypes;
+            return $function->ticketTypes->where('is_hidden', false);
         })->isNotEmpty();
 
-        // Verificar si hay tipos de entrada gratis
+        // Verificar si tiene tickets gratuitos
         $hasFreeTickets = $this->functions->flatMap(function ($function) {
             return $function->ticketTypes->where('is_hidden', false)->where('price', 0);
         })->isNotEmpty();
@@ -41,9 +51,11 @@ class EventResource extends JsonResource
             'province' => $this->venue->ciudad && $this->venue->ciudad->provincia ?
                 $this->venue->ciudad->provincia->name : null,
             'category' => $this->category->name,
+            'date' => $firstFunction ? $firstFunction->start_time->format('d M Y') : 'Fecha por confirmar',
+            'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
             'price' => $minPrice,
-            'has_ticket_types' => $hasTicketTypes, // Agregar esta información
-            'has_free_tickets' => $hasFreeTickets, // Agregar esta información
+            'has_ticket_types' => $hasTicketTypes,
+            'has_free_tickets' => $hasFreeTickets,
             'venue' => [
                 'id' => $this->venue->id,
                 'name' => $this->venue->name,
@@ -57,8 +69,6 @@ class EventResource extends JsonResource
                 ];
             }),
             'status' => $this->getConsolidatedStatus(), // Método para obtener estado consolidado
-            'date' => $this->functions->first()?->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-            'time' => $this->functions->first()?->start_time?->format('H:i'),
         ];
     }
 
