@@ -180,7 +180,6 @@ export default function Index({ auth }: any) {
                             key: "status",
                             placeholder: "Estado",
                             options: [
-                                { value: "all", label: "Todos los estados" },
                                 { value: "active", label: "Activos" },
                                 { value: "inactive", label: "Inactivos" }
                             ]
