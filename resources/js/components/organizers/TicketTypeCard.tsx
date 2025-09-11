@@ -14,8 +14,6 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Badge } from "@/components/ui/badge";
 import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { DuplicateTicketTypeModal } from "./modals/DuplicateTicketTypeModal";
 
 interface TicketTypeCardProps {
@@ -23,7 +21,7 @@ interface TicketTypeCardProps {
   onToggleVisibility?: (ticketId: number) => void;
   onEdit?: (ticketId: number) => void;
   onDuplicateAll?: (ticket: TicketType, functionIds: number[]) => void;
-  onDelete?: (ticketId: number) => void;
+  onDelete?: (ticket: TicketType) => void; // Cambiar para pasar el ticket completo
   allFunctions?: { id: number; name: string }[];
   functionsWithTicket?: number[];
 }
@@ -67,7 +65,7 @@ export const TicketTypeCard = ({
 
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(ticket.id);
+      onDelete(ticket); // Pasar el ticket completo
     }
   };
 
@@ -223,7 +221,7 @@ export const TicketTypeCard = ({
         </Button>
       </CardFooter>
 
-      {/* Reemplaza el Dialog por el nuevo modal */}
+      {/* Modal de duplicar */}
       <DuplicateTicketTypeModal
         open={showDuplicateModal}
         onClose={() => setShowDuplicateModal(false)}
