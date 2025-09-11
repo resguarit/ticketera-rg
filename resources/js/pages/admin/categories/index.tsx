@@ -41,6 +41,7 @@ import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Category } from '@/types';
 import { PageProps } from '@/types/ui/ui';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 // Helper para mapear nombres de iconos a componentes de Lucide
 const iconMap: { [key: string]: LucideIcon } = {
@@ -72,6 +73,8 @@ export default function CategoriesIndex() {
     const { categories, errors } = usePage<CategoriesPageProps>().props;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState<CategoryWithCount | null>(null);
     const [editingCategory, setEditingCategory] = useState<CategoryWithCount | null>(null);
 
     const { data, setData, post, put, delete: deleteCategory, reset, processing } = useForm({
@@ -105,6 +108,14 @@ export default function CategoriesIndex() {
 
         (method === 'post' ? post : put)(routeName, {
             onSuccess: () => setIsModalOpen(false),
+        });
+    };
+
+    const handleDeleteCategory = (categoryId: number) => {
+        deleteCategory(route('admin.categories.destroy', categoryId), {
+            onSuccess: () => {
+                setCategoryToDelete(null);
+            }
         });
     };
 
@@ -224,7 +235,6 @@ export default function CategoriesIndex() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <AlertDialog>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="sm">
@@ -237,36 +247,20 @@ export default function CategoriesIndex() {
                                                         Editar
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator className="bg-gray-200" />
-                                                    <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600 hover:bg-red-50"
-                                                            onSelect={(e) => e.preventDefault()}
+                                                            onSelect={() => {
+                                                                setCategoryToDelete(category);
+                                                                setIsConfirmModalOpen(true);
+                                                            }}
                                                             disabled={category.events_count > 0}
                                                         >
                                                             <Trash2 className="w-4 h-4 mr-2" />
                                                             Eliminar
                                                         </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                            <AlertDialogContent className="bg-white border-gray-300">
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle className="text-black">¿Estás seguro?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        Esta acción no se puede deshacer. Se eliminará permanentemente la categoría.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction
-                                                        onClick={() => deleteCategory(route('admin.categories.destroy', category.id))}
-                                                        className="bg-red-600 hover:bg-red-700 text-white"
-                                                    >
-                                                        Sí, eliminar
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                                    
                                     </div>
                                 ))}
                             </div>
@@ -290,6 +284,25 @@ export default function CategoriesIndex() {
                     </CardContent>
                 </Card>
             </div>
+
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    if (categoryToDelete) {
+                        handleDeleteCategory(categoryToDelete.id);
+                    }
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="esta"
+                entidad="categoría"
+                accionando="eliminando"
+                nombreElemento={categoryToDelete?.name}
+                advertencia="Todos los datos asociados a la categoría también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+            />
         </>
     );
 }
