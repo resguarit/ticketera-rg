@@ -341,7 +341,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                 }}
                 onConfirm={handleConfirmDeleteTicket}
                 accionTitulo="Eliminación"
-                accion="eliminar"
+                accion="Eliminar"
                 pronombre="este"
                 entidad="tipo de entrada"
                 accionando="eliminando"
