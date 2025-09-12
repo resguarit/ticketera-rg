@@ -124,9 +124,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-2 sm:mb-4">
                             Mis Tickets
                         </h1>
-                        <p className="text-foreground/80 text-sm sm:text-base lg:text-lg px-4">
-                            Bienvenido de vuelta, {auth.user.person.name}. Aquí están todos tus tickets
-                        </p>
+
                     </div>
 
 {/*                     

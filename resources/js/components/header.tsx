@@ -29,18 +29,18 @@ export default function Header({ className = '' }: HeaderProps) {
                     {/* Logo */}
                     <Link href={route('home')} className="flex items-center  space-x-2">
                             <img 
-                                src="/images/logo_sin_texto.png" 
+                                src="/images/logo-bordes.png" 
                                 alt="TRG Logo" 
                                 className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
                             />
                         <h1 className="text-lg sm:text-xl font-bold text-white">
                             <span className="hidden sm:inline">RG <span className="font-medium">ENTRADAS</span></span>
-                            <span className="sm:hidden">Ticketera</span>
+                            <span className="sm:hidden font-medium">RG ENTRADAS</span>
                         </h1>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center space-x-6"> 
+                    <nav className="hidden md:flex items-center space-x-6 lg:space-x-10"> 
                         <Link href={route('events')} className="text-white font-medium hover:scale-110 transition-transform ">
                             Eventos
                         </Link>
@@ -53,7 +53,7 @@ export default function Header({ className = '' }: HeaderProps) {
                             Ayuda
                         </Link>
                         {auth.user ? (
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-6 lg:space-x-10">
                                 <Link
                                     href={route('my-account')}
                                     className="text-white hover:scale-110 transition-transform font-medium cursor-pointer"
@@ -114,9 +114,9 @@ export default function Header({ className = '' }: HeaderProps) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="p-2 h-9 w-9 text-primary hover:text-primary hover:bg-gray-100"
+                                    className="p-2 h-9 w-9 text-white "
                                 >
-                                    <Menu className="h-5 w-5" />
+                                    <Menu className="h-5 w-5 " />
                                     <span className="sr-only">Abrir menú</span>
                                 </Button>
                             </SheetTrigger>
@@ -127,7 +127,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 <SheetHeader className="px-4 py-4 border-b border-gray-100">
                                     <div className="flex items-center justify-between">
                                         <SheetTitle className="text-lg font-bold tracking-tight text-pretty leading-tight text-foreground">
-                                            Ticketera-RG
+                                            RG ENTRADAS
                                         </SheetTitle>
                                     </div>
                                 </SheetHeader>
