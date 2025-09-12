@@ -60,16 +60,25 @@
         }
         
         .logo-rg {
-            background: #1a365d;
+            background: transparent;
             color: white;
-            padding: 8px 12px;
+            padding: 4px;
             border-radius: 4px;
             font-weight: bold;
             font-size: 14px;
             text-align: center;
-            width: 80px;
-            height: 60px;
+            width: 100px;
+            height: 100px;
             float: right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-rg img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .event-info-bottom {
@@ -170,7 +179,9 @@
             <div class="header-top">
                 <!-- Banner del evento (izquierda) -->
                 <div class="event-banner">
-                    @if($event->image_url)
+                    @if($event->banner_url)
+                        <img src="{{ $event->banner_url }}" alt="{{ $event->name }}">
+                    @elseif($event->image_url)
                         <img src="{{ $event->image_url }}" alt="{{ $event->name }}">
                     @else
                         <div style="padding: 20px; text-align: center; color: #666; font-size: 10px;">
@@ -181,8 +192,7 @@
                 
                 <!-- Logo RG (derecha) -->
                 <div class="logo-rg">
-                    RG<br>
-                    <small style="font-size: 8px;">RG ENTRADAS</small>
+                    <img src="{{ public_path('images/logo_ticketera.png') }}" alt="RG Entradas">
                 </div>
             </div>
             
