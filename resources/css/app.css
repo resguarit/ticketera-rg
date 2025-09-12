@@ -34,6 +34,7 @@
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
     --color-primary-hover: var(--primary-hover);
+    --color-dark: var(--dark);
 
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
@@ -72,6 +73,7 @@
     --primary: #08083a;
     --primary-foreground: #ffffff;
     --primary-hover: #101086;
+    --dark: #06061e;
     
     /* Secondary Colors */
     --secondary: #0dc1ba;

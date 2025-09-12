@@ -23,17 +23,17 @@ export default function Header({ className = '' }: HeaderProps) {
     };
 
     return (
-        <header className={`bg-white backdrop-blur-md border-b border-white/10 justify-center flex sticky top-0 z-50 w-full ${className}`}>
+        <header className={`bg-dark backdrop-blur-md  justify-center flex sticky top-0 z-50 w-full ${className}`}>
             <div className=" py-3 sm:py-1 px-4  justify-center w-full">
                 <div className="flex items-center justify-between w-full">
                     {/* Logo */}
-                    <Link href={route('home')} className="flex items-center space-x-2">
+                    <Link href={route('home')} className="flex items-center  space-x-2">
                             <img 
                                 src="/images/logo_sin_texto.png" 
                                 alt="TRG Logo" 
                                 className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
                             />
-                        <h1 className="text-lg sm:text-xl font-bold bg-primary bg-clip-text text-transparent">
+                        <h1 className="text-lg sm:text-xl font-bold text-white">
                             <span className="hidden sm:inline">RG <span className="font-medium">ENTRADAS</span></span>
                             <span className="sm:hidden">Ticketera</span>
                         </h1>
@@ -41,27 +41,27 @@ export default function Header({ className = '' }: HeaderProps) {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center space-x-6"> 
-                        <Link href={route('events')} className="text-gray-500 font-medium hover:text-primary transition-colors">
+                        <Link href={route('events')} className="text-white font-medium hover:scale-110 transition-transform ">
                             Eventos
                         </Link>
                         {auth.user && (
-                            <Link href={route('my-tickets')} className="text-gray-500 font-medium hover:text-primary transition-colors">
+                            <Link href={route('my-tickets')} className="text-white font-medium hover:scale-110 transition-transform ">
                                 Mis Tickets
                             </Link>
                         )}
-                        <Link href={route('help')} className="text-gray-500 font-medium hover:text-primary transition-colors">
+                        <Link href={route('help')} className="text-white font-medium hover:scale-110 transition-transform">
                             Ayuda
                         </Link>
                         {auth.user ? (
                             <div className="flex items-center space-x-4">
                                 <Link
                                     href={route('my-account')}
-                                    className="text-gray-500 hover:text-primary font-medium transition-colors cursor-pointer"
+                                    className="text-white hover:scale-110 transition-transform font-medium cursor-pointer"
                                 >
                                     Hola, {auth.user.person.name}
                                 </Link>
                                 {auth.user.role === 'admin' && (
-                                    <Link href={route('admin.dashboard')} className="text-gray-500 hover:text-primary font-medium transition-colors">
+                                    <Link href={route('admin.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
                                         <Button 
                                             variant="outline"
                                             size="sm"
@@ -72,7 +72,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                     </Link>
                                 )}
                                 {auth.user.role === 'organizer' && (
-                                    <Link href={route('organizer.dashboard')} className="text-gray-500 hover:text-primary font-medium transition-colors">
+                                    <Link href={route('organizer.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
                                         <Button 
                                             variant="outline"
                                             size="sm"
@@ -94,12 +94,12 @@ export default function Header({ className = '' }: HeaderProps) {
                         ) : (
                             <div className="flex items-center space-x-3">
                                 <Link href={route('login')}>
-                                    <button className="text-gray-500 font-medium hover:text-primary transition-colors">
+                                    <button className="text-white font-medium hover:scale-110 transition-transform hover:cursor-pointer">
                                         Iniciar Sesión
                                     </button>
                                 </Link>
                                 <Link href={route('register')}>
-                                    <button className="bg-primary px-4 py-2 rounded-lg font-medium hover:bg-primary/90 text-white transition-colors">
+                                    <button className="bg-primary px-4 py-2 rounded-lg font-medium hover:scale-110 transition-transform text-white transition-colors hover:cursor-pointer">
                                         Registrarse
                                     </button>
                                 </Link>
