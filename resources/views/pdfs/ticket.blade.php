@@ -102,7 +102,6 @@
         
         .ticket-details-grid {
             display: flex;
-            justify-content: space-between;
             margin-bottom: 15px;
         }
         
@@ -111,8 +110,9 @@
         }
         
         .ticket-info-right {
-            width: 30%;
-            text-align: right;
+            width: 100%;
+            text-align: center;
+            margin-top: 40px;
         }
         
         .detail-row {
@@ -134,8 +134,8 @@
         
         /* QR */
         .qr-code {
-            width: 110px;
-            height: 110px;
+            width: 220px;
+            height: 220px;
             margin: 0 auto 8px;
             border: 1px solid #ddd;
             display: flex;
