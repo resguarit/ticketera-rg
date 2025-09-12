@@ -103,6 +103,14 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
         );
     }
 
+    const handleDownloadTicket = (ticketId: number) => {
+        window.open(route('user.tickets.download', { ticket: ticketId }), '_blank');
+    };
+
+    const handleDownloadOrder = (orderId: number) => {
+        window.open(route('user.orders.download-tickets', { order: orderId }), '_blank');
+    };
+
     return (
         <>
             <Head title="Mis Tickets - TicketMax" />
@@ -228,6 +236,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
+                                                                title="Ver QR"
                                                             >
                                                                 <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             </Button>
@@ -235,6 +244,8 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
+                                                                onClick={() => handleDownloadTicket(ticket.id)}
+                                                                title="Descargar ticket individual"
                                                             >
                                                                 <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             </Button>
@@ -242,6 +253,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
+                                                                title="Compartir"
                                                             >
                                                                 <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             </Button>
