@@ -97,12 +97,8 @@ class TicketController extends Controller
             abort(403, 'No tienes permiso para descargar este ticket');
         }
 
-        // Por ahora retornamos una respuesta simple
-        // Aquí implementarías la generación del PDF del ticket
-        return response()->json([
-            'message' => 'Función de descarga en desarrollo',
-            'ticket_code' => $ticket->unique_code
-        ]);
+        return app(\App\Http\Controllers\User\TicketPDFController::class)
+            ->downloadSingle($ticket);
     }
 
     /**

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatNumber, formatPriceWithCurrency } from '@/lib/currencyHelpers';
 import { calculateTicketSubtotal } from '@/lib/ticketHelpers';
-import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket, LogIn, UserCheck } from 'lucide-react';
+import { Check, Download, Share2, Calendar, MapPin, Mail, Phone, User, Ticket, LogIn, UserCheck, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -242,10 +242,12 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
 
                         {/* Action Buttons */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <Button className="bg-primary hover:bg-primary-hover text-white">
-                                <Download className="w-4 h-4 mr-2" />
-                                Descargar Tickets
-                            </Button>
+                            <a href={route('user.orders.download-tickets', { order: purchaseData.orderId.split('-')[2] })} target="_blank">
+                                <Button className="w-full bg-primary hover:bg-primary-hover text-white">
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Descargar Tickets
+                                </Button>
+                            </a>
                             <Button
                                 variant="outline"
                                 className="border-gray-300 text-foreground hover:bg-gray-50"
@@ -259,7 +261,17 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                     variant="outline"
                                     className="w-full border-gray-300 text-foreground hover:bg-gray-50"
                                 >
-                                    {auth.user ? 'Ver Mis Tickets' : 'Volver al Inicio'}
+                                    {auth.user ? (
+                                        <>
+                                            <Ticket className="w-4 h-4 mr-2" />
+                                            Ver Mis Tickets
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Home className="w-4 h-4 mr-2" />
+                                            Volver al Inicio
+                                        </>
+                                    )}
                                 </Button>
                             </Link>
                             {/* --- FIN MODIFICADO --- */}
