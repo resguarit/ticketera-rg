@@ -33,29 +33,24 @@
             background: #f8f9fa;
             border-bottom: 1px solid #ddd;
             padding: 15px 20px;
-            min-height: 120px;
+            min-height: 140px;
             position: relative;
-            overflow: hidden;
         }
         
-        .header-table {
+        .header-top {
             width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .header-table td {
-            padding: 0;
-            vertical-align: top;
+            height: 80px;
+            margin-bottom: 15px;
+            overflow: hidden;
         }
         
         .event-banner {
             width: 200px;
-            height: 100px;
+            height: 80px;
             border-radius: 4px;
             background: #e9ecef;
-            float: left;
             overflow: hidden;
-            display: block;
+            float: left;
         }
         
         .event-banner img {
@@ -64,14 +59,22 @@
             object-fit: cover;
         }
         
-        .event-info-header {
-            position: absolute;
-            color: black;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
+        .logo-rg {
+            background: #1a365d;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
             text-align: center;
-            width: 250px;
+            width: 80px;
+            height: 60px;
+            float: right;
+        }
+        
+        .event-info-bottom {
+            text-align: left;
+            padding-left: 0;
         }
         
         .event-title {
@@ -90,25 +93,6 @@
         .event-location {
             font-size: 12px;
             color: #666;
-        }
-        
-        .logo-container {
-            width: 80px;
-            height: 100px;
-            float: right;
-            display: block;
-            text-align: center;
-        }
-        
-        .logo-rg {
-            background: #1a365d;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 20px;
         }
         
         /* Body */
@@ -182,41 +166,36 @@
     <div class="ticket-container">
         <!-- Header -->
         <div class="ticket-header">
-            <table class="header-table">
-                <tr>
-                    <!-- Banner del evento (izquierda) -->
-                    <td class="header-banner">
-                        <div class="event-banner">
-                            @if($event->image_url)
-                                <img src="{{ $event->image_url }}" alt="{{ $event->name }}">
-                            @else
-                                <div style="padding: 20px; text-align: center; color: #666;">
-                                    {{ $event->name }}
-                                </div>
-                            @endif
+            <!-- Top: Banner (izquierda) y Logo (derecha) -->
+            <div class="header-top">
+                <!-- Banner del evento (izquierda) -->
+                <div class="event-banner">
+                    @if($event->image_url)
+                        <img src="{{ $event->image_url }}" alt="{{ $event->name }}">
+                    @else
+                        <div style="padding: 20px; text-align: center; color: #666; font-size: 10px;">
+                            {{ $event->name }}
                         </div>
-                    </td>
-                    
-                    <!-- Información del evento (centro) -->
-                    <td class="header-info">
-                        <div class="event-title">{{ $event->name }}</div>
-                        <div class="event-date-time">
-                            {{ $function->start_time ? $function->start_time->format('D d M, Y – H:i') . 'hs' : 'Fecha por confirmar' }}
-                        </div>
-                        <div class="event-location">
-                            {{ $event->venue->name }}, {{ $event->venue->ciudad ? $event->venue->ciudad->name : '' }}{{ $event->venue->ciudad && $event->venue->ciudad->provincia ? ', '.$event->venue->ciudad->provincia->name : '' }}
-                        </div>
-                    </td>
-                    
-                    <!-- Logo RG (derecha) -->
-                    <td class="header-logo">
-                        <div class="logo-rg">
-                            RG<br>
-                            <small style="font-size: 8px;">RG ENTRADAS</small>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+                    @endif
+                </div>
+                
+                <!-- Logo RG (derecha) -->
+                <div class="logo-rg">
+                    RG<br>
+                    <small style="font-size: 8px;">RG ENTRADAS</small>
+                </div>
+            </div>
+            
+            <!-- Bottom: Información del evento (alineada a la izquierda) -->
+            <div class="event-info-bottom">
+                <div class="event-title">{{ $event->name }}</div>
+                <div class="event-date-time">
+                    {{ $function->start_time ? $function->start_time->format('D d M, Y – H:i') . 'hs' : 'Fecha por confirmar' }}
+                </div>
+                <div class="event-location">
+                    {{ $event->venue->name }}, {{ $event->venue->ciudad ? $event->venue->ciudad->name : '' }}{{ $event->venue->ciudad && $event->venue->ciudad->provincia ? ', '.$event->venue->ciudad->provincia->name : '' }}
+                </div>
+            </div>
         </div>
         
         <!-- Body -->
@@ -237,7 +216,7 @@
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Organizador:</div>
-                        <div class="detail-value">{{ $event->organizer->business_name }}</div>
+                        <div class="detail-value">{{ $event->organizer->name }}</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Contacto:</div>
