@@ -62,7 +62,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                         </div>
 
                         {/* Event title - altura fija con line-clamp */}
-                        <h2 className="text-black text-xl font-bold mb-4 leading-tight uppercase line-clamp-2 min-h-[3.5rem]">
+                        <h2 className="text-black text-xl font-bold mb-4 leading-tight tracking-wide uppercase line-clamp-2 min-h-[3.5rem]">
                             {event.name}
                         </h2>
                     </div>
