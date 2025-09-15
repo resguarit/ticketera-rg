@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\TicketType;
-use App\Models\Sector; // <-- AÑADIR ESTO
+use App\Models\Sector;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,18 +46,49 @@ class TicketTypeController extends Controller
                 'min:1',
                 function ($attribute, $value, $fail) use ($request) {
                     $sector = Sector::find($request->input('sector_id'));
-                    if ($sector && $value > $sector->capacity) {
-                        $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    $isBundle = $request->boolean('is_bundle');
+                    $bundleQuantity = $request->input('bundle_quantity', 1);
+                    
+                    if ($sector) {
+                        $realQuantity = $isBundle ? $value * $bundleQuantity : $value;
+                        if ($realQuantity > $sector->capacity) {
+                            $fail("La cantidad real de entradas ({$realQuantity}) no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                        }
+                    }
+                },
+            ],
+            'max_purchase_quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:50',
+                function ($attribute, $value, $fail) use ($request) {
+                    $quantity = $request->input('quantity');
+                    if ($quantity && $value > $quantity) {
+                        $fail("El máximo por compra no puede ser mayor que la cantidad total disponible.");
                     }
                 },
             ],
             'sales_start_date' => 'required|date',
             'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
+            'is_bundle' => 'sometimes|boolean',
+            'bundle_quantity' => [
+                'nullable',
+                'integer',
+                'min:2',
+                'max:20',
+                'required_if:is_bundle,true',
+            ],
         ]);
 
         // Asociar el ID de la función a los datos validados
         $validated['event_function_id'] = $function->id;
+
+        // Si no es bundle, asegurar que bundle_quantity sea null
+        if (!$validated['is_bundle']) {
+            $validated['bundle_quantity'] = null;
+        }
 
         TicketType::create($validated);
 
@@ -93,17 +124,67 @@ class TicketTypeController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                function ($attribute, $value, $fail) use ($request) {
+                function ($attribute, $value, $fail) use ($request, $ticketType) {
                     $sector = Sector::find($request->input('sector_id'));
-                    if ($sector && $value > $sector->capacity) {
-                        $fail("La cantidad no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                    $isBundle = $request->boolean('is_bundle');
+                    $bundleQuantity = $request->input('bundle_quantity', 1);
+                    
+                    if ($sector) {
+                        $realQuantity = $isBundle ? $value * $bundleQuantity : $value;
+                        if ($realQuantity > $sector->capacity) {
+                            $fail("La cantidad real de entradas ({$realQuantity}) no puede ser mayor que la capacidad del sector ({$sector->capacity}).");
+                        }
+                    }
+
+                    // Validar que no se reduzca por debajo de las ventas existentes
+                    $currentSold = $ticketType->quantity_sold;
+                    if ($value < $currentSold) {
+                        $fail("No se puede reducir la cantidad por debajo de las ya vendidas ({$currentSold}).");
+                    }
+                },
+            ],
+            'max_purchase_quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:50',
+                function ($attribute, $value, $fail) use ($request) {
+                    $quantity = $request->input('quantity');
+                    if ($quantity && $value > $quantity) {
+                        $fail("El máximo por compra no puede ser mayor que la cantidad total disponible.");
                     }
                 },
             ],
             'sales_start_date' => 'required|date',
             'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
+            'is_bundle' => 'sometimes|boolean',
+            'bundle_quantity' => [
+                'nullable',
+                'integer',
+                'min:2',
+                'max:20',
+                'required_if:is_bundle,true',
+                function ($attribute, $value, $fail) use ($request, $ticketType) {
+                    $isBundle = $request->boolean('is_bundle');
+                    
+                    // Si ya hay ventas y se está cambiando de bundle a normal o viceversa
+                    if ($ticketType->quantity_sold > 0 && $ticketType->is_bundle !== $isBundle) {
+                        $fail("No se puede cambiar el tipo de entrada (individual/lote) cuando ya hay ventas registradas.");
+                    }
+                    
+                    // Si ya hay ventas y se está cambiando la cantidad del bundle
+                    if ($ticketType->quantity_sold > 0 && $isBundle && $ticketType->bundle_quantity !== $value) {
+                        $fail("No se puede cambiar la cantidad del lote cuando ya hay ventas registradas.");
+                    }
+                },
+            ],
         ]);
+
+        // Si no es bundle, asegurar que bundle_quantity sea null
+        if (!$validated['is_bundle']) {
+            $validated['bundle_quantity'] = null;
+        }
 
         $ticketType->update($validated);
 
@@ -158,10 +239,13 @@ class TicketTypeController extends Controller
                 'description' => $ticketType->description,
                 'price' => $ticketType->price,
                 'quantity' => $ticketType->quantity,
+                'max_purchase_quantity' => $ticketType->max_purchase_quantity,
                 'sector_id' => $ticketType->sector_id,
                 'sales_start_date' => $ticketType->sales_start_date,
                 'sales_end_date' => $ticketType->sales_end_date,
                 'is_hidden' => $ticketType->is_hidden,
+                'is_bundle' => $ticketType->is_bundle,
+                'bundle_quantity' => $ticketType->bundle_quantity,
                 'event_function_id' => $func->id,
             ]);
         }
@@ -175,6 +259,12 @@ class TicketTypeController extends Controller
      */
     public function destroy(Event $event, EventFunction $function, TicketType $ticketType): RedirectResponse
     {
+        // Verificar que no haya entradas vendidas
+        if ($ticketType->quantity_sold > 0) {
+            return redirect()->route('organizer.events.tickets', $event->id)
+                ->with('error', 'No se puede eliminar un tipo de entrada que ya tiene ventas registradas.');
+        }
+
         $ticketType->delete();
 
         return redirect()->route('organizer.events.tickets', $event->id)

@@ -27,6 +27,7 @@ import { PageProps } from '@/types/ui/ui';
 import { Venue } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 // Extender el tipo base Venue para la lista
 interface VenueIndexItem extends Venue {
@@ -48,6 +49,9 @@ export default function VenuesIndex() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProvince, setSelectedProvince] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
+
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [venueToDelete, setVenueToDelete] = useState<VenueIndexItem | null>(null);
 
     const provinces = useMemo(() => {
         const allProvinces = venues.map(v => v.province).filter((p): p is string => !!p);
@@ -78,6 +82,14 @@ export default function VenuesIndex() {
         setSelectedCity('');
     };
 
+    const handleDeleteVenue = (venueId: number) => {
+        deleteVenue(route('admin.venues.destroy', venueId), {
+            onSuccess: () => {
+                setVenueToDelete(null);
+            }
+        });
+    }
+
     return (
         <>
             <Head title="Gestionar Recintos" />
@@ -90,7 +102,7 @@ export default function VenuesIndex() {
                             Administra los lugares donde se realizarán tus eventos.
                         </p>
                     </div>
-                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button asChild className="bg-primary hover:bg-primary-hover text-white">
                         <Link href={route('admin.venues.create')}>
                             <Plus className="w-4 h-4 mr-2" />
                             Crear Recinto
@@ -179,7 +191,6 @@ export default function VenuesIndex() {
                                         className="w-full h-48 object-cover rounded-t-lg"
                                     />
                                     <div className="absolute top-4 right-4">
-                                        <AlertDialog>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="secondary" size="sm" className="h-8 w-8 p-0">
@@ -194,36 +205,19 @@ export default function VenuesIndex() {
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600"
                                                             disabled={venue.eventos_count > 0}
-                                                            onSelect={(e) => e.preventDefault()}
+                                                            onSelect={() => {
+                                                                setVenueToDelete(venue);
+                                                                setIsConfirmModalOpen(true);
+                                                            }}
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
                                                             <span>Eliminar</span>
                                                         </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                            <AlertDialogContent className="bg-white">
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        Esta acción no se puede deshacer. Se eliminará el recinto permanentemente.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction
-                                                        onClick={() => deleteVenue(route('admin.venues.destroy', venue.id))}
-                                                        className="bg-red-600 hover:bg-red-700"
-                                                    >
-                                                        Sí, eliminar
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="flex-grow pt-0 px-4 pb-4 flex flex-col">
@@ -282,6 +276,25 @@ export default function VenuesIndex() {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    if (venueToDelete) {
+                        handleDeleteVenue(venueToDelete.id);
+                    }
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="recinto"
+                accionando="eliminando"
+                nombreElemento={venueToDelete?.name}
+                advertencia="Todos los datos asociados al recinto también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+            />
         </>
     );
 }

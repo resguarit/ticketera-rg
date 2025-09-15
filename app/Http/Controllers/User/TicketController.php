@@ -25,7 +25,8 @@ class TicketController extends Controller
         $tickets = IssuedTicket::with([
             'order',
             'ticketType.eventFunction.event.venue.ciudad.provincia',
-            'ticketType.eventFunction.event.category'
+            'ticketType.eventFunction.event.category',
+            'ticketType.eventFunction.event.organizer' // Agregar organizer
         ])
         ->where('client_id', $user->id)
         ->get()
@@ -71,6 +72,9 @@ class TicketController extends Controller
             return $ticket['eventDateTime'] && Carbon::parse($ticket['eventDateTime'])->lt($now);
         })->values();
 
+        // Agrupar tickets por orden para mostrar opción de descarga por orden
+        $ticketsByOrder = $tickets->groupBy('order.id');
+
         // Estadísticas
         $stats = [
             'upcoming_count' => $upcomingTickets->count(),
@@ -83,6 +87,7 @@ class TicketController extends Controller
                 'upcoming' => $upcomingTickets,
                 'past' => $pastTickets,
             ],
+            'ticketsByOrder' => $ticketsByOrder,
             'stats' => $stats,
         ]);
     }
@@ -97,12 +102,8 @@ class TicketController extends Controller
             abort(403, 'No tienes permiso para descargar este ticket');
         }
 
-        // Por ahora retornamos una respuesta simple
-        // Aquí implementarías la generación del PDF del ticket
-        return response()->json([
-            'message' => 'Función de descarga en desarrollo',
-            'ticket_code' => $ticket->unique_code
-        ]);
+        return app(\App\Http\Controllers\User\TicketPDFController::class)
+            ->downloadSingle($ticket);
     }
 
     /**

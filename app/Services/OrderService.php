@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class OrderService
 {
@@ -25,7 +26,7 @@ class OrderService
             $accountCreated = false;
     
             // Si no hay usuario autenticado, crear uno nuevo
-            if (!Auth::check()) {
+            if (!Auth::check()) {                
                 // Verificar si el usuario ya existe
                 $existingUser = User::where('email', $orderData['billing_info']['email'])->first();
                 
@@ -33,23 +34,31 @@ class OrderService
                     // Crear nuevo usuario
                     $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
                     $accountCreated = true;
-                    Auth::loginUsingId($userId);
                 } else {
                     $userId = $existingUser->id;
+                    // Si el usuario existe, nos aseguramos de que los datos de la persona estén actualizados si es necesario.
+                    $user = User::with('person')->find($userId);
+                    if ($user->person) {
+                        $user->person->update([
+                            'name' => $orderData['billing_info']['firstName'],
+                            'last_name' => $orderData['billing_info']['lastName'],
+                            'phone' => $orderData['billing_info']['phone'],
+                            'dni' => $orderData['billing_info']['documentNumber'],
+                        ]);
+                    }
                 }
             } else {
                 $userId = Auth::id();
             }
-    
-            // Calcular totales
+
             $totals = $this->calculateOrderTotals(
                 $orderData['selected_tickets'],
-                $orderData['discount'] ?? 0, // Pasamos el descuento
-                $orderData['tax'] ?? 0 // Pasamos el tax del organizador
+                $orderData['discount'] ?? 0,
+                $orderData['tax'] ?? 0
             );
 
             // Crear la orden principal
-            $order = Order::create([
+            $orderCreateData = [
                 'client_id' => $userId,
                 'order_date' => now(),
                 'status' => OrderStatus::PENDING,
@@ -61,46 +70,77 @@ class OrderService
                 'service_fee' => $totals['service_fee'],
                 'total_amount' => $totals['total_amount'],
                 'order_details' => $totals['order_details'],
-            ]);
+            ];
+
+            $order = Order::create($orderCreateData);
     
             // Crear los tickets individuales y verificar disponibilidad
-            foreach ($orderData['selected_tickets'] as $ticketData) {
+            foreach ($orderData['selected_tickets'] as $index => $ticketData) {
+
                 $ticketType = TicketType::findOrFail($ticketData['id']);
     
                 // Verificar disponibilidad
                 $availableQuantity = $ticketType->quantity - $ticketType->quantity_sold;
+
                 if ($availableQuantity < $ticketData['quantity']) {
-                    throw new \Exception("No hay suficientes tickets disponibles para {$ticketType->name}. Disponibles: {$availableQuantity}");
+                    $errorMsg = "No hay suficientes tickets disponibles para {$ticketType->name}. Disponibles: {$availableQuantity}";
+                    Log::error('Error de disponibilidad', ['error' => $errorMsg]);
+                    throw new \Exception($errorMsg);
                 }
-    
-                // Crear tickets individuales
-                for ($i = 0; $i < $ticketData['quantity']; $i++) {
-                    IssuedTicket::create([
-                        'order_id' => $order->id,
-                        'ticket_type_id' => $ticketType->id,
-                        'client_id' => $userId,
-                        'unique_code' => $this->generateUniqueCode($order, $ticketType),
-                        'status' => IssuedTicketStatus::AVAILABLE,
-                        'issued_at' => now(),
-                    ]);
-                }
+
+                $this->createTicketsForType($order, $ticketType, $ticketData['quantity'], $userId);
     
                 // Actualizar cantidad vendida
                 $ticketType->increment('quantity_sold', $ticketData['quantity']);
             }
-    
-            Log::info('Orden creada exitosamente', [
-                'order_id' => $order->id,
-                'user_id' => $userId,
-                'total_amount' => $orderData['total_amount'],
-                'user_created' => !Auth::check()
-            ]);
     
             return [
                 'order' => $order,
                 'account_created' => $accountCreated
             ];
         });
+    }
+
+    private function createTicketsForType(Order $order, TicketType $ticketType, int $quantity, int $userId): void
+    {
+
+        if ($ticketType->isBundle()) {
+            // Para bundles, crear múltiples tickets por cada bundle comprado
+            for ($i = 0; $i < $quantity; $i++) {
+                $bundleReference = Str::uuid()->toString();                
+                // Crear la cantidad de tickets definida en bundle_quantity
+                for ($j = 0; $j < $ticketType->bundle_quantity; $j++) {
+                    $ticketData = [
+                        'order_id' => $order->id,
+                        'ticket_type_id' => $ticketType->id,
+                        'client_id' => $userId,
+                        'bundle_reference' => $bundleReference,
+                        'unique_code' => $this->generateUniqueCode($order, $ticketType, $bundleReference . '-' . ($j + 1)),
+                        'status' => IssuedTicketStatus::AVAILABLE,
+                        'issued_at' => now(),
+                    ];
+
+                    $ticketNumber = $j + 1;
+
+                    $ticket = IssuedTicket::create($ticketData);
+                }
+            }
+        } else {
+            // Para tickets individuales, crear uno por cada cantidad
+            for ($i = 0; $i < $quantity; $i++) {
+                $ticketData = [
+                    'order_id' => $order->id,
+                    'ticket_type_id' => $ticketType->id,
+                    'client_id' => $userId,
+                    'bundle_reference' => null,
+                    'unique_code' => $this->generateUniqueCode($order, $ticketType),
+                    'status' => IssuedTicketStatus::AVAILABLE,
+                    'issued_at' => now(),
+                ];
+
+                $ticket = IssuedTicket::create($ticketData);
+            }
+        }
     }
 
     private function createUserFromBillingInfo(array $billingInfo): int
@@ -133,23 +173,20 @@ class OrderService
             'email_verified_at' => now(),
         ]);
 
-        Log::info('Usuario creado automáticamente durante compra', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'default_password' => $defaultPassword
-        ]);
 
         return $user->id;
     }
 
     public function processPayment(Order $order, array $paymentData): bool
     {
+
         try {
             $transactionId = 'TXN-' . time() . '-' . rand(1000, 9999);
             
             $paymentSuccessful = $this->simulatePaymentProcess($order, $paymentData);
             
             if ($paymentSuccessful) {
+                
                 $order->update([
                     'status' => OrderStatus::PAID,
                     'transaction_id' => $transactionId,
@@ -159,13 +196,9 @@ class OrderService
                     'status' => IssuedTicketStatus::AVAILABLE
                 ]);
 
-                Log::info('Pago procesado exitosamente', [
-                    'order_id' => $order->id,
-                    'transaction_id' => $transactionId
-                ]);
-
                 return true;
             } else {
+                Log::warning('Pago falló, cancelando orden');
                 $this->cancelOrder($order);
                 return false;
             }
@@ -173,7 +206,8 @@ class OrderService
         } catch (\Exception $e) {
             Log::error('Error procesando pago', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             $this->cancelOrder($order);
@@ -190,7 +224,6 @@ class OrderService
                 'status' => IssuedTicketStatus::CANCELLED
             ]);
 
-            Log::info('Orden cancelada', ['order_id' => $order->id]);
             return true;
         });
     }
@@ -203,13 +236,33 @@ class OrderService
             ->groupBy('ticket_type_id')
             ->map(function ($tickets) {
                 $firstTicket = $tickets->first();
-                return [
-                    'ticket_type_id' => $firstTicket->ticket_type_id,
-                    'ticket_type_name' => $firstTicket->ticketType->name,
-                    'quantity' => $tickets->count(),
-                    'unit_price' => $firstTicket->ticketType->price,
-                    'total_price' => $tickets->count() * $firstTicket->ticketType->price,
-                ];
+                $ticketType = $firstTicket->ticketType;
+                
+                if ($ticketType->isBundle()) {
+                    // Para bundles, contar por bundle_reference
+                    $bundleCount = $tickets->whereNotNull('bundle_reference')
+                        ->groupBy('bundle_reference')
+                        ->count();
+                    
+                    return [
+                        'ticket_type_id' => $firstTicket->ticket_type_id,
+                        'ticket_type_name' => $ticketType->name,
+                        'quantity' => $bundleCount,
+                        'unit_price' => $ticketType->price,
+                        'total_price' => $bundleCount * $ticketType->price,
+                        'is_bundle' => true,
+                        'bundle_quantity' => $ticketType->bundle_quantity,
+                    ];
+                } else {
+                    return [
+                        'ticket_type_id' => $firstTicket->ticket_type_id,
+                        'ticket_type_name' => $ticketType->name,
+                        'quantity' => $tickets->count(),
+                        'unit_price' => $ticketType->price,
+                        'total_price' => $tickets->count() * $ticketType->price,
+                        'is_bundle' => false,
+                    ];
+                }
             })->values();
 
         return [
@@ -236,9 +289,19 @@ class OrderService
         return $success;
     }
 
-    private function generateUniqueCode(Order $order, TicketType $ticketType): string
+    private function generateUniqueCode(Order $order, TicketType $ticketType, string $suffix = null): string
     {
-        return 'TK-' . $order->id . '-' . $ticketType->id . '-' . time() . '-' . rand(1000, 9999);
+        // Generar un código más corto pero único
+        $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
+        
+        if ($suffix) {
+            // Para bundles, usar solo los primeros 8 caracteres del UUID + número
+            $bundleParts = explode('-', $suffix);
+            $shortSuffix = substr($bundleParts[0], 0, 8) . '-' . end($bundleParts);
+            return $baseCode . '-' . $shortSuffix;
+        }
+        
+        return $baseCode;
     }
 
     private function generateOrderNumber(Order $order): string
@@ -248,7 +311,18 @@ class OrderService
 
     private function releaseTickets(Order $order): void
     {
-        $ticketCounts = $order->items->groupBy('ticket_type_id')->map->count();
+        $ticketCounts = $order->items->groupBy('ticket_type_id')->map(function ($tickets) {
+            $ticketType = $tickets->first()->ticketType;
+            
+            if ($ticketType->isBundle()) {
+                // Para bundles, contar por bundle_reference
+                return $tickets->whereNotNull('bundle_reference')
+                    ->groupBy('bundle_reference')
+                    ->count();
+            } else {
+                return $tickets->count();
+            }
+        });
         
         foreach ($ticketCounts as $ticketTypeId => $count) {
             TicketType::where('id', $ticketTypeId)->decrement('quantity_sold', $count);
@@ -257,29 +331,38 @@ class OrderService
 
     public function calculateOrderTotals(array $selectedTickets, float $discount = 0, float $tax = 0): array
     {
+
         $subtotal = 0;
         $orderDetails = [];
         
-        foreach ($selectedTickets as $ticket) {
+        foreach ($selectedTickets as $index => $ticket) {
+
             $ticketType = TicketType::find($ticket['id']);
             if ($ticketType) {
                 $ticketSubtotal = $ticketType->price * (int)$ticket['quantity'];
                 $subtotal += $ticketSubtotal;
 
-                $orderDetails[] = [
+                $ticketDetail = [
                     'ticket_type_id' => $ticketType->id,
                     'price' => $ticketType->price,
                     'quantity' => (int)$ticket['quantity'],
                     'subtotal' => $ticketSubtotal,
+                    'is_bundle' => $ticketType->isBundle(),
+                    'bundle_quantity' => $ticketType->bundle_quantity,
                 ];
+
+                $orderDetails[] = $ticketDetail;
+
+            } else {
+                Log::error("TicketType no encontrado", ['ticket_id' => $ticket['id']]);
             }
         }
         
         $subtotalAfterDiscount = $subtotal * (1 - $discount);
         $serviceFee = $subtotalAfterDiscount * $tax;
         $totalAmount = $subtotalAfterDiscount + $serviceFee;
-        
-        return [
+
+        $result = [
             'subtotal' => $subtotal,
             'discount' => $discount,
             'tax' => $tax,
@@ -287,5 +370,7 @@ class OrderService
             'total_amount' => $totalAmount,
             'order_details' => $orderDetails,
         ];
+        
+        return $result;
     }
 }

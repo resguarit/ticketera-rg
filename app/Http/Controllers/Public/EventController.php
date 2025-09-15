@@ -59,7 +59,9 @@ class EventController extends Controller
         $cities = Ciudad::orderBy('name')->get();
 
         return Inertia::render('public/events', [
-            'events' => EventResource::collection($events),
+            'events' => EventResource::collection($events)->additional([
+                'with_ticket_info' => true // Agregar flag para incluir info de tickets
+            ]),
             'categories' => $categories,
             'cities' => $cities,
             'filters' => [
@@ -88,6 +90,7 @@ class EventController extends Controller
                 'time' => $function->start_time?->format('H:i'),
                 'day_name' => $function->start_time?->format('l'),
                 'is_active' => $function->is_active,
+                'status' => $function->status->value, // Agregar el estado de la función
                 'ticketTypes' => $function->ticketTypes->map(function($ticket) {
                     return [
                         'id' => $ticket->id,

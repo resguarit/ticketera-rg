@@ -20,6 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Faq, FaqCategory as FaqCategoryModel } from '@/types/models';
@@ -44,6 +45,7 @@ interface FaqCategory extends FaqCategoryModel {
 
 interface HelpPageProps extends PageProps {
     faqCategories: FaqCategory[];
+    [key: string]: unknown;
 }
 
 const contactOptions = [
@@ -113,7 +115,7 @@ export default function Help() {
         <>
             <Head title="Centro de Ayuda - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-gradient-to-br from-cyan-800/50 to-blue-300">
                 {/* Header */}
                 <Header />
 
@@ -126,19 +128,6 @@ export default function Help() {
                         <p className="text-foreground text-sm sm:text-base lg:text-lg  mx-auto px-4">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
-                    </div>
-
-                    {/* Search */}
-                    <div className="max-w-2xl mx-auto mb-4 sm:mb-6 lg:mb-10">
-                        <div className="relative">
-                            <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                            <Input
-                                placeholder="Buscar en preguntas frecuentes..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="py-3 sm:py-4 text-sm sm:text-base lg:text-lg pl-10 sm:pl-12 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md h-8 sm:h-10"
-                            />
-                        </div>
                     </div>
 
                     {/* Contact Options */}
@@ -171,7 +160,6 @@ export default function Help() {
                         {/* FAQ Section */}
                         <div className="lg:col-span-2">
                             <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-6">
-                                <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
                                 <h2 className="text-xl sm:text-3xl text-foreground font-bold">Preguntas Frecuentes</h2>
                             </div>
 
@@ -310,15 +298,15 @@ export default function Help() {
                                     <Link href="/refunds" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Reembolsos
                                     </Link>
-                                    <Link href="/accessibility" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
-                                        Accesibilidad
-                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            {/* Add Footer */}
+            <Footer />
         </>
     );
 }

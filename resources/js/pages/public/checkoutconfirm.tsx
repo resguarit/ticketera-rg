@@ -12,7 +12,17 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Mail, KeyRound } from 'lucide-react';
 
 import { Event, EventFunction, Organizer } from '@/types';
 
@@ -23,6 +33,8 @@ interface SelectedTicket {
     price: number;
     quantity: number;
     description: string;
+    is_bundle?: boolean;
+    bundle_quantity?: number;
 }
 
 interface EventData extends Event {
@@ -34,7 +46,8 @@ interface EventData extends Event {
     full_address?: string;
     selectedTickets: SelectedTicket[];
     function?: EventFunction;
-    organizer?: Organizer; // <-- AÑADIR ESTO
+    organizer?: Organizer;
+    tax?: number; // <-- AÑADIR ESTO
 }
 
 interface CheckoutConfirmProps {
@@ -67,17 +80,25 @@ const paymentMethods = [
 ];
 
 export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmProps) {
+    const { auth } = usePage<SharedData>().props;
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [showCVV, setShowCVV] = useState(false);
+    const [errors, setErrors] = useState<Partial<Record<keyof typeof billingInfo, string>>>({});
+
+    // --- NUEVO: Estados para el modal de verificación ---
+    const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
+    const [verificationStep, setVerificationStep] = useState<'prompt' | 'code'>('prompt');
+    const [verificationCode, setVerificationCode] = useState('');
+    // --- FIN NUEVO ---
 
     const [billingInfo, setBillingInfo] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
+        firstName: auth.user?.person?.name ?? "",
+        lastName: auth.user?.person?.last_name ?? "",
+        email: auth.user?.email ?? "",
+        phone: auth.user?.person?.phone ?? "",
         documentType: "DNI",
-        documentNumber: "",
+        documentNumber: auth.user?.person?.dni ?? "",
         address: "",
         city: "",
         postalCode: "",
@@ -104,11 +125,21 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const getTotalTickets = () => {
+        return eventData.selectedTickets.reduce((total, ticket) => {
+            // Si el ticket tiene información de bundle, usar esa lógica
+            if (ticket.is_bundle && ticket.bundle_quantity) {
+                return total + (ticket.quantity * ticket.bundle_quantity);
+            }
+            return total + ticket.quantity;
+        }, 0);
+    };
+
+    const getBundleTicketsCount = () => {
         return eventData.selectedTickets.reduce((total, ticket) => total + ticket.quantity, 0);
     };
 
     const getServiceFeeDetails = () => {
-        const taxRate = eventData.organizer?.tax ? parseFloat(eventData.organizer.tax) / 100 : 0;
+        const taxRate = eventData.tax ? eventData.tax / 100 : 0;
         const fee = getTotalPrice() * taxRate;
         return { fee, taxRate };
     };
@@ -120,9 +151,37 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     };
 
     const handleNextStep = () => {
-        if (currentStep < 3) {
+        // --- MODIFICADO: Validación de campos con feedback visual ---
+        if (currentStep === 1) {
+            const newErrors: Partial<Record<keyof typeof billingInfo, string>> = {};
+            if (!billingInfo.firstName) newErrors.firstName = 'El nombre es obligatorio.';
+            if (!billingInfo.lastName) newErrors.lastName = 'El apellido es obligatorio.';
+            if (!billingInfo.email) {
+                newErrors.email = 'El email es obligatorio.';
+            } else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) {
+                newErrors.email = 'El formato del email no es válido.';
+            }
+            if (!billingInfo.phone) newErrors.phone = 'El teléfono es obligatorio.';
+            if (!billingInfo.documentNumber) newErrors.documentNumber = 'El número de documento es obligatorio.';
+
+            setErrors(newErrors);
+
+            if (Object.keys(newErrors).length > 0) {
+                return; // Detener si hay errores
+            }
+
+            // Si la validación es exitosa, limpiar errores y continuar
+            setErrors({});
+            if (!auth.user) {
+                setVerificationStep('prompt'); // Reiniciar el modal al estado inicial
+                setVerificationModalOpen(true);
+            } else {
+                setCurrentStep(currentStep + 1);
+            }
+        } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
+        // --- FIN MODIFICADO ---
     };
 
     const handlePrevStep = () => {
@@ -130,6 +189,24 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
             setCurrentStep(currentStep - 1);
         }
     };
+
+    // --- NUEVO: Manejadores para el modal de verificación ---
+    const handleConfirmEmail = () => {
+        // Simula el envío de un email y pasa al paso de introducir el código
+        setVerificationStep('code');
+    };
+
+    const handleVerifyCode = () => {
+        // Simula la validación del código. Como es hardcodeado, cualquier valor es válido.
+        if (!verificationCode) {
+            alert('Por favor, introduce el código de verificación.');
+            return;
+        }
+        // Cierra el modal y avanza al siguiente paso (pago)
+        setVerificationModalOpen(false);
+        setCurrentStep(2);
+    };
+    // --- FIN NUEVO ---
 
     const handleSubmitPayment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -294,10 +371,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="firstName"
                                                         value={billingInfo.firstName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, firstName: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.firstName ? 'border-red-500' : ''}`}
+
                                                         placeholder="Tu nombre"
                                                         required
                                                     />
+                                                    {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="lastName" className="text-foreground">
@@ -307,10 +386,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="lastName"
                                                         value={billingInfo.lastName}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, lastName: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.lastName ? 'border-red-500' : ''}`}
+
                                                         placeholder="Tu apellido"
                                                         required
                                                     />
+                                                    {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
                                                 </div>
                                             </div>
 
@@ -324,10 +405,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         type="email"
                                                         value={billingInfo.email}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, email: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.email ? 'border-red-500' : ''}`}
+
                                                         placeholder="tu@email.com"
                                                         required
                                                     />
+                                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="phone" className="text-foreground">
@@ -337,10 +420,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="phone"
                                                         value={billingInfo.phone}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, phone: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.phone ? 'border-red-500' : ''}`}
+
                                                         placeholder="+54 11 1234-5678"
                                                         required
                                                     />
+                                                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                                                 </div>
                                             </div>
 
@@ -371,10 +456,12 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                         id="documentNumber"
                                                         value={billingInfo.documentNumber}
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                                                        className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.documentNumber ? 'border-red-500' : ''}`}
+
                                                         placeholder="12345678"
                                                         required
                                                     />
+                                                    {errors.documentNumber && <p className="text-red-500 text-xs mt-1">{errors.documentNumber}</p>}
                                                 </div>
                                             </div>
                                         </form>
@@ -617,13 +704,36 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     {eventData.selectedTickets.map((ticket) => (
                                         <div key={ticket.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex-1">
-                                                <h4 className="text-foreground font-semibold">{ticket.type}</h4>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="text-foreground font-semibold">{ticket.type}</h4>
+                                                    {ticket.is_bundle && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            Pack x{ticket.bundle_quantity}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 <p className="text-foreground/60 text-sm">{ticket.description}</p>
-                                                <p className="text-foreground/80 text-sm">Cantidad: {ticket.quantity}</p>
+                                                <div className="text-foreground/80 text-sm">
+                                                    {ticket.is_bundle ? (
+                                                        <div>
+                                                            <div>Cantidad: {ticket.quantity} lotes</div>
+                                                            <div className="text-blue-600">
+                                                                = {ticket.quantity * (ticket.bundle_quantity || 1)} entradas
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>Cantidad: {ticket.quantity}</div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
                                                 <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
+                                                {ticket.is_bundle && (
+                                                    <p className="text-foreground/60 text-xs">
+                                                        {formatPrice(ticket.price / (ticket.bundle_quantity || 1))} por entrada individual
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -632,11 +742,13 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-foreground/80">
-                                            <span>Subtotal ({getTotalTickets()} tickets)</span>
+                                            <span>
+                                                Subtotal ({getBundleTicketsCount()} {getBundleTicketsCount() === 1 ? 'ítem' : 'ítems'}, {getTotalTickets()} entradas)
+                                            </span>
                                             <span>{formatPrice(getTotalPrice())}</span>
                                         </div>
                                         <div className="flex justify-between text-foreground/80">
-                                            <span>Cargo por servicio ({ (serviceFeeDetails.taxRate * 100).toFixed(0) }%)</span>
+                                            <span>Cargo por servicio ({(serviceFeeDetails.taxRate * 100).toFixed(0)}%)</span>
                                             <span>{formatPrice(serviceFeeDetails.fee)}</span>
                                         </div>
                                         <Separator className="bg-gray-200" />
@@ -661,6 +773,50 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                     </div>
                 </div>
             </div>
+
+            {/* --- NUEVO: Modal de Verificación de Email --- */}
+            <Dialog open={isVerificationModalOpen} onOpenChange={setVerificationModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Email</DialogTitle>
+                        <DialogDescription>
+                            {verificationStep === 'prompt'
+                                ? 'Para continuar, necesitamos verificar tu dirección de email. La compra quedará asociada a esta dirección.'
+                                : 'Hemos enviado un código a tu email. Introdúcelo a continuación para validar tu cuenta.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {verificationStep === 'prompt' ? (
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground">Se asociará la compra a:</p>
+                                <p className="font-semibold text-lg">{billingInfo.email}</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <Label htmlFor="verification-code">Código de Verificación</Label>
+                                <Input
+                                    id="verification-code"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    placeholder="Escribe cualquier código para continuar"
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        {verificationStep === 'prompt' ? (
+                            <Button onClick={handleConfirmEmail} className="w-full">
+                                <Mail className="mr-2 h-4 w-4" /> Confirmar Email
+                            </Button>
+                        ) : (
+                            <Button onClick={handleVerifyCode} className="w-full">
+                                <KeyRound className="mr-2 h-4 w-4" /> Validar y Continuar
+                            </Button>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* --- FIN NUEVO --- */}
         </>
     );
 }

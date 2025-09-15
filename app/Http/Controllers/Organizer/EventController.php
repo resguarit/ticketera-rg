@@ -22,16 +22,70 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $organizer = Auth::user()->organizer;
-        $includeArchived = $request->boolean('include_archived');
+        
+        // Obtener filtros del request
+        $filters = [
+            'search' => $request->get('search', ''),
+            'category_id' => $request->get('category_id', 'all'),
+            'venue_id' => $request->get('venue_id', 'all'),
+            'status' => $request->get('status', 'all'),
+            'sort_by' => $request->get('sort_by', 'created_at'),
+            'sort_direction' => $request->get('sort_direction', 'desc'),
+            'include_archived' => $request->boolean('include_archived'),
+            'price_min' => $request->get('price_min', ''),
+            'price_max' => $request->get('price_max', ''),
+        ];
 
-        $events = $organizer->events()
-            ->when(!$includeArchived, function ($query) {
+        // Query base de eventos
+        $query = $organizer->events()
+            ->when(!$filters['include_archived'], function ($query) {
                 $query->where('is_archived', false);
             })
-            ->with(['category', 'venue', 'organizer', 'functions'])
-            ->orderBy('created_at', 'desc')
-            ->get()
+            ->with(['category', 'venue', 'organizer', 'functions']);
+
+        // Aplicar filtro de búsqueda
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        // Aplicar filtro por categoría
+        if ($filters['category_id'] !== 'all') {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        // Aplicar filtro por venue
+        if ($filters['venue_id'] !== 'all') {
+            $query->where('venue_id', $filters['venue_id']);
+        }
+
+        // Aplicar filtro por estado (si tienes campo status en events)
+        if ($filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+        // Aplicar ordenamiento
+        switch ($filters['sort_by']) {
+            case 'name':
+                $query->orderBy('name', $filters['sort_direction']);
+                break;
+            default:
+                $query->orderBy('created_at', $filters['sort_direction']);
+        }
+
+        $events = $query->get()
             ->map(function($event) {
+                // Calcular precios mínimo y máximo si tienes ticketTypes
+                $functions = $event->functions->load('ticketTypes');
+                $allPrices = $functions->flatMap(function($function) {
+                    return $function->ticketTypes->pluck('price');
+                })->filter();
+                
+                $minPrice = $allPrices->min() ?? 0;
+                $maxPrice = $allPrices->max() ?? 0;
+                
+                // Próxima función
+                $nextFunction = $event->functions->where('start_time', '>=', now())->sortBy('start_time')->first();
+
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
@@ -44,13 +98,17 @@ class EventController extends Controller
                     'organizer' => $event->organizer,
                     'created_at' => $event->created_at,
                     'updated_at' => $event->updated_at,
+                    'min_price' => $minPrice,
+                    'max_price' => $maxPrice,
+                    'next_function_date' => $nextFunction ? $nextFunction->start_time : null,
+                    'functions_count' => $event->functions->count(),
                     'functions' => $event->functions->map(function($function) {
                         return [
                             'id' => $function->id,
                             'name' => $function->name,
                             'description' => $function->description,
-                            'start_time' => $function->start_time, // Raw para compatibilidad
-                            'end_time' => $function->end_time ? $function->end_time : null,     // Raw para compatibilidad
+                            'start_time' => $function->start_time,
+                            'end_time' => $function->end_time ? $function->end_time : null,
                             'date' => $function->start_time?->format('d M Y'),
                             'time' => $function->start_time?->format('H:i'),
                             'formatted_date' => $function->start_time?->format('Y-m-d'),
@@ -61,9 +119,20 @@ class EventController extends Controller
                 ];
             });
 
+        // Obtener categorías y venues para los selects
+        $categories = \App\Models\Category::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+            
+        $venues = \App\Models\Venue::select('id', 'name', 'address')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('organizer/events/index', [
             'events' => $events,
-            'filters' => ['include_archived' => $includeArchived],
+            'categories' => $categories,
+            'venues' => $venues,
+            'filters' => $filters,
         ]);
     }
 
@@ -123,6 +192,7 @@ class EventController extends Controller
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
                 'featured' => $validated['featured'] ?? false,
+                'tax' => $organizer->tax, // <-- AÑADIR ESTA LÍNEA
             ]);
 
             // Create functions only (without ticket types for now)
@@ -376,6 +446,7 @@ class EventController extends Controller
                             'sold_percentage' => round($soldPercentage, 1),
                             'total_income' => (float) $totalIncome,
                             'is_hidden' => (bool) $ticketType->is_hidden,
+                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10), // ← AGREGAR ESTA LÍNEA
                             'event_function_id' => $ticketType->event_function_id,
                             'sector_id' => $ticketType->sector_id,
                             'sector' => $ticketType->sector,

@@ -16,28 +16,24 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
+use App\Services\ReportPDFService;
 
 class ReportController extends Controller
 {
+    public function __construct(private ReportPDFService $reportPDFService)
+    {
+    }
+
     public function index(Request $request): Response
     {
-        // Obtener rango de tiempo (por defecto 6 meses)
         $timeRange = $request->get('timeRange', '6m');
         $startDate = $this->getStartDate($timeRange);
 
-        // Estadísticas principales de ventas
+        // Obtener datos principales
         $salesData = $this->getSalesData($startDate);
-        
-        // Top eventos por ingresos
-        $topEvents = $this->getTopEvents($startDate);
-        
-        // Datos mensuales para gráficos
+        $topEvents = $this->getTopEvents($startDate, 10);
         $monthlyData = $this->getMonthlyData($startDate);
-        
-        // Datos por categorías
         $categoryData = $this->getCategoryData($startDate);
-        
-        // Demografía de usuarios
         $userDemographics = $this->getUserDemographics();
 
         return Inertia::render('admin/reports', [
@@ -46,28 +42,82 @@ class ReportController extends Controller
             'monthlyData' => $monthlyData,
             'categoryData' => $categoryData,
             'userDemographics' => $userDemographics,
-            'timeRange' => $timeRange
+            'timeRange' => $timeRange,
         ]);
     }
 
-    public function export(Request $request)
+    /**
+     * Descargar reporte específico en PDF
+     */
+    public function downloadReport(Request $request, string $reportType)
     {
-        $type = $request->get('type', 'complete');
         $timeRange = $request->get('timeRange', '6m');
         $startDate = $this->getStartDate($timeRange);
 
-        switch ($type) {
-            case 'sales':
-                return $this->exportSalesReport($startDate);
-            case 'events':
-                return $this->exportEventsReport($startDate);
-            case 'users':
-                return $this->exportUsersReport($startDate);
-            default:
-                return $this->exportCompleteReport($startDate);
-        }
+        return match($reportType) {
+            'sales' => $this->reportPDFService->generateSalesReport($startDate, $timeRange),
+            'events' => $this->reportPDFService->generateEventsReport($startDate, $timeRange),
+            'financial' => $this->reportPDFService->generateFinancialReport($startDate, $timeRange),
+            'users' => $this->reportPDFService->generateUsersReport($startDate, $timeRange),
+            'complete' => $this->reportPDFService->generateCompleteReport($startDate, $timeRange),
+            default => abort(404, 'Tipo de reporte no encontrado'),
+        };
     }
 
+    /**
+     * Obtener estadísticas en tiempo real para el dashboard
+     */
+    public function realTimeStats()
+    {
+        $today = Carbon::today();
+        
+        $todaySales = Order::where('status', OrderStatus::PAID)
+            ->whereDate('created_at', $today)
+            ->sum('total_amount');
+
+        $todayTickets = IssuedTicket::whereHas('order', function($query) use ($today) {
+            $query->where('status', OrderStatus::PAID)
+                  ->whereDate('created_at', $today);
+        })->count();
+
+        $activeEvents = Event::whereHas('functions', function($query) {
+            $query->where('start_time', '>', Carbon::now());
+        })->count();
+
+        $totalUsers = User::where('role', UserRole::CLIENT)->count();
+
+        return response()->json([
+            'today_sales' => $todaySales,
+            'today_tickets' => $todayTickets,
+            'active_events' => $activeEvents,
+            'total_users' => $totalUsers,
+            'last_update' => Carbon::now()->format('d/m/Y H:i:s'),
+        ]);
+    }
+
+    /**
+     * Exportar datos para procesamiento externo (no PDF)
+     */
+    public function export(Request $request)
+    {
+        $type = $request->get('type', 'sales');
+        $timeRange = $request->get('timeRange', '6m');
+        $startDate = $this->getStartDate($timeRange);
+
+        $data = match($type) {
+            'sales' => $this->getSalesData($startDate),
+            'events' => $this->getTopEvents($startDate, 50),
+            'users' => $this->getUserStats($startDate),
+            default => [],
+        };
+
+        return response()->json([
+            'message' => 'Datos exportados correctamente',
+            'data' => $data,
+        ]);
+    }
+
+    // Métodos privados de utilidad
     private function getStartDate(string $timeRange): Carbon
     {
         return match($timeRange) {
@@ -75,70 +125,57 @@ class ReportController extends Controller
             '3m' => Carbon::now()->subMonths(3),
             '6m' => Carbon::now()->subMonths(6),
             '1y' => Carbon::now()->subYear(),
-            default => Carbon::now()->subMonths(6)
+            default => Carbon::now()->subMonths(6),
         };
     }
 
     private function getSalesData(Carbon $startDate): array
     {
-        // Ingresos totales usando órdenes pagadas
         $totalRevenue = Order::where('status', OrderStatus::PAID)
             ->where('created_at', '>=', $startDate)
             ->sum('total_amount');
 
-        $previousPeriodRevenue = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '<', $startDate)
-            ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
+        $monthlyRevenue = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', Carbon::now()->startOfMonth())
             ->sum('total_amount');
 
-        $revenueGrowth = $previousPeriodRevenue > 0 
-            ? round((($totalRevenue - $previousPeriodRevenue) / $previousPeriodRevenue) * 100, 1)
-            : 0;
-
-        // Tickets vendidos usando IssuedTicket con órdenes pagadas
         $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
                   ->where('created_at', '>=', $startDate);
         })->count();
 
-        // Ingresos mensuales
-        $monthlyRevenue = Order::where('status', OrderStatus::PAID)
-            ->whereBetween('created_at', [
-                Carbon::now()->startOfMonth(),
-                Carbon::now()->endOfMonth()
-            ])
-            ->sum('total_amount');
-
-        // Tickets mensuales
         $monthlyTickets = IssuedTicket::whereHas('order', function($query) {
             $query->where('status', OrderStatus::PAID)
-                  ->whereBetween('created_at', [
-                      Carbon::now()->startOfMonth(),
-                      Carbon::now()->endOfMonth()
-                  ]);
+                  ->where('created_at', '>=', Carbon::now()->startOfMonth());
         })->count();
 
-        // Precio promedio
-        $averageTicketPrice = $totalTickets > 0 ? round($totalRevenue / $totalTickets) : 0;
+        $totalOrders = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->count();
 
-        // Tasa de conversión (simulada)
-        $conversionRate = 12.5;
+        // Calcular tasa de crecimiento comparando con período anterior
+        $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
+        $previousRevenue = Order::where('status', OrderStatus::PAID)
+            ->whereBetween('created_at', [$previousPeriod, $startDate])
+            ->sum('total_amount');
+
+        $growthRate = $previousRevenue > 0 ? 
+            (($totalRevenue - $previousRevenue) / $previousRevenue) * 100 : 0;
 
         return [
             'totalRevenue' => $totalRevenue,
             'monthlyRevenue' => $monthlyRevenue,
             'totalTickets' => $totalTickets,
             'monthlyTickets' => $monthlyTickets,
-            'averageTicketPrice' => $averageTicketPrice,
-            'conversionRate' => $conversionRate,
-            'growthRate' => $revenueGrowth
+            'averageTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
+            'conversionRate' => 73.5, // Puedes calcular esto basado en visitas vs compras
+            'growthRate' => round($growthRate, 1),
         ];
     }
 
-    private function getTopEvents(Carbon $startDate): array
+    private function getTopEvents(Carbon $startDate, int $limit): array
     {
-        // Obtener eventos con ingresos calculados usando IssuedTicket y Order
-        return Event::with(['category'])
+        return Event::with(['category', 'venue.ciudad'])
             ->select('events.*')
             ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
             ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
@@ -151,10 +188,9 @@ class ReportController extends Controller
             ->whereNotNull('orders.id')
             ->groupBy('events.id')
             ->orderByRaw('SUM(ticket_types.price) DESC')
-            ->limit(5)
+            ->limit($limit)
             ->get()
             ->map(function ($event) use ($startDate) {
-                // Calcular ingresos del evento
                 $revenue = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -164,7 +200,6 @@ class ReportController extends Controller
                     ->where('orders.created_at', '>=', $startDate)
                     ->sum('ticket_types.price');
 
-                // Calcular tickets vendidos
                 $ticketsSold = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -174,31 +209,16 @@ class ReportController extends Controller
                     ->where('orders.created_at', '>=', $startDate)
                     ->count();
 
-                // Determinar estado
-                $status = 'completed';
-                $hasActiveFunctions = DB::table('event_functions')
-                    ->where('event_id', $event->id)
-                    ->where('start_time', '>', Carbon::now())
-                    ->exists();
-                
-                if ($hasActiveFunctions) {
-                    $status = 'active';
-                }
-
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'category' => $event->category->name ?? 'Sin categoría',
                     'revenue' => $revenue,
                     'tickets_sold' => $ticketsSold,
-                    'growth' => '+' . rand(5, 30) . '%', // Simulado
-                    'status' => $status
+                    'growth' => '+' . rand(5, 25) . '%', // Puedes calcular el crecimiento real
+                    'status' => $event->functions()->where('start_time', '>', Carbon::now())->exists() ? 'active' : 'completed',
                 ];
             })
-            ->filter(function($item) {
-                return $item['revenue'] > 0;
-            })
-            ->values()
             ->toArray();
     }
 
@@ -226,7 +246,7 @@ class ReportController extends Controller
             $months[] = [
                 'month' => $current->locale('es')->format('M'),
                 'revenue' => $monthRevenue,
-                'tickets' => $monthTickets
+                'tickets' => $monthTickets,
             ];
 
             $current->addMonth();
@@ -237,14 +257,9 @@ class ReportController extends Controller
 
     private function getCategoryData(Carbon $startDate): array
     {
-        $totalRevenue = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->sum('total_amount');
-
-        return Category::with(['events'])
+        $categories = Category::with(['events'])
             ->get()
-            ->map(function ($category) use ($startDate, $totalRevenue) {
-                // Calcular ingresos por categoría usando queries directas
+            ->map(function ($category) use ($startDate) {
                 $categoryRevenue = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -255,122 +270,90 @@ class ReportController extends Controller
                     ->where('orders.created_at', '>=', $startDate)
                     ->sum('ticket_types.price');
 
-                $percentage = $totalRevenue > 0 ? round(($categoryRevenue / $totalRevenue) * 100, 1) : 0;
-
                 return [
                     'category' => $category->name,
-                    'percentage' => $percentage,
                     'revenue' => $categoryRevenue,
-                    'color' => $category->color ?? 'bg-blue-500' // Color desde BD
                 ];
             })
             ->filter(function($item) {
                 return $item['revenue'] > 0;
             })
             ->sortByDesc('revenue')
-            ->values()
-            ->toArray();
+            ->values();
+
+        $totalRevenue = $categories->sum('revenue');
+        
+        $colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+        
+        return $categories->map(function($category, $index) use ($totalRevenue, $colors) {
+            return [
+                'category' => $category['category'],
+                'revenue' => $category['revenue'],
+                'percentage' => $totalRevenue > 0 ? round(($category['revenue'] / $totalRevenue) * 100, 1) : 0,
+                'color' => $colors[$index % count($colors)],
+            ];
+        })->toArray();
     }
 
     private function getUserDemographics(): array
     {
-        $totalClients = User::where('role', UserRole::CLIENT)->count();
-        
+        // Datos simulados de demografía - puedes implementar la lógica real
         return [
-            ['age' => '18-25', 'percentage' => 30, 'users' => round($totalClients * 0.30)],
-            ['age' => '26-35', 'percentage' => 35, 'users' => round($totalClients * 0.35)],
-            ['age' => '36-45', 'percentage' => 20, 'users' => round($totalClients * 0.20)],
-            ['age' => '46-55', 'percentage' => 10, 'users' => round($totalClients * 0.10)],
-            ['age' => '56+', 'percentage' => 5, 'users' => round($totalClients * 0.05)]
+            ['age' => '18-25', 'percentage' => 30, 'users' => 1500],
+            ['age' => '26-35', 'percentage' => 35, 'users' => 1750],
+            ['age' => '36-45', 'percentage' => 20, 'users' => 1000],
+            ['age' => '46+', 'percentage' => 15, 'users' => 750],
         ];
     }
 
-    private function exportSalesReport(Carbon $startDate)
+    private function getUserStats(Carbon $startDate): array
     {
-        $salesData = $this->getSalesData($startDate);
-        $monthlyData = $this->getMonthlyData($startDate);
+        $totalUsers = User::where('role', UserRole::CLIENT)->count();
+        $newUsers = User::where('role', UserRole::CLIENT)
+            ->where('created_at', '>=', $startDate)
+            ->count();
 
-        return response()->json([
-            'message' => 'Reporte de ventas generado',
-            'data' => [
-                'sales' => $salesData,
-                'monthly' => $monthlyData
-            ]
-        ]);
-    }
-
-    private function exportEventsReport(Carbon $startDate)
-    {
-        $topEvents = $this->getTopEvents($startDate);
-
-        return response()->json([
-            'message' => 'Reporte de eventos generado',
-            'data' => $topEvents
-        ]);
-    }
-
-    private function exportUsersReport(Carbon $startDate)
-    {
-        $userStats = [
-            'total_users' => User::where('role', UserRole::CLIENT)->count(),
-            'new_users' => User::where('role', UserRole::CLIENT)
-                ->where('created_at', '>=', $startDate)
-                ->count(),
-            'active_users' => User::where('role', UserRole::CLIENT)
+        return [
+            'totalUsers' => $totalUsers,
+            'newUsers' => $newUsers,
+            'activeUsers' => User::where('role', UserRole::CLIENT)
                 ->whereNotNull('email_verified_at')
                 ->count(),
-            'demographics' => $this->getUserDemographics()
+        ];
+    }
+
+    public function generateCompleteReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
+    {
+        // Obtener todos los datos
+        $salesData = $this->getSalesData($startDate);
+        $monthlyData = $this->getMonthlyData($startDate);
+        $topEvents = $this->getTopEventsByRevenue($startDate, 15);
+        $eventsData = $this->getEventsAnalytics($startDate);
+        $categoryStats = $this->getCategoryStats($startDate);
+        $venueStats = $this->getVenueStats($startDate);
+        $financialData = $this->getFinancialAnalytics($startDate);
+        $userStats = $this->getUserStats($startDate);
+        
+        $data = [
+            'title' => 'Reporte Completo de la Plataforma',
+            'period' => $this->getPeriodName($timeRange),
+            'startDate' => $startDate->format('d/m/Y'),
+            'endDate' => Carbon::now()->format('d/m/Y'),
+            'generatedAt' => Carbon::now()->format('d/m/Y H:i'),
+            'salesData' => $salesData,
+            'monthlyData' => $monthlyData,
+            'topEvents' => $topEvents,
+            'eventsData' => $eventsData,
+            'categoryStats' => $categoryStats,
+            'venueStats' => $venueStats,
+            'financialData' => $financialData,
+            'userStats' => $userStats,
         ];
 
-        return response()->json([
-            'message' => 'Reporte de usuarios generado',
-            'data' => $userStats
-        ]);
-    }
+        $pdf = Pdf::loadView('pdfs.reports.complete', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-    private function exportCompleteReport(Carbon $startDate)
-    {
-        return response()->json([
-            'message' => 'Reporte completo generado',
-            'data' => [
-                'sales' => $this->getSalesData($startDate),
-                'events' => $this->getTopEvents($startDate),
-                'monthly' => $this->getMonthlyData($startDate),
-                'categories' => $this->getCategoryData($startDate),
-                'users' => $this->getUserDemographics()
-            ]
-        ]);
-    }
-
-    public function downloadReport(Request $request)
-    {
-        $type = $request->get('type', 'pdf');
-        $reportType = $request->get('report', 'complete');
-        $timeRange = $request->get('timeRange', '6m');
-
-        return response()->json([
-            'message' => "Descargando reporte {$reportType} en formato {$type}",
-            'url' => '/storage/reports/' . $reportType . '_' . date('Y-m-d') . '.' . $type
-        ]);
-    }
-
-    public function realTimeStats(Request $request)
-    {
-        $today = Carbon::today();
-        
-        return response()->json([
-            'today_sales' => Order::where('status', OrderStatus::PAID)
-                ->whereDate('created_at', $today)
-                ->sum('total_amount'),
-            'today_tickets' => IssuedTicket::whereHas('order', function($query) use ($today) {
-                $query->where('status', OrderStatus::PAID)
-                      ->whereDate('created_at', $today);
-            })->count(),
-            'active_events' => Event::whereHas('functions', function($query) {
-                $query->where('start_time', '>', Carbon::now());
-            })->count(),
-            'total_users' => User::where('role', UserRole::CLIENT)->count(),
-            'last_update' => Carbon::now()->format('H:i:s')
-        ]);
+        return $pdf->download('reporte-completo-' . date('Y-m-d') . '.pdf');
     }
 }

@@ -76,7 +76,7 @@ export function FaqCategoryModal({ isOpen, onClose, category, icons }: Props) {
                                         type="button"
                                         key={iconName}
                                         onClick={() => setData('icon', iconName)}
-                                        className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${data.icon === iconName ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                                        className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${data.icon === iconName ? 'bg-secondary text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
                                     >
                                         <DynamicIcon name={iconName} className="w-5 h-5" />
                                     </button>

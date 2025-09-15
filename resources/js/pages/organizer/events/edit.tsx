@@ -190,7 +190,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                 <Link href={route('organizer.events.index')}>
                                     <Button type="button" variant="outline">Cancelar</Button>
                                 </Link>
-                                <Button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700">
+                                <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover">
                                     <Save className="w-4 h-4 mr-2" />
                                     {processing ? 'Guardando...' : 'Guardar Cambios'}
                                 </Button>

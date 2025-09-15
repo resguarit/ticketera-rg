@@ -63,7 +63,7 @@ export function AdminDashboardLayout({
                 <Button 
                   onClick={primaryAction.onClick}
                   variant={primaryAction.variant || "default"}
-                  className="bg-black text-white hover:bg-gray-800"
+                  className="bg-primary text-white hover:bg-primary-hover"
                 >
                   {primaryAction.icon && <primaryAction.icon className="w-4 h-4 mr-2" />}
                   {primaryAction.label}

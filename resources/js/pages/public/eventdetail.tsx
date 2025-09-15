@@ -27,6 +27,7 @@ interface EventFunctionData extends EventFunction {
     date: string;
     time: string;
     day_name: string;
+    status: string; // Agregar el campo status
     ticketTypes: TicketTypeData[];
 }
 
@@ -65,10 +66,17 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         setSelectedTickets({}); // Limpiar selección de tickets
     };
 
-    const updateTicketQuantity = (ticketId: number, change: number) => {
-        setSelectedTickets((prev) => {
+    const handleQuantityChange = (ticketId: number, change: number) => {
+        setSelectedTickets(prev => {
             const current = prev[ticketId] || 0;
-            const newQuantity = Math.max(0, Math.min(10, current + change));
+            const ticketType = currentTicketTypes.find(t => t.id === ticketId);
+            
+            if (!ticketType) return prev;
+            
+            // Para bundles, el límite es max_purchase_quantity (no multiplicado)
+            const maxAllowed = ticketType.max_purchase_quantity || 10;
+            const newQuantity = Math.max(0, Math.min(maxAllowed, current + change));
+            
             if (newQuantity === 0) {
                 const { [ticketId]: removed, ...rest } = prev;
                 return rest;
@@ -85,7 +93,23 @@ export default function EventDetail({ eventData }: EventDetailProps) {
     };
 
     const getTotalTickets = () => {
-        return Object.values(selectedTickets).reduce((total, quantity) => total + quantity, 0);
+        return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
+            const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
+            if (!ticket) return total;
+            
+            // Si es bundle, mostrar cantidad real de entradas
+            const realQuantity = ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity;
+            return total + realQuantity;
+        }, 0);
+    };
+
+    const getRealTicketCount = () => {
+        return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
+            const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
+            if (!ticket) return total;
+            
+            return total + (ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity);
+        }, 0);
     };
 
     const handlePurchase = () => {
@@ -186,15 +210,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
-                                                    <Badge 
-                                                        className={`mt-1 sm:mt-2 text-xs ${
-                                                            selectedFunctionId === func.id 
-                                                                ? 'bg-primary text-white' 
-                                                                : 'bg-gray-100 text-gray-600'
-                                                        }`}
-                                                    >
-                                                        {func.ticketTypes.length} tipos de entrada
-                                                    </Badge>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Badge 
+                                                            className={`text-xs ${
+                                                                selectedFunctionId === func.id 
+                                                                    ? 'bg-primary text-white' 
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                            }`}
+                                                        >
+                                                            {func.ticketTypes.length} tipos de entrada
+                                                        </Badge>
+                                                        <Badge 
+                                                            variant="outline" 
+                                                            className={`text-xs ${
+                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
+                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
+                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
+                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
+                                                                'border-orange-300 text-orange-600'
+                                                            }`}
+                                                        >
+                                                            {func.status === 'on_sale' ? 'En venta' :
+                                                             func.status === 'sold_out' ? 'Agotado' :
+                                                             func.status === 'upcoming' ? 'Próximamente' :
+                                                             func.status === 'finished' ? 'Finalizada' :
+                                                             'Inactiva'}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -279,15 +321,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
-                                                    <Badge 
-                                                        className={`mt-1 sm:mt-2 text-xs ${
-                                                            selectedFunctionId === func.id 
-                                                                ? 'bg-primary text-white' 
-                                                                : 'bg-gray-100 text-gray-600'
-                                                        }`}
-                                                    >
-                                                        {func.ticketTypes.length} tipos de entrada
-                                                    </Badge>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Badge 
+                                                            className={`text-xs ${
+                                                                selectedFunctionId === func.id 
+                                                                    ? 'bg-primary text-white' 
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                            }`}
+                                                        >
+                                                            {func.ticketTypes.length} tipos de entrada
+                                                        </Badge>
+                                                        <Badge 
+                                                            variant="outline" 
+                                                            className={`text-xs ${
+                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
+                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
+                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
+                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
+                                                                'border-orange-300 text-orange-600'
+                                                            }`}
+                                                        >
+                                                            {func.status === 'on_sale' ? 'En venta' :
+                                                             func.status === 'sold_out' ? 'Agotado' :
+                                                             func.status === 'upcoming' ? 'Próximamente' :
+                                                             func.status === 'finished' ? 'Finalizada' :
+                                                             'Inactiva'}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -336,65 +396,128 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                                             {currentTicketTypes
                                                 .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => (
-                                                <div
-                                                    key={ticket.id}
-                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                        <div className="min-w-0 flex-1 mr-2">
-                                                            <h4 className="font-bold text-foreground text-sm sm:text-base">{ticket.name}</h4>
-                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                            <p className="text-foreground/60 text-xs mt-1">
-                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            <p className="text-lg sm:text-xl font-bold text-foreground">
-                                                                {formatPrice(ticket.price)}
-                                                            </p>
-                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                        </div>
-                                                    </div>
+                                                .map((ticket) => {
+                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                    const isBundle = ticket.is_bundle || false;
+                                                    const bundleQuantity = ticket.bundle_quantity || 1;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={ticket.id}
+                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                <div className="min-w-0 flex-1 mr-2">
+                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                    <p className="text-foreground/60 text-xs mt-1">
+                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                        {formatPrice(ticket.price)}
+                                                                    </p>
+                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                </div>
+                                                            </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2 sm:space-x-3">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                                disabled={!selectedTickets[ticket.id]}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <span className="text-foreground font-semibold w-6 sm:w-8 text-center text-sm sm:text-base">
-                                                                {selectedTickets[ticket.id] || 0}
-                                                            </span>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                                disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                        disabled={selectedQuantity === 0}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                                {selectedQuantity > 0 && (
+                                                                    <div className="text-sm text-foreground/60 mt-1">
+                                                                        {isBundle ? (
+                                                                            <div>
+                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div className="text-blue-600">
+                                                                                    = {selectedQuantity * bundleQuantity} entradas
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>{selectedQuantity} entradas</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    );
+                                                })}
                                         </>
-                                    ) : selectedFunction && currentTicketTypes.length === 0 ? (
+                                    ) : selectedFunction ? (
+                                        // Usar el estado real de la función para mostrar el mensaje apropiado
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">No hay entradas disponibles para esta función</p>
-                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
-                                                Agotado
-                                            </Badge>
+                                            {selectedFunction.status === 'sold_out' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Las entradas para esta función están agotadas
+                                                    </p>
+                                                    <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                        Agotado
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'upcoming' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Las entradas para esta función estarán disponibles próximamente
+                                                    </p>
+                                                    <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                        Próximamente
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'finished' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Esta función ya ha finalizado
+                                                    </p>
+                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                        Finalizada
+                                                    </Badge>
+                                                </>
+                                            ) : selectedFunction.status === 'inactive' ? (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        Esta función no está activa
+                                                    </p>
+                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                        Inactiva
+                                                    </Badge>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                        No hay entradas disponibles para esta función
+                                                    </p>
+                                                    <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                        No disponible
+                                                    </Badge>
+                                                </>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">Selecciona una función para ver las entradas disponibles</p>
+                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                Selecciona una función para ver las entradas disponibles
+                                            </p>
                                             <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
                                                 Selecciona función
                                             </Badge>
@@ -532,54 +655,72 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                                             {currentTicketTypes
                                                 .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => (
-                                                <div
-                                                    key={ticket.id}
-                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                        <div className="min-w-0 flex-1 mr-2">
-                                                            <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                            <p className="text-foreground/60 text-xs mt-1">
-                                                                {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                {formatPrice(ticket.price)}
-                                                            </p>
-                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                        </div>
-                                                    </div>
+                                                .map((ticket) => {
+                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                    const isBundle = ticket.is_bundle || false;
+                                                    const bundleQuantity = ticket.bundle_quantity || 1;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={ticket.id}
+                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                <div className="min-w-0 flex-1 mr-2">
+                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                    <p className="text-foreground/60 text-xs mt-1">
+                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right flex-shrink-0">
+                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                        {formatPrice(ticket.price)}
+                                                                    </p>
+                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                </div>
+                                                            </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2 sm:space-x-3">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, -1)}
-                                                                disabled={!selectedTickets[ticket.id]}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <span className="text-foreground font-semibold w-6 sm:w-8 text-center text-sm sm:text-base">
-                                                                {selectedTickets[ticket.id] || 0}
-                                                            </span>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateTicketQuantity(ticket.id, 1)}
-                                                                disabled={(selectedTickets[ticket.id] || 0) >= Math.min(10, ticket.available)}
-                                                                className="w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-300 text-foreground hover:bg-gray-100"
-                                                            >
-                                                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                        disabled={selectedQuantity === 0}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        className="w-8 h-8 p-0"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                                {selectedQuantity > 0 && (
+                                                                    <div className="text-sm text-foreground/60 mt-1">
+                                                                        {isBundle ? (
+                                                                            <div>
+                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div className="text-blue-600">
+                                                                                    = {selectedQuantity * bundleQuantity} entradas
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>{selectedQuantity} entradas</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    );
+                                                })}
                                         </>
                                     ) : selectedFunction && currentTicketTypes.length === 0 ? (
                                         <div className="text-center py-6 sm:py-8">

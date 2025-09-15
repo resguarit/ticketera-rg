@@ -19,6 +19,7 @@ class IssuedTicket extends Model
         'order_id',
         'assistant_id',
         'client_id',
+        'bundle_reference',  // ← NUEVO
         'unique_code',
         'status',
         'issued_at',
@@ -50,5 +51,21 @@ class IssuedTicket extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(User::class, 'client_id');
+    }
+
+    // ← NUEVO: Método para verificar si pertenece a un bundle
+    public function isFromBundle(): bool
+    {
+        return !is_null($this->bundle_reference);
+    }
+
+    // ← NUEVO: Obtener todos los tickets del mismo bundle
+    public function bundleTickets()
+    {
+        if (!$this->isFromBundle()) {
+            return collect([$this]);
+        }
+
+        return static::where('bundle_reference', $this->bundle_reference)->get();
     }
 }

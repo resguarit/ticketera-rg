@@ -53,11 +53,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{organizerId}/users/{userId}/regenerate-credentials', [OrganizerController::class, 'regenerateCredentials'])->name('regenerate-credentials');
     });
     
-    // Reportes - ACTUALIZADO
+    // Reportes - CORREGIDO: usar solo 'admin' middleware
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
-        Route::get('/download', [ReportController::class, 'downloadReport'])->name('download');
+        Route::get('/download/{reportType}', [ReportController::class, 'downloadReport'])->name('download');
         Route::get('/real-time', [ReportController::class, 'realTimeStats'])->name('real-time');
     });
     
@@ -68,7 +68,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         })->name('index');
     });
 
-        // Gestión de categorías
+    // Gestión de categorías
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
     

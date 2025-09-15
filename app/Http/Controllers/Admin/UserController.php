@@ -58,8 +58,8 @@ class UserController extends Controller
         // Ordenamiento
         switch ($sortBy) {
             case 'name':
-                $query->leftJoin('people', 'users.person_id', '=', 'people.id')
-                      ->orderBy('people.name', $sortDirection)
+                $query->leftJoin('person', 'users.person_id', '=', 'person.id')
+                      ->orderBy('person.name', $sortDirection)
                       ->select('users.*');
                 break;
             case 'email':
@@ -202,10 +202,9 @@ class UserController extends Controller
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'dni' => 'required|string|max:20|unique:people,dni',
+            'dni' => 'required|string|max:20|unique:person,dni',
             'address' => 'nullable|string|max:500',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'email_verified' => 'boolean',
         ]);
 
         DB::transaction(function() use ($validated) {
@@ -218,13 +217,13 @@ class UserController extends Controller
                 'address' => $validated['address'],
             ]);
 
-            // Crear usuario
+            // Crear usuario - email no verificado por defecto
             User::create([
                 'person_id' => $person->id,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => UserRole::CLIENT,
-                'email_verified_at' => $validated['email_verified'] ? now() : null,
+                'email_verified_at' => null, // Siempre null inicialmente
             ]);
         });
 
@@ -243,13 +242,12 @@ class UserController extends Controller
 
         $userData = [
             'id' => $user->id,
-            'firstName' => $user->person->name ?? '',
-            'lastName' => $user->person->last_name ?? '',
+            'firstName' => $user->person->name,
+            'lastName' => $user->person->last_name,
             'email' => $user->email,
             'phone' => $user->person->phone ?? '',
-            'dni' => $user->person->dni ?? '',
+            'dni' => $user->person->dni,
             'address' => $user->person->address ?? '',
-            'email_verified' => (bool) $user->email_verified_at,
         ];
 
         return Inertia::render('admin/users/edit', [
@@ -271,9 +269,8 @@ class UserController extends Controller
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'dni' => 'required|string|max:20|unique:people,dni,' . $user->person->id,
+            'dni' => 'required|string|max:20|unique:person,dni,' . $user->person->id,
             'address' => 'nullable|string|max:500',
-            'email_verified' => 'boolean',
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
 
@@ -290,7 +287,7 @@ class UserController extends Controller
             // Actualizar usuario
             $userData = [
                 'email' => $validated['email'],
-                'email_verified_at' => $validated['email_verified'] ? now() : null,
+                // No cambiamos email_verified_at en la edición
             ];
 
             if (!empty($validated['password'])) {

@@ -20,6 +20,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { router } from '@inertiajs/react';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface FaqsPageProps extends PageProps {
     categories: (FaqCategory & { faqs: Faq[] })[];
@@ -41,6 +42,11 @@ export default function FaqsIndex() {
     const [editingCategory, setEditingCategory] = useState<FaqCategory | null>(null);
     const [editingFaq, setEditingFaq] = useState<Faq | null>(null);
     const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(null);
+
+    const [isConfirmModalCategoryOpen, setIsConfirmModalCategoryOpen] = useState(false);
+    const [faqCategoryToDelete, setFaqCategoryToDelete] = useState<FaqCategory | null>(null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [faqToDelete, setFaqToDelete] = useState<Faq | null>(null);
 
     const openNewCategoryModal = () => {
         setEditingCategory(null);
@@ -64,6 +70,22 @@ export default function FaqsIndex() {
         setFaqModalOpen(true);
     };
 
+    const handleDeleteFaqCategory = (categoryId: number) => {
+        router.delete(route('admin.faqs.categories.destroy', categoryId), {
+            onSuccess: () => {
+                setFaqCategoryToDelete(null);
+            }
+        });
+    }
+
+    const handleDeleteFaq = (faqId: number) => {
+        router.delete(route('admin.faqs.destroy', faqId), {
+            onSuccess: () => {
+                setFaqToDelete(null);
+            }
+        });
+    }
+
     return (
         <>
             <Head title="Gestionar FAQs" />
@@ -73,7 +95,7 @@ export default function FaqsIndex() {
                         <h1 className="text-2xl font-bold text-gray-900">Gestionar Preguntas Frecuentes</h1>
                         <p className="text-gray-600 mt-1">Crea y administra las categorías y preguntas del Centro de Ayuda.</p>
                     </div>
-                    <Button onClick={openNewCategoryModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button onClick={openNewCategoryModal} className="bg-primary hover:bg-primary-hover text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear Categoría
                     </Button>
@@ -93,25 +115,9 @@ export default function FaqsIndex() {
                                     <Button variant="outline" size="sm" onClick={() => openEditCategoryModal(category)}>
                                         <Edit className="h-4 w-4 mr-2" /> Editar Categoría
                                     </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-2" /> Eliminar</Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Se eliminará la categoría y todas sus preguntas. Esta acción no se puede deshacer.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => router.delete(route('admin.faqs.categories.destroy', category.id))}>
-                                                    Confirmar
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <Button variant="destructive" size="sm" onClick={() => {setIsConfirmModalCategoryOpen(true); setFaqCategoryToDelete(category)}}>
+                                        <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -126,22 +132,10 @@ export default function FaqsIndex() {
                                                 <Button variant="outline" size="icon" onClick={() => openEditFaqModal(faq)}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>¿Eliminar pregunta?</AlertDialogTitle>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => router.delete(route('admin.faqs.destroy', faq.id))}>
-                                                                Eliminar
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                <Button variant="destructive" size="icon" onClick={() => { setFaqToDelete(faq);
+                                                     setIsConfirmModalOpen(true) }}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
                                         </div>
                                     ))}
@@ -169,6 +163,44 @@ export default function FaqsIndex() {
                 faq={editingFaq}
                 categoryId={currentCategoryId}
             />
+
+            <ConfirmationModal
+                isOpen={isConfirmModalCategoryOpen}
+                onClose={() => setIsConfirmModalCategoryOpen(false)}
+                onConfirm={() => {
+                    if (faqCategoryToDelete) {
+                        handleDeleteFaqCategory(faqCategoryToDelete.id);
+                    }
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="esta"
+                entidad="categoría de pregunta"
+                accionando="eliminando"
+                nombreElemento={faqCategoryToDelete?.title}
+                advertencia="Todos los datos asociados a la categoría de pregunta también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+                />
+
+                <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    if (faqToDelete) {
+                        handleDeleteFaq(faqToDelete.id);
+                    }
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="esta"
+                entidad="pregunta"
+                accionando="eliminando"
+                nombreElemento={faqToDelete?.question}
+                advertencia="Todos los datos asociados a la pregunta también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+                />
         </>
     );
 }

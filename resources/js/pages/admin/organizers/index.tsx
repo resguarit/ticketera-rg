@@ -23,20 +23,10 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useDebounce } from 'use-debounce';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 // Components
 import { AdminDashboardLayout } from '@/components/admin/AdminDashboardLayout';
@@ -77,6 +67,10 @@ export default function Index({ auth }: any) {
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
     const [hasPendingFilters, setHasPendingFilters] = useState(false);
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+
+    // Estado para el modal de confirmación
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [organizerToDelete, setOrganizerToDelete] = useState<OrganizerIndex | null>(null);
 
     // Configuración de estadísticas para el dashboard
     const organizerStats: StatCardProps[] = [
@@ -151,7 +145,6 @@ export default function Index({ auth }: any) {
     const handleDeleteOrganizer = (organizerId: number) => {
         // Lógica para eliminar (ej: usando Inertia)
         router.delete(route('admin.organizers.destroy', organizerId), {
-            onBefore: () => confirm('¿Estás seguro de que quieres eliminar este organizador?'),
         });
     };
 
@@ -180,7 +173,6 @@ export default function Index({ auth }: any) {
                             key: "status",
                             placeholder: "Estado",
                             options: [
-                                { value: "all", label: "Todos los estados" },
                                 { value: "active", label: "Activos" },
                                 { value: "inactive", label: "Inactivos" }
                             ]
@@ -299,35 +291,16 @@ export default function Index({ auth }: any) {
                                                     Editar organizador
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator className="bg-gray-200" />
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem 
-                                                            className="text-red-600 focus:text-red-600 hover:bg-red-50"
-                                                            onSelect={(e) => e.preventDefault()}
-                                                        >
-                                                            <Trash2 className="w-4 h-4 mr-2" />
-                                                            Eliminar organizador
-                                                        </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent className="bg-white border-gray-300">
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle className="text-black">¿Estás seguro?</AlertDialogTitle>
-                                                            <AlertDialogDescription className="text-gray-600">
-                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente el organizador
-                                                                "{organizer.name}" y todos los datos relacionados.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel className="border-gray-300 text-black hover:bg-gray-50">Cancelar</AlertDialogCancel>
-                                                            <AlertDialogAction 
-                                                                onClick={() => handleDeleteOrganizer(organizer.id)}
-                                                                className="bg-red-600 hover:bg-red-700 text-white"
-                                                            >
-                                                                Eliminar
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                <DropdownMenuItem 
+                                                    className="text-red-600 focus:text-red-600 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        setOrganizerToDelete(organizer);
+                                                        setIsConfirmModalOpen(true);
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Eliminar organizador
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -377,6 +350,29 @@ export default function Index({ auth }: any) {
                     </div>
                 )}
             </AdminDashboardLayout>
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false);
+                    setOrganizerToDelete(null);
+                }}
+                onConfirm={() => {
+                    if (organizerToDelete) {
+                        handleDeleteOrganizer(organizerToDelete.id);
+                    }
+                    setIsConfirmModalOpen(false);
+                    setOrganizerToDelete(null);
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="organizador"
+                accionando="eliminando"
+                nombreElemento={organizerToDelete?.name}
+                advertencia="Todos los datos asociados al organizador también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+            />
         </>
     );
 }

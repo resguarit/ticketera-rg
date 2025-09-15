@@ -25,14 +25,20 @@ class TicketType extends Model
         'sales_end_date',
         'quantity',
         'quantity_sold',
+        'max_purchase_quantity',
         'is_hidden',
+        'is_bundle',        // ← NUEVO
+        'bundle_quantity',  // ← NUEVO
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'quantity' => 'integer',
         'quantity_sold' => 'integer',
+        'max_purchase_quantity' => 'integer',
         'is_hidden' => 'boolean',
+        'is_bundle' => 'boolean',        // ← NUEVO
+        'bundle_quantity' => 'integer',  // ← NUEVO
         'sales_start_date' => 'datetime',
         'sales_end_date' => 'datetime',
     ];
@@ -50,6 +56,24 @@ class TicketType extends Model
     public function issuedTickets(): HasMany
     {
         return $this->hasMany(IssuedTicket::class);
+    }
+
+    // ← NUEVO: Método para verificar si es un bundle
+    public function isBundle(): bool
+    {
+        return $this->is_bundle === true;
+    }
+
+    // ← NUEVO: Método para obtener la cantidad real de tickets (considerando bundles)
+    public function getRealQuantityAttribute(): int
+    {
+        return $this->isBundle() ? $this->quantity * $this->bundle_quantity : $this->quantity;
+    }
+
+    // ← NUEVO: Método para obtener tickets vendidos reales (considerando bundles)
+    public function getRealQuantitySoldAttribute(): int
+    {
+        return $this->isBundle() ? $this->quantity_sold * $this->bundle_quantity : $this->quantity_sold;
     }
 
     public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float

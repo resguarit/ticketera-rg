@@ -1,23 +1,14 @@
 import { useState, useEffect } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
-import { 
-    UserPlus, 
-    Eye, 
-    Edit, 
-    Trash2, 
-    Users as UsersIcon,
-    TrendingUp,
-    ShoppingCart,
-    CheckCircle,
-    Clock,
-    XCircle
-} from 'lucide-react';
+import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, UsersIcon, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import UserDetailsModal from './users/UserDetailsModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface UserData {
     id: number;
@@ -73,6 +64,14 @@ export default function Users({ auth }: any) {
     // Estado para detectar si hay filtros pendientes de aplicar
     const [hasPendingFilters, setHasPendingFilters] = useState(false);
 
+    // Estados para el modal
+    const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+    // Agregar estado para el usuario a eliminar
+    const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+
     // Detectar cambios en los filtros para mostrar indicador
     const checkPendingFilters = () => {
         const hasChanges = 
@@ -85,6 +84,17 @@ export default function Users({ auth }: any) {
     useEffect(() => {
         checkPendingFilters();
     }, [searchTerm, selectedStatus]);
+
+    // Funciones para el modal
+    const handleViewUser = (user: UserData) => {
+        setSelectedUser(user);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedUser(null);
+    };
 
     // Configuración de estadísticas para el dashboard
     const userStats: StatCardProps[] = [
@@ -160,7 +170,6 @@ export default function Users({ auth }: any) {
 
     const handleDeleteUser = (userId: number) => {
         router.delete(route('admin.users.destroy', userId), {
-            onBefore: () => confirm('¿Estás seguro de que quieres eliminar este usuario?'),
         });
     };
 
@@ -192,8 +201,6 @@ export default function Users({ auth }: any) {
             default: return <XCircle className="w-4 h-4 text-gray-500" />;
         }
     };
-
-    console.log(users.data);
 
     return (
         <>
@@ -231,59 +238,64 @@ export default function Users({ auth }: any) {
                                 <div key={user.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4 flex-1">
-                                            {/* Avatar */}
                                             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <UsersIcon className="w-6 h-6 text-white" />
+                                                <User className="w-6 h-6 text-white" />
                                             </div>
-
-                                            {/* User Info */}
                                             <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-black">{user.name}</h3>
-                                                        <p className="text-gray-600 text-sm">{user.email}</p>
-                                                        <p className="text-gray-500 text-xs">DNI: {user.dni} • Tel: {user.phone}</p>
-                                                    </div>
-
-                                                    <div className="flex items-center space-x-4">
-                                                        {/* Stats */}
-                                                        <div className="text-right">
-                                                            <p className="text-sm font-medium text-black">
-                                                                {user.total_purchases} compras
-                                                            </p>
-                                                            <p className="text-sm text-gray-600">
-                                                                {formatCurrency(parseFloat(user.total_spent))} gastados
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Status */}
-                                                        <div className="flex items-center space-x-2">
-                                                            {getStatusIcon(user.status)}
-                                                            {getStatusBadge(user.status)}
-                                                        </div>
-
-                                                        {/* Actions */}
-                                                        <div className="flex items-center space-x-2">
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Eye className="w-4 h-4 mr-1" />
-                                                                Ver
-                                                            </Button>
-                                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50">
-                                                                <Edit className="w-4 h-4 mr-1" />
-                                                                Editar
-                                                            </Button>
-                                                            <Button 
-                                                                onClick={() => handleDeleteUser(user.id)}
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <h3 className="font-semibold text-black">{user.name}</h3>
+                                                    {getStatusBadge(user.status)}
+                                                </div>
+                                                <p className="text-sm text-gray-600">{user.email}</p>
+                                                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                                                    <span>DNI: {user.dni}</span>
+                                                    <span>Tel: {user.phone}</span>
+                                                    <span>Compras: {user.total_purchases}</span>
+                                                    <span>Gastado: ${user.total_spent}</span>
                                                 </div>
                                             </div>
+                                        </div>
+                                        
+                                        {/* Actions */}
+                                        <div className="flex items-center space-x-2">
+                                            <Button 
+                                                onClick={() => handleToggleStatus(user.id)}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                {getStatusIcon(user.status)}
+                                                {user.status === 'active' ? 'Desactivar' : 'Activar'}
+                                            </Button>
+                                            <Button 
+                                                onClick={() => handleViewUser(user)}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                <Eye className="w-4 h-4 mr-1" />
+                                                Ver
+                                            </Button>
+                                            <Button 
+                                                onClick={() => router.visit(route('admin.users.edit', user.id))}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                <Edit className="w-4 h-4 mr-1" />
+                                                Editar
+                                            </Button>
+                                            <Button 
+                                                onClick={() => {
+                                                    setUserToDelete(user); // Establecer el usuario antes de abrir el modal
+                                                    setIsConfirmModalOpen(true);
+                                                }}
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -325,7 +337,48 @@ export default function Users({ auth }: any) {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* User Details Modal */}
+                {selectedUser && (
+                    <UserDetailsModal 
+                        isOpen={isModalOpen} 
+                        onClose={handleCloseModal} 
+                        user={selectedUser} 
+                        onUserUpdated={(updatedUser) => {
+                            // Actualizar el usuario en la lista sin recargar
+                            const updatedUsers = users.data.map((user) =>
+                                user.id === updatedUser.id ? updatedUser : user
+                            );
+                            // @ts-ignore
+                            router.setData('admin.users.index', { ...users, data: updatedUsers });
+                            handleCloseModal();
+                        }}
+                    />
+                )}
             </AdminDashboardLayout>
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false);
+                    setUserToDelete(null); // Limpiar el usuario al cerrar
+                }}
+                onConfirm={() => {
+                    if (userToDelete) {
+                        handleDeleteUser(userToDelete.id);
+                    }
+                    setIsConfirmModalOpen(false);
+                    setUserToDelete(null);
+                }}
+                accionTitulo="Eliminación"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="usuario"
+                accionando="eliminando"
+                nombreElemento={userToDelete?.name} // Usar userToDelete en lugar de selectedUser
+                advertencia="Todos los datos asociados al usuario también serán eliminados."
+                confirmVariant='destructive'
+                isLoading={false}
+            />
         </>
     );
 }

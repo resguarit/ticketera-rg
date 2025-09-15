@@ -99,12 +99,9 @@ class Order extends Model
     public function getServiceFeeAttribute($value)
     {
         if ($value === null) {
-            // Usa el 'tax' de la orden si existe, si no, lo busca en el organizador.
-            $taxRate = $this->attributes['tax'] ?? $this->organizer?->tax ?? 0;
-            // Usa el 'discount' de la orden si existe, si no, lo busca en el código de descuento.
-            $discountRate = $this->attributes['discount'] ?? $this->discountCode?->value ?? 0;
-
-            $subtotalWithDiscount = $this->subtotal * (1 - $discountRate);
+            // El tax (como tasa decimal) se almacena en la orden al momento de la compra.
+            $taxRate = $this->attributes['tax'] ?? 0;
+            $subtotalWithDiscount = $this->subtotal * (1 - ($this->discount ?? 0));
             return $subtotalWithDiscount * $taxRate;
         }
         return $value;
