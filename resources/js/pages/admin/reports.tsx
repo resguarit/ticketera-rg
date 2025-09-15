@@ -127,20 +127,32 @@ export default function Reports({ auth }: any) {
         }
     };
 
-    const handleDownloadReport = async (reportType: string, format: string = 'pdf') => {
+    const handleDownloadReport = async (reportType: string) => {
+        setIsGenerating(true);
+        
         try {
-            const response = await fetch(route('admin.reports.download', {
-                type: format,
-                report: reportType,
+            // Crear la URL para la descarga
+            const downloadUrl = route('admin.reports.download', {
+                reportType: reportType,
                 timeRange: currentTimeRange
-            }));
-            const result = await response.json();
+            });
             
-            // Simular descarga
-            console.log(result.message);
+            // Crear un enlace temporal para forzar la descarga
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `reporte-${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Opcional: mostrar mensaje de éxito
+            console.log(`Descargando reporte de ${reportType}...`);
             
         } catch (error) {
             console.error('Error descargando reporte:', error);
+            // Aquí podrías mostrar un toast de error
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -606,6 +618,7 @@ export default function Reports({ auth }: any) {
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
                                     onClick={() => handleDownloadReport('sales')}
+                                    disabled={isGenerating}
                                 >
                                     <BarChart3 className="w-6 h-6 mb-2" />
                                     <span>Reporte de Ventas</span>
@@ -615,6 +628,7 @@ export default function Reports({ auth }: any) {
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
                                     onClick={() => handleDownloadReport('events')}
+                                    disabled={isGenerating}
                                 >
                                     <Calendar className="w-6 h-6 mb-2" />
                                     <span>Reporte de Eventos</span>
@@ -624,6 +638,7 @@ export default function Reports({ auth }: any) {
                                     variant="outline" 
                                     className="h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
                                     onClick={() => handleDownloadReport('users')}
+                                    disabled={isGenerating}
                                 >
                                     <Users className="w-6 h-6 mb-2" />
                                     <span>Reporte de Usuarios</span>
