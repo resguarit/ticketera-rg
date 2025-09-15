@@ -716,7 +716,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                 <div className="text-foreground/80 text-sm">
                                                     {ticket.is_bundle ? (
                                                         <div>
-                                                            <div>Cantidad: {ticket.quantity} lotes</div>
+                                                            <div>Cantidad: {ticket.quantity} lote</div>
                                                             <div className="text-blue-600">
                                                                 = {ticket.quantity * (ticket.bundle_quantity || 1)} entradas
                                                             </div>
@@ -728,11 +728,14 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
-                                                <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
-                                                {ticket.is_bundle && (
+                                                {ticket.is_bundle ? (
+                                                    // Para packs: solo mostrar el precio por entrada individual
                                                     <p className="text-foreground/60 text-xs">
-                                                        {formatPrice(ticket.price / (ticket.bundle_quantity || 1))} por entrada individual
+                                                        {formatPrice(ticket.price / (ticket.bundle_quantity || 1))} c/u
                                                     </p>
+                                                ) : (
+                                                    // Para tickets individuales: mostrar precio c/u
+                                                    <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
                                                 )}
                                             </div>
                                         </div>
