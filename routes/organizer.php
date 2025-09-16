@@ -8,6 +8,7 @@ use App\Http\Controllers\Organizer\EventController;
 use App\Http\Controllers\Organizer\TicketTypeController;
 use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
 use App\Http\Controllers\Organizer\AssistantController;
+use App\Http\Controllers\Organizer\AttendeeInvitationController;
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -28,6 +29,8 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         
         // Rutas para gestión de asistentes
         Route::prefix('{event}/attendees')->name('attendees.')->group(function () {
+            Route::get('/invite', [AttendeeInvitationController::class, 'create'])->name('invite');
+            Route::post('/invite', [AttendeeInvitationController::class, 'store'])->name('invite.store');
             Route::post('/', [AssistantController::class, 'store'])->name('store');
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
             Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
