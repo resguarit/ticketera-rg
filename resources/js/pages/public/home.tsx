@@ -80,19 +80,19 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             <Header className="" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
-                {/* Hero Banner - Solo eventos destacados */}
+                {/* Hero Banner - Eventos destacados con hero banners */}
                 <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
-                            <div className="absolute inset-0  z-10"></div>
+                            <div className="absolute inset-0 bg-black/20 z-10"></div>
                             <img
-                                src={featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
+                                src={featuredEvents[currentSlide]?.hero_image_url || featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
                                 alt={featuredEvents[currentSlide]?.name || "Evento"}
                                 className="w-full h-full object-cover"
                             />
 
 
-                            {/* Slide indicators */}
+                            {/* Slide indicators - sin cambios */}
                             {featuredEvents.length > 1 && (
                                 <div className="absolute bottom-3 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
                                     {featuredEvents.map((_, index) => (
@@ -108,11 +108,11 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             )}
                         </>
                     ) : (
-                        // Fallback si no hay eventos destacados
+                        // Fallback - sin cambios
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
                             <div className="text-center text-white px-4">
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Próximamente!</h2>
-                                <p className="text-base sm:text-xl">Eventos destacados muy pronto</p>
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
+                                <p className="text-base sm:text-xl">Descubre los mejores eventos</p>
                             </div>
                         </div>
                     )}
@@ -197,7 +197,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 </section>
             </div>
             
-            {/* Add Footer */}
             <Footer />
         </>
     );

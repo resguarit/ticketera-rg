@@ -162,6 +162,7 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
+            'hero_banner_url' => 'nullable|image|max:5120', // 5MB para hero banner
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
             'featured' => 'boolean',
@@ -183,6 +184,12 @@ class EventController extends Controller
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
+            // Handle hero banner upload
+            $heroBannerPath = null;
+            if ($request->hasFile('hero_banner_url')) {
+                $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
+            }
+
             // Create event
             $event = Event::create([
                 'organizer_id' => $organizer->id,
@@ -191,8 +198,9 @@ class EventController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
+                'hero_banner_url' => $heroBannerPath, // Nueva línea
                 'featured' => $validated['featured'] ?? false,
-                'tax' => $organizer->tax, // <-- AÑADIR ESTA LÍNEA
+                'tax' => $organizer->tax,
             ]);
 
             // Create functions only (without ticket types for now)
@@ -215,9 +223,12 @@ class EventController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
-            // Delete uploaded banner if it exists
+            // Delete uploaded files if they exist
             if ($bannerPath) {
                 Storage::disk('public')->delete($bannerPath);
+            }
+            if ($heroBannerPath) {
+                Storage::disk('public')->delete($heroBannerPath);
             }
             
             return back()->withErrors(['error' => 'Error al crear el evento: ' . $e->getMessage()]);
@@ -235,6 +246,10 @@ class EventController extends Controller
         // Cargar relaciones
         $event->load(['functions']);
 
+        // Agregar hero_image_url al evento que se pasa al frontend
+        $eventData = $event->toArray();
+        $eventData['hero_image_url'] = $event->hero_image_url;
+
         // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
             
@@ -242,7 +257,7 @@ class EventController extends Controller
         $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
 
         return Inertia::render('organizer/events/edit', [
-            'event' => $event,
+            'event' => $eventData,
             'categories' => $categories,
             'venues' => $venues,
         ]);
@@ -260,6 +275,7 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
+            'hero_banner_url' => 'nullable|image|max:5120', // Nueva línea
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
             'featured' => 'boolean',
@@ -269,12 +285,24 @@ class EventController extends Controller
             DB::beginTransaction();
             
             $bannerPath = $event->banner_url;
+            $heroBannerPath = $event->hero_banner_url;
+
+            // Handle normal banner
             if ($request->hasFile('banner_url')) {
                 // Delete old banner if it exists
                 if ($bannerPath) {
                     Storage::disk('public')->delete($bannerPath);
                 }
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
+            }
+
+            // Handle hero banner
+            if ($request->hasFile('hero_banner_url')) {
+                // Delete old hero banner if it exists
+                if ($heroBannerPath) {
+                    Storage::disk('public')->delete($heroBannerPath);
+                }
+                $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
             // Update event
@@ -284,6 +312,7 @@ class EventController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
+                'hero_banner_url' => $heroBannerPath, // Nueva línea
                 'featured' => $validated['featured'] ?? false,
             ]);
 

@@ -13,13 +13,18 @@ import InputError from '@/components/input-error';
 import { useEffect, useState } from 'react';
 
 interface EditEventProps {
-    event: Event & { functions: EventFunction[], image_url?: string };
+    event: Event & { 
+        functions: EventFunction[], 
+        image_url?: string,
+        hero_image_url?: string // Agregar esta línea
+    };
     categories: Category[];
     venues: Venue[];
 }
 
 export default function EditEvent({ event, categories, venues }: EditEventProps) {
     const [bannerPreview, setBannerPreview] = useState<string | null>(event.image_url || null);
+    const [heroBannerPreview, setHeroBannerPreview] = useState<string | null>(event.hero_image_url || null);
 
     const { data, setData, put, processing, errors, wasSuccessful } = useForm({
         _method: 'PUT',
@@ -29,6 +34,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
         venue_id: event.venue_id || '',
         featured: event.featured || false,
         banner_url: null as File | null,
+        hero_banner_url: null as File | null, // Nueva línea
     });
 
     useEffect(() => {
@@ -36,8 +42,11 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
             if (bannerPreview && bannerPreview.startsWith('blob:')) {
                 URL.revokeObjectURL(bannerPreview);
             }
+            if (heroBannerPreview && heroBannerPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(heroBannerPreview);
+            }
         };
-    }, [bannerPreview]);
+    }, [bannerPreview, heroBannerPreview]);
 
     function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0] || null;
@@ -51,6 +60,21 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
             setBannerPreview(URL.createObjectURL(file));
         } else {
             setBannerPreview(event.image_url || null);
+        }
+    }
+
+    function handleHeroBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0] || null;
+        setData('hero_banner_url', file);
+
+        if (heroBannerPreview && heroBannerPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(heroBannerPreview);
+        }
+
+        if (file) {
+            setHeroBannerPreview(URL.createObjectURL(file));
+        } else {
+            setHeroBannerPreview(event.hero_image_url || null);
         }
     }
 
@@ -155,22 +179,53 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                     </Select>
                                     <InputError message={errors.venue_id} className="mt-2" />
                                 </div>
-                                <div>
-                                    <Label htmlFor="banner_url">Banner del Evento (Opcional)</Label>
-                                    {bannerPreview && (
-                                        <div className="mt-2 mb-4">
-                                            <img src={bannerPreview} alt="Vista previa del banner" className="w-full h-32 object-cover rounded-md border" />
-                                        </div>
-                                    )}
-                                    <Input
-                                        id="banner_url"
-                                        type="file"
-                                        onChange={handleBannerChange}
-                                        className="mt-1"
-                                        accept="image/*"
-                                    />
-                                    <p className="text-sm text-gray-500 mt-1">Sube una nueva imagen para reemplazar la actual. Formatos: JPG, PNG. Max: 2MB.</p>
-                                    <InputError message={errors.banner_url} className="mt-2" />
+                            </div>
+
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-medium">Imágenes del Evento</h3>
+                                
+                                {/* Banner Normal */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label htmlFor="banner_url">Banner Normal del Evento</Label>
+                                        <p className="text-sm text-gray-500 mb-2">
+                                            Imagen que aparece en las listas de eventos. Recomendado: 800x400px
+                                        </p>
+                                        {bannerPreview && (
+                                            <div className="mt-2 mb-4">
+                                                <img src={bannerPreview} alt="Vista previa del banner" className="w-full h-32 object-cover rounded-md border" />
+                                            </div>
+                                        )}
+                                        <Input
+                                            id="banner_url"
+                                            type="file"
+                                            onChange={handleBannerChange}
+                                            className="mt-1"
+                                            accept="image/*"
+                                        />
+                                        <InputError message={errors.banner_url} className="mt-2" />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="hero_banner_url">Hero Banner (Opcional)</Label>
+                                        <p className="text-sm text-gray-500 mb-2">
+                                            Imagen especial para la página principal cuando esté destacado. 
+                                            Recomendado: 1920x600px
+                                        </p>
+                                        {heroBannerPreview && (
+                                            <div className="mt-2 mb-4">
+                                                <img src={heroBannerPreview} alt="Vista previa del hero banner" className="w-full h-24 object-cover rounded-md border" />
+                                            </div>
+                                        )}
+                                        <Input
+                                            id="hero_banner_url"
+                                            type="file"
+                                            onChange={handleHeroBannerChange}
+                                            className="mt-1"
+                                            accept="image/*"
+                                        />
+                                        <InputError message={errors.hero_banner_url} className="mt-2" />
+                                    </div>
                                 </div>
                             </div>
 
