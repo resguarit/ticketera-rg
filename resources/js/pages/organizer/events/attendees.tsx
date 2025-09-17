@@ -87,7 +87,7 @@ export default function EventAttendees({
     };
 
     const handleInviteAssistant = () => {
-        // TODO: Abrir modal para invitar asistente
+        router.visit(route('organizer.events.attendees.invite', event.id));
     };
 
     const handleViewTickets = async (attendee: AttendeeForTable) => {
