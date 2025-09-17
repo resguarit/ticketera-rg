@@ -79,10 +79,9 @@ export default function EventsNew({ categories, venues }: Props) {
         name: '',
         description: '',
         banner_url: null as File | null,
-        hero_banner_url: null as File | null, // Nueva línea
+        hero_banner_url: null as File | null,
         category_id: '',
         venue_id: '',
-        featured: false,
     });
 
     // Helper functions for date formatting
@@ -446,14 +445,14 @@ export default function EventsNew({ categories, venues }: Props) {
                                     {/* Separador */}
                                     <div className="border-t border-border my-4"></div>
 
-                                    {/* Hero Banner - Solo si el evento está marcado como destacado */}
+                                    {/* Hero Banner - Siempre disponible para que puedan prepararlo */}
                                     <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
                                             <Label htmlFor="hero_banner" className="text-card-foreground">
                                                 Hero Banner (Opcional)
                                             </Label>
                                             <p className="text-sm text-muted-foreground">
-                                                Imagen especial para la página principal cuando el evento esté destacado. 
+                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
                                                 Recomendado: 1920x600px
                                             </p>
                                             <Input 
@@ -477,21 +476,22 @@ export default function EventsNew({ categories, venues }: Props) {
                                         )}
                                     </div>
 
-                                    {/* Checkbox de destacado */}
-                                    <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            id="featured"
-                                            checked={data.featured}
-                                            onChange={(e) => setData('featured', e.target.checked)}
-                                            className="rounded border-border"
-                                        />
-                                        <Label htmlFor="featured" className="text-card-foreground font-medium">
-                                            Marcar como evento destacado
-                                        </Label>
-                                        <p className="text-sm text-muted-foreground ml-2">
-                                            (aparecerá en la página principal)
-                                        </p>
+                                    {/* Nota informativa en lugar del checkbox */}
+                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="flex items-start space-x-2">
+                                            <div className="text-blue-600 mt-1">
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-medium text-blue-800">Eventos Destacados</h4>
+                                                <p className="text-sm text-blue-700">
+                                                    Solo los administradores pueden marcar eventos como destacados. 
+                                                    Si subes un hero banner, estará listo para cuando tu evento sea destacado.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>

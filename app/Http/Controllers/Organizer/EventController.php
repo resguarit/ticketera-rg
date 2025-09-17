@@ -162,10 +162,10 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
-            'hero_banner_url' => 'nullable|image|max:5120', // 5MB para hero banner
+            'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            'featured' => 'boolean',
+            // Remover 'featured' => 'boolean',
             'functions' => 'required|array|min:1',
             'functions.*.name' => 'required|string|max:255',
             'functions.*.description' => 'nullable|string',
@@ -190,7 +190,7 @@ class EventController extends Controller
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
-            // Create event
+            // Create event (featured será false por defecto)
             $event = Event::create([
                 'organizer_id' => $organizer->id,
                 'category_id' => $validated['category_id'],
@@ -198,8 +198,8 @@ class EventController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
-                'hero_banner_url' => $heroBannerPath, // Nueva línea
-                'featured' => $validated['featured'] ?? false,
+                'hero_banner_url' => $heroBannerPath,
+                'featured' => false, // Siempre false para organizadores
                 'tax' => $organizer->tax,
             ]);
 
@@ -275,10 +275,10 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
-            'hero_banner_url' => 'nullable|image|max:5120', // Nueva línea
+            'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            'featured' => 'boolean',
+            // Remover 'featured' => 'boolean',
         ]);
 
         try {
@@ -305,15 +305,15 @@ class EventController extends Controller
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
-            // Update event
+            // Update event (no tocar el campo featured)
             $event->update([
                 'category_id' => $validated['category_id'],
                 'venue_id' => $validated['venue_id'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
-                'hero_banner_url' => $heroBannerPath, // Nueva línea
-                'featured' => $validated['featured'] ?? false,
+                'hero_banner_url' => $heroBannerPath,
+                // NO actualizar featured aquí
             ]);
 
             DB::commit();
