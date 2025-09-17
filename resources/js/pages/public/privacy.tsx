@@ -7,11 +7,11 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 
 export default function Privacy() {
-    const lastUpdated = "15 de Noviembre de 2024";
+    const lastUpdated = "17 de Septiembre de 2025";
 
     return (
         <>
-            <Head title="Política de Privacidad - Ticketera RG" />
+            <Head title="Política de Privacidad - Ticketera RG ENTRADAS" />
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
@@ -26,15 +26,9 @@ export default function Privacy() {
                         </Link>
                         
                         <div className="text-center mb-6">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-full mb-4">
-                                <Shield className="w-8 h-8 text-white" />
-                            </div>
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+                            <h1 className="text-3xl sm:text-4xl  font-bold text-foreground mb-4">
                                 Política de Privacidad
                             </h1>
-                            <p className="text-foreground/80 text-lg mb-2">
-                                Cómo protegemos y utilizamos su información personal
-                            </p>
                             <p className="text-foreground/60 text-sm flex items-center justify-center">
                                 <Calendar className="w-4 h-4 mr-2" />
                                 Última actualización: {lastUpdated}
@@ -48,254 +42,160 @@ export default function Privacy() {
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
-                                    <Eye className="w-5 h-5 mr-2 text-green-500" />
                                     1. Introducción
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="prose prose-gray max-w-none">
                                 <p className="text-foreground/80 leading-relaxed">
-                                    En Ticketera RG, valoramos y respetamos su privacidad. Esta Política de Privacidad describe 
-                                    cómo recopilamos, utilizamos, almacenamos y protegemos su información personal cuando utiliza 
-                                    nuestros servicios.
+                                    En Ticketera RG ENTRADAS valoramos y respetamos su privacidad. Esta Política de Privacidad explica cómo recopilamos, utilizamos, almacenamos y protegemos sus datos personales de acuerdo con la Ley Nº 25.326 de Protección de Datos Personales de la República Argentina y la normativa complementaria de la Agencia de Acceso a la Información Pública (AAIP).
                                 </p>
                                 <p className="text-foreground/80 leading-relaxed mt-4">
-                                    Al utilizar nuestra plataforma, usted consiente las prácticas descritas en esta política. 
-                                    Si no está de acuerdo con alguna parte de esta política, no debe utilizar nuestros servicios.
+                                    Al utilizar nuestra plataforma, usted presta su consentimiento libre, expreso e informado para el tratamiento de sus datos personales conforme a esta Política. Si no está de acuerdo, le solicitamos abstenerse de utilizar nuestros servicios.
                                 </p>
                             </CardContent>
                         </Card>
 
-                        {/* Información que Recopilamos */}
+                        {/* Datos que recopilamos */}
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
-                                    <Database className="w-5 h-5 mr-2 text-blue-500" />
-                                    2. Información que Recopilamos
+                                    2. Datos que recopilamos
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">2.1 Información Personal</h4>
+                                    <h4 className="font-semibold text-foreground mb-2">2.1 Datos Personales:</h4>
                                     <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Nombre completo y apellido</li>
+                                        <li>Nombre y apellido</li>
+                                        <li>Documento de identidad (DNI/Pasaporte)</li>
                                         <li>Dirección de correo electrónico</li>
                                         <li>Número de teléfono</li>
-                                        <li>Documento de identidad (DNI/Pasaporte)</li>
                                         <li>Dirección postal</li>
-                                        <li>Información de pago (procesada de forma segura)</li>
+                                        <li>Información de pago (procesada de forma segura por terceros)</li>
                                     </ul>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">2.2 Información de Uso</h4>
+                                    <h4 className="font-semibold text-foreground mb-2">2.2 Datos de Uso:</h4>
                                     <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Direcciones IP y datos de ubicación</li>
+                                        <li>Dirección IP, datos de ubicación aproximada</li>
                                         <li>Información del navegador y dispositivo</li>
                                         <li>Páginas visitadas y tiempo de navegación</li>
-                                        <li>Patrones de uso y preferencias</li>
+                                        <li>Preferencias y patrones de uso</li>
                                         <li>Cookies y tecnologías similares</li>
                                     </ul>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">2.3 Información de Eventos</h4>
+                                    <h4 className="font-semibold text-foreground mb-2">2.3 Datos de Eventos:</h4>
                                     <ul className="list-disc list-inside space-y-1 ml-4">
                                         <li>Historial de compras de entradas</li>
                                         <li>Preferencias de eventos</li>
-                                        <li>Evaluaciones y comentarios</li>
+                                        <li>Opiniones, valoraciones o comentarios</li>
                                         <li>Información de asistencia a eventos</li>
                                     </ul>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Cómo Utilizamos la Información */}
+                        {/* Finalidades del Tratamiento */}
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
-                                <CardTitle className="text-foreground">3. Cómo Utilizamos su Información</CardTitle>
+                                <CardTitle className="text-foreground">3. Finalidades del Tratamiento</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-foreground/80">
+                                <p>Usamos sus datos para:</p>
+                                <ul className="list-disc list-inside space-y-1 ml-4">
+                                    <li>Procesar y confirmar compras de entradas</li>
+                                    <li>Emitir tickets digitales y confirmar reservas</li>
+                                    <li>Gestionar su cuenta de usuario y brindar soporte</li>
+                                    <li>Notificarle sobre cambios o cancelaciones en eventos</li>
+                                    <li>Enviar comunicaciones de servicio y, con su consentimiento, promociones</li>
+                                    <li>Analizar el uso de la plataforma y mejorar la experiencia</li>
+                                    <li>Cumplir con obligaciones legales y regulatorias</li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+
+                        {/* Cesión y Transferencia de Datos */}
+                        <Card className="bg-white shadow-lg">
+                            <CardHeader>
+                                <CardTitle className="text-foreground">4. Cesión y Transferencia de Datos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">3.1 Prestación de Servicios</h4>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Procesar y confirmar compras de entradas</li>
-                                        <li>Enviar entradas digitales y confirmaciones</li>
-                                        <li>Proporcionar soporte al cliente</li>
-                                        <li>Gestionar su cuenta de usuario</li>
-                                    </ul>
+                                    <p><strong>Organizadores de eventos:</strong> compartimos únicamente la información necesaria para gestionar su entrada y comunicar cuestiones relacionadas con el evento.</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">3.2 Comunicación</h4>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Enviar confirmaciones de compra</li>
-                                        <li>Notificar cambios en eventos</li>
-                                        <li>Responder consultas y solicitudes</li>
-                                        <li>Enviar actualizaciones del servicio (con su consentimiento)</li>
-                                    </ul>
+                                    <p><strong>Proveedores de servicios:</strong> contratamos terceros (procesadores de pago, servicios de hosting, email marketing, etc.) que acceden a datos bajo estrictos compromisos de confidencialidad y seguridad.</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-foreground mb-2">3.3 Mejora del Servicio</h4>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Analizar patrones de uso para mejorar la plataforma</li>
-                                        <li>Personalizar recomendaciones de eventos</li>
-                                        <li>Desarrollar nuevas funcionalidades</li>
-                                        <li>Realizar estudios de mercado</li>
-                                    </ul>
+                                    <p><strong>Requerimientos legales:</strong> podremos divulgar información ante órdenes judiciales o autoridades competentes.</p>
+                                </div>
+                                <div>
+                                    <p><strong>Transferencias internacionales:</strong> si sus datos se almacenan en servidores fuera de Argentina, aseguramos que el país de destino cuente con un nivel adecuado de protección de datos conforme la normativa argentina.</p>
+                                </div>
+                                <div>
+                                    <p><strong>Nunca comercializamos sus datos:</strong> no vendemos ni alquilamos información personal a terceros con fines de marketing.</p>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Compartir Información */}
-                        <Card className="bg-white shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="text-foreground">4. Compartir su Información</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-foreground/80">
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">4.1 Con Organizadores de Eventos</h4>
-                                    <p>Compartimos información limitada (nombre, email) con organizadores para facilitar 
-                                    la comunicación sobre eventos específicos que ha comprado.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">4.2 Proveedores de Servicios</h4>
-                                    <p>Trabajamos con terceros de confianza para procesamiento de pagos, envío de emails 
-                                    y análisis. Estos proveedores están obligados contractualmente a proteger su información.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">4.3 Requisitos Legales</h4>
-                                    <p>Podemos divulgar información cuando sea requerido por ley, orden judicial, 
-                                    o para proteger nuestros derechos y los de nuestros usuarios.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">4.4 No Vendemos sus Datos</h4>
-                                    <p className="font-semibold text-green-600">Nunca vendemos, alquilamos o comercializamos 
-                                    su información personal a terceros para fines de marketing.</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Seguridad */}
+                        {/* Seguridad y Conservación de Datos */}
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
-                                    <Lock className="w-5 h-5 mr-2 text-yellow-500" />
-                                    5. Seguridad de la Información
+                                    5. Seguridad y Conservación de Datos
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">5.1 Medidas de Protección</h4>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Encriptación SSL/TLS para todas las transmisiones</li>
-                                        <li>Servidores seguros con acceso restringido</li>
-                                        <li>Monitoreo continuo de seguridad</li>
-                                        <li>Actualizaciones regulares de seguridad</li>
-                                        <li>Verificación en dos pasos disponible</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">5.2 Procesamiento de Pagos</h4>
-                                    <p>Utilizamos procesadores de pago certificados PCI DSS. No almacenamos información 
-                                    completa de tarjetas de crédito en nuestros servidores.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">5.3 Retención de Datos</h4>
-                                    <p>Conservamos su información personal mientras mantenga una cuenta activa y durante 
-                                    el tiempo necesario para cumplir con obligaciones legales y fiscales.</p>
-                                </div>
+                                <ul className="list-disc list-inside space-y-1">
+                                    <li>Empleamos cifrado SSL y servidores seguros con acceso restringido.</li>
+                                    <li>No almacenamos información completa de tarjetas de crédito.</li>
+                                    <li>Conservamos los datos solo mientras dure la relación contractual y mientras exista obligación legal, fiscal o contable de mantenerlos.</li>
+                                </ul>
                             </CardContent>
                         </Card>
 
-                        {/* Derechos del Usuario */}
+                        {/* Derechos de los Titulares de los Datos */}
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
-                                <CardTitle className="text-foreground">6. Sus Derechos</CardTitle>
+                                <CardTitle className="text-foreground">6. Derechos de los Titulares de los Datos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">6.1 Acceso y Rectificación</h4>
-                                    <p>Puede acceder, actualizar o corregir su información personal desde su cuenta 
-                                    o contactando nuestro soporte.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">6.2 Eliminación</h4>
-                                    <p>Puede solicitar la eliminación de su cuenta y datos personales, sujeto a 
-                                    obligaciones legales de retención.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">6.3 Portabilidad</h4>
-                                    <p>Puede solicitar una copia de sus datos personales en formato estructurado y 
-                                    legible por máquina.</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">6.4 Oposición al Marketing</h4>
-                                    <p>Puede optar por no recibir comunicaciones promocionales en cualquier momento 
-                                    utilizando el enlace de cancelación en nuestros emails.</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Cookies */}
-                        <Card className="bg-white shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="text-foreground">7. Cookies y Tecnologías Similares</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-foreground/80">
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">7.1 Tipos de Cookies</h4>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li><strong>Esenciales:</strong> Necesarias para el funcionamiento del sitio</li>
-                                        <li><strong>Funcionales:</strong> Mejoran la experiencia del usuario</li>
-                                        <li><strong>Analíticas:</strong> Nos ayudan a entender cómo usa el sitio</li>
-                                        <li><strong>Marketing:</strong> Para personalizar anuncios (requiere consentimiento)</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold text-foreground mb-2">7.2 Gestión de Cookies</h4>
-                                    <p>Puede gestionar sus preferencias de cookies a través de la configuración de su navegador 
-                                    o nuestro panel de preferencias de cookies.</p>
-                                </div>
+                                <p>
+                                    Usted podrá ejercer gratuitamente los derechos de acceso, rectificación, actualización, supresión y oposición, enviando un correo a ***************o por escrito al domicilio de Ticketera RG ENTRADAS.
+                                </p>
+                                <p>
+                                    El titular de los datos tiene derecho a solicitar y obtener información sobre sus datos personales registrados, y podrá solicitar la rectificación, actualización o supresión de los mismos, conforme al art. 6 de la Ley 25.326.
+                                </p>
+                                <p>
+                                    La Agencia de Acceso a la Información Pública (AAIP), en su carácter de autoridad de control de la Ley 25.326, tiene la atribución de atender las denuncias y reclamos que se interpongan respecto al incumplimiento de las normas sobre protección de datos personales.
+                                </p>
                             </CardContent>
                         </Card>
 
                         {/* Menores de Edad */}
                         <Card className="bg-white shadow-lg">
                             <CardHeader>
-                                <CardTitle className="text-foreground">8. Menores de Edad</CardTitle>
+                                <CardTitle className="text-foreground">7. Menores de Edad</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
-                                <p>Nuestros servicios están dirigidos a personas mayores de 16 años. No recopilamos 
-                                intencionalmente información personal de menores de 16 años sin el consentimiento parental. 
-                                Si tiene conocimiento de que un menor ha proporcionado información personal, 
-                                contáctenos inmediatamente.</p>
+                                <p>
+                                    Nuestros servicios están dirigidos a mayores de 18 años. No recopilamos de manera intencional datos de menores de edad.
+                                </p>
                             </CardContent>
                         </Card>
 
-                        {/* Cambios en la Política */}
-                        <Card className="bg-white shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="text-foreground">9. Cambios en esta Política</CardTitle>
-                            </CardHeader>
-                            <CardContent className="text-foreground/80">
-                                <p>Podemos actualizar esta Política de Privacidad ocasionalmente. Le notificaremos sobre 
-                                cambios significativos por email o mediante un aviso prominente en nuestro sitio web. 
-                                La fecha de "última actualización" indica cuándo se realizaron los cambios más recientes.</p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Contacto */}
+                        {/* Modificaciones */}
                         <Card className="bg-green-50 border-green-200 shadow-lg">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
-                                    <AlertTriangle className="w-5 h-5 mr-2 text-green-500" />
-                                    10. Contacto sobre Privacidad
+                                    8. Modificaciones
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
-                                <p className="mb-4">Para consultas sobre esta política de privacidad o para ejercer sus derechos:</p>
-                                <div className="space-y-2">
-                                    <p><strong>Email de Privacidad:</strong> privacy@ticketera-rg.com</p>
-                                    <p><strong>Teléfono:</strong> +54 2966 123456</p>
-                                    <p><strong>Dirección:</strong> La Plata, Buenos Aires, Argentina</p>
-                                </div>
+                                <p className="mb-4">
+                                    Podremos actualizar esta Política para reflejar cambios legales, técnicos o comerciales. La versión vigente siempre estará disponible en nuestro sitio web con la fecha de la última actualización. En caso de cambios sustanciales, se le notificará por medios razonables (correo electrónico o aviso en la plataforma).
+                                </p>
                                 <div className="mt-4 pt-4 border-t border-green-200">
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <Link href={route('help')}>
