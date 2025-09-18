@@ -119,7 +119,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 </section>
 
                 {/* Search and Filters */}
-                <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+                <section className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
                             {/* Filtros principales */}
