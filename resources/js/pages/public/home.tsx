@@ -142,9 +142,9 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm"
-                                                className="text-primary/60 hover:text-primary text-xs px-2 py-1 h-auto"
+                                                className="text-gray-400 hover:text-gray-600 text-xs px-2 py-1 h-auto font-normal"
                                             >
-                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                <RotateCcw className="w-2.5 h-2.5 mr-1" />
                                                 Arrepentimiento
                                             </Button>
                                         </Link>
@@ -195,14 +195,14 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     </div>
                                     <div className="lg:hidden">
                                     </div>
-
-                                    <Link href={route('refunds')}>
+                                
+                                    <Link href={route('refunds')} className="justify-end w-full flex">
                                         <Button 
-                                            variant="outline" 
-                                            className="w-full text-primary/60 hover:text-primary text-xs h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2"
+                                            variant="ghost" 
+                                            className="w-1/2 bg-white/50 text-gray-400 hover:text-gray-600 border-gray-200 hover:border-gray-300 text-xs h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2 font-normal"
                                         >
-                                            <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            <span className="">Botón de arrepentimiento</span>
+                                            <RotateCcw className="w-2 h-2 sm:w-3 sm:h-3" />
+                                            <span className="">Arrepentimiento</span>
                                         </Button>
                                     </Link>
                                 </div>
