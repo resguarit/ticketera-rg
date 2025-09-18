@@ -125,7 +125,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             {/* Filtros principales - En pantallas pequeñas solo searchbar */}
                             <div className="lg:col-span-5">
                                 {/* Solo searchbar en móviles */}
-                                <div className="sm:hidden">
+                                <div className="md:hidden">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         <Input
@@ -152,7 +152,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 </div>
 
                                 {/* Filtros completos en pantallas sm y mayores */}
-                                <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                <div className="hidden md:grid  md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                                         <Input
@@ -190,11 +190,16 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    
+                                    <div className="lg:hidden">
+                                    </div>
+                                    <div className="lg:hidden">
+                                    </div>
 
                                     <Link href={route('refunds')}>
                                         <Button 
                                             variant="outline" 
-                                            className="w-full bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 hover:border-primary text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2"
+                                            className="w-full text-primary/60 hover:text-primary text-xs h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2"
                                         >
                                             <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
                                             <span className="">Botón de arrepentimiento</span>
