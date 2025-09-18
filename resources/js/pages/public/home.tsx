@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/lib/currencyHelpers';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,6 +42,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
+    const [sortBy, setSortBy] = useState("date"); // nuevo estado para ordenamiento
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Auto-rotate del carousel cada 5 segundos
@@ -54,16 +55,31 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
         }
     }, [featuredEvents.length]);
 
-    // Filtrar eventos basado en los criterios de búsqueda
-    const filteredEvents = events.filter((event) => {
-        const matchesSearch =
-            event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
-        const matchesCity = selectedCity === "all" || event.city === selectedCity;
+    // Filtrar y ordenar eventos
+    const filteredAndSortedEvents = events
+        .filter((event) => {
+            const matchesSearch =
+                event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.location.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
+            const matchesCity = selectedCity === "all" || event.city === selectedCity;
 
-        return matchesSearch && matchesCategory && matchesCity;
-    });
+            return matchesSearch && matchesCategory && matchesCity;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case "date":
+                    return new Date(a.date).getTime() - new Date(b.date).getTime();
+                case "price-low":
+                    return (a.price || 0) - (b.price || 0);
+                case "price-high":
+                    return (b.price || 0) - (a.price || 0);
+                case "name":
+                    return a.name.localeCompare(b.name);
+                default:
+                    return 0;
+            }
+        });
 
     // Obtener color de categoría
     const getCategoryColor = (categoryName: string) => {
@@ -91,8 +107,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 className="w-full h-full object-cover"
                             />
 
-
-                            {/* Slide indicators - sin cambios */}
+                            {/* Slide indicators */}
                             {featuredEvents.length > 1 && (
                                 <div className="absolute bottom-3 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
                                     {featuredEvents.map((_, index) => (
@@ -108,7 +123,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             )}
                         </>
                     ) : (
-                        // Fallback - sin cambios
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
                             <div className="text-center text-white px-4">
                                 <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
@@ -119,40 +133,40 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 </section>
 
                 {/* Search and Filters */}
-                                <section className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+                <section className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
-                            {/* Filtros principales - En pantallas pequeñas solo searchbar */}
                             <div className="lg:col-span-5">
-                                {/* Solo searchbar en móviles */}
-                                <div className="md:hidden">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                        <Input
-                                            placeholder="Buscar eventos..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-8 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8"
-                                        />
-                                    </div>
-                                    
-                                    {/* Botón de arrepentimiento pequeño y discreto en móviles */}
-                                    <div className="mt-2 flex justify-end">
-                                        <Link href={route('refunds')}>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                className="text-gray-400 hover:text-gray-600 text-xs px-2 py-1 h-auto font-normal"
-                                            >
-                                                <RotateCcw className="w-2.5 h-2.5 mr-1" />
-                                                Arrepentimiento
-                                            </Button>
-                                        </Link>
+                                {/* MÓVIL: Solo searchbar y ordenador */}
+                                <div className="sm:hidden">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
+                                            <Input
+                                                placeholder="Buscar eventos..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-8 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8"
+                                            />
+                                        </div>
+                                        
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8">
+                                                <ArrowUpDown className="w-3.5 h-3.5 mr-1" />
+                                                <SelectValue placeholder="Ordenar" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="date">Por fecha</SelectItem>
+                                                <SelectItem value="name">Por nombre</SelectItem>
+                                                <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
+                                                <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
-                                {/* Filtros completos en pantallas sm y mayores */}
-                                <div className="hidden md:grid  md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                {/* DESKTOP: Filtros completos con ordenador */}
+                                <div className="hidden sm:grid sm:grid-cols-4 gap-3 sm:gap-4">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                                         <Input
@@ -190,21 +204,21 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    
-                                    <div className="lg:hidden">
-                                    </div>
-                                    <div className="lg:hidden">
-                                    </div>
-                                
-                                    <Link href={route('refunds')} className="justify-end w-full flex">
-                                        <Button 
-                                            variant="ghost" 
-                                            className="w-1/2 bg-white/50 text-gray-400 hover:text-gray-600 border-gray-200 hover:border-gray-300 text-xs h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2 font-normal"
-                                        >
-                                            <RotateCcw className="w-2 h-2 sm:w-3 sm:h-3" />
-                                            <span className="">Arrepentimiento</span>
-                                        </Button>
-                                    </Link>
+
+                                    <Select value={sortBy} onValueChange={setSortBy}>
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                            <ArrowUpDown className="w-4 h-4 mr-2" />
+                                            <SelectValue placeholder="Ordenar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="date">Por fecha</SelectItem>
+                                            <SelectItem value="name">Por nombre</SelectItem>
+                                            <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
+                                            <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+
                                 </div>
                             </div>
                         </div>              
@@ -214,9 +228,9 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 {/* Events Grid */}
                 <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
-                    {filteredEvents.length > 0 ? (
+                    {filteredAndSortedEvents.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
-                            {filteredEvents.map((event) => (
+                            {filteredAndSortedEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}
                         </div>
