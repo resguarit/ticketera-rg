@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/lib/currencyHelpers';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,6 +42,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
+    const [sortBy, setSortBy] = useState("date"); // nuevo estado para ordenamiento
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Auto-rotate del carousel cada 5 segundos
@@ -54,16 +55,31 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
         }
     }, [featuredEvents.length]);
 
-    // Filtrar eventos basado en los criterios de búsqueda
-    const filteredEvents = events.filter((event) => {
-        const matchesSearch =
-            event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
-        const matchesCity = selectedCity === "all" || event.city === selectedCity;
+    // Filtrar y ordenar eventos
+    const filteredAndSortedEvents = events
+        .filter((event) => {
+            const matchesSearch =
+                event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.location.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
+            const matchesCity = selectedCity === "all" || event.city === selectedCity;
 
-        return matchesSearch && matchesCategory && matchesCity;
-    });
+            return matchesSearch && matchesCategory && matchesCity;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case "date":
+                    return new Date(a.date).getTime() - new Date(b.date).getTime();
+                case "price-low":
+                    return (a.price || 0) - (b.price || 0);
+                case "price-high":
+                    return (b.price || 0) - (a.price || 0);
+                case "name":
+                    return a.name.localeCompare(b.name);
+                default:
+                    return 0;
+            }
+        });
 
     // Obtener color de categoría
     const getCategoryColor = (categoryName: string) => {
@@ -80,17 +96,16 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             <Header className="" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
-                {/* Hero Banner - Solo eventos destacados */}
+                {/* Hero Banner - Eventos destacados con hero banners */}
                 <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
-                            <div className="absolute inset-0  z-10"></div>
+                            <div className="absolute inset-0 bg-black/20 z-10"></div>
                             <img
-                                src={featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
+                                src={featuredEvents[currentSlide]?.hero_image_url || featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
                                 alt={featuredEvents[currentSlide]?.name || "Evento"}
                                 className="w-full h-full object-cover"
                             />
-
 
                             {/* Slide indicators */}
                             {featuredEvents.length > 1 && (
@@ -108,74 +123,104 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                             )}
                         </>
                     ) : (
-                        // Fallback si no hay eventos destacados
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
                             <div className="text-center text-white px-4">
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Próximamente!</h2>
-                                <p className="text-base sm:text-xl">Eventos destacados muy pronto</p>
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
+                                <p className="text-base sm:text-xl">Descubre los mejores eventos</p>
                             </div>
                         </div>
                     )}
                 </section>
 
                 {/* Search and Filters */}
-                <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+                <section className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
-                            {/* Filtros principales */}
-                            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <Input
-                                        placeholder="Buscar eventos..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10"
-                                    />
+                            <div className="lg:col-span-5">
+                                {/* MÓVIL: Solo searchbar y ordenador */}
+                                <div className="sm:hidden">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
+                                            <Input
+                                                placeholder="Buscar eventos..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-8 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8"
+                                            />
+                                        </div>
+                                        
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8">
+                                                <ArrowUpDown className="w-3.5 h-3.5 mr-1" />
+                                                <SelectValue placeholder="Ordenar" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="date">Por fecha</SelectItem>
+                                                <SelectItem value="name">Por nombre</SelectItem>
+                                                <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
+                                                <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
-                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
-                                        <SelectValue placeholder="Categoría" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todas las categorías</SelectItem>
-                                        {categories.map((category) => (
-                                            <SelectItem key={category.id} value={category.name}>
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {/* DESKTOP: Filtros completos con ordenador */}
+                                <div className="hidden sm:grid sm:grid-cols-4 gap-3 sm:gap-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                                        <Input
+                                            placeholder="Buscar eventos..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10"
+                                        />
+                                    </div>
 
-                                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
-                                        <SelectValue placeholder="Ciudad" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todas las ciudades</SelectItem>
-                                        {cities.filter(city => city).map((city) => (
-                                            <SelectItem key={city} value={city!}>
-                                                {city}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                            <SelectValue placeholder="Categoría" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todas las categorías</SelectItem>
+                                            {categories.map((category) => (
+                                                <SelectItem key={category.id} value={category.name}>
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
 
-                                <Link href={route('refunds')}>
-                                    <Button 
-                                        variant="outline" 
-                                        className="w-full bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 hover:border-primary text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4 gap-1 sm:gap-2"
-                                    >
-                                        <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
-                                        <span className="">Botón de arrepentimiento</span>
-                                    </Button>
-                                </Link>
+                                    <Select value={selectedCity} onValueChange={setSelectedCity}>
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                            <SelectValue placeholder="Ciudad" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todas las ciudades</SelectItem>
+                                            {cities.filter(city => city).map((city) => (
+                                                <SelectItem key={city} value={city!}>
+                                                    {city}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select value={sortBy} onValueChange={setSortBy}>
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                            <ArrowUpDown className="w-4 h-4 mr-2" />
+                                            <SelectValue placeholder="Ordenar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="date">Por fecha</SelectItem>
+                                            <SelectItem value="name">Por nombre</SelectItem>
+                                            <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
+                                            <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+
+                                </div>
                             </div>
-
-
-      
-
                         </div>              
                     </div>
                 </section>
@@ -183,9 +228,9 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 {/* Events Grid */}
                 <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
-                    {filteredEvents.length > 0 ? (
+                    {filteredAndSortedEvents.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
-                            {filteredEvents.map((event) => (
+                            {filteredAndSortedEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}
                         </div>
@@ -197,7 +242,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 </section>
             </div>
             
-            {/* Add Footer */}
             <Footer />
         </>
     );

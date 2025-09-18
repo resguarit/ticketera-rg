@@ -180,7 +180,6 @@ class CheckoutController extends Controller
             if ($paymentSuccessful) {
                 $redirectParams = ['order' => $order->id];
                 
-                // Solo agregar el parámetro si se creó una cuenta
                 if ($accountCreated) {
                     $redirectParams['account_created'] = '1';
                 }
@@ -188,26 +187,107 @@ class CheckoutController extends Controller
                 return redirect()->route('checkout.success', $redirectParams)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
-                Log::error('Pago falló, redirigiendo con error');
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Error al procesar el pago. Por favor intenta de nuevo.');
+                Log::error('Pago falló', [
+                    'order_id' => $order->id,
+                    'payment_method' => $validated['payment_info']['method'],
+                    'event_id' => $validated['event_id']
+                ]);
+
+                // Redirigir a página de error con información específica
+                return $this->redirectToError([
+                    'title' => 'Error en el Pago',
+                    'message' => 'No pudimos procesar tu pago. Por favor verifica la información de tu tarjeta e intenta nuevamente.',
+                    'errorCode' => 'PAYMENT_FAILED',
+                    'canRetry' => true,
+                    'retryUrl' => route('checkout.confirm', $validated['event_id']) . '?' . http_build_query([
+                        'function_id' => $validated['function_id'],
+                        'tickets' => json_encode(array_keys($validated['selected_tickets']))
+                    ]),
+                    'eventId' => $validated['event_id'],
+                    'eventName' => Event::find($validated['event_id'])->name ?? null,
+                    'timestamp' => now()->format('d/m/Y H:i')
+                ]);
             }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Error de validación en checkout', [
+                'errors' => $e->errors(),
+                'event_id' => $request->input('event_id')
+            ]);
+
+            return $this->redirectToError([
+                'title' => 'Datos Incompletos',
+                'message' => 'Algunos datos requeridos están incompletos o son incorrectos. Por favor revisa la información e intenta nuevamente.',
+                'errorCode' => 'VALIDATION_ERROR',
+                'canRetry' => true,
+                'retryUrl' => route('checkout.confirm', $request->input('event_id')),
+                'eventId' => $request->input('event_id'),
+                'eventName' => Event::find($request->input('event_id'))->name ?? null,
+                'timestamp' => now()->format('d/m/Y H:i')
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Error general en checkout', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id(),
-                'event_id' => $validated['event_id'] ?? 'no_event_id',
-                'request_data_keys' => array_keys($request->all())
+                'event_id' => $request->input('event_id')
             ]);
+
+            return $this->redirectToError([
+                'title' => 'Error Inesperado',
+                'message' => 'Ha ocurrido un error inesperado al procesar tu compra. Nuestro equipo ha sido notificado y trabajamos para solucionarlo.',
+                'errorCode' => 'SYSTEM_ERROR',
+                'canRetry' => true,
+                'retryUrl' => route('checkout.confirm', $request->input('event_id')),
+                'eventId' => $request->input('event_id'),
+                'eventName' => Event::find($request->input('event_id'))->name ?? null,
+                'timestamp' => now()->format('d/m/Y H:i')
+            ]);
+        }
+    }
+
+    /**
+     * Redirigir a la página de error con datos específicos
+     */
+    private function redirectToError(array $errorData): RedirectResponse
+    {
+        return redirect()->route('checkout.error', [
+            'data' => base64_encode(json_encode($errorData))
+        ]);
+    }
+
+    /**
+     * Mostrar página de error
+     */
+    public function error(Request $request): Response | RedirectResponse
+    {
+        $encodedData = $request->query('data');
+        
+        if (!$encodedData) {
+            return redirect()->route('home')
+                ->with('error', 'Error desconocido');
+        }
+
+        try {
+            $errorData = json_decode(base64_decode($encodedData), true);
             
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error al procesar la compra: ' . $e->getMessage());
+            if (!$errorData) {
+                throw new \Exception('Datos de error inválidos');
+            }
+
+            return Inertia::render('public/checkouterror', [
+                'errorData' => $errorData
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error mostrando página de error', [
+                'message' => $e->getMessage(),
+                'encoded_data' => $encodedData
+            ]);
+
+            return redirect()->route('home')
+                ->with('error', 'Ha ocurrido un error. Por favor intenta nuevamente.');
         }
     }
 

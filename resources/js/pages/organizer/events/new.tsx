@@ -55,6 +55,7 @@ interface Props {
 
 export default function EventsNew({ categories, venues }: Props) {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [heroBannerPreview, setHeroBannerPreview] = useState<string | null>(null);
     const [sectors, setSectors] = useState<Sector[]>([]);
     const [loadingSectors, setLoadingSectors] = useState(false);
     const [functions, setFunctions] = useState<EventFunction[]>([]);
@@ -78,9 +79,9 @@ export default function EventsNew({ categories, venues }: Props) {
         name: '',
         description: '',
         banner_url: null as File | null,
+        hero_banner_url: null as File | null,
         category_id: '',
         venue_id: '',
-        featured: false,
     });
 
     // Helper functions for date formatting
@@ -150,8 +151,11 @@ export default function EventsNew({ categories, venues }: Props) {
             if (bannerPreview) {
                 URL.revokeObjectURL(bannerPreview);
             }
+            if (heroBannerPreview) {
+                URL.revokeObjectURL(heroBannerPreview);
+            }
         };
-    }, [bannerPreview]);
+    }, [bannerPreview, heroBannerPreview]);
 
     const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
@@ -163,6 +167,19 @@ export default function EventsNew({ categories, venues }: Props) {
             setBannerPreview(URL.createObjectURL(file));
         } else {
             setBannerPreview(null);
+        }
+    };
+
+    const handleHeroBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        setData('hero_banner_url', file);
+        if (heroBannerPreview) {
+            URL.revokeObjectURL(heroBannerPreview);
+        }
+        if (file) {
+            setHeroBannerPreview(URL.createObjectURL(file));
+        } else {
+            setHeroBannerPreview(null);
         }
     };
 
@@ -390,18 +407,22 @@ export default function EventsNew({ categories, venues }: Props) {
                             </CardContent>
                         </Card>
 
-                        {/* Banner */}
+                        {/* Banners del Evento */}
                         <Card className='bg-card shadow-lg border-border'>
                             <CardHeader>
-                                <CardTitle className='text-lg font-semibold text-card-foreground'>Banner del Evento</CardTitle>
+                                <CardTitle className='text-lg font-semibold text-card-foreground'>Imágenes del Evento</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
-                                    <div className='space-y-2'>
-                                        <Label htmlFor="banner" className="text-card-foreground">Subir Banner</Label>
-                                        <div className='flex items-center py-4'>
+                                <div className="space-y-6">
+                                    {/* Banner Normal */}
+                                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
+                                        <div className='space-y-2'>
+                                            <Label htmlFor="banner" className="text-card-foreground">Banner Normal</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Imagen que aparece en las listas de eventos. Recomendado: 800x400px
+                                            </p>
                                             <Input 
-                                                className='w-fit bg-background border-border text-foreground' 
+                                                className='bg-background border-border text-foreground' 
                                                 id="banner" 
                                                 type="file" 
                                                 onChange={handleBannerChange}
@@ -409,17 +430,69 @@ export default function EventsNew({ categories, venues }: Props) {
                                             />
                                             <InputError message={errors.banner_url} className="mt-1" />
                                         </div>
+                                        {bannerPreview && (
+                                            <div className='space-y-2'>
+                                                <Label className="text-card-foreground">Vista Previa - Banner Normal</Label>
+                                                <img 
+                                                    src={bannerPreview} 
+                                                    alt="Banner preview" 
+                                                    className="w-full h-32 object-cover rounded-lg border border-border"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
-                                    {bannerPreview && (
+
+                                    {/* Separador */}
+                                    <div className="border-t border-border my-4"></div>
+
+                                    {/* Hero Banner - Siempre disponible para que puedan prepararlo */}
+                                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
-                                            <Label className="text-card-foreground">Vista Previa</Label>
-                                            <img 
-                                                src={bannerPreview} 
-                                                alt="Banner preview" 
-                                                className="w-full h-32 object-cover rounded-lg border border-border"
+                                            <Label htmlFor="hero_banner" className="text-card-foreground">
+                                                Hero Banner (Opcional)
+                                            </Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
+                                                Recomendado: 1920x600px
+                                            </p>
+                                            <Input 
+                                                className='bg-background border-border text-foreground' 
+                                                id="hero_banner" 
+                                                type="file" 
+                                                onChange={handleHeroBannerChange}
+                                                accept="image/*"
                                             />
+                                            <InputError message={errors.hero_banner_url} className="mt-1" />
                                         </div>
-                                    )}
+                                        {heroBannerPreview && (
+                                            <div className='space-y-2'>
+                                                <Label className="text-card-foreground">Vista Previa - Hero Banner</Label>
+                                                <img 
+                                                    src={heroBannerPreview} 
+                                                    alt="Hero banner preview" 
+                                                    className="w-full h-24 object-cover rounded-lg border border-border"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Nota informativa en lugar del checkbox */}
+                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="flex items-start space-x-2">
+                                            <div className="text-blue-600 mt-1">
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-medium text-blue-800">Eventos Destacados</h4>
+                                                <p className="text-sm text-blue-700">
+                                                    Solo los administradores pueden marcar eventos como destacados. 
+                                                    Si subes un hero banner, estará listo para cuando tu evento sea destacado.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

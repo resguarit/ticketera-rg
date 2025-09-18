@@ -115,17 +115,17 @@ export default function Help() {
         <>
             <Head title="Centro de Ayuda - TicketMax" />
             
-            <div className="min-h-screen bg-gradient-to-br from-cyan-800/50 to-blue-300">
+            <div className="min-h-screen bg-primary">
                 {/* Header */}
                 <Header />
 
                 <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     {/* Page Header */}
                     <div className="text-center mb-2 sm:mb-4 lg:mb-6">
-                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-2 sm:mb-4">
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4">
                             Centro de Ayuda
                         </h1>
-                        <p className="text-foreground text-sm sm:text-base lg:text-lg  mx-auto px-4">
+                        <p className="text-white text-sm sm:text-base lg:text-lg  mx-auto px-4">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
                     </div>
@@ -147,7 +147,7 @@ export default function Help() {
                                     <p className="text-foreground/80 mb-2 sm:mb-3 text-sm sm:text-base">{option.description}</p>
                                     <Badge className="mb-3 sm:mb-4 bg-gray-100 text-foreground border-0 text-xs sm:text-sm">{option.available}</Badge>
                                     <div>
-                                        <Button className={`bg-${option.color} hover:opacity-90 text-white w-full text-sm sm:text-base h-9 sm:h-10`}>
+                                        <Button className={`bg-${option.color} text-white w-full text-sm sm:text-base h-9 sm:h-10`}>
                                             {option.action}
                                         </Button>
                                     </div>
@@ -160,7 +160,7 @@ export default function Help() {
                         {/* FAQ Section */}
                         <div className="lg:col-span-2">
                             <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-6">
-                                <h2 className="text-xl sm:text-3xl text-foreground font-bold">Preguntas Frecuentes</h2>
+                                <h2 className="text-xl sm:text-3xl text-white font-bold">Preguntas Frecuentes</h2>
                             </div>
 
                             <div className="space-y-3 sm:space-y-4 lg:space-y-6">
@@ -206,26 +206,11 @@ export default function Help() {
                                 ))}
                             </div>
 
-                            {searchTerm && filteredFAQs.length === 0 && (
-                                <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg py-4 lg:py-6 lg:gap-6 gap-2">
-                                    <CardContent className="p-6 sm:p-8 lg:p-12 text-center">
-                                        <Search className="w-12 h-12 sm:w-16 sm:h-16 text-foreground/80 mx-auto mb-3 sm:mb-4" />
-                                        <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">No se encontraron resultados</h3>
-                                        <p className="text-foreground/60 mb-4 sm:mb-6 text-sm sm:text-base">No encontramos preguntas que coincidan con "{searchTerm}"</p>
-                                        <Button
-                                            onClick={() => setSearchTerm("")}
-                                            className="bg-primary hover:bg-primary-hover text-white text-sm sm:text-base"
-                                        >
-                                            Ver todas las preguntas
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )}
                         </div>
 
                         {/* Contact Form */}
                         <div className="space-y-4 sm:space-y-6">
-                            <h2 className="text-xl sm:text-2xl font-bold text-foreground">¿No encontraste lo que buscas?</h2>
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">¿No encontraste lo que buscas?</h2>
                             <Card className="bg-white shadow-md sm:shadow-lg py-4 lg:py-6 lg:gap-6 gap-2">
                                 <CardHeader className="pb-3 sm:pb-4">
                                     <CardTitle className="text-foreground text-lg sm:text-xl">Contáctanos</CardTitle>

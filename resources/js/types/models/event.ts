@@ -21,6 +21,7 @@ export interface Event {
 
     // Accessor
     image_url: string | null;
+    hero_image_url: string | null;
 }
 
 export interface EventRelations {
