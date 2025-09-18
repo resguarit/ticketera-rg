@@ -29,9 +29,9 @@ export default function Refunds() {
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
-                <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+                <div className="px-8 py-6 sm:py-8">
                     {/* Header */}
-                    <div className="mb-6 sm:mb-8">
+                    <div className="mb-2 ">
                         <Link href={route('home')}>
                             <Button variant="ghost" className="mb-4 text-foreground hover:bg-accent">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -39,23 +39,19 @@ export default function Refunds() {
                             </Button>
                         </Link>
                         
-                        <div className="text-center mb-6">
-                            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                                Solicitud de Reembolso
-                            </h1>
-                        </div>
+
                     </div>
 
                     {/* Formulario */}
                     <div className="max-w-xl mx-auto">
                         <Card className="bg-white shadow-xl">
-                            <CardHeader className="text-center">
-                                <CardTitle className="text-2xl text-foreground">
+                            <CardHeader className="text-center pb-2">
+                                <CardTitle className="text-xl sm:text-3xl text-foreground">
                                     Formulario de Reembolso
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <form onSubmit={handleSubmit} className="space-y-6">
+                                <form onSubmit={handleSubmit} className="space-y-4">
                                     <div>
                                         <Label htmlFor="nombre_completo" className="text-foreground">
                                             Nombre y Apellido Completo *
@@ -142,7 +138,7 @@ export default function Refunds() {
                                         )}
                                     </div>
 
-                                    <div className="pt-6 border-t">
+                                    <div className="pt-6 ">
                                         <Button
                                             type="submit"
                                             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
