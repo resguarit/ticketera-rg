@@ -141,7 +141,7 @@ export default function Refunds() {
                                     <div className="pt-6 ">
                                         <Button
                                             type="submit"
-                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-medium"
+                                            className="w-full bg-primary hover:bg-primary-hover text-white py-3 text-lg font-medium"
                                             disabled={processing}
                                         >
                                             {processing ? (
