@@ -306,9 +306,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                         <div className="lg:col-span-2 space-y-6">
                             {/* Event Summary */}
                             <Card className="bg-white border-gray-200 shadow-lg gap-2">
-                                <CardHeader>
-                                    <CardTitle className="text-foreground flex items-center space-x-3">
-                                        <Ticket className="w-6 h-6 text-primary" />
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-gray-500 font-medium flex items-center space-x-3">
                                         <span>Resumen del Evento</span>
                                     </CardTitle>
                                 </CardHeader>
@@ -342,7 +341,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center space-x-1">
-                                                    <MapPin className="w-4 h-4 text-pink-500" />
+                                                    <MapPin className="w-4 h-4 text-secondary" />
                                                     <span>
                                                         {eventData.location}, {eventData.city}
                                                     </span>
@@ -695,8 +694,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                         <div className="lg:col-span-1">
                             <Card className="bg-white border-gray-200 shadow-lg sticky top-24">
                                 <CardHeader>
-                                    <CardTitle className="text-foreground flex items-center space-x-2">
-                                        <Users className="w-5 h-5 text-primary" />
+                                    <CardTitle className="text-gray-500 font-medium flex items-center space-x-2">
+                                        
                                         <span>Resumen de Compra</span>
                                     </CardTitle>
                                 </CardHeader>

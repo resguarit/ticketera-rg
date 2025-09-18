@@ -40,6 +40,7 @@ interface EventData extends Event {
     functions: EventFunctionData[];
     date: string;
     time: string;
+    hero_image_url?: string; // Agregar esta línea
 }
 
 interface EventDetailProps {
@@ -168,10 +169,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
                         <div className="hidden lg:block lg:col-span-2 space-y-4 sm:space-y-6">
-                            {/* Hero Image */}
+                            {/* Hero Image - Usar hero_image_url primero, luego image_url */}
                             <div className="relative h-48 sm:h-64 lg:h-80 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
                                 <img 
-                                    src={eventData.image_url || '/placeholder.jpg'} 
+                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'} 
                                     alt={eventData.name} 
                                     className="w-full h-full object-cover" 
                                 />
@@ -266,7 +267,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         </div>
 
                                         <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 flex-shrink-0" />
+                                            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-secondary flex-shrink-0" />
                                             <div>
                                                 <p className="font-semibold text-foreground text-sm sm:text-base">Ubicación</p>
                                                 <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
@@ -279,10 +280,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                         {/* MOBILE LAYOUT - Completo (menor a lg) */}
                         <div className="lg:hidden space-y-4 sm:space-y-6">
-                            {/* Hero Image Mobile */}
+                            {/* Hero Image Mobile - Usar hero_image_url primero, luego image_url */}
                             <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg">
                                 <img 
-                                    src={eventData.image_url || '/placeholder.jpg'} 
+                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'} 
                                     alt={eventData.name} 
                                     className="w-full h-full object-cover" 
                                 />

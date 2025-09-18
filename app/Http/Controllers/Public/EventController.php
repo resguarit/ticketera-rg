@@ -114,6 +114,7 @@ class EventController extends Controller
             'name' => $event->name,
             'description' => $event->description,
             'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
+            'hero_image_url' => $event->hero_image_url, // Agregar esta línea
             'location' => $event->venue->name,
             // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
