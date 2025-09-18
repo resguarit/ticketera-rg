@@ -16,9 +16,18 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use App\Services\EmailDispatcherService;
 
 class AttendeeInvitationController extends Controller
 {
+
+    protected $emailService;
+
+    public function __construct(EmailDispatcherService $emailService)
+    {
+        $this->emailService = $emailService;
+    }
+
     /**
      * Mostrar el formulario para invitar asistentes
      */
@@ -136,6 +145,8 @@ class AttendeeInvitationController extends Controller
                 ]);
             }
 
+            $issuedTickets = [];
+
             // Crear asistentes y tickets directamente (SIN orden)
             foreach ($request->tickets as $ticketRequest) {
                 $eventFunction = EventFunction::find($ticketRequest['event_function_id']);
@@ -161,9 +172,9 @@ class AttendeeInvitationController extends Controller
                     $assistant->increment('quantity', $ticketRequest['quantity']);
                 }
 
-                // Crear tickets directamente (SIN order_id, SIN client_id)
+                // Crear tickets directamente
                 for ($i = 0; $i < $ticketRequest['quantity']; $i++) {
-                    IssuedTicket::create([
+                    $issuedTickets[] = IssuedTicket::create([
                         'ticket_type_id' => $ticketType->id,
                         'order_id' => null, // No hay orden para invitaciones
                         'assistant_id' => $assistant->id,
@@ -176,6 +187,8 @@ class AttendeeInvitationController extends Controller
             }
 
             DB::commit();
+
+            $this->emailService->sendInvitation($issuedTickets, $personData['email']);
 
             return redirect()->route('organizer.events.attendees', $event)
                 ->with('success', 'Asistente invitado exitosamente.');

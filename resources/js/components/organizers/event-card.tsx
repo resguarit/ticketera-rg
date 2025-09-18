@@ -51,8 +51,10 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
     };
 
     return (
+
         <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0">
             {/* Header con fecha y título (altura fija) */}
+            <Link href={route('organizer.events.manage', event.id)}>
             <div className="bg-gradient-to-r from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -196,6 +198,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                     </div>
                 </div>
             </div>
+            </Link>
         </Card>
     );
 }
