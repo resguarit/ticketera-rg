@@ -17,15 +17,18 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use App\Services\EmailDispatcherService;
+use App\Services\OrderService;
 
 class AttendeeInvitationController extends Controller
 {
 
     protected $emailService;
+    protected $orderService;
 
-    public function __construct(EmailDispatcherService $emailService)
+    public function __construct(EmailDispatcherService $emailService, OrderService $orderService)
     {
         $this->emailService = $emailService;
+        $this->orderService = $orderService;
     }
 
     /**
@@ -179,7 +182,7 @@ class AttendeeInvitationController extends Controller
                         'order_id' => null, // No hay orden para invitaciones
                         'assistant_id' => $assistant->id,
                         'client_id' => null, // No hay cliente para invitaciones
-                        'unique_code' => $this->generateUniqueTicketCode($ticketType),
+                        'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'INV'),
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
                     ]);
@@ -199,21 +202,5 @@ class AttendeeInvitationController extends Controller
                 ->withErrors(['general' => $e->getMessage()])
                 ->withInput();
         }
-    }
-
-    /**
-     * Generar código único para el ticket
-     */
-    private function generateUniqueTicketCode(TicketType $ticketType): string
-    {
-        // Generar un código similar al OrderService pero para invitaciones
-        $baseCode = 'INV-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
-        
-        // Verificar que sea único
-        while (IssuedTicket::where('unique_code', $baseCode)->exists()) {
-            $baseCode = 'INV-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
-        }
-        
-        return $baseCode;
     }
 }

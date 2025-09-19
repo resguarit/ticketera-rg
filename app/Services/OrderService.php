@@ -291,13 +291,15 @@ class OrderService
 
     private function generateUniqueCode(Order $order, TicketType $ticketType, string $suffix = null): string
     {
-        // Generar un código más corto pero único
-        $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
+        // Usar UUID para garantizar unicidad
+        $uuid = Str::uuid()->toString();
+        
+        // Mantener formato legible pero único
+        $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr($uuid, 0, 8);
         
         if ($suffix) {
-            // Para bundles, usar solo los primeros 8 caracteres del UUID + número
             $bundleParts = explode('-', $suffix);
-            $shortSuffix = substr($bundleParts[0], 0, 8) . '-' . end($bundleParts);
+            $shortSuffix = end($bundleParts);
             return $baseCode . '-' . $shortSuffix;
         }
         
@@ -372,5 +374,20 @@ class OrderService
         ];
         
         return $result;
+    }
+
+    /**
+     * Genera un código único para tickets de invitación u otros usos
+     * Método público para ser usado desde otros servicios/controladores
+     */
+    public function generateUniqueTicketCode(TicketType $ticketType, string $prefix = 'INV'): string
+    {
+        // Usar UUID para garantizar unicidad
+        $uuid = Str::uuid()->toString();
+        
+        // Formato: {PREFIX}-{ticket_type_id}-{uuid_part}
+        $baseCode = $prefix . '-' . $ticketType->id . '-' . substr($uuid, 0, 12);
+        
+        return $baseCode;
     }
 }
