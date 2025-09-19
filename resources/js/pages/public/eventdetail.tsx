@@ -244,7 +244,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             )}
 
                             {/* Event Info - MOVIDO DESPUÉS DE FUNCTIONS LIST */}
-                            <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg">
+                            <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg gap-2">
                                 <CardHeader className="pb-3 sm:pb-4">
                                     <CardTitle className="text-foreground text-lg sm:text-xl lg:text-2xl">Información del Evento</CardTitle>
                                 </CardHeader>
@@ -575,8 +575,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </Button>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
-                                    <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg mt-2 lg:py-6 py-4 gap-2 lg:gap-6">
-                                        <CardHeader className="pb-3 sm:pb-4">
+                                    <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg mt-2 lg:py-6 py-4 gap-2 ">
+                                        <CardHeader className="pb-3 ">
                                             <CardTitle className="text-foreground text-lg sm:text-xl">Información del Evento</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-3 sm:space-y-4">
