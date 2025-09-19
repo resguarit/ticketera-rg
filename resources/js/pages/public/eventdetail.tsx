@@ -178,9 +178,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 <div className="absolute bottom-3 sm:bottom-4 lg:bottom-6 left-3 sm:left-4 lg:left-6">
-                                    <Badge className="mb-1 sm:mb-2 bg-primary text-white border-0 text-xs sm:text-sm">
-                                        {eventData.category.toUpperCase()}
-                                    </Badge>
+ 
                                     <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-1 sm:mb-2 leading-tight">
                                         {eventData.name}
                                     </h1>
@@ -189,7 +187,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                             {/* Functions List (if multiple) - MOVIDO ANTES DE EVENT INFO */}
                             {eventData.functions.length > 1 && (
-                                <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg">
+                                <Card className=" bg-white border-gray-200 shadow-md sm:shadow-lg">
                                     <CardHeader className="pb-3 sm:pb-4">
                                         <CardTitle className="text-foreground text-lg sm:text-xl">Funciones Disponibles</CardTitle>
                                     </CardHeader>
@@ -289,9 +287,6 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4">
-                                    <Badge className="mb-1 sm:mb-2 bg-primary text-white border-0 text-xs sm:text-sm">
-                                        {eventData.category.toUpperCase()}
-                                    </Badge>
                                     <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2 leading-tight">
                                         {eventData.name}
                                     </h1>
@@ -300,7 +295,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                             {/* 1. Functions List Mobile (if multiple) */}
                             {eventData.functions.length > 1 && (
-                                <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg lg:py-6 py-4 gap-2 lg:gap-6">
+                                <Card className="hidden lg:block bg-white border-gray-200 shadow-md sm:shadow-lg lg:py-6 py-4 gap-2 lg:gap-6">
                                     <CardHeader className="pb-2 sm:pb-4">
                                         <CardTitle className="text-foreground text-lg sm:text-xl">Funciones Disponibles</CardTitle>
                                     </CardHeader>
