@@ -237,11 +237,7 @@
                 </div>
                 
                 <div class="ticket-info-right">
-                    <div class="qr-code">
-                        <!-- Aquí va el QR generado -->
-                        QR
-                    </div>
-                    <div class="qr-code-text">{{ $ticket->unique_code }}</div>
+                    <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Código QR">
                 </div>
             </div>
         </div>
