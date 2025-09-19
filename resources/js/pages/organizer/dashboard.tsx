@@ -21,8 +21,10 @@ interface RecentEvent {
     name: string;
     image_url: string;
     date: string;
-    tickets_sold: number;
-    total_tickets: number;
+    entradas_vendidas: number;  // NUEVO: entradas vendidas para progreso
+    total_entradas: number;     // NUEVO: total entradas para progreso
+    tickets_sold: number;       // tickets emitidos
+    total_tickets: number;      // total tickets físicos
 }
 
 interface TopEvent {
@@ -131,7 +133,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     </Card>
                 </div>
 
-                {/* Recent Events - mantener igual, usa tickets_sold que ahora son tickets emitidos */}
+                {/* Recent Events - CORREGIDO para usar entradas en progreso */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Eventos Recientes</CardTitle>
@@ -151,8 +153,18 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                             <div className="p-3">
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
-                                                <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2 mt-2 bg-white border border-gray-300" />
-                                                <p className="text-xs text-muted-foreground mt-1">{formatNumber(event.tickets_sold)} / {formatNumber(event.total_tickets)} tickets</p>
+                                                
+                                                {/* CORREGIDO: Barra de progreso basada en entradas vendidas */}
+                                                <Progress 
+                                                    value={event.total_entradas > 0 ? (event.entradas_vendidas / event.total_entradas) * 100 : 0} 
+                                                    className="h-2 mt-2 bg-white border border-gray-300" 
+                                                />
+                                                
+                                                {/* CORREGIDO: Mostrar entradas vendidas para el progreso */}
+                                                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                                    <div>{formatNumber(event.entradas_vendidas)} / {formatNumber(event.total_entradas)} entradas</div>
+                                                    <div className="text-purple-600">{formatNumber(event.tickets_sold)} tickets emitidos</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </Link>
