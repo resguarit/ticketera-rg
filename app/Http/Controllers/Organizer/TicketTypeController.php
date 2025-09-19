@@ -136,10 +136,11 @@ class TicketTypeController extends Controller
                         }
                     }
 
-                    // Validar que no se reduzca por debajo de las ventas existentes
-                    $currentSold = $ticketType->quantity_sold;
+                    // MODIFICACIÓN: Para bundles, validar contra lotes vendidos, no entradas emitidas
+                    $currentSold = $ticketType->quantity_sold; // Lotes vendidos para bundles
                     if ($value < $currentSold) {
-                        $fail("No se puede reducir la cantidad por debajo de las ya vendidas ({$currentSold}).");
+                        $bundleText = $ticketType->is_bundle ? 'lotes' : 'entradas';
+                        $fail("No se puede reducir la cantidad por debajo de los {$bundleText} ya vendidos ({$currentSold}).");
                     }
                 },
             ],

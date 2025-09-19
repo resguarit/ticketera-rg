@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Users, Eye } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -164,6 +164,81 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Funciones y estadísticas */}
+                {organizer.functions.map((func) => {
+    const stats = func.stats;
+    
+    return (
+        <TabsContent key={func.id} value={func.id.toString()} className="space-y-6">
+            {/* Estadísticas de la función */}
+            <div className="bg-card rounded-lg border p-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-3">Resumen de {func.name}</h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                            <div className="bg-muted p-1.5 rounded-full">
+                                <Ticket className="h-3 w-3 text-primary" />
+                            </div>
+                            <span className="text-xs font-medium">Lotes/Tipos</span>
+                        </div>
+                        <div className="text-lg font-bold text-foreground">{formatNumber(stats?.totalTickets || 0)}</div>
+                        <div className="text-xs text-muted-foreground">{stats?.totalTypes || 0} tipos</div>
+                    </div>
+                    
+                    <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                            <div className="bg-muted p-1.5 rounded-full">
+                                <Users className="h-3 w-3 text-primary" />
+                            </div>
+                            <span className="text-xs font-medium">Vendidos</span>
+                        </div>
+                        <div className="text-lg font-bold text-primary">{formatNumber(stats?.soldTickets || 0)}</div>
+                        <div className="text-xs text-muted-foreground">{formatNumber(stats?.availableTickets || 0)} disponibles</div>
+                    </div>
+                    
+                    {/* NUEVA COLUMNA: Entradas emitidas */}
+                    <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                            <div className="bg-muted p-1.5 rounded-full">
+                                <div className="h-3 w-3 text-purple-600">🎫</div>
+                            </div>
+                            <span className="text-xs font-medium">Emitidas</span>
+                        </div>
+                        <div className="text-lg font-bold text-purple-600">{formatNumber(stats?.entradasEmitidas || 0)}</div>
+                        <div className="text-xs text-muted-foreground">entradas físicas</div>
+                    </div>
+                    
+                    <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                            <div className="bg-muted p-1.5 rounded-full">
+                                <DollarSign className="h-3 w-3 text-secondary" />
+                            </div>
+                            <span className="text-xs font-medium">Ingresos</span>
+                        </div>
+                        <div className="text-lg font-bold text-secondary">
+                            {formatCurrency(stats?.totalRevenue || 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">ARS</div>
+                    </div>
+                    
+                    <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                            <div className="bg-muted p-1.5 rounded-full">
+                                <Eye className="h-3 w-3 text-accent-foreground" />
+                            </div>
+                            <span className="text-xs font-medium">Visibles</span>
+                        </div>
+                        <div className="text-lg font-bold text-accent-foreground">{stats?.visibleTickets || 0}</div>
+                        <div className="text-xs text-muted-foreground">de {stats?.totalTypes || 0}</div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* ...existing code... */}
+        </TabsContent>
+    );
+})}
             </div>
         </>
     );

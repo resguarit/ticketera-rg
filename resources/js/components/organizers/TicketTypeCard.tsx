@@ -26,15 +26,7 @@ interface TicketTypeCardProps {
   functionsWithTicket?: number[];
 }
 
-export const TicketTypeCard = ({
-  ticket,
-  onToggleVisibility,
-  onEdit,
-  onDuplicateAll,
-  onDelete,
-  allFunctions = [],
-  functionsWithTicket = [],
-}: TicketTypeCardProps) => {
+export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggleVisibility, onEdit, onDuplicateAll, onDelete, allFunctions, functionsWithTicket }) => {
   const handleButtonClick = () => {
     if (onToggleVisibility) {
       onToggleVisibility(ticket.id);
@@ -71,8 +63,12 @@ export const TicketTypeCard = ({
 
   const isBundle = ticket.is_bundle || false;
   const bundleQuantity = ticket.bundle_quantity || 1;
-  const realQuantity = isBundle ? ticket.quantity * bundleQuantity : ticket.quantity;
-  const realQuantitySold = isBundle ? ticket.quantity_sold * bundleQuantity : ticket.quantity_sold;
+  
+  // Para mostrar información de lotes vs entradas emitidas
+  const lotesDisponibles = ticket.quantity_available || 0;
+  const lotesVendidos = ticket.quantity_sold || 0;
+  const entradasEmitidas = isBundle ? lotesVendidos * bundleQuantity : lotesVendidos;
+  const totalEntradas = isBundle ? ticket.quantity * bundleQuantity : ticket.quantity;
 
   return (
     <Card className="w-80 hover:shadow-md transition-shadow relative">
@@ -124,44 +120,56 @@ export const TicketTypeCard = ({
       
       <CardContent className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          {/* Información de lotes (para bundles) o entradas (para individuales) */}
           <div className="flex justify-between">
             <span className="text-muted-foreground">
-              {isBundle ? 'Lotes:' : 'Total:'}
+              {isBundle ? 'Lotes totales:' : 'Entradas:'}
             </span>
             <span className="font-medium">{ticket.quantity}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Disponibles:</span>
-            <span className="font-medium text-green-600">{ticket.quantity_available}</span>
+            <span className="font-medium text-green-600">{lotesDisponibles}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Vendidas:</span>
-            <span className="font-medium text-blue-600">{ticket.quantity_sold}</span>
+            <span className="text-muted-foreground">
+              {isBundle ? 'Lotes vendidos:' : 'Vendidas:'}
+            </span>
+            <span className="font-medium text-blue-600">{lotesVendidos}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Vendido:</span>
+            <span className="text-muted-foreground">Progreso:</span>
             <span className="font-medium">{ticket.sold_percentage}%</span>
           </div>
           
-          {/* NUEVA FILA: Mostrar entradas reales si es bundle */}
+          {/* NUEVA SECCIÓN: Mostrar entradas emitidas si es bundle */}
           {isBundle && (
             <>
-              <div className="flex justify-between col-span-2 pt-1 border-t">
-                <span className="text-muted-foreground text-xs">Entradas reales:</span>
-                <span className="font-medium text-xs text-blue-700">
-                  {realQuantitySold}/{realQuantity}
+              <div className="flex justify-between col-span-2 pt-2 border-t border-gray-200">
+                <span className="text-muted-foreground text-sm font-medium">📋 Entradas Emitidas</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground text-xs">Total emisiones:</span>
+                <span className="font-medium text-xs text-purple-700">
+                  {entradasEmitidas}/{totalEntradas}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground text-xs">Por lote:</span>
+                <span className="font-medium text-xs text-blue-600">
+                  x{bundleQuantity} entradas
                 </span>
               </div>
             </>
           )}
           
-          <div className="flex justify-between col-span-2">
+          <div className="flex justify-between col-span-2 pt-2 border-t border-gray-200">
             <span className="text-muted-foreground text-xs">Máx. por compra:</span>
             <span className="font-medium text-xs text-gray-700">
               {ticket.max_purchase_quantity}
               {isBundle && (
                 <span className="text-blue-600">
-                  {' '}({ticket.max_purchase_quantity * bundleQuantity} entradas)
+                  {' '}(={ticket.max_purchase_quantity * bundleQuantity} entradas)
                 </span>
               )}
             </span>
@@ -180,8 +188,8 @@ export const TicketTypeCard = ({
         {/* Barra de progreso visual */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Ventas</span>
-            <span>{ticket.quantity_sold}/{ticket.quantity}</span>
+            <span>{isBundle ? 'Lotes' : 'Ventas'}</span>
+            <span>{lotesVendidos}/{ticket.quantity}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
