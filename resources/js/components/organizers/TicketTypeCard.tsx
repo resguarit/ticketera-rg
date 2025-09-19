@@ -79,7 +79,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
               <CardTitle className="text-lg">{ticket.name}</CardTitle>
               {isBundle && (
                 <Badge variant="secondary" className="text-xs">
-                  Pack x{bundleQuantity}
+                  Lote x{bundleQuantity}
                 </Badge>
               )}
             </div>
