@@ -23,10 +23,36 @@ class TicketTypeController extends Controller
         // Cargar el recinto del evento y sus sectores
         $event->load('venue.sectors');
 
+        // Calcular disponibilidad por sector para esta función
+        $sectorsWithAvailability = $event->venue->sectors->map(function ($sector) use ($function) {
+            // Obtener todos los ticket types de esta función para este sector
+            $ticketTypes = TicketType::where('event_function_id', $function->id)
+                ->where('sector_id', $sector->id)
+                ->get();
+            
+            // Calcular entradas ya asignadas (considerando bundles)
+            $usedCapacity = $ticketTypes->sum(function ($ticketType) {
+                return $ticketType->is_bundle 
+                    ? $ticketType->quantity * $ticketType->bundle_quantity
+                    : $ticketType->quantity;
+            });
+            
+            $availableCapacity = $sector->capacity - $usedCapacity;
+            
+            return [
+                'id' => $sector->id,
+                'name' => $sector->name,
+                'capacity' => $sector->capacity,
+                'used_capacity' => $usedCapacity,
+                'available_capacity' => max(0, $availableCapacity),
+            ];
+        });
+
         return Inertia::render('organizer/events/ticket-types/create', [
             'event' => $event,
             'function' => $function,
             'sectors' => $event->venue->sectors,
+            'sectorsWithAvailability' => $sectorsWithAvailability,
         ]);
     }
 
