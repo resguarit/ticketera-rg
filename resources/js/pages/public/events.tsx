@@ -313,7 +313,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                     {/* Events Grid */}
                     <div className="w-full">
                         {filteredEvents.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
                                 {filteredEvents.map((event) => (
                                     <EventCard key={event.id} event={event} />
                                 ))}

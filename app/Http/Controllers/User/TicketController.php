@@ -54,7 +54,8 @@ class TicketController extends Controller
                 'status' => $this->mapTicketStatus($ticket->status->value),
                 'qrCode' => $ticket->unique_code,
                 'purchaseDate' => $ticket->order->order_date->format('Y-m-d'),
-                'eventDateTime' => $eventFunction->start_time,
+                'eventStartTime' => $eventFunction->start_time,
+                'eventEndTime' => $eventFunction->end_time,
                 'order' => [
                     'id' => $ticket->order->id,
                     'order_number' => $this->generateOrderNumber($ticket->order),
@@ -62,23 +63,24 @@ class TicketController extends Controller
             ];
         });
 
-        // ACTUALIZADO: Separar tickets próximos y pasados basado en fecha del evento Y estado del ticket
+        // ACTUALIZADO: Separar tickets próximos y pasados basado en fecha/hora de finalización del evento Y estado del ticket
         $now = Carbon::now();
         $upcomingTickets = $tickets->filter(function ($ticket) use ($now) {
             // Solo mostrar como "próximo" si:
-            // 1. El evento aún no ha pasado
+            // 1. El evento aún no ha finalizado
             // 2. El ticket está disponible (no usado)
-            return $ticket['eventDateTime'] && 
-                   Carbon::parse($ticket['eventDateTime'])->gte($now) &&
-                   $ticket['status'] === 'available';
+            $eventHasEnded = $this->hasEventEnded($ticket['eventStartTime'], $ticket['eventEndTime'], $now);
+            
+            return !$eventHasEnded && $ticket['status'] === 'available';
         })->values();
 
         $pastTickets = $tickets->filter(function ($ticket) use ($now) {
             // Mostrar como "pasado" si:
-            // 1. El evento ya pasó, O
+            // 1. El evento ya finalizó, O
             // 2. El ticket fue usado (independientemente de la fecha)
-            return ($ticket['eventDateTime'] && Carbon::parse($ticket['eventDateTime'])->lt($now)) ||
-                   $ticket['status'] === 'used';
+            $eventHasEnded = $this->hasEventEnded($ticket['eventStartTime'], $ticket['eventEndTime'], $now);
+            
+            return $eventHasEnded || $ticket['status'] === 'used';
         })->values();
 
         // Agrupar tickets por orden para mostrar opción de descarga por orden
@@ -99,6 +101,29 @@ class TicketController extends Controller
             'ticketsByOrder' => $ticketsByOrder,
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Determinar si un evento ha finalizado
+     */
+    private function hasEventEnded($startTime, $endTime, Carbon $now): bool
+    {
+        // Si no hay fecha de inicio, no podemos determinar si finalizó
+        if (!$startTime) {
+            return false;
+        }
+
+        $startTime = Carbon::parse($startTime);
+        
+        // Si hay fecha de finalización, usar esa
+        if ($endTime) {
+            $endTime = Carbon::parse($endTime);
+            return $now->gt($endTime);
+        }
+        
+        // Si no hay fecha de finalización, asumir que dura 24 horas desde el inicio
+        $assumedEndTime = $startTime->copy()->addHours(24);
+        return $now->gt($assumedEndTime);
     }
 
     /**
