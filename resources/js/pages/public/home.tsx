@@ -109,7 +109,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Eventos destacados con hero banners */}
-                <section className="relative h-[250px] sm:h-[350px] lg:h-[400px] overflow-hidden">
+                <section className="relative h-[180px] sm:h-[280px] lg:h-[300px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-black/20 z-10"></div>
@@ -125,28 +125,28 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     {/* Flecha izquierda */}
                                     <button
                                         onClick={goToPreviousSlide}
-                                        className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-20  hover:bg-black/30 text-white rounded-full p-2 sm:p-3 transition-all duration-200 hover:scale-110"
+                                        className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-20 hover:bg-black/30 text-white rounded-full p-1.5 sm:p-3 transition-all duration-200 hover:scale-110"
                                     >
-                                        <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+                                        <ChevronLeft className="w-5 h-5 sm:w-8 sm:h-8" />
                                     </button>
 
                                     {/* Flecha derecha */}
                                     <button
                                         onClick={goToNextSlide}
-                                        className="absolute right-2 sm:right-4 top-1/2 transform hover:bg-black/30 -translate-y-1/2 z-20 text-white rounded-full p-2 sm:p-3 transition-all duration-200 hover:scale-110"
+                                        className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-20 hover:bg-black/30 text-white rounded-full p-1.5 sm:p-3 transition-all duration-200 hover:scale-110"
                                     >
-                                        <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+                                        <ChevronRight className="w-5 h-5 sm:w-8 sm:h-8" />
                                     </button>
                                 </>
                             )}
 
                             {/* Slide indicators - solo indicadores visuales, no clickeables */}
                             {featuredEvents.length > 1 && (
-                                <div className="absolute bottom-3 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
+                                <div className="absolute bottom-2 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
                                     {featuredEvents.map((_, index) => (
                                         <div
                                             key={index}
-                                            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
+                                            className={`w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
                                                 index === currentSlide ? "bg-white" : "bg-white/40"
                                             }`}
                                         />
@@ -157,15 +157,15 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
                             <div className="text-center text-white px-4">
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
-                                <p className="text-base sm:text-xl">Descubre los mejores eventos</p>
+                                <h2 className="text-2xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
+                                <p className="text-sm sm:text-xl">Descubre los mejores eventos</p>
                             </div>
                         </div>
                     )}
                 </section>
 
                 {/* Search and Filters */}
-                <section className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+                <section className="container mx-auto px-4 py-3 sm:py-6 lg:py-8">
                     <div className="rounded-lg">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
                             <div className="lg:col-span-5">
