@@ -109,7 +109,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Eventos destacados con hero banners */}
-                <section className="relative h-[180px] sm:h-[280px] lg:h-[300px] overflow-hidden">
+                <section className="relative h-[160px] sm:h-[200px] lg:h-[300px] overflow-hidden">
                     {featuredEvents.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-black/20 z-10"></div>
