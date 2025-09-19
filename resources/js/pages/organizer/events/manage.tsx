@@ -103,67 +103,55 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
 
                 {/* Estadísticas rápidas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Funciones</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalFunctions}</p>
+                    <Card className="p-6 bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Total Funciones</p>
                             </div>
-                            <div className="bg-chart-2/20 p-3 rounded-full">
-                                <Calendar className="w-6 h-6 text-chart-2" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{totalFunctions}</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Funciones Activas</p>
-                                <p className="text-2xl font-bold text-gray-900">{activeFunctions}</p>
+                    <Card className="p-6 bg-gradient-to-br from-white to-green-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Funciones Activas</p>
                             </div>
-                            <div className="bg-chart-3/20 p-3 rounded-full">
-                                <TrendingUp className="w-6 h-6 text-chart-3" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{activeFunctions}</p>
                         </div>
                     </Card>
 
                     {/* CAMBIADO: Entradas Vendidas (lotes + individuales sin multiplicar) */}
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Entradas Vendidas</p>
-                                <p className="text-2xl font-bold text-gray-900">{event.entradas_vendidas}</p>
-                                
+                    <Card className="p-6 bg-gradient-to-br from-white to-red-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Entradas Vendidas</p>
                             </div>
-                            <div className="bg-chart-4/20 p-3 rounded-full">
-                                <Ticket className="w-6 h-6 text-chart-4" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{event.entradas_vendidas}</p>
                         </div>
                     </Card>
 
                     {/* CAMBIADO: Tickets Emitidos (físicos reales) */}
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Tickets Emitidos</p>
-                                <p className="text-2xl font-bold text-gray-900">{event.tickets_emitidos}</p>
-                                
+                    <Card className="p-6 bg-gradient-to-br from-white to-purple-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Tickets Emitidos</p>
                             </div>
-                            <div className="bg-purple-100/70 p-3 rounded-full">
-                                <div className="w-6 h-6 text-purple-600 flex items-center justify-center text-sm font-bold">🎫</div>
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{event.tickets_emitidos}</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
+                    <Card className="p-6 bg-gradient-to-br from-white to-yellow-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Ingresos</p>
                             </div>
-                            <div className="bg-chart-5/20 p-3 rounded-full">
-                                <DollarSign className="w-6 h-6 text-chart-5" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
                         </div>
                     </Card>
                 </div>
