@@ -46,6 +46,10 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
     
     // Calcular cantidad real de entradas
     const realQuantity = isBundle ? (data.quantity || 0) * bundleQuantity : (data.quantity || 0);
+    
+    // Determinar si se superará la capacidad
+    const availableCapacity = selectedSectorAvailability?.available_capacity || 0;
+    const willExceedCapacity = realQuantity > availableCapacity && availableCapacity >= 0;
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -157,7 +161,6 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         onChange={e => setData('quantity', e.target.value)}
                         required
                         min="1"
-                        max={maxQuantity}
                     />
                     {selectedSector && selectedSectorAvailability && (
                         <div className="text-sm space-y-1">
@@ -177,6 +180,20 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                             )}
                         </div>
                     )}
+                    
+                    {/* Mensaje de advertencia si se supera la capacidad */}
+                    
+                    {willExceedCapacity && selectedSectorAvailability && (
+                        <Alert className="border-primary bg-primary/10">
+                            <Info className="h-4 w-4 text-primary" />
+                            <AlertDescription className="text-primary">
+                                <strong>Advertencia:</strong> Estás superando la capacidad disponible del sector por{' '}
+                                {realQuantity - selectedSectorAvailability.available_capacity} entradas.
+                                Esto puede generar sobreventa. 
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
                     <InputError message={errors.quantity} />
                 </div>
             </div>
