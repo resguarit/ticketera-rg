@@ -41,7 +41,6 @@ class SendOrderConfirmationJob implements ShouldQueue
         }
 
         $email = new TicketsPurchased($this->order, $attachments);
-
         Mail::to($this->order->client->email)->send($email);
     }
 }

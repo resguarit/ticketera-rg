@@ -23,6 +23,7 @@ class IssuedTicket extends Model
         'unique_code',
         'status',
         'issued_at',
+        'email_sent_at',
         'validated_at',
         'device_used',
     ];

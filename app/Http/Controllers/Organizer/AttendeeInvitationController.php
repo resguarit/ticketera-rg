@@ -191,7 +191,16 @@ class AttendeeInvitationController extends Controller
 
             DB::commit();
 
-            $this->emailService->sendInvitation($issuedTickets, $personData['email']);
+            // Cargar los tickets creados con sus relaciones para el email
+            $ticketIds = collect($issuedTickets)->pluck('id');
+            $ticketsWithRelations = IssuedTicket::whereIn('id', $ticketIds)
+                ->with([
+                    'assistant.person',
+                    'ticketType.eventFunction.event'
+                ])
+                ->get();
+
+            $this->emailService->sendBatchInvitation($ticketsWithRelations, $personData['email']);
 
             return redirect()->route('organizer.events.attendees', $event)
                 ->with('success', 'Asistente invitado exitosamente.');

@@ -3,19 +3,29 @@
 namespace App\Services;
 
 use App\Jobs\SendOrderConfirmationJob;
+use App\Jobs\SendTicketBatchJob;
 use App\Jobs\SendTicketEmailJob;
 use App\Models\Invitation;
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Support\Collection;
 
 class EmailDispatcherService
 {
-    public function sendInvitation($issuedTickets, $recipientEmail)
+    const BATCH_SIZE = 10;
+
+    public function sendBatchInvitation(Collection $tickets, string $recipientEmail)
     {
-        Log::info("Dispatching email for invitation to {$recipientEmail}");
-        Log::info("Issued Tickets qnty: " . count($issuedTickets));
-        Log::info("Issued Tickets: " . json_encode($issuedTickets));
+        if ($tickets->isEmpty()) {
+            return 0;
+        }
+
+        $ticketsChunk = $tickets->chunk(self::BATCH_SIZE);
+
+        foreach ($ticketsChunk as $chunk) {
+            SendTicketBatchJob::dispatch($chunk, $recipientEmail);
+        }
     }
 
     public function sendTicketPurchaseConfirmation(Order $order)

@@ -16,15 +16,30 @@ class PdfService
     /**
      * Genera los datos necesarios para crear un PDF de ticket
      * incluyendo el QR code y todas las relaciones cargadas
+     * Funciona tanto para tickets de compra como de invitación
      */
     public function generateTicketData(IssuedTicket $ticket, int $qrSize = 200): array
     {
-        // Cargar relaciones necesarias
+        // Cargar relaciones básicas que siempre necesitamos
         $ticket->load([
             'ticketType.eventFunction.event.venue.ciudad.provincia',
-            'ticketType.eventFunction.event.organizer',
-            'order.client.person'
+            'ticketType.eventFunction.event.organizer'
         ]);
+
+        // Detectar el tipo de ticket y cargar relaciones específicas
+        if ($ticket->order_id) {
+            // Ticket de compra - cargar relaciones de orden
+            $ticket->load(['order.client.person']);
+            $user = $ticket->order->client;
+            $person = $ticket->order->client->person;
+            $orderNumber = str_pad($ticket->order->id, 5, '0', STR_PAD_LEFT);
+        } else {
+            // Ticket de invitación - cargar relaciones de assistant
+            $ticket->load(['assistant.person']);
+            $user = null; // No hay usuario para invitaciones
+            $person = $ticket->assistant->person ?? null;
+            $orderNumber = 'INV-' . substr($ticket->unique_code, 0, 8); // Usar parte del código único
+        }
 
         $qrCode = base64_encode(
             QrCode::format('svg')->size($qrSize)->generate($ticket->unique_code)
@@ -37,9 +52,10 @@ class PdfService
             'ticket' => $ticket,
             'event' => $event,
             'function' => $eventFunction,
-            'user' => $ticket->order->client,
-            'person' => $ticket->order->client->person,
+            'user' => $user,
+            'person' => $person,
             'qrCode' => $qrCode,
+            'orderNumber' => $orderNumber, // Nuevo campo para el template
         ];
     }
 
@@ -56,6 +72,7 @@ class PdfService
 
     /**
      * Genera el nombre del archivo PDF basado en los datos del ticket
+     * Funciona tanto para tickets de compra como de invitación
      */
     public function generateTicketFileName(IssuedTicket $ticket): string
     {
@@ -67,7 +84,10 @@ class PdfService
         // Limpiar el nombre del evento para que sea válido como nombre de archivo
         $cleanEventName = preg_replace('/[^a-zA-Z0-9\-_]/', '-', $eventName);
         
-        return "ticket-{$cleanEventName}-{$ticket->unique_code}.pdf";
+        // Determinar el prefijo según el tipo de ticket
+        $prefix = $ticket->order_id ? 'ticket' : 'invitation';
+        
+        return "{$prefix}-{$cleanEventName}-{$ticket->unique_code}.pdf";
     }
 
     /**
