@@ -46,13 +46,15 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case "available":
-                return "bg-blue-500";
-            case "confirmed":
                 return "bg-green-500";
+            case "used":
+                return "bg-gray-500";
             case "pending":
                 return "bg-yellow-500";
             case "cancelled":
                 return "bg-red-500";
+            case "reprinted":
+                return "bg-blue-500";
             default:
                 return "bg-gray-500";
         }
@@ -62,12 +64,14 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
         switch (status) {
             case "available":
                 return "Disponible";
-            case "confirmed":
-                return "Confirmado";
+            case "used":
+                return "Usado";
             case "pending":
                 return "Pendiente";
             case "cancelled":
                 return "Cancelado";
+            case "reprinted":
+                return "Reimpreso";
             default:
                 return "Desconocido";
         }
@@ -124,33 +128,8 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-2 sm:mb-4">
                             Mis Tickets
                         </h1>
-
                     </div>
 
-{/*                     
-                    <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                        <Card className="bg-white py-0 border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-shadow">
-                            <CardContent className="p-2 sm:p-4 lg:p-6 text-center">
-                                <div className="tex-lg sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">{stats.upcoming_count}</div>
-                                <div className="text-foreground/80 text-xs sm:text-sm lg:text-base">Próximos Eventos</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white py-0 border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-shadow">
-                            <CardContent className="p-2 sm:p-4 lg:p-6 text-center">
-                                <div className="tex-lg sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">{stats.past_count}</div>
-                                <div className="text-foreground/80 text-xs sm:text-sm lg:text-base">Eventos Pasados</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white py-0 border-gray-200 shadow-md sm:shadow-lg hover:shadow-xl transition-shadow sm:col-span-2 lg:col-span-1">
-                            <CardContent className="p-2 sm:p-4 lg:p-6 text-center">
-                                <div className="tex-lg sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-                                    {formatNumber(stats.total_spent)}
-                                </div>
-                                <div className="text-foreground/80 text-xs sm:text-sm lg:text-base">Total Gastado</div>
-                            </CardContent>
-                        </Card>
-                    </div>
- */}
                     {/* Tickets Tabs */}
                     <Tabs defaultValue="upcoming" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 shadow-sm h-9 sm:h-10 lg:h-11">
@@ -279,7 +258,9 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                     {pastTickets.map((ticket) => (
                                         <Card
                                             key={ticket.id}
-                                            className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-shadow opacity-75 rounded-lg sm:rounded-xl"
+                                            className={`bg-white border-gray-200 shadow-md hover:shadow-lg transition-shadow rounded-lg sm:rounded-xl ${
+                                                ticket.status === 'used' ? 'opacity-60' : 'opacity-75'
+                                            }`}
                                         >
                                             <CardContent className="p-3 sm:p-4 lg:p-6">
                                                 <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6">
@@ -291,7 +272,12 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                         />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 truncate">{ticket.eventTitle}</h4>
+                                                        <div className="flex items-start justify-between mb-1 sm:mb-2">
+                                                            <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg truncate pr-2">{ticket.eventTitle}</h4>
+                                                            <Badge className={`${getStatusColor(ticket.status)} text-white border-0 text-xs flex-shrink-0`}>
+                                                                {getStatusText(ticket.status)}
+                                                            </Badge>
+                                                        </div>
                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-foreground/80 text-xs sm:text-sm space-y-1 sm:space-y-0">
                                                             <span>{ticket.date}</span>
                                                             <span className="truncate">

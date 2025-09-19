@@ -21,14 +21,15 @@ class TicketController extends Controller
     {
         $user = Auth::user();
         
-        // ACTUALIZADO: Obtener todos los tickets del usuario con ciudad y provincia
+        // ACTUALIZADO: Obtener todos los tickets del usuario excluyendo los cancelados
         $tickets = IssuedTicket::with([
             'order',
             'ticketType.eventFunction.event.venue.ciudad.provincia',
             'ticketType.eventFunction.event.category',
-            'ticketType.eventFunction.event.organizer' // Agregar organizer
+            'ticketType.eventFunction.event.organizer'
         ])
         ->where('client_id', $user->id)
+        ->where('status', '!=', 'cancelled') // Excluir tickets cancelados
         ->get()
         ->map(function ($ticket) {
             $event = $ticket->ticketType->eventFunction->event;
@@ -42,7 +43,6 @@ class TicketController extends Controller
                 'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
                 'time' => $eventFunction->start_time?->format('H:i') ?? '',
                 'location' => $event->venue->name,
-                // ACTUALIZADO: usar la nueva estructura
                 'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                 'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                     $event->venue->ciudad->provincia->name : null,
@@ -62,14 +62,23 @@ class TicketController extends Controller
             ];
         });
 
-        // Separar tickets próximos y pasados
+        // ACTUALIZADO: Separar tickets próximos y pasados basado en fecha del evento Y estado del ticket
         $now = Carbon::now();
         $upcomingTickets = $tickets->filter(function ($ticket) use ($now) {
-            return $ticket['eventDateTime'] && Carbon::parse($ticket['eventDateTime'])->gte($now);
+            // Solo mostrar como "próximo" si:
+            // 1. El evento aún no ha pasado
+            // 2. El ticket está disponible (no usado)
+            return $ticket['eventDateTime'] && 
+                   Carbon::parse($ticket['eventDateTime'])->gte($now) &&
+                   $ticket['status'] === 'available';
         })->values();
 
         $pastTickets = $tickets->filter(function ($ticket) use ($now) {
-            return $ticket['eventDateTime'] && Carbon::parse($ticket['eventDateTime'])->lt($now);
+            // Mostrar como "pasado" si:
+            // 1. El evento ya pasó, O
+            // 2. El ticket fue usado (independientemente de la fecha)
+            return ($ticket['eventDateTime'] && Carbon::parse($ticket['eventDateTime'])->lt($now)) ||
+                   $ticket['status'] === 'used';
         })->values();
 
         // Agrupar tickets por orden para mostrar opción de descarga por orden
@@ -161,10 +170,10 @@ class TicketController extends Controller
     private function mapTicketStatus(string $status): string
     {
         return match($status) {
-            'AVAILABLE' => 'available',
-            'USED' => 'used',
-            'CANCELLED' => 'cancelled',
-            'REPRINTED' => 'reprinted',
+            'available' => 'available',
+            'used' => 'used',
+            'cancelled' => 'cancelled',
+            'reprinted' => 'reprinted',
             default => 'available'
         };
     }
