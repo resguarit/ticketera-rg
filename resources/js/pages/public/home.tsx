@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/lib/currencyHelpers';
-import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw, ArrowUpDown } from 'lucide-react';
+import { Search, Calendar, MapPin, Music, Theater, Trophy, Filter, Star, Presentation, Utensils, Palette, Laugh, Users, RotateCcw, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,7 +42,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
-    const [sortBy, setSortBy] = useState("date"); // nuevo estado para ordenamiento
+    const [sortBy, setSortBy] = useState("date");
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Auto-rotate del carousel cada 5 segundos
@@ -54,6 +54,18 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
             return () => clearInterval(interval);
         }
     }, [featuredEvents.length]);
+
+    // Función para ir al slide anterior
+    const goToPreviousSlide = () => {
+        setCurrentSlide((prev) => 
+            prev === 0 ? featuredEvents.length - 1 : prev - 1
+        );
+    };
+
+    // Función para ir al slide siguiente
+    const goToNextSlide = () => {
+        setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+    };
 
     // Filtrar y ordenar eventos
     const filteredAndSortedEvents = events
@@ -107,13 +119,33 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                 className="w-full h-full object-cover"
                             />
 
-                            {/* Slide indicators */}
+                            {/* Flechas de navegación - solo mostrar si hay más de 1 imagen */}
+                            {featuredEvents.length > 1 && (
+                                <>
+                                    {/* Flecha izquierda */}
+                                    <button
+                                        onClick={goToPreviousSlide}
+                                        className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-20  hover:bg-black/30 text-white rounded-full p-2 sm:p-3 transition-all duration-200 hover:scale-110"
+                                    >
+                                        <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+                                    </button>
+
+                                    {/* Flecha derecha */}
+                                    <button
+                                        onClick={goToNextSlide}
+                                        className="absolute right-2 sm:right-4 top-1/2 transform hover:bg-black/30 -translate-y-1/2 z-20 text-white rounded-full p-2 sm:p-3 transition-all duration-200 hover:scale-110"
+                                    >
+                                        <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Slide indicators - solo indicadores visuales, no clickeables */}
                             {featuredEvents.length > 1 && (
                                 <div className="absolute bottom-3 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
                                     {featuredEvents.map((_, index) => (
-                                        <button
+                                        <div
                                             key={index}
-                                            onClick={() => setCurrentSlide(index)}
                                             className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
                                                 index === currentSlide ? "bg-white" : "bg-white/40"
                                             }`}
@@ -217,8 +249,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
                                         </SelectContent>
                                     </Select>
-
-
                                 </div>
                             </div>
                         </div>              
