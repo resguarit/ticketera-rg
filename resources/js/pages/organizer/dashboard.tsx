@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Users, Eye } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 
 interface Stat {
     totalRevenue: number;
-    totalTicketsSold: number;
+    totalEntradasVendidas: number; // NUEVO: entradas vendidas
+    totalTicketsSold: number; // CAMBIADO: tickets emitidos
     activeEventsCount: number;
     totalEventsCount: number;
 }
@@ -48,9 +49,9 @@ interface DashboardProps {
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData }: DashboardProps) {
     const statCards = [
         { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
-        { title: 'Tickets Vendidos', value: formatNumber(stats.totalTicketsSold), icon: Ticket, color: 'text-chart-3' },
-        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Activity, color: 'text-chart-4' },
-        { title: 'Total de Eventos', value: formatNumber(stats.totalEventsCount), icon: Calendar, color: 'text-chart-5' },
+        { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3' },
+        { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4' },
+        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
 
     return (
@@ -63,25 +64,32 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
-                                        <Link href={route('organizer.events.create')}>
-                                            <Button className="bg-primary hover:bg-primary-hover text-white">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Crear Evento
-                                            </Button>
-                                        </Link>
+                    <Link href={route('organizer.events.create')}>
+                        <Button className="bg-primary hover:bg-primary-hover text-white">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Crear Evento
+                        </Button>
+                    </Link>
                 </div>
 
-                {/* Stat Cards */}
+                {/* Stat Cards - ACTUALIZADO con 4 estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {statCards.map((card, index) => (
-                        <Card key={index}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                                <card.icon className={`h-5 w-5 ${card.color}`} />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{card.value}</div>
-                            </CardContent>
+                        <Card key={index} className="p-6 border-l-4 border-l-blue-500">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                                    <card.icon className={`w-4 h-4 ${card.color}`} />
+                                </div>
+                                <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+                                {/* NUEVO: Añadir descripción para las nuevas métricas */}
+                                {card.title === 'Entradas Vendidas' && (
+                                    <p className="text-xs text-gray-500">lotes + individuales</p>
+                                )}
+                                {card.title === 'Tickets Emitidos' && (
+                                    <p className="text-xs text-gray-500">entradas físicas</p>
+                                )}
+                            </div>
                         </Card>
                     ))}
                 </div>
@@ -114,7 +122,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 <div key={event.id} className="flex items-center">
                                     <div className="flex-1 space-y-1">
                                         <p className="text-sm font-medium leading-none truncate">{event.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets</p>
+                                        <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
                                     </div>
                                     <div className="font-medium text-green-600">{formatCurrency(event.revenue)}</div>
                                 </div>
@@ -123,7 +131,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     </Card>
                 </div>
 
-                {/* Recent Events */}
+                {/* Recent Events - mantener igual, usa tickets_sold que ahora son tickets emitidos */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Eventos Recientes</CardTitle>
@@ -144,7 +152,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
                                                 <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2 mt-2 bg-white border border-gray-300" />
-                                                <p className="text-xs text-muted-foreground mt-1">{formatNumber(event.tickets_sold)} / {formatNumber(event.total_tickets)}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">{formatNumber(event.tickets_sold)} / {formatNumber(event.total_tickets)} tickets</p>
                                             </div>
                                         </div>
                                     </Link>
@@ -164,81 +172,6 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         )}
                     </CardContent>
                 </Card>
-
-                {/* Funciones y estadísticas */}
-                {organizer.functions.map((func) => {
-    const stats = func.stats;
-    
-    return (
-        <TabsContent key={func.id} value={func.id.toString()} className="space-y-6">
-            {/* Estadísticas de la función */}
-            <div className="bg-card rounded-lg border p-4">
-                <h4 className="text-sm font-medium text-muted-foreground mb-3">Resumen de {func.name}</h4>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                            <div className="bg-muted p-1.5 rounded-full">
-                                <Ticket className="h-3 w-3 text-primary" />
-                            </div>
-                            <span className="text-xs font-medium">Lotes/Tipos</span>
-                        </div>
-                        <div className="text-lg font-bold text-foreground">{formatNumber(stats?.totalTickets || 0)}</div>
-                        <div className="text-xs text-muted-foreground">{stats?.totalTypes || 0} tipos</div>
-                    </div>
-                    
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                            <div className="bg-muted p-1.5 rounded-full">
-                                <Users className="h-3 w-3 text-primary" />
-                            </div>
-                            <span className="text-xs font-medium">Vendidos</span>
-                        </div>
-                        <div className="text-lg font-bold text-primary">{formatNumber(stats?.soldTickets || 0)}</div>
-                        <div className="text-xs text-muted-foreground">{formatNumber(stats?.availableTickets || 0)} disponibles</div>
-                    </div>
-                    
-                    {/* NUEVA COLUMNA: Entradas emitidas */}
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                            <div className="bg-muted p-1.5 rounded-full">
-                                <div className="h-3 w-3 text-purple-600">🎫</div>
-                            </div>
-                            <span className="text-xs font-medium">Emitidas</span>
-                        </div>
-                        <div className="text-lg font-bold text-purple-600">{formatNumber(stats?.entradasEmitidas || 0)}</div>
-                        <div className="text-xs text-muted-foreground">entradas físicas</div>
-                    </div>
-                    
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                            <div className="bg-muted p-1.5 rounded-full">
-                                <DollarSign className="h-3 w-3 text-secondary" />
-                            </div>
-                            <span className="text-xs font-medium">Ingresos</span>
-                        </div>
-                        <div className="text-lg font-bold text-secondary">
-                            {formatCurrency(stats?.totalRevenue || 0)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">ARS</div>
-                    </div>
-                    
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                            <div className="bg-muted p-1.5 rounded-full">
-                                <Eye className="h-3 w-3 text-accent-foreground" />
-                            </div>
-                            <span className="text-xs font-medium">Visibles</span>
-                        </div>
-                        <div className="text-lg font-bold text-accent-foreground">{stats?.visibleTickets || 0}</div>
-                        <div className="text-xs text-muted-foreground">de {stats?.totalTypes || 0}</div>
-                    </div>
-                </div>
-            </div>
-            
-            {/* ...existing code... */}
-        </TabsContent>
-    );
-})}
             </div>
         </>
     );
