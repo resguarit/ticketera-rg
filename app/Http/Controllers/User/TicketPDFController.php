@@ -4,12 +4,17 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\IssuedTicket;
+use App\Services\PdfService;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 
 class TicketPDFController extends Controller
 {
+    public function __construct(
+        private PdfService $pdfService
+    ) {}
+
     /**
      * Descargar ticket individual en PDF
      */
@@ -20,27 +25,9 @@ class TicketPDFController extends Controller
             abort(403, 'No tienes permiso para descargar este ticket');
         }
 
-        // Cargar relaciones necesarias
-        $ticket->load([
-            'ticketType.eventFunction.event.venue.ciudad.provincia',
-            'ticketType.eventFunction.event.organizer',
-            'order.client.person'
-        ]);
-
-        $event = $ticket->ticketType->eventFunction->event;
-        $eventFunction = $ticket->ticketType->eventFunction;
-
-        $data = [
-            'ticket' => $ticket,
-            'event' => $event,
-            'function' => $eventFunction,
-            'user' => $ticket->order->client,
-            'person' => $ticket->order->client->person,
-        ];
-
-        $pdf = Pdf::loadView('pdfs.ticket', $data);
+        $ticketData = $this->pdfService->generateTicketPdfWithName($ticket, 220);
         
-        return $pdf->download("ticket-{$event->name}-{$ticket->unique_code}.pdf");
+        return $ticketData['pdf']->download($ticketData['filename']);
     }
 
     /**
