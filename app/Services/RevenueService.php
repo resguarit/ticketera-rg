@@ -20,19 +20,40 @@ class RevenueService
      */
     public function forTicketType(TicketType $ticketType, ?Carbon $startDate = null, ?Carbon $endDate = null): float
     {
-        $query = IssuedTicket::query()
-            ->where('ticket_type_id', $ticketType->id)
-            ->whereHas('order', function ($q) use ($startDate, $endDate) {
-                $q->where('status', OrderStatus::PAID);
-                if ($startDate && $endDate) {
-                    $q->whereBetween('order_date', [$startDate, $endDate]);
-                }
-            });
-
-        // Sumamos el precio del ticket type multiplicado por la cantidad de tickets emitidos
-        $ticketCount = $query->count();
+        // Para bundles: necesitamos contar órdenes únicas (lotes vendidos)
+        // Para individuales: contamos tickets emitidos normalmente
         
-        return (float) ($ticketCount * $ticketType->price);
+        if ($ticketType->is_bundle) {
+            // Para bundles: contar órdenes distintas que compraron este tipo de ticket
+            $lotesVendidos = Order::query()
+                ->where('status', OrderStatus::PAID)
+                ->whereHas('issuedTickets', function ($q) use ($ticketType) {
+                    $q->where('ticket_type_id', $ticketType->id);
+                });
+
+            if ($startDate && $endDate) {
+                $lotesVendidos->whereBetween('order_date', [$startDate, $endDate]);
+            }
+
+            $countLotes = $lotesVendidos->count();
+            
+            // Para bundles: precio del lote × cantidad de lotes vendidos
+            return (float) ($countLotes * $ticketType->price);
+        } else {
+            // Para tickets individuales: mantener la lógica original
+            $query = IssuedTicket::query()
+                ->where('ticket_type_id', $ticketType->id)
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                    $q->where('status', OrderStatus::PAID);
+                    if ($startDate && $endDate) {
+                        $q->whereBetween('order_date', [$startDate, $endDate]);
+                    }
+                });
+
+            $ticketCount = $query->count();
+            
+            return (float) ($ticketCount * $ticketType->price);
+        }
     }
 
     /**
