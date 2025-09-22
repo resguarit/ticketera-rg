@@ -170,7 +170,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
                         <div className="hidden lg:block lg:col-span-2 space-y-4 sm:space-y-6">
                             {/* Hero Image - Usar hero_image_url primero, luego image_url */}
-                            <div className="relative h-48 sm:h-64 lg:h-80 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
+                            <div className="relative h-48 sm:h-64 lg:h-72 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
                                 <img 
                                     src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'} 
                                     alt={eventData.name} 
