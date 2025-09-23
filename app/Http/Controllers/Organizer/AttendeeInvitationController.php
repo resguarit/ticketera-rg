@@ -91,7 +91,7 @@ class AttendeeInvitationController extends Controller
             'tickets' => 'required|array|min:1',
             'tickets.*.event_function_id' => 'required|exists:event_functions,id',
             'tickets.*.ticket_type_id' => 'required|exists:ticket_types,id',
-            'tickets.*.quantity' => 'required|integer|min:1|max:10',
+            'tickets.*.quantity' => 'required|integer|min:1|max:100',
         ]);
 
         if ($validator->fails()) {
