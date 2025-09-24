@@ -16,9 +16,21 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use App\Services\EmailDispatcherService;
+use App\Services\OrderService;
 
 class AttendeeInvitationController extends Controller
 {
+
+    protected $emailService;
+    protected $orderService;
+
+    public function __construct(EmailDispatcherService $emailService, OrderService $orderService)
+    {
+        $this->emailService = $emailService;
+        $this->orderService = $orderService;
+    }
+
     /**
      * Mostrar el formulario para invitar asistentes
      */
@@ -79,7 +91,7 @@ class AttendeeInvitationController extends Controller
             'tickets' => 'required|array|min:1',
             'tickets.*.event_function_id' => 'required|exists:event_functions,id',
             'tickets.*.ticket_type_id' => 'required|exists:ticket_types,id',
-            'tickets.*.quantity' => 'required|integer|min:1|max:10',
+            'tickets.*.quantity' => 'required|integer|min:1|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -136,6 +148,8 @@ class AttendeeInvitationController extends Controller
                 ]);
             }
 
+            $issuedTickets = [];
+
             // Crear asistentes y tickets directamente (SIN orden)
             foreach ($request->tickets as $ticketRequest) {
                 $eventFunction = EventFunction::find($ticketRequest['event_function_id']);
@@ -161,14 +175,14 @@ class AttendeeInvitationController extends Controller
                     $assistant->increment('quantity', $ticketRequest['quantity']);
                 }
 
-                // Crear tickets directamente (SIN order_id, SIN client_id)
+                // Crear tickets directamente
                 for ($i = 0; $i < $ticketRequest['quantity']; $i++) {
-                    IssuedTicket::create([
+                    $issuedTickets[] = IssuedTicket::create([
                         'ticket_type_id' => $ticketType->id,
                         'order_id' => null, // No hay orden para invitaciones
                         'assistant_id' => $assistant->id,
                         'client_id' => null, // No hay cliente para invitaciones
-                        'unique_code' => $this->generateUniqueTicketCode($ticketType),
+                        'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'INV'),
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
                     ]);
@@ -176,6 +190,17 @@ class AttendeeInvitationController extends Controller
             }
 
             DB::commit();
+
+            // Cargar los tickets creados con sus relaciones para el email
+            $ticketIds = collect($issuedTickets)->pluck('id');
+            $ticketsWithRelations = IssuedTicket::whereIn('id', $ticketIds)
+                ->with([
+                    'assistant.person',
+                    'ticketType.eventFunction.event'
+                ])
+                ->get();
+
+            $this->emailService->sendBatchInvitation($ticketsWithRelations, $personData['email']);
 
             return redirect()->route('organizer.events.attendees', $event)
                 ->with('success', 'Asistente invitado exitosamente.');
@@ -186,21 +211,5 @@ class AttendeeInvitationController extends Controller
                 ->withErrors(['general' => $e->getMessage()])
                 ->withInput();
         }
-    }
-
-    /**
-     * Generar código único para el ticket
-     */
-    private function generateUniqueTicketCode(TicketType $ticketType): string
-    {
-        // Generar un código similar al OrderService pero para invitaciones
-        $baseCode = 'INV-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
-        
-        // Verificar que sea único
-        while (IssuedTicket::where('unique_code', $baseCode)->exists()) {
-            $baseCode = 'INV-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
-        }
-        
-        return $baseCode;
     }
 }

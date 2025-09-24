@@ -10,6 +10,7 @@ export interface Event {
     description: string | null;
     banner_url: string | null;
     featured: boolean;
+    is_archived: boolean;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;

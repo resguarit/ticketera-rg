@@ -144,24 +144,86 @@ export default function EventAttendees({
         });
     };
 
-    const handleResendInvitation = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
-        if (attendeeType !== 'invited') {
-            return;
-        }
-        
-        router.patch(
-            route('organizer.events.assistants.resendInvitation', {
-                event: event.id,
-                assistant: attendeeId
-            }),
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    // TODO: mostrar toast de éxito
+    const handleResendInvitation = async (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
+        try {
+            if (attendeeType === 'invited') {
+                // Lógica para asistentes invitados
+                // Primero obtenemos los detalles del asistente para conseguir los IDs de los tickets
+                const response = await fetch(route('organizer.events.attendees.assistant.details', {
+                    event: event.id,
+                    assistant: attendeeId
+                }));
+
+                if (!response.ok) {
+                    throw new Error('Error al obtener los detalles del asistente');
                 }
+
+                const assistantDetails = await response.json();
+                
+                // Extraemos los IDs de todos los tickets disponibles y usados del asistente
+                const ticketIds: number[] = [];
+                if (assistantDetails.per_type && Array.isArray(assistantDetails.per_type)) {
+                    assistantDetails.per_type.forEach((ticketType: any) => {
+                        if (ticketType.ticket_ids && Array.isArray(ticketType.ticket_ids)) {
+                            ticketIds.push(...ticketType.ticket_ids);
+                        }
+                    });
+                }
+
+                if (ticketIds.length === 0) {
+                    throw new Error('No se encontraron tickets para reenviar');
+                }
+
+                // Ahora enviamos los IDs de los tickets al controller
+                router.patch(
+                    route('organizer.events.assistants.resendInvitation', {
+                        event: event.id,
+                        assistant: attendeeId
+                    }),
+                    {
+                        ticket_ids: ticketIds
+                    },
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            // TODO: mostrar toast de éxito
+                            console.log(`Invitación reenviada exitosamente para ${ticketIds.length} tickets`);
+                        },
+                        onError: (errors) => {
+                            console.error('Error al reenviar invitación:', errors);
+                            // TODO: mostrar toast de error
+                        }
+                    }
+                );
+
+            } else if (attendeeType === 'buyer') {
+                // Lógica para compradores - reenviar orden completa
+                // Para compradores, attendeeId es realmente el order_id
+                router.patch(
+                    route('organizer.events.assistants.resendPurchase', {
+                        event: event.id,
+                        order: attendeeId // attendeeId es el order_id para compradores
+                    }),
+                    {},
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            // TODO: mostrar toast de éxito
+                            console.log('Tickets de compra reenviados exitosamente');
+                        },
+                        onError: (errors) => {
+                            console.error('Error al reenviar tickets de compra:', errors);
+                            // TODO: mostrar toast de error
+                        }
+                    }
+                );
             }
-        );
+
+        } catch (error) {
+            console.error('Error en handleResendInvitation:', error);
+            // TODO: mostrar toast de error
+            alert('Error al reenviar. Por favor, inténtalo de nuevo.');
+        }
     };
 
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
@@ -438,6 +500,12 @@ export default function EventAttendees({
                                                                     Eliminar
                                                                 </DropdownMenuItem>
                                                             </>
+                                                        )}
+                                                        {attendee.type === 'buyer' && (
+                                                            <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
+                                                                <Mail className="mr-2 h-4 w-4" />
+                                                                Reenviar tickets
+                                                            </DropdownMenuItem>
                                                         )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>

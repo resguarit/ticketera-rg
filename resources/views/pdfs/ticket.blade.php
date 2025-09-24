@@ -214,7 +214,7 @@
                 <div class="ticket-info-left">
                     <div class="detail-row">
                         <div class="detail-label">Orden Nº:</div>
-                        <div class="detail-value">{{ str_pad($ticket->order->id, 5, '0', STR_PAD_LEFT) }}</div>
+                        <div class="detail-value">{{ $orderNumber }}</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Tipo de Entrada:</div>
@@ -237,11 +237,7 @@
                 </div>
                 
                 <div class="ticket-info-right">
-                    <div class="qr-code">
-                        <!-- Aquí va el QR generado -->
-                        QR
-                    </div>
-                    <div class="qr-code-text">{{ $ticket->unique_code }}</div>
+                    <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Código QR">
                 </div>
             </div>
         </div>
