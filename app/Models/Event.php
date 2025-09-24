@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\Attributes\Ticket;
 
 class Event extends Model
 {
@@ -27,6 +26,7 @@ class Event extends Model
         'name',
         'description',
         'banner_url',
+        'hero_banner_url', // Nueva columna
         'featured',
         'is_archived',
         'tax',
@@ -37,13 +37,22 @@ class Event extends Model
         'is_archived' => 'boolean',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'hero_image_url'];
 
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->banner_url
                 ? Storage::url($this->banner_url)
+                : null,
+        );
+    }
+
+    protected function heroImageUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->hero_banner_url
+                ? Storage::url($this->hero_banner_url)
                 : null,
         );
     }

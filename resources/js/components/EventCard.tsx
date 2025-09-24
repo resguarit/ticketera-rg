@@ -37,54 +37,109 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
 
     return (
         <Link href={`/events/${event.id}`} className={`block ${className}`}>
-            <div className="w-full h-[440px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col">
-                {/* Header section with dark background - altura fija */}
-                <div className="relative h-[260px] overflow-hidden flex-shrink-0">
-                    {/* Background image */}
-                    <div className="absolute inset-0">
-                        <img 
-                            src={event.image_url || "/placeholder.svg?height=400&width=800"} 
-                            alt={event.name} 
-                            className="w-full h-full object-cover" 
-                        />
-                    </div>
-                </div>
-
-                {/* Bottom section with white background - flex para distribuir contenido */}
-                <div className="p-4 bg-white flex-1 flex flex-col justify-between">
-                    <div>
-                        {/* Location - altura fija */}
-                        <div className="flex items-center gap-2 mb-3 h-6">
-                            <MapPin className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                            <span className="text-gray-600 text-sm font-medium uppercase truncate">
-                                {event.location}{event.city && `, ${event.city}`}
-                            </span>
+            {/* Diseño para pantallas menores a sm (móvil) */}
+            <div className="sm:hidden">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex h-32">
+                        {/* Imagen izquierda */}
+                        <div className="w-32 h-32 flex-shrink-0">
+                            <img 
+                                src={event.image_url || "/placeholder.svg?height=400&width=800"} 
+                                alt={event.name} 
+                                className="w-full h-full object-cover" 
+                            />
                         </div>
-
-                        {/* Event title - altura fija con line-clamp */}
-                        <h2 className="text-black text-xl font-bold mb-4 leading-tight tracking-wide uppercase line-clamp-2 min-h-[3.5rem]">
-                            {event.name}
-                        </h2>
-                    </div>
-
-                    {/* Date and time - siempre al final */}
-                    <div className="flex gap-6 mt-auto">
-                        <div className="text-center">
-                            <div className="flex gap-[2px] flex-row items-center">
-                                <div className="text-4xl font-bold text-black">{day}</div>
-                                <div className="gap-0">
-                                    <div className="capitalize text-start font-bold text-black leading-none pt-1">
-                                        {month}<br />{year}
+                        
+                        {/* Contenido derecha */}
+                        <div className="flex-1 p-3 flex flex-col justify-between">
+                            {/* Top section */}
+                            <div>
+                                <div className="flex items-center gap-1 mb-1">
+                                    <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                                    <span className="text-xs text-gray-500 uppercase truncate">
+                                        {event.location}
+                                    </span>
+                                </div>
+                                
+                                <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 mb-2">
+                                    {event.name}
+                                </h3>
+                            </div>
+                            
+                            {/* Bottom section - Fecha y hora */}
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-2xl font-bold text-black leading-none">{day}</span>
+                                    <div className="leading-none">
+                                        <div className="text-xs font-bold text-black capitalize">{month}</div>
+                                        <div className="text-xs font-bold text-black">{year}</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                    <span className="text-2xl font-bold text-black leading-none">{timeHour}</span>
+                                    <div className="leading-none">
+                                        <div className="text-xs font-bold text-black">{timeMinutes}</div>
+                                        <div className="text-xs font-bold text-black">hrs</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="text-center">
-                            <div className="flex gap-[2px] flex-row items-center">
-                                <div className="text-4xl font-bold text-black">{timeHour}</div>
-                                <div className="gap-0">
-                                    <div className=" text-start font-bold text-black leading-none pt-1">
-                                        {timeMinutes}<br />hrs
+                    </div>
+                </div>
+            </div>
+
+            {/* Diseño original para pantallas sm y mayores */}
+            <div className="hidden sm:block">
+                <div className="w-full h-[440px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col">
+                    {/* Header section with dark background - altura fija */}
+                    <div className="relative h-[260px] overflow-hidden flex-shrink-0">
+                        {/* Background image */}
+                        <div className="absolute inset-0">
+                            <img 
+                                src={event.image_url || "/placeholder.svg?height=400&width=800"} 
+                                alt={event.name} 
+                                className="w-full h-full object-cover" 
+                            />
+                        </div>
+                    </div>
+
+                    {/* Bottom section with white background - flex para distribuir contenido */}
+                    <div className="p-4 bg-white flex-1 flex flex-col justify-between">
+                        <div>
+                            {/* Location - altura fija */}
+                            <div className="flex items-center gap-2 mb-3 h-6">
+                                <MapPin className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                                <span className="text-gray-600 text-sm font-medium uppercase truncate">
+                                    {event.location}{event.city && `, ${event.city}`}
+                                </span>
+                            </div>
+
+                            {/* Event title - altura fija con line-clamp */}
+                            <h2 className="text-black text-xl font-bold mb-4 leading-tight tracking-wide uppercase line-clamp-2 min-h-[3.5rem]">
+                                {event.name}
+                            </h2>
+                        </div>
+
+                        {/* Date and time - siempre al final */}
+                        <div className="flex gap-6 mt-auto">
+                            <div className="text-center">
+                                <div className="flex gap-[2px] flex-row items-center">
+                                    <div className="text-4xl font-bold text-black">{day}</div>
+                                    <div className="gap-0">
+                                        <div className="capitalize text-start font-bold text-black leading-none pt-1">
+                                            {month}<br />{year}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <div className="flex gap-[2px] flex-row items-center">
+                                    <div className="text-4xl font-bold text-black">{timeHour}</div>
+                                    <div className="gap-0">
+                                        <div className=" text-start font-bold text-black leading-none pt-1">
+                                            {timeMinutes}<br />hrs
+                                        </div>
                                     </div>
                                 </div>
                             </div>

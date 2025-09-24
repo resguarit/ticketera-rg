@@ -252,7 +252,14 @@ class AssistantController extends Controller
         $invitedAttendees = $attendees->where('type', 'invited');
         $buyerAttendees = $attendees->where('type', 'buyer');
         
-        $totalTickets = $attendees->sum('tickets_count');
+        // CORREGIDO: Separar entradas vendidas vs tickets emitidos
+        $totalEntradasVendidas = $attendees->sum('tickets_count'); // Esto sigue siendo correcto (lotes + individuales)
+        $totalTicketsEmitidos = $attendees->sum(function($attendee) {
+            // Para compradores: ya viene calculado correctamente en tickets_count
+            // Para invitados: también viene calculado correctamente
+            return $attendee['tickets_count']; // Este es el número real de tickets físicos
+        });
+        
         $ticketsUsed = $attendees->sum('tickets_used');
         $totalRevenue = $buyerAttendees->sum('total_amount');
 
@@ -260,9 +267,11 @@ class AssistantController extends Controller
             'total_attendees' => $attendees->count(),
             'invited_attendees' => $invitedAttendees->count(),
             'buyer_attendees' => $buyerAttendees->count(),
-            'total_tickets' => $totalTickets,
+            'total_entradas_vendidas' => $totalEntradasVendidas, // CAMBIADO: entradas vendidas
+            'total_tickets_emitidos' => $totalTicketsEmitidos,   // NUEVO: tickets emitidos físicos
+            'total_tickets' => $totalTicketsEmitidos, // Mantener compatibilidad hacia atrás
             'tickets_used' => $ticketsUsed,
-            'tickets_pending' => $totalTickets - $ticketsUsed,
+            'tickets_pending' => $totalTicketsEmitidos - $ticketsUsed,
             'total_revenue' => $totalRevenue,
         ];
     }
@@ -402,19 +411,44 @@ class AssistantController extends Controller
         $perType = $ticketsByType->map(function ($tickets) {
             $firstTicket = $tickets->first();
             $ticketType = $firstTicket->ticketType;
-            $quantity = $tickets->count();
+            $ticketsEmitidos = $tickets->count(); // Cantidad de tickets físicos emitidos
             $price = $ticketType->price;
-            $subtotal = $quantity * $price;
 
-            return [
-                'ticket_type_id' => $ticketType->id,
-                'ticket_type_name' => $ticketType->name,
-                'price' => round($price, 2),
-                'quantity' => $quantity,
-                'subtotal' => round($subtotal, 2),
-                'tickets_used' => $tickets->where('status', 'used')->count(),
-                'tickets_available' => $tickets->where('status', 'available')->count(),
-            ];
+            // CORREGIDO: Para bundles, calcular lotes vendidos y subtotal correctamente
+            if ($ticketType->is_bundle) {
+                $bundleQuantity = $ticketType->bundle_quantity ?? 1;
+                $lotesVendidos = intval($ticketsEmitidos / $bundleQuantity); // Lotes vendidos
+                $subtotal = $lotesVendidos * $price; // Precio por lote × cantidad de lotes
+                
+                return [
+                    'ticket_type_id' => $ticketType->id,
+                    'ticket_type_name' => $ticketType->name,
+                    'price' => round($price, 2), // Precio por lote
+                    'quantity' => $lotesVendidos, // CORREGIDO: Mostrar lotes vendidos
+                    'bundle_quantity' => $bundleQuantity,
+                    'tickets_emitidos' => $ticketsEmitidos, // NUEVO: Tickets físicos emitidos
+                    'subtotal' => round($subtotal, 2), // CORREGIDO: Subtotal basado en lotes
+                    'tickets_used' => $tickets->where('status', 'used')->count(),
+                    'tickets_available' => $tickets->where('status', 'available')->count(),
+                    'is_bundle' => true,
+                ];
+            } else {
+                // Para tickets individuales: mantener lógica original
+                $subtotal = $ticketsEmitidos * $price;
+                
+                return [
+                    'ticket_type_id' => $ticketType->id,
+                    'ticket_type_name' => $ticketType->name,
+                    'price' => round($price, 2),
+                    'quantity' => $ticketsEmitidos, // Para individuales: cantidad = tickets emitidos
+                    'bundle_quantity' => 1,
+                    'tickets_emitidos' => $ticketsEmitidos,
+                    'subtotal' => round($subtotal, 2),
+                    'tickets_used' => $tickets->where('status', 'used')->count(),
+                    'tickets_available' => $tickets->where('status', 'available')->count(),
+                    'is_bundle' => false,
+                ];
+            }
         })->values();
 
         $orderSubtotal = $order->subtotal ?? $perType->sum('subtotal');

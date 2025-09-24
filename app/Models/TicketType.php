@@ -70,9 +70,19 @@ class TicketType extends Model
         return $this->isBundle() ? $this->quantity * $this->bundle_quantity : $this->quantity;
     }
 
-    // ← NUEVO: Método para obtener tickets vendidos reales (considerando bundles)
+    // Modificar el método getRealQuantitySoldAttribute
     public function getRealQuantitySoldAttribute(): int
     {
+        // Para bundles: devolver cantidad de lotes vendidos (no multiplicar)
+        // Para individuales: devolver cantidad normal
+        return $this->quantity_sold;
+    }
+
+    // Nuevo método para obtener entradas emitidas reales
+    public function getTicketsIssuedAttribute(): int
+    {
+        // Para bundles: multiplicar lotes vendidos por cantidad del bundle
+        // Para individuales: es igual a quantity_sold
         return $this->isBundle() ? $this->quantity_sold * $this->bundle_quantity : $this->quantity_sold;
     }
 

@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 
 interface Stat {
     totalRevenue: number;
-    totalTicketsSold: number;
+    totalEntradasVendidas: number; // NUEVO: entradas vendidas
+    totalTicketsSold: number; // CAMBIADO: tickets emitidos
     activeEventsCount: number;
     totalEventsCount: number;
 }
@@ -20,8 +21,10 @@ interface RecentEvent {
     name: string;
     image_url: string;
     date: string;
-    tickets_sold: number;
-    total_tickets: number;
+    entradas_vendidas: number;  // NUEVO: entradas vendidas para progreso
+    total_entradas: number;     // NUEVO: total entradas para progreso
+    tickets_sold: number;       // tickets emitidos
+    total_tickets: number;      // total tickets físicos
 }
 
 interface TopEvent {
@@ -48,9 +51,9 @@ interface DashboardProps {
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData }: DashboardProps) {
     const statCards = [
         { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
-        { title: 'Tickets Vendidos', value: formatNumber(stats.totalTicketsSold), icon: Ticket, color: 'text-chart-3' },
-        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Activity, color: 'text-chart-4' },
-        { title: 'Total de Eventos', value: formatNumber(stats.totalEventsCount), icon: Calendar, color: 'text-chart-5' },
+        { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3' },
+        { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4' },
+        { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
 
     return (
@@ -63,25 +66,32 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
-                                        <Link href={route('organizer.events.create')}>
-                                            <Button className="bg-primary hover:bg-primary-hover text-white">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Crear Evento
-                                            </Button>
-                                        </Link>
+                    <Link href={route('organizer.events.create')}>
+                        <Button className="bg-primary hover:bg-primary-hover text-white">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Crear Evento
+                        </Button>
+                    </Link>
                 </div>
 
-                {/* Stat Cards */}
+                {/* Stat Cards - ACTUALIZADO con 4 estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {statCards.map((card, index) => (
-                        <Card key={index}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                                <card.icon className={`h-5 w-5 ${card.color}`} />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{card.value}</div>
-                            </CardContent>
+                        <Card key={index} className="p-6 border-l-4 border-l-blue-500">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                                    <card.icon className={`w-4 h-4 ${card.color}`} />
+                                </div>
+                                <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+                                {/* NUEVO: Añadir descripción para las nuevas métricas */}
+                                {card.title === 'Entradas Vendidas' && (
+                                    <p className="text-xs text-gray-500">lotes + individuales</p>
+                                )}
+                                {card.title === 'Tickets Emitidos' && (
+                                    <p className="text-xs text-gray-500">entradas físicas</p>
+                                )}
+                            </div>
                         </Card>
                     ))}
                 </div>
@@ -114,7 +124,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 <div key={event.id} className="flex items-center">
                                     <div className="flex-1 space-y-1">
                                         <p className="text-sm font-medium leading-none truncate">{event.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets</p>
+                                        <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
                                     </div>
                                     <div className="font-medium text-green-600">{formatCurrency(event.revenue)}</div>
                                 </div>
@@ -123,7 +133,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     </Card>
                 </div>
 
-                {/* Recent Events */}
+                {/* Recent Events - CORREGIDO para usar entradas en progreso */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Eventos Recientes</CardTitle>
@@ -143,8 +153,18 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                             <div className="p-3">
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
-                                                <Progress value={(event.tickets_sold / event.total_tickets) * 100} className="h-2 mt-2 bg-white border border-gray-300" />
-                                                <p className="text-xs text-muted-foreground mt-1">{formatNumber(event.tickets_sold)} / {formatNumber(event.total_tickets)}</p>
+                                                
+                                                {/* CORREGIDO: Barra de progreso basada en entradas vendidas */}
+                                                <Progress 
+                                                    value={event.total_entradas > 0 ? (event.entradas_vendidas / event.total_entradas) * 100 : 0} 
+                                                    className="h-2 mt-2 bg-white border border-gray-300" 
+                                                />
+                                                
+                                                {/* CORREGIDO: Mostrar entradas vendidas para el progreso */}
+                                                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                                    <div>{formatNumber(event.entradas_vendidas)} / {formatNumber(event.total_entradas)} entradas</div>
+                                                    <div className="text-purple-600">{formatNumber(event.tickets_sold)} tickets emitidos</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </Link>

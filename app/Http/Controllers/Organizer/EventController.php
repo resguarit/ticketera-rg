@@ -162,9 +162,10 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
+            'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            'featured' => 'boolean',
+            // Remover 'featured' => 'boolean',
             'functions' => 'required|array|min:1',
             'functions.*.name' => 'required|string|max:255',
             'functions.*.description' => 'nullable|string',
@@ -183,7 +184,13 @@ class EventController extends Controller
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
-            // Create event
+            // Handle hero banner upload
+            $heroBannerPath = null;
+            if ($request->hasFile('hero_banner_url')) {
+                $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
+            }
+
+            // Create event (featured será false por defecto)
             $event = Event::create([
                 'organizer_id' => $organizer->id,
                 'category_id' => $validated['category_id'],
@@ -191,8 +198,9 @@ class EventController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
-                'featured' => $validated['featured'] ?? false,
-                'tax' => $organizer->tax, // <-- AÑADIR ESTA LÍNEA
+                'hero_banner_url' => $heroBannerPath,
+                'featured' => false, // Siempre false para organizadores
+                'tax' => $organizer->tax,
             ]);
 
             // Create functions only (without ticket types for now)
@@ -215,9 +223,12 @@ class EventController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
-            // Delete uploaded banner if it exists
+            // Delete uploaded files if they exist
             if ($bannerPath) {
                 Storage::disk('public')->delete($bannerPath);
+            }
+            if ($heroBannerPath) {
+                Storage::disk('public')->delete($heroBannerPath);
             }
             
             return back()->withErrors(['error' => 'Error al crear el evento: ' . $e->getMessage()]);
@@ -235,6 +246,10 @@ class EventController extends Controller
         // Cargar relaciones
         $event->load(['functions']);
 
+        // Agregar hero_image_url al evento que se pasa al frontend
+        $eventData = $event->toArray();
+        $eventData['hero_image_url'] = $event->hero_image_url;
+
         // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
             
@@ -242,7 +257,7 @@ class EventController extends Controller
         $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
 
         return Inertia::render('organizer/events/edit', [
-            'event' => $event,
+            'event' => $eventData,
             'categories' => $categories,
             'venues' => $venues,
         ]);
@@ -260,15 +275,19 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'banner_url' => 'nullable|image|max:2048',
+            'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            'featured' => 'boolean',
+            // Remover 'featured' => 'boolean',
         ]);
 
         try {
             DB::beginTransaction();
             
             $bannerPath = $event->banner_url;
+            $heroBannerPath = $event->hero_banner_url;
+
+            // Handle normal banner
             if ($request->hasFile('banner_url')) {
                 // Delete old banner if it exists
                 if ($bannerPath) {
@@ -277,14 +296,24 @@ class EventController extends Controller
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
-            // Update event
+            // Handle hero banner
+            if ($request->hasFile('hero_banner_url')) {
+                // Delete old hero banner if it exists
+                if ($heroBannerPath) {
+                    Storage::disk('public')->delete($heroBannerPath);
+                }
+                $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
+            }
+
+            // Update event (no tocar el campo featured)
             $event->update([
                 'category_id' => $validated['category_id'],
                 'venue_id' => $validated['venue_id'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
-                'featured' => $validated['featured'] ?? false,
+                'hero_banner_url' => $heroBannerPath,
+                // NO actualizar featured aquí
             ]);
 
             DB::commit();
@@ -321,7 +350,27 @@ class EventController extends Controller
         }
 
         // Cargar el evento con todas sus relaciones
-        $event->load(['category', 'venue', 'organizer', 'functions']);
+        $event->load(['category', 'venue', 'organizer', 'functions.ticketTypes']);
+
+        // Calcular estadísticas del evento
+        $totalEntradasVendidas = 0; // CAMBIADO: suma de lotes + entradas individuales (sin multiplicar)
+        $totalTicketsEmitidos = 0;   // CAMBIADO: tickets físicos reales emitidos
+        
+        foreach ($event->functions as $function) {
+            foreach ($function->ticketTypes as $ticketType) {
+                $vendidos = (int) $ticketType->quantity_sold;
+                
+                // Entradas vendidas: contar lotes y entradas individuales por igual
+                $totalEntradasVendidas += $vendidos;
+                
+                // Tickets emitidos: multiplicar por bundle_quantity si es bundle
+                if ($ticketType->is_bundle) {
+                    $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                } else {
+                    $totalTicketsEmitidos += $vendidos;
+                }
+            }
+        }
 
         // Formatear los datos del evento
         $eventData = [
@@ -336,8 +385,27 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'total_revenue' => $event->getRevenue(),
-            'tickets_sold' => $this->revenueService->ticketsSoldByEvent($event),
+            'entradas_vendidas' => $totalEntradasVendidas, // CAMBIADO: entradas vendidas
+            'tickets_emitidos' => $totalTicketsEmitidos,   // CAMBIADO: tickets emitidos
             'functions' => $event->functions->map(function($function) {
+                // Calcular estadísticas por función
+                $entradasVendidasFunc = 0;
+                $ticketsEmitidosFunc = 0;
+                
+                foreach ($function->ticketTypes as $ticketType) {
+                    $vendidos = (int) $ticketType->quantity_sold;
+                    
+                    // Entradas vendidas: contar lotes y entradas individuales por igual
+                    $entradasVendidasFunc += $vendidos;
+                    
+                    // Tickets emitidos: multiplicar por bundle_quantity si es bundle
+                    if ($ticketType->is_bundle) {
+                        $ticketsEmitidosFunc += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                    } else {
+                        $ticketsEmitidosFunc += $vendidos;
+                    }
+                }
+                
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -349,7 +417,8 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
-                    'tickets_sold' => $this->revenueService->ticketsSoldByFunction($function),
+                    'entradas_vendidas' => $entradasVendidasFunc, // CAMBIADO: entradas vendidas
+                    'tickets_emitidos' => $ticketsEmitidosFunc,   // CAMBIADO: tickets emitidos
                 ];
             }),
         ];
@@ -392,9 +461,14 @@ class EventController extends Controller
             'functions' => $event->functions->map(function($function) {
                 // Calcular estadísticas de la función usando los métodos del modelo y service
                 $ticketTypes = $function->ticketTypes;
-                $totalTickets = (int) $ticketTypes->sum('quantity');
-                $soldTickets = (int) $this->revenueService->ticketsSoldByFunction($function);
-                $availableTickets = max(0, $totalTickets - $soldTickets);
+                $totalLotes = (int) $ticketTypes->sum('quantity'); // Total de lotes/entradas disponibles
+                $lotesVendidos = (int) $ticketTypes->sum('quantity_sold'); // CORREGIDO: usar quantity_sold directamente
+                $entradasEmitidas = (int) $ticketTypes->sum(function($ticketType) {
+                    // CORREGIDO: usar quantity_sold directamente, no el accessor
+                    $sold = (int) $ticketType->quantity_sold;
+                    return $ticketType->is_bundle ? $sold * ($ticketType->bundle_quantity ?? 1) : $sold;
+                });
+                $availableLotes = max(0, $totalLotes - $lotesVendidos);
                 $totalRevenue = $function->getRevenue();
                 if ($totalRevenue === null) {
                     $totalRevenue = 0.0;
@@ -414,16 +488,22 @@ class EventController extends Controller
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
                     // Estadísticas calculadas en el backend
+                    'total_lotes' => $totalLotes,
+                    'lotes_vendidos' => $lotesVendidos,
+                    'entradas_emitidas' => $entradasEmitidas,
+                    'available_lotes' => $availableLotes,
                     'stats' => [
-                        'totalTickets' => $totalTickets,
-                        'soldTickets' => $soldTickets,
-                        'availableTickets' => $availableTickets,
+                        'totalTickets' => $totalLotes, // CORREGIDO: usar $totalLotes
+                        'soldTickets' => $lotesVendidos, // CORREGIDO: usar $lotesVendidos
+                        'availableTickets' => $availableLotes, // CORREGIDO: usar $availableLotes
+                        'entradasEmitidas' => $entradasEmitidas, // NUEVO: agregar entradas emitidas
                         'totalRevenue' => (float) $totalRevenue,
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],
                     'ticketTypes' => $function->ticketTypes->map(function($ticketType) {
-                        $actualSoldTickets = $this->revenueService->ticketsSoldByTicketType($ticketType);
+                        // USAR UNA SOLA FUENTE: quantity_sold del modelo (que ya debería estar actualizada)
+                        $actualSoldTickets = (int) $ticketType->quantity_sold; // Usar directamente del modelo
                         $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
                         $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
                         $totalIncome = $ticketType->getRevenue();
@@ -441,12 +521,17 @@ class EventController extends Controller
                             'sales_start_date' => $ticketType->sales_start_date,
                             'sales_end_date' => $ticketType->sales_end_date,
                             'quantity' => (int) ($ticketType->quantity ?? 0),
-                            'quantity_sold' => (int) $actualSoldTickets,
+                            'quantity_sold' => $actualSoldTickets, // CORREGIDO: usar $actualSoldTickets consistentemente
                             'quantity_available' => (int) $availableTickets,
                             'sold_percentage' => round($soldPercentage, 1),
                             'total_income' => (float) $totalIncome,
                             'is_hidden' => (bool) $ticketType->is_hidden,
-                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10), // ← AGREGAR ESTA LÍNEA
+                            'is_bundle' => (bool) ($ticketType->is_bundle ?? false),
+                            'bundle_quantity' => (int) ($ticketType->bundle_quantity ?? 1),
+                            'tickets_issued' => $ticketType->is_bundle 
+                                ? $actualSoldTickets * ($ticketType->bundle_quantity ?? 1) 
+                                : $actualSoldTickets,
+                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10),
                             'event_function_id' => $ticketType->event_function_id,
                             'sector_id' => $ticketType->sector_id,
                             'sector' => $ticketType->sector,

@@ -21,13 +21,15 @@ interface EventFunctionDetail extends EventFunction {
     time: string;       
     formatted_date: string; 
     day_name: string;
-    tickets_sold: number;
+    entradas_vendidas: number; // CAMBIADO: entradas vendidas (lotes + individuales sin multiplicar)
+    tickets_emitidos: number;  // CAMBIADO: tickets emitidos (físicos reales)
 }
 
 interface EventWithDetails extends Event, EventRelations {
     functions: EventFunctionDetail[];
     total_revenue: number;
-    tickets_sold: number;
+    entradas_vendidas: number; // CAMBIADO: entradas vendidas
+    tickets_emitidos: number;  // CAMBIADO: tickets emitidos
 }
 
 interface EventManageProps {
@@ -100,52 +102,56 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                 </div>
 
                 {/* Estadísticas rápidas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Funciones</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalFunctions}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <Card className="p-6 bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Total Funciones</p>
                             </div>
-                            <div className="bg-chart-2/20 p-3 rounded-full">
-                                <Calendar className="w-6 h-6 text-chart-2" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{totalFunctions}</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Funciones Activas</p>
-                                <p className="text-2xl font-bold text-gray-900">{activeFunctions}</p>
+                    <Card className="p-6 bg-gradient-to-br from-white to-green-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Funciones Activas</p>
                             </div>
-                            <div className="bg-chart-3/20 p-3 rounded-full">
-                                <TrendingUp className="w-6 h-6 text-chart-3" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{activeFunctions}</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Entradas Vendidas</p>
-                                <p className="text-2xl font-bold text-gray-900">{event.tickets_sold}</p>
+                    {/* CAMBIADO: Entradas Vendidas (lotes + individuales sin multiplicar) */}
+                    <Card className="p-6 bg-gradient-to-br from-white to-red-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Entradas Vendidas</p>
                             </div>
-                            <div className="bg-chart-4/20 p-3 rounded-full">
-                                <Ticket className="w-6 h-6 text-chart-4" />
-                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{event.entradas_vendidas}</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
+                    {/* CAMBIADO: Tickets Emitidos (físicos reales) */}
+                    <Card className="p-6 bg-gradient-to-br from-white to-purple-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Tickets Emitidos</p>
                             </div>
-                            <div className="bg-chart-5/20 p-3 rounded-full">
-                                <DollarSign className="w-6 h-6 text-chart-5" />
+                            <p className="text-3xl font-bold text-gray-900">{event.tickets_emitidos}</p>
+                        </div>
+                    </Card>
+
+                    <Card className="p-6 bg-gradient-to-br from-white to-yellow-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <p className="text-sm font-medium text-gray-700">Ingresos</p>
                             </div>
+                            <p className="text-3xl font-bold text-gray-900">{formatCurrency(event.total_revenue)}</p>
                         </div>
                     </Card>
                 </div>
@@ -183,7 +189,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                     </Card>
                 )}
 
-                {/* Lista de todas las funciones */}
+                {/* Lista de todas las funciones - ACTUALIZAR la información mostrada */}
                 <Card className="p-6 w-1/2">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Todas las Funciones</h3>
                     <div className="space-y-3">
@@ -208,8 +214,9 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                             <p className="text-sm text-gray-500 mt-1">{func.description}</p>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">{func.tickets_sold} entradas vendidas</span>
+                                    <div className="flex flex-col items-end gap-1 text-right">
+                                        <span className="text-sm text-gray-700 font-medium">{func.entradas_vendidas} entradas vendidas</span>
+                                        <span className="text-xs text-purple-600">{func.tickets_emitidos} tickets emitidos</span>
                                     </div>
                                 </div>
                             ))
