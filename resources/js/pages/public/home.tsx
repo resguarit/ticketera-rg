@@ -259,7 +259,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
                     {filteredAndSortedEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 ">
                             {filteredAndSortedEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}
