@@ -350,7 +350,27 @@ class EventController extends Controller
         }
 
         // Cargar el evento con todas sus relaciones
-        $event->load(['category', 'venue', 'organizer', 'functions']);
+        $event->load(['category', 'venue', 'organizer', 'functions.ticketTypes']);
+
+        // Calcular estadísticas del evento
+        $totalEntradasVendidas = 0; // CAMBIADO: suma de lotes + entradas individuales (sin multiplicar)
+        $totalTicketsEmitidos = 0;   // CAMBIADO: tickets físicos reales emitidos
+        
+        foreach ($event->functions as $function) {
+            foreach ($function->ticketTypes as $ticketType) {
+                $vendidos = (int) $ticketType->quantity_sold;
+                
+                // Entradas vendidas: contar lotes y entradas individuales por igual
+                $totalEntradasVendidas += $vendidos;
+                
+                // Tickets emitidos: multiplicar por bundle_quantity si es bundle
+                if ($ticketType->is_bundle) {
+                    $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                } else {
+                    $totalTicketsEmitidos += $vendidos;
+                }
+            }
+        }
 
         // Formatear los datos del evento
         $eventData = [
@@ -365,8 +385,27 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'total_revenue' => $event->getRevenue(),
-            'tickets_sold' => $this->revenueService->ticketsSoldByEvent($event),
+            'entradas_vendidas' => $totalEntradasVendidas, // CAMBIADO: entradas vendidas
+            'tickets_emitidos' => $totalTicketsEmitidos,   // CAMBIADO: tickets emitidos
             'functions' => $event->functions->map(function($function) {
+                // Calcular estadísticas por función
+                $entradasVendidasFunc = 0;
+                $ticketsEmitidosFunc = 0;
+                
+                foreach ($function->ticketTypes as $ticketType) {
+                    $vendidos = (int) $ticketType->quantity_sold;
+                    
+                    // Entradas vendidas: contar lotes y entradas individuales por igual
+                    $entradasVendidasFunc += $vendidos;
+                    
+                    // Tickets emitidos: multiplicar por bundle_quantity si es bundle
+                    if ($ticketType->is_bundle) {
+                        $ticketsEmitidosFunc += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                    } else {
+                        $ticketsEmitidosFunc += $vendidos;
+                    }
+                }
+                
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -378,7 +417,8 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
-                    'tickets_sold' => $this->revenueService->ticketsSoldByFunction($function),
+                    'entradas_vendidas' => $entradasVendidasFunc, // CAMBIADO: entradas vendidas
+                    'tickets_emitidos' => $ticketsEmitidosFunc,   // CAMBIADO: tickets emitidos
                 ];
             }),
         ];
@@ -421,9 +461,14 @@ class EventController extends Controller
             'functions' => $event->functions->map(function($function) {
                 // Calcular estadísticas de la función usando los métodos del modelo y service
                 $ticketTypes = $function->ticketTypes;
-                $totalTickets = (int) $ticketTypes->sum('quantity');
-                $soldTickets = (int) $this->revenueService->ticketsSoldByFunction($function);
-                $availableTickets = max(0, $totalTickets - $soldTickets);
+                $totalLotes = (int) $ticketTypes->sum('quantity'); // Total de lotes/entradas disponibles
+                $lotesVendidos = (int) $ticketTypes->sum('quantity_sold'); // CORREGIDO: usar quantity_sold directamente
+                $entradasEmitidas = (int) $ticketTypes->sum(function($ticketType) {
+                    // CORREGIDO: usar quantity_sold directamente, no el accessor
+                    $sold = (int) $ticketType->quantity_sold;
+                    return $ticketType->is_bundle ? $sold * ($ticketType->bundle_quantity ?? 1) : $sold;
+                });
+                $availableLotes = max(0, $totalLotes - $lotesVendidos);
                 $totalRevenue = $function->getRevenue();
                 if ($totalRevenue === null) {
                     $totalRevenue = 0.0;
@@ -443,16 +488,22 @@ class EventController extends Controller
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
                     // Estadísticas calculadas en el backend
+                    'total_lotes' => $totalLotes,
+                    'lotes_vendidos' => $lotesVendidos,
+                    'entradas_emitidas' => $entradasEmitidas,
+                    'available_lotes' => $availableLotes,
                     'stats' => [
-                        'totalTickets' => $totalTickets,
-                        'soldTickets' => $soldTickets,
-                        'availableTickets' => $availableTickets,
+                        'totalTickets' => $totalLotes, // CORREGIDO: usar $totalLotes
+                        'soldTickets' => $lotesVendidos, // CORREGIDO: usar $lotesVendidos
+                        'availableTickets' => $availableLotes, // CORREGIDO: usar $availableLotes
+                        'entradasEmitidas' => $entradasEmitidas, // NUEVO: agregar entradas emitidas
                         'totalRevenue' => (float) $totalRevenue,
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],
                     'ticketTypes' => $function->ticketTypes->map(function($ticketType) {
-                        $actualSoldTickets = $this->revenueService->ticketsSoldByTicketType($ticketType);
+                        // USAR UNA SOLA FUENTE: quantity_sold del modelo (que ya debería estar actualizada)
+                        $actualSoldTickets = (int) $ticketType->quantity_sold; // Usar directamente del modelo
                         $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
                         $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
                         $totalIncome = $ticketType->getRevenue();
@@ -470,12 +521,17 @@ class EventController extends Controller
                             'sales_start_date' => $ticketType->sales_start_date,
                             'sales_end_date' => $ticketType->sales_end_date,
                             'quantity' => (int) ($ticketType->quantity ?? 0),
-                            'quantity_sold' => (int) $actualSoldTickets,
+                            'quantity_sold' => $actualSoldTickets, // CORREGIDO: usar $actualSoldTickets consistentemente
                             'quantity_available' => (int) $availableTickets,
                             'sold_percentage' => round($soldPercentage, 1),
                             'total_income' => (float) $totalIncome,
                             'is_hidden' => (bool) $ticketType->is_hidden,
-                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10), // ← AGREGAR ESTA LÍNEA
+                            'is_bundle' => (bool) ($ticketType->is_bundle ?? false),
+                            'bundle_quantity' => (int) ($ticketType->bundle_quantity ?? 1),
+                            'tickets_issued' => $ticketType->is_bundle 
+                                ? $actualSoldTickets * ($ticketType->bundle_quantity ?? 1) 
+                                : $actualSoldTickets,
+                            'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10),
                             'event_function_id' => $ticketType->event_function_id,
                             'sector_id' => $ticketType->sector_id,
                             'sector' => $ticketType->sector,

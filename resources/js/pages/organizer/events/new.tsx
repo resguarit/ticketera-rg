@@ -415,11 +415,11 @@ export default function EventsNew({ categories, venues }: Props) {
                             <CardContent>
                                 <div className="space-y-6">
                                     {/* Banner Normal */}
-                                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
+                                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
                                             <Label htmlFor="banner" className="text-card-foreground">Banner Normal</Label>
                                             <p className="text-sm text-muted-foreground">
-                                                Imagen que aparece en las listas de eventos. Recomendado: 800x400px
+                                                Imagen que aparece en las tarjetas de eventos. Recomendado: 800x400px
                                             </p>
                                             <Input 
                                                 className='bg-background border-border text-foreground' 
@@ -432,12 +432,109 @@ export default function EventsNew({ categories, venues }: Props) {
                                         </div>
                                         {bannerPreview && (
                                             <div className='space-y-2'>
-                                                <Label className="text-card-foreground">Vista Previa - Banner Normal</Label>
-                                                <img 
-                                                    src={bannerPreview} 
-                                                    alt="Banner preview" 
-                                                    className="w-full h-32 object-cover rounded-lg border border-border"
-                                                />
+                                                <Label className="text-card-foreground">Vista Previa - Como se verá en la tarjeta</Label>
+                                                {/* Vista previa móvil */}
+                                                <div className="block sm:hidden">
+                                                    <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ width: '212px' }}>
+                                                        <div className="flex h-32">
+                                                            {/* Imagen izquierda - tamaño móvil */}
+                                                            <div className="w-32 h-32 flex-shrink-0">
+                                                                <img 
+                                                                    src={bannerPreview} 
+                                                                    alt="Banner preview móvil" 
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            
+                                                            {/* Contenido derecha - simulado */}
+                                                            <div className="flex-1 p-3 flex flex-col justify-between">
+                                                                <div>
+                                                                    <div className="flex items-center gap-1 mb-1">
+                                                                        <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                                                        <span className="text-xs text-gray-500 uppercase">
+                                                                            UBICACIÓN
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 mb-2">
+                                                                        NOMBRE DEL EVENTO
+                                                                    </h3>
+                                                                </div>
+                                                                
+                                                                <div className="flex gap-4">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-2xl font-bold text-black leading-none">15</span>
+                                                                        <div className="leading-none">
+                                                                            <div className="text-xs font-bold text-black">nov</div>
+                                                                            <div className="text-xs font-bold text-black">2024</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-2xl font-bold text-black leading-none">20</span>
+                                                                        <div className="leading-none">
+                                                                            <div className="text-xs font-bold text-black">30</div>
+                                                                            <div className="text-xs font-bold text-black">hrs</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-2">Vista en móviles</p>
+                                                </div>
+
+                                                {/* Vista previa desktop */}
+                                                <div className="hidden sm:block">
+                                                    <div className="bg-white rounded-2xl overflow-hidden shadow-lg" style={{ width: '212px', height: '380px' }}>
+                                                        {/* Header section con la imagen - altura fija como en la tarjeta real */}
+                                                        <div className="relative overflow-hidden" style={{ height: '260px' }}>
+                                                            <img 
+                                                                src={bannerPreview} 
+                                                                alt="Banner preview desktop" 
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+
+                                                        {/* Bottom section - simulado - altura exacta restante */}
+                                                        <div className="p-3 bg-white" style={{ height: '100px' }}>
+                                                            <div className="flex items-center gap-1 mb-2" style={{ height: '16px' }}>
+                                                                <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0"></div>
+                                                                <span className="text-gray-600 text-xs font-medium uppercase truncate">
+                                                                    UBICACIÓN, CIUDAD
+                                                                </span>
+                                                            </div>
+
+                                                            <h2 className="text-black text-sm font-bold mb-2 leading-tight tracking-wide uppercase line-clamp-2" style={{ minHeight: '28px' }}>
+                                                                NOMBRE DEL EVENTO
+                                                            </h2>
+
+                                                            <div className="flex gap-4">
+                                                                <div className="text-center">
+                                                                    <div className="flex gap-[1px] flex-row items-center">
+                                                                        <div className="text-2xl font-bold text-black leading-none">15</div>
+                                                                        <div className="gap-0">
+                                                                            <div className="capitalize text-start font-bold text-black leading-none text-xs pt-1">
+                                                                                nov<br />2024
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <div className="flex gap-[1px] flex-row items-center">
+                                                                        <div className="text-2xl font-bold text-black leading-none">20</div>
+                                                                        <div className="gap-0">
+                                                                            <div className="text-start font-bold text-black leading-none text-xs pt-1">
+                                                                                30<br />hrs
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-2">Vista en desktop y tablets </p>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -445,8 +542,8 @@ export default function EventsNew({ categories, venues }: Props) {
                                     {/* Separador */}
                                     <div className="border-t border-border my-4"></div>
 
-                                    {/* Hero Banner - Siempre disponible para que puedan prepararlo */}
-                                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
+                                    {/* Hero Banner - mantener como está */}
+                                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
                                             <Label htmlFor="hero_banner" className="text-card-foreground">
                                                 Hero Banner (Opcional)
@@ -472,11 +569,12 @@ export default function EventsNew({ categories, venues }: Props) {
                                                     alt="Hero banner preview" 
                                                     className="w-full h-24 object-cover rounded-lg border border-border"
                                                 />
+                                                <p className="text-xs text-muted-foreground">Se mostrará en el banner principal del home</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Nota informativa en lugar del checkbox */}
+                                    {/* Nota informativa - mantener como está */}
                                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                         <div className="flex items-start space-x-2">
                                             <div className="text-blue-600 mt-1">

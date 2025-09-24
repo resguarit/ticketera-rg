@@ -12,6 +12,14 @@ import InputError from '@/components/input-error';
 import type { TicketType } from '@/types/models/ticketType';
 import type { Sector } from '@/types/models/sector';
 
+interface SectorWithAvailability {
+    id: number;
+    name: string;
+    capacity: number;
+    used_capacity: number;
+    available_capacity: number;
+}
+
 // Extender el tipo base para el formulario
 export interface TicketTypeFormData extends Partial<TicketType> {
     // Puedes agregar campos temporales si lo necesitas, pero los principales ya están en TicketType
@@ -24,18 +32,24 @@ interface TicketTypeFormProps {
     processing: boolean;
     onSubmit: FormEventHandler;
     sectors: Sector[];
+    sectorsWithAvailability?: SectorWithAvailability[];
     submitText: string;
     cancelUrl: string;
     maxQuantity?: number;
 }
 
-export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, submitText, cancelUrl, maxQuantity }: TicketTypeFormProps) {
+export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, sectorsWithAvailability, submitText, cancelUrl, maxQuantity }: TicketTypeFormProps) {
     const selectedSector = sectors.find(s => s.id.toString() === data.sector_id?.toString());
+    const selectedSectorAvailability = sectorsWithAvailability?.find(s => s.id.toString() === data.sector_id?.toString());
     const isBundle = data.is_bundle || false;
     const bundleQuantity = data.bundle_quantity || 1;
     
     // Calcular cantidad real de entradas
     const realQuantity = isBundle ? (data.quantity || 0) * bundleQuantity : (data.quantity || 0);
+    
+    // Determinar si se superará la capacidad
+    const availableCapacity = selectedSectorAvailability?.available_capacity || 0;
+    const willExceedCapacity = realQuantity > availableCapacity && availableCapacity >= 0;
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -52,9 +66,18 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                             <SelectValue placeholder="Selecciona un sector" />
                         </SelectTrigger>
                         <SelectContent>
-                            {sectors.map(sector => (
-                                <SelectItem key={sector.id} value={sector.id.toString()}>{sector.name} ({sector.capacity} asientos)</SelectItem>
-                            ))}
+                            {sectors.map(sector => {
+                                const sectorAvailability = sectorsWithAvailability?.find(s => s.id === sector.id);
+                                const availabilityText = sectorAvailability 
+                                    ? ` - Disponible: ${sectorAvailability.available_capacity}/${sector.capacity}`
+                                    : ` (${sector.capacity} asientos)`;
+                                
+                                return (
+                                    <SelectItem key={sector.id} value={sector.id.toString()}>
+                                        {sector.name}{availabilityText}
+                                    </SelectItem>
+                                );
+                            })}
                         </SelectContent>
                     </Select>
                     <InputError message={errors.sector_id} />
@@ -138,19 +161,39 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         onChange={e => setData('quantity', e.target.value)}
                         required
                         min="1"
-                        max={maxQuantity}
                     />
-                    {selectedSector && (
-                        <p className="text-sm text-muted-foreground">
-                            Capacidad máxima del sector: {selectedSector.capacity}
+                    {selectedSector && selectedSectorAvailability && (
+                        <div className="text-sm space-y-1">
+                            <p className="text-muted-foreground">
+                                Capacidad total del sector: {selectedSector.capacity}
+                            </p>
+                            <p className="text-orange-600">
+                                Ya asignadas: {selectedSectorAvailability.used_capacity}
+                            </p>
+                            <p className={`font-medium ${selectedSectorAvailability.available_capacity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                Disponibles: {selectedSectorAvailability.available_capacity}
+                            </p>
                             {isBundle && (
-                                <><br />
-                                <span className={realQuantity > (selectedSector.capacity ?? 0) ? 'text-red-600 font-medium' : 'text-blue-600'}>
+                                <p className={realQuantity > selectedSectorAvailability.available_capacity ? 'text-red-600 font-medium' : 'text-blue-600'}>
                                     Entradas reales que se generarán: {realQuantity}
-                                </span></>
+                                </p>
                             )}
-                        </p>
+                        </div>
                     )}
+                    
+                    {/* Mensaje de advertencia si se supera la capacidad */}
+                    
+                    {willExceedCapacity && selectedSectorAvailability && (
+                        <Alert className="border-primary bg-primary/10">
+                            <Info className="h-4 w-4 text-primary" />
+                            <AlertDescription className="text-primary">
+                                <strong>Advertencia:</strong> Estás superando la capacidad disponible del sector por{' '}
+                                {realQuantity - selectedSectorAvailability.available_capacity} entradas.
+                                Esto puede generar sobreventa. 
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
                     <InputError message={errors.quantity} />
                 </div>
             </div>
