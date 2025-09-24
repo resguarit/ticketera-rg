@@ -39,9 +39,9 @@ export default function Privacy() {
                     {/* Content */}
                     <div className="max-w-4xl mx-auto space-y-8">
                         {/* Introducción */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground flex items-center">
+                                <CardTitle className="text-primary flex items-center">
                                     1. Introducción
                                 </CardTitle>
                             </CardHeader>
@@ -56,9 +56,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Datos que recopilamos */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground flex items-center">
+                                <CardTitle className="text-primary flex items-center">
                                     2. Datos que recopilamos
                                 </CardTitle>
                             </CardHeader>
@@ -97,9 +97,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Finalidades del Tratamiento */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">3. Finalidades del Tratamiento</CardTitle>
+                                <CardTitle className="text-primary">3. Finalidades del Tratamiento</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <p>Usamos sus datos para:</p>
@@ -116,9 +116,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Cesión y Transferencia de Datos */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">4. Cesión y Transferencia de Datos</CardTitle>
+                                <CardTitle className="text-primary">4. Cesión y Transferencia de Datos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
@@ -140,9 +140,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Seguridad y Conservación de Datos */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground flex items-center">
+                                <CardTitle className="text-primary flex items-center">
                                     5. Seguridad y Conservación de Datos
                                 </CardTitle>
                             </CardHeader>
@@ -156,9 +156,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Derechos de los Titulares de los Datos */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">6. Derechos de los Titulares de los Datos</CardTitle>
+                                <CardTitle className="text-primary">6. Derechos de los Titulares de los Datos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <p>
@@ -174,9 +174,9 @@ export default function Privacy() {
                         </Card>
 
                         {/* Menores de Edad */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">7. Menores de Edad</CardTitle>
+                                <CardTitle className="text-primary">7. Menores de Edad</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
                                 <p>
@@ -186,7 +186,7 @@ export default function Privacy() {
                         </Card>
 
                         {/* Modificaciones */}
-                        <Card className="bg-green-50 border-green-200 shadow-lg">
+                        <Card className="bg-green-50 border-green-200 shadow-lg gap-2">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
                                     8. Modificaciones

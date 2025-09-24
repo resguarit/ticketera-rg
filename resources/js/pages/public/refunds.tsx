@@ -31,7 +31,7 @@ export default function Refunds() {
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <div className="px-8 py-6 sm:py-8">
                     {/* Header */}
-                    <div className="mb-2 ">
+                    <div className=" ">
                         <Link href={route('home')}>
                             <Button variant="ghost" className="mb-4 text-foreground hover:bg-accent">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -45,7 +45,7 @@ export default function Refunds() {
                     {/* Formulario */}
                     <div className="max-w-xl mx-auto">
                         <Card className="bg-white shadow-xl">
-                            <CardHeader className="text-center pb-2">
+                            <CardHeader className="text-center pb-1">
                                 <CardTitle className="text-xl sm:text-3xl text-foreground">
                                     Formulario de Reembolso
                                 </CardTitle>
@@ -61,7 +61,7 @@ export default function Refunds() {
                                             type="text"
                                             value={data.nombre_completo}
                                             onChange={(e) => setData('nombre_completo', e.target.value)}
-                                            className="mt-1"
+                                            className=""
                                             required
                                         />
                                         {errors.nombre_completo && (
@@ -78,7 +78,7 @@ export default function Refunds() {
                                             type="email"
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
-                                            className="mt-1"
+                                            className=""
                                             required
                                         />
                                         {errors.email && (
@@ -95,7 +95,7 @@ export default function Refunds() {
                                             type="tel"
                                             value={data.telefono}
                                             onChange={(e) => setData('telefono', e.target.value)}
-                                            className="mt-1"
+                                            className=""
                                             required
                                         />
                                         {errors.telefono && (
@@ -112,7 +112,7 @@ export default function Refunds() {
                                             type="text"
                                             value={data.evento_nombre}
                                             onChange={(e) => setData('evento_nombre', e.target.value)}
-                                            className="mt-1"
+                                            className=""
                                             required
                                         />
                                         {errors.evento_nombre && (
@@ -128,7 +128,7 @@ export default function Refunds() {
                                             id="motivo"
                                             value={data.motivo}
                                             onChange={(e) => setData('motivo', e.target.value)}
-                                            className="mt-1"
+                                            className=""
                                             rows={4}
                                             placeholder="Describe el motivo de tu solicitud de reembolso..."
                                             required
@@ -138,10 +138,10 @@ export default function Refunds() {
                                         )}
                                     </div>
 
-                                    <div className="pt-6 ">
+                                    <div className="pt-3 ">
                                         <Button
                                             type="submit"
-                                            className="w-full bg-primary hover:bg-primary-hover text-white py-3 text-lg font-medium"
+                                            className="w-full bg-primary hover:bg-primary-hover text-white py-3  font-medium"
                                             disabled={processing}
                                         >
                                             {processing ? (
