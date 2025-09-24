@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\TicketLockService; // NUEVO
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -19,14 +20,20 @@ use Illuminate\Support\Facades\Redirect;
 class CheckoutController extends Controller
 {
     protected OrderService $orderService;
+    protected TicketLockService $ticketLockService; // NUEVO
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, TicketLockService $ticketLockService)
     {
         $this->orderService = $orderService;
+        $this->ticketLockService = $ticketLockService; // NUEVO
     }
 
     public function confirm(Request $request, Event $event): RedirectResponse | Response
     {
+        // NUEVO: Generar ID de sesión único para esta compra
+        $sessionId = $request->session()->getId() . '_' . time();
+        $request->session()->put('checkout_session_id', $sessionId);
+
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
@@ -52,7 +59,9 @@ class CheckoutController extends Controller
             $selectedTicketIds = json_decode($selectedTicketIds, true) ?? [];
         }
 
+        // MODIFICADO: Preparar tickets con información de bloqueo
         $selectedTickets = [];
+        $ticketRequests = [];
 
         if (!empty($selectedTicketIds)) {
             foreach ($selectedTicketIds as $ticketId => $quantity) {
@@ -60,6 +69,11 @@ class CheckoutController extends Controller
                     $ticketType = $selectedFunction->ticketTypes->firstWhere('id', $ticketId);
                     
                     if ($ticketType) {
+                        $ticketRequests[] = [
+                            'id' => $ticketType->id,
+                            'quantity' => (int)$quantity
+                        ];
+
                         $selectedTickets[] = [
                             'id' => $ticketType->id,
                             'type' => $ticketType->name,
@@ -72,6 +86,25 @@ class CheckoutController extends Controller
                     }
                 }
             }
+        }
+
+        // NUEVO: Intentar bloquear los tickets
+        if (!empty($ticketRequests)) {
+            $lockResult = $this->ticketLockService->lockTickets($ticketRequests, $sessionId);
+            
+            if (!$lockResult['success']) {
+                // Redirigir con errores de disponibilidad
+                $errorMessages = array_map(function($failure) {
+                    return "Error con {$failure['message']}";
+                }, $lockResult['failures']);
+                
+                return redirect()->route('event.detail', $event->id)
+                    ->withErrors(['tickets' => $errorMessages])
+                    ->with('error', 'Algunos tickets ya no están disponibles. Por favor, revisa tu selección.');
+            }
+            
+            // Guardar información de bloqueo en sesión
+            $request->session()->put('locked_tickets', $lockResult['locked_tickets']);
         }
 
         // Preparar datos del evento para el checkout
@@ -95,19 +128,47 @@ class CheckoutController extends Controller
         return Inertia::render('public/checkoutconfirm', [
             'eventData' => $eventData,
             'eventId' => $event->id,
+            'sessionId' => $sessionId, // NUEVO: Pasar session ID al frontend
+            'lockExpiration' => now()->addMinutes(TicketLockService::LOCK_DURATION)->toISOString() // NUEVO
         ]);
     }
 
     public function processPayment(Request $request): RedirectResponse
     {
-
-        // Log de todos los datos de entrada (sin datos sensibles)
-        $allData = $request->all();
-        if (isset($allData['payment_info']['cardNumber'])) {
-            $allData['payment_info']['cardNumber'] = '**** **** **** ' . substr($allData['payment_info']['cardNumber'], -4);
+        // NUEVO: Verificar locks antes de procesar
+        $sessionId = $request->session()->get('checkout_session_id');
+        $lockedTickets = $request->session()->get('locked_tickets', []);
+        
+        if (empty($sessionId) || empty($lockedTickets)) {
+            return $this->redirectToError([
+                'title' => 'Sesión Expirada',
+                'message' => 'Tu sesión de compra ha expirado. Por favor, inicia el proceso nuevamente.',
+                'errorCode' => 'SESSION_EXPIRED',
+                'canRetry' => true,
+                'retryUrl' => route('event.detail', $request->input('event_id')),
+                'eventId' => $request->input('event_id'),
+                'eventName' => Event::find($request->input('event_id'))->name ?? null,
+                'timestamp' => now()->format('d/m/Y H:i')
+            ]);
         }
-        if (isset($allData['payment_info']['cvv'])) {
-            $allData['payment_info']['cvv'] = '***';
+
+        // Verificar que los locks siguen válidos
+        $lockVerification = $this->ticketLockService->verifyLocks($lockedTickets, $sessionId);
+        
+        if (!$lockVerification['all_valid']) {
+            // Liberar todos los locks de esta sesión
+            $this->ticketLockService->releaseTickets($sessionId);
+            
+            return $this->redirectToError([
+                'title' => 'Tickets No Disponibles',
+                'message' => 'Los tickets que seleccionaste ya no están disponibles. Tu reserva ha expirado.',
+                'errorCode' => 'TICKETS_EXPIRED',
+                'canRetry' => true,
+                'retryUrl' => route('event.detail', $request->input('event_id')),
+                'eventId' => $request->input('event_id'),
+                'eventName' => Event::find($request->input('event_id'))->name ?? null,
+                'timestamp' => now()->format('d/m/Y H:i')
+            ]);
         }
 
         try {
@@ -166,80 +227,82 @@ class CheckoutController extends Controller
             ];
 
 
-            // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
-            $orderResult = $this->orderService->createOrder($orderData);
-            
+            // 🔥 IMPORTANTE: Liberar locks ANTES de crear la orden
+            Log::info('=== ANTES DE LIBERAR LOCKS ===', [
+                'session_id' => substr($sessionId, -8),
+                'availability_before' => $this->ticketLockService->getAvailability($validated['selected_tickets'][0]['id'])
+            ]);
 
-            // Verificar si se creó una nueva cuenta
-            $accountCreated = $orderResult['account_created'] ?? false;
+            $this->ticketLockService->releaseTickets($sessionId);
+
+            Log::info('=== DESPUÉS DE LIBERAR LOCKS ===', [
+                'session_id' => substr($sessionId, -8),
+                'availability_after' => $this->ticketLockService->getAvailability($validated['selected_tickets'][0]['id'])
+            ]);
+
+            // Crear la orden usando el servicio
+            $orderResult = $this->orderService->createOrder($orderData);
             $order = $orderResult['order'];
 
-            // Procesar el pago usando el servicio
+            Log::info('=== DESPUÉS DE CREAR ORDEN ===', [
+                'order_id' => $order->id,
+                'availability_final' => $this->ticketLockService->getAvailability($validated['selected_tickets'][0]['id'])
+            ]);
+
+            // Procesar el pago
             $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
 
             if ($paymentSuccessful) {
-                $redirectParams = ['order' => $order->id];
+                // Ya no necesitas liberar locks aquí porque ya se liberaron
                 
-                if ($accountCreated) {
+                // Limpiar sesión
+                $request->session()->forget(['checkout_session_id', 'locked_tickets']);
+                
+                $redirectParams = ['order' => $order->id];
+                if ($orderResult['account_created'] ?? false) {
                     $redirectParams['account_created'] = '1';
                 }
                 
                 return redirect()->route('checkout.success', $redirectParams)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
-                Log::error('Pago falló', [
-                    'order_id' => $order->id,
-                    'payment_method' => $validated['payment_info']['method'],
-                    'event_id' => $validated['event_id']
-                ]);
-
-                // Redirigir a página de error con información específica
+                // Si el pago falla, la orden ya está creada pero en estado cancelled/failed
+                // No necesitamos liberar locks porque ya se liberaron antes de crear la orden
+                
                 return $this->redirectToError([
                     'title' => 'Error en el Pago',
-                    'message' => 'No pudimos procesar tu pago. Por favor verifica la información de tu tarjeta e intenta nuevamente.',
+                    'message' => 'No pudimos procesar tu pago. La orden ha sido cancelada.',
                     'errorCode' => 'PAYMENT_FAILED',
                     'canRetry' => true,
-                    'retryUrl' => route('checkout.confirm', $validated['event_id']) . '?' . http_build_query([
-                        'function_id' => $validated['function_id'],
-                        'tickets' => json_encode(array_keys($validated['selected_tickets']))
-                    ]),
+                    'retryUrl' => route('event.detail', $validated['event_id']),
                     'eventId' => $validated['event_id'],
                     'eventName' => Event::find($validated['event_id'])->name ?? null,
                     'timestamp' => now()->format('d/m/Y H:i')
                 ]);
             }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Error de validación en checkout', [
-                'errors' => $e->errors(),
-                'event_id' => $request->input('event_id')
-            ]);
-
-            return $this->redirectToError([
-                'title' => 'Datos Incompletos',
-                'message' => 'Algunos datos requeridos están incompletos o son incorrectos. Por favor revisa la información e intenta nuevamente.',
-                'errorCode' => 'VALIDATION_ERROR',
-                'canRetry' => true,
-                'retryUrl' => route('checkout.confirm', $request->input('event_id')),
-                'eventId' => $request->input('event_id'),
-                'eventName' => Event::find($request->input('event_id'))->name ?? null,
-                'timestamp' => now()->format('d/m/Y H:i')
-            ]);
-
         } catch (\Exception $e) {
+            // En caso de error, liberar locks si aún no se han liberado
+            // (esto manejará el caso donde el error ocurre antes de liberar los locks)
+            try {
+                $this->ticketLockService->releaseTickets($sessionId);
+            } catch (\Exception $releaseError) {
+                Log::error('Error liberando locks en catch', ['error' => $releaseError->getMessage()]);
+            }
+            
             Log::error('Error general en checkout', [
                 'message' => $e->getMessage(),
+                'session_id' => $sessionId ?? 'unknown',
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'event_id' => $request->input('event_id')
+                'line' => $e->getLine()
             ]);
 
             return $this->redirectToError([
                 'title' => 'Error Inesperado',
-                'message' => 'Ha ocurrido un error inesperado al procesar tu compra. Nuestro equipo ha sido notificado y trabajamos para solucionarlo.',
+                'message' => 'Ha ocurrido un error inesperado. Por favor intenta nuevamente.',
                 'errorCode' => 'SYSTEM_ERROR',
                 'canRetry' => true,
-                'retryUrl' => route('checkout.confirm', $request->input('event_id')),
+                'retryUrl' => route('event.detail', $request->input('event_id')),
                 'eventId' => $request->input('event_id'),
                 'eventName' => Event::find($request->input('event_id'))->name ?? null,
                 'timestamp' => now()->format('d/m/Y H:i')
