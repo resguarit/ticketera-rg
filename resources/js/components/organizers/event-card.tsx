@@ -50,8 +50,18 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
         });
     };
 
+    const handleCardClick = () => {
+        router.visit(route('organizer.events.manage', event.id));
+    };
+
+    const preventCardClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
-        <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0">
+
+        <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0 cursor-pointer" onClick={handleCardClick}>
             {/* Header con fecha y título (altura fija) */}
             <div className="bg-gradient-to-r from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
                 <div className="flex items-center justify-between">
@@ -152,7 +162,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                 </div>
 
                 {/* Botones de acción (se alinearán en la parte inferior) */}
-                <div className="flex gap-2 mt-auto pt-4">
+                <div className="flex gap-2 mt-auto pt-4" onClick={preventCardClick}>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                         <Link href={route('organizer.events.edit', event.id)}>
                             <Edit className="w-4 h-4 mr-1" />
@@ -169,13 +179,16 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                            onClick={(e) => {
+                                preventCardClick(e);
+                                setDropdownOpen(!dropdownOpen);
+                            }}
                         >
                             <MoreVertical className="w-4 h-4" />
                         </Button>
                         
                         {dropdownOpen && (
-                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10" onClick={preventCardClick}>
                                 <div className="py-1">
                                     <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
                                         Ver como público

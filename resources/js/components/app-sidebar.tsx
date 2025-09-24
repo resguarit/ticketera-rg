@@ -132,11 +132,6 @@ const footerNavItems: NavItem[] = [
         href: '/help',
         icon: BookOpen,
     },
-    {
-        title: 'Soporte',
-        href: '/support',
-        icon: Shield,
-    },
 ];
 
 export function AppSidebar() {

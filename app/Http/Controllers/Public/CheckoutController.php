@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Order;
+use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\Redirect;
 class CheckoutController extends Controller
 {
     protected OrderService $orderService;
+    protected EmailDispatcherService $emailDispatcher;
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, EmailDispatcherService $emailDispatcher)
     {
         $this->orderService = $orderService;
+        $this->emailDispatcher = $emailDispatcher;
     }
 
     public function confirm(Request $request, Event $event): RedirectResponse | Response
@@ -169,7 +172,6 @@ class CheckoutController extends Controller
             // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
             $orderResult = $this->orderService->createOrder($orderData);
             
-
             // Verificar si se creó una nueva cuenta
             $accountCreated = $orderResult['account_created'] ?? false;
             $order = $orderResult['order'];
@@ -178,6 +180,7 @@ class CheckoutController extends Controller
             $paymentSuccessful = $this->orderService->processPayment($order, $validated['payment_info']);
 
             if ($paymentSuccessful) {
+                $this->emailDispatcher->sendTicketPurchaseConfirmation($order);
                 $redirectParams = ['order' => $order->id];
                 
                 if ($accountCreated) {
