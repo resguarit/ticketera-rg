@@ -229,12 +229,12 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                         placeholder="Buscar eventos..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-base h-7 sm:h-10"
+                                        className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm  h-7 sm:h-10"
                                     />
                                 </div>
 
                                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-base h-7 sm:h-10">
+                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-sm h-7 sm:h-10">
                                         <SelectValue placeholder="Categoría" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -248,7 +248,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 </Select>
 
                                 <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-base h-7 sm:h-10">
+                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-sm h-7 sm:h-10">
                                         <SelectValue placeholder="Ciudad" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -262,7 +262,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 </Select>
 
                                 <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-base h-7 sm:h-10">
+                                    <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-400 shadow-md text-sm sm:text-sm h-7 sm:h-10">
                                         <SelectValue placeholder="Ordenar por" />
                                     </SelectTrigger>
                                     <SelectContent>

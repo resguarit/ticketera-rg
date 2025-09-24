@@ -205,12 +205,12 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             placeholder="Buscar eventos..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10"
+                                            className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10"
                                         />
                                     </div>
 
                                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <SelectValue placeholder="Categoría" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -224,7 +224,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     </Select>
 
                                     <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <SelectValue placeholder="Ciudad" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -238,7 +238,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     </Select>
 
                                     <Select value={sortBy} onValueChange={setSortBy}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <ArrowUpDown className="w-4 h-4 mr-2" />
                                             <SelectValue placeholder="Ordenar" />
                                         </SelectTrigger>
