@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\SendOrderConfirmationJob;
+use App\Jobs\SendOrderTicketJob;
 use App\Jobs\SendTicketBatchJob;
 use App\Jobs\SendTicketEmailJob;
 use App\Models\Invitation;
@@ -26,6 +27,13 @@ class EmailDispatcherService
         foreach ($ticketsChunk as $chunk) {
             SendTicketBatchJob::dispatch($chunk, $recipientEmail);
         }
+    }
+
+    public function resendTicketPurchaseConfirmation(Order $order)
+    {
+        Log::info("Resending ticket purchase confirmation email for Order ID: {$order->id} to {$order->client->email}");
+
+        SendOrderTicketJob::dispatch($order);
     }
 
     public function sendTicketPurchaseConfirmation(Order $order)

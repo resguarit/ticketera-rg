@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Assistant;
 use App\Models\EventFunction;
+use App\Models\IssuedTicket;
 use App\Models\Order;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -13,10 +14,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\EmailDispatcherService;
 
 class AssistantController extends Controller
 {
     use AuthorizesRequests;
+
+    protected $emailService;
+
+    public function __construct(EmailDispatcherService $emailService)
+    {
+        $this->emailService = $emailService;
+    }
 
     private function checkOwnership(Event $event)
     {
@@ -26,15 +35,12 @@ class AssistantController extends Controller
     }
     public function index(Event $event, Request $request): Response
     {
-        // Verificar que el evento pertenece al organizador autenticado
         $this->checkOwnership($event);
         
         $functionId = $request->get('function_id');
         
-        // Cargar el evento con todas sus relaciones
         $event->load(['category', 'venue', 'organizer', 'functions']);
 
-        // Formatear los datos del evento
         $eventData = [
             'id' => $event->id,
             'name' => $event->name,
@@ -62,7 +68,6 @@ class AssistantController extends Controller
             }),
         ];
         
-        // Obtener las funciones del evento para el filtro
         $functions = $event->functions()
             ->select('id', 'name', 'start_time')
             ->orderBy('start_time')
@@ -75,40 +80,32 @@ class AssistantController extends Controller
                 ];
             });
 
-        // Obtener los asistentes basados en issued_tickets
         $attendees = $this->getAttendeesFromIssuedTickets($event, $functionId);
         
-        // Ordenar los asistentes por fecha (más recientes primero)
         $attendees = $attendees->sortByDesc(function ($attendee) {
             return $attendee['type'] === 'buyer' 
                 ? $attendee['purchased_at'] 
                 : $attendee['invited_at'];
         });
         
-        // Calcular estadísticas
         $stats = $this->calculateStats($attendees);
         
-        // Paginar los resultados
-        $perPage = 10; // Número de resultados por página
+        $perPage = 10; 
         $currentPage = request()->input('page', 1);
         $offset = ($currentPage - 1) * $perPage;
         
-        // Asegurarnos de que paginatedItems sea un array
         $paginatedItems = $attendees->slice($offset, $perPage)->values()->all();
         $totalItems = $attendees->count();
         
-        // Crear los enlaces de paginación manualmente
         $lastPage = ceil($totalItems / $perPage);
         $links = [];
         
-        // Enlace anterior
         $links[] = [
             'url' => $currentPage > 1 ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage - 1])) : null,
             'label' => '&laquo; Anterior',
             'active' => false,
         ];
         
-        // Enlaces numéricos
         $startPage = max(1, $currentPage - 2);
         $endPage = min($lastPage, $currentPage + 2);
         
@@ -120,14 +117,12 @@ class AssistantController extends Controller
             ];
         }
         
-        // Enlace siguiente
         $links[] = [
             'url' => $currentPage < $lastPage ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage + 1])) : null,
             'label' => 'Siguiente &raquo;',
             'active' => false,
         ];
         
-        // Estructura de paginación compatible con PaginatedResponse
         $attendeesPaginated = [
             'data' => $paginatedItems,
             'links' => $links,
@@ -150,13 +145,11 @@ class AssistantController extends Controller
 
     private function getAttendeesFromIssuedTickets(Event $event, $functionId = null)
     {
-        // Query base para issued tickets del evento
         $issuedTicketsQuery = DB::table('issued_tickets as it')
             ->join('ticket_types as tt', 'it.ticket_type_id', '=', 'tt.id')
             ->join('event_functions as ef', 'tt.event_function_id', '=', 'ef.id')
             ->where('ef.event_id', $event->id);
 
-        // Filtrar por función si se especifica
         if ($functionId) {
             $issuedTicketsQuery->where('ef.id', $functionId);
         }
@@ -173,7 +166,6 @@ class AssistantController extends Controller
 
         $attendees = collect();
 
-        // 1. Procesar asistentes invitados (con assistant_id)
         $invitedTickets = $issuedTickets->whereNotNull('assistant_id');
         $invitedGroups = $invitedTickets->groupBy('assistant_id');
 
@@ -213,7 +205,6 @@ class AssistantController extends Controller
             ]);
         }
 
-        // 2. Procesar compradores (con order_id y sin assistant_id)
         $buyerTickets = $issuedTickets->whereNull('assistant_id')->whereNotNull('order_id');
         $buyerGroups = $buyerTickets->groupBy('order_id');
 
@@ -287,7 +278,6 @@ class AssistantController extends Controller
             'quantity' => 'required|integer|min:1|max:10',
         ]);
 
-        // Verificar que la función pertenece al evento
         $function = EventFunction::where('id', $request->function_id)
             ->where('event_id', $event->id)
             ->firstOrFail();
@@ -306,7 +296,6 @@ class AssistantController extends Controller
     {
         $this->checkOwnership($event);
 
-        // Verificar que el asistente pertenece a una función del evento
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404);
         }
@@ -316,29 +305,58 @@ class AssistantController extends Controller
         return redirect()->back()->with('success', 'Asistente eliminado correctamente.');
     }
 
-    public function resendInvitation(Event $event, Assistant $assistant)
+    public function resendInvitation(Event $event, Assistant $assistant, Request $request)
     {
         $this->checkOwnership($event);
 
-        // Verificar que el asistente pertenece a una función del evento
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404);
         }
 
-        // Aquí iría la lógica para reenviar la invitación
-        // Por ahora solo actualizamos el timestamp
+        $request->validate([
+            'ticket_ids' => 'required|array|min:1',
+            'ticket_ids.*' => 'required|integer|exists:issued_tickets,id'
+        ]);
+
+        $ticketIds = $request->ticket_ids;
+
+        $tickets = IssuedTicket::whereIn('id', $ticketIds)
+            ->where('assistant_id', $assistant->id)
+            ->with([
+                'assistant.person',
+                'ticketType.eventFunction.event'
+            ])
+            ->get();
+
+        if ($tickets->count() !== count($ticketIds)) {
+            return redirect()->back()->withErrors(['error' => 'Algunos tickets no pertenecen a este asistente.']);
+        }
+
+        $invalidTickets = $tickets->filter(function ($ticket) use ($event) {
+            return $ticket->ticketType->eventFunction->event_id !== $event->id;
+        });
+
+        if ($invalidTickets->count() > 0) {
+            return redirect()->back()->withErrors(['error' => 'Algunos tickets no pertenecen a este evento.']);
+        }
+
+        $this->emailService->sendBatchInvitation($tickets, $assistant->email);
+
         $assistant->update([
             'sended_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Invitación reenviada correctamente.');
+        IssuedTicket::whereIn('id', $ticketIds)
+            ->update(['email_sent_at' => now()]);
+
+        return redirect()->back()->with('success', 'Invitación reenviada correctamente para ' . $tickets->count() . ' tickets.');
     }
 
-    public function showOrderDetails(Event $event, Order $order)
+    public function resendPurchase(Event $event, Order $order)
     {
         $this->checkOwnership($event);
 
-        // Verificar que la orden pertenece al evento
+        // Verificar que la orden pertenezca al evento
         $orderBelongsToEvent = $order->issuedTickets()
             ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
                 $query->where('event_id', $event->id);
@@ -349,7 +367,26 @@ class AssistantController extends Controller
             abort(404, 'Esta orden no pertenece al evento especificado.');
         }
 
-        // Cargar la orden con todas sus relaciones
+        // Reenviar los tickets de la orden usando el EmailDispatcherService
+        $this->emailService->resendTicketPurchaseConfirmation($order);
+
+        return redirect()->back()->with('success', 'Tickets de compra reenviados correctamente.');
+    }
+
+    public function showOrderDetails(Event $event, Order $order)
+    {
+        $this->checkOwnership($event);
+
+        $orderBelongsToEvent = $order->issuedTickets()
+            ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
+                $query->where('event_id', $event->id);
+            })
+            ->exists();
+
+        if (!$orderBelongsToEvent) {
+            abort(404, 'Esta orden no pertenece al evento especificado.');
+        }
+
         $order->load([
             'client.person',
             'issuedTickets.ticketType',
@@ -358,9 +395,8 @@ class AssistantController extends Controller
 
         $person = $order->client->person;
         
-        // Agrupar tickets por tipo
         $ticketsByType = $order->issuedTickets
-            ->where('status', '!=', 'cancelled') // Excluir cancelados
+            ->where('status', '!=', 'cancelled')
             ->groupBy('ticket_type_id');
 
         $perType = $ticketsByType->map(function ($tickets) {
@@ -381,13 +417,12 @@ class AssistantController extends Controller
             ];
         })->values();
 
-        // Calcular totales usando los campos de la orden
         $orderSubtotal = $order->subtotal ?? $perType->sum('subtotal');
-        $discountPercentage = $order->discount ?? 0; // Ya viene como decimal (0.15 = 15%)
+        $discountPercentage = $order->discount ?? 0; 
         $discountAmount = $orderSubtotal * $discountPercentage;
         $subtotalAfterDiscount = $orderSubtotal - $discountAmount;
         $serviceFeeAmount = $order->service_fee ?? 0;
-        $taxPercentage = $order->tax ?? 0; // Ya viene como decimal (0.05 = 5%)
+        $taxPercentage = $order->tax ?? 0; 
         $totalPaid = $order->total_amount;
 
         return response()->json([
@@ -408,11 +443,11 @@ class AssistantController extends Controller
             'per_type' => $perType,
             'totals' => [
                 'subtotal' => round($orderSubtotal, 2),
-                'discount_percentage' => round($discountPercentage * 100, 1), // Convertir a porcentaje para mostrar (0.15 -> 15.0%)
+                'discount_percentage' => round($discountPercentage * 100, 1),
                 'discount_amount' => round($discountAmount, 2),
                 'subtotal_after_discount' => round($subtotalAfterDiscount, 2),
                 'service_fee_amount' => round($serviceFeeAmount, 2),
-                'tax_percentage' => round($taxPercentage * 100, 1), // Convertir a porcentaje para mostrar (0.05 -> 5.0%)
+                'tax_percentage' => round($taxPercentage * 100, 1),
                 'total_paid' => round($totalPaid, 2),
             ],
             'discount_code' => $order->discountCode ? [
@@ -427,12 +462,10 @@ class AssistantController extends Controller
     {
         $this->checkOwnership($event);
 
-        // Verificar que el asistente pertenece al evento
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404, 'Este asistente no pertenece al evento especificado.');
         }
 
-        // Cargar el asistente con todas sus relaciones
         $assistant->load([
             'person',
             'eventFunction',
@@ -441,13 +474,12 @@ class AssistantController extends Controller
 
         $person = $assistant->person;
         
-        // Agrupar tickets por tipo
         $ticketsByType = $assistant->issuedTickets
-            ->where('status', '!=', 'cancelled') // Excluir cancelados
+            ->where('status', '!=', 'cancelled')
             ->groupBy('ticket_type_id');
 
-        $perType = collect(); // Inicializar como colección vacía
-        
+        $perType = collect();
+
         if ($ticketsByType->count() > 0) {
             $perType = $ticketsByType->map(function ($tickets) {
                 $firstTicket = $tickets->first();
@@ -457,7 +489,7 @@ class AssistantController extends Controller
                 
                 $ticketType = $firstTicket->ticketType;
                 $quantity = $tickets->count();
-                $courtesyValue = $ticketType->price; // Valor de cortesía (precio original)
+                $courtesyValue = $ticketType->price;
 
                 return [
                     'ticket_type_id' => $ticketType->id,
@@ -467,13 +499,13 @@ class AssistantController extends Controller
                     'total_courtesy_value' => round($quantity * $courtesyValue, 2),
                     'tickets_used' => $tickets->where('status', 'used')->count(),
                     'tickets_available' => $tickets->where('status', 'available')->count(),
+                    'ticket_ids' => $tickets->pluck('id')->toArray(), // Agregamos los IDs específicos de los tickets
                 ];
             })
-            ->filter() // Eliminar valores nulos
+            ->filter()
             ->values();
         }
 
-        // Calcular totales
         $totalTickets = $assistant->issuedTickets->where('status', '!=', 'cancelled')->count();
         $ticketsUsed = $assistant->issuedTickets->where('status', 'used')->count();
         $ticketsAvailable = $assistant->issuedTickets->where('status', 'available')->count();
