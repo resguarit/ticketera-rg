@@ -46,8 +46,15 @@ class TicketPDFController extends Controller
         ->where('client_id', $user->id)
         ->findOrFail($orderId);
 
+        // Generar QR codes para cada ticket usando PdfService
+        $ticketsWithQR = $order->items->map(function($ticket) {
+            $ticketData = $this->pdfService->generateTicketData($ticket, 120);
+            $ticket->qrCode = $ticketData['qrCode'];
+            return $ticket;
+        });
+
         // Agrupar tickets por evento/función
-        $ticketsByEvent = $order->items->groupBy(function($ticket) {
+        $ticketsByEvent = $ticketsWithQR->groupBy(function($ticket) {
             return $ticket->ticketType->eventFunction->event->id;
         });
 
