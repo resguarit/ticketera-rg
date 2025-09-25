@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
-import VenueMap from '@/components/VenueMap';
 
 import {
     Event,
@@ -56,6 +55,46 @@ interface EventData extends Event {
 interface EventDetailProps {
     eventData: EventData;
 }
+
+// Crear un componente simple para el mapa de Google
+const GoogleMapEmbed = ({ coordinates, venueName, venueAddress }: { coordinates: string, venueName: string, venueAddress: string }) => {
+    const [lat, lng] = coordinates.split(',');
+    
+    // URL para Google Maps Embed
+    const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15&maptype=roadmap`;
+    
+    // URL para abrir Google Maps directamente
+    const openUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+    
+    return (
+        <div className="relative group">
+            {/* Iframe del mapa */}
+            <iframe
+                src={embedUrl}
+                width="100%"
+                height="400px"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="rounded-lg"
+            />
+            
+            {/* Overlay clickeable para abrir Google Maps */}
+            <div 
+                className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
+                onClick={() => window.open(openUrl, '_blank')}
+            >
+                <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
+                    <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Abrir en Google Maps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function EventDetail({ eventData }: EventDetailProps) {
     // Estado para la función seleccionada
@@ -285,34 +324,18 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Venue Map */}
+                            {/* Venue Map Desktop */}
                             {eventData.venue.coordinates && (
-                                    <div>
-                                        
-                                        {/* Mapa */}
+                                <div>
+                                        {/* Mapa con Google Maps Embed */}
                                         <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
-                                            <VenueMap 
+                                            <GoogleMapEmbed 
                                                 coordinates={eventData.venue.coordinates}
                                                 venueName={eventData.venue.name}
                                                 venueAddress={eventData.venue.full_address}
                                             />
                                         </div>
-                                        
-                                        {/* Botón para abrir en Google Maps */}
-                                        <div className="pt-2">
-                                            <Button
-                                                size="sm"
-                                                onClick={() => {
-                                                    const [lat, lng] = eventData.venue.coordinates!.split(',');
-                                                    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-                                                }}
-                                                className="w-full sm:w-auto bg-primary "
-                                            >
-                                                <MapPin className="w-4 h-4 " />
-                                                Ver en Google Maps
-                                            </Button>
-                                        </div>
-                                        </div>
+                                </div>
                             )}
                         </div>
 
@@ -650,47 +673,16 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                             {/* Venue Map Mobile */}
                             {eventData.venue.coordinates && (
-                                <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg">
-                                    <CardHeader className="pb-3 sm:pb-4">
-                                        <CardTitle className="text-foreground text-lg sm:text-xl">Ubicación del Recinto</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3 sm:space-y-4">
-                                        <div className="space-y-2">
-                                            <div className="flex items-start space-x-3">
-                                                <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                                                <div>
-                                                    <h4 className="font-semibold text-foreground">{eventData.venue.name}</h4>
-                                                    <p className="text-foreground/80 text-sm">{eventData.venue.full_address}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
+                                        <div>
                                         {/* Mapa Mobile */}
                                         <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
-                                            <VenueMap 
+                                            <GoogleMapEmbed 
                                                 coordinates={eventData.venue.coordinates}
                                                 venueName={eventData.venue.name}
                                                 venueAddress={eventData.venue.full_address}
                                             />
                                         </div>
-                                        
-                                        {/* Botón para abrir en Google Maps */}
-                                        <div className="pt-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    const [lat, lng] = eventData.venue.coordinates!.split(',');
-                                                    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-                                                }}
-                                                className="w-full"
-                                            >
-                                                <MapPin className="w-4 h-4 mr-2" />
-                                                Ver en Google Maps
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
                             )}
                         </div>
 
