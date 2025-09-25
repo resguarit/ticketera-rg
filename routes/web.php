@@ -39,6 +39,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/events', [PublicEventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
+    Route::get('/{event}/availability', [PublicEventController::class, 'getAvailability'])->name('availability'); 
 
 Route::post('/checkout/process-payment', [CheckoutController::class, 'processPayment'])->name('checkout.process');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');

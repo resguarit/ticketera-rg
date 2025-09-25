@@ -8,6 +8,7 @@ use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\Category;
 use App\Models\Ciudad;
+use App\Services\TicketLockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -15,6 +16,13 @@ use Inertia\Response;
 
 class EventController extends Controller
 {
+    protected TicketLockService $ticketLockService;
+
+    public function __construct(TicketLockService $ticketLockService)
+    {
+        $this->ticketLockService = $ticketLockService;
+    }
+
     public function index(Request $request): Response
     {
         // ACTUALIZADO: incluir ciudad y provincia
@@ -92,20 +100,25 @@ class EventController extends Controller
                 'is_active' => $function->is_active,
                 'status' => $function->status->value,
                 'ticketTypes' => $function->ticketTypes->map(function($ticket) {
+                    // CORREGIDO: Usar el nuevo método getLockedQuantity
+                    $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+                    $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+                    
                     return [
                         'id' => $ticket->id,
                         'name' => $ticket->name,
                         'description' => $ticket->description,
                         'price' => $ticket->price,
-                        'available' => $ticket->quantity - $ticket->quantity_sold,
+                        'available' => $realAvailable,
                         'quantity' => $ticket->quantity,
                         'quantity_sold' => $ticket->quantity_sold,
-                        'max_purchase_quantity' => $ticket->max_purchase_quantity, // Asegurar que se incluya
+                        'locked_quantity' => $lockedQuantity,
+                        'max_purchase_quantity' => $ticket->max_purchase_quantity,
                         'sales_start_date' => $ticket->sales_start_date,
                         'sales_end_date' => $ticket->sales_end_date,
                         'is_hidden' => $ticket->is_hidden,
-                        'is_bundle' => $ticket->is_bundle, // Agregar información de bundle
-                        'bundle_quantity' => $ticket->bundle_quantity, // Agregar información de bundle
+                        'is_bundle' => $ticket->is_bundle,
+                        'bundle_quantity' => $ticket->bundle_quantity,
                         'color' => 'from-blue-500 to-cyan-500',
                     ];
                 }),
@@ -143,6 +156,33 @@ class EventController extends Controller
 
         return Inertia::render('public/eventdetail', [
             'eventData' => $eventData
+        ]);
+    }
+
+    // NUEVO: Endpoint para obtener disponibilidad actualizada en tiempo real
+    public function getAvailability(Event $event, Request $request)
+    {
+        $functionId = $request->get('function_id');
+        $function = $event->functions()->with('ticketTypes')->find($functionId);
+        
+        if (!$function) {
+            return response()->json(['error' => 'Function not found'], 404);
+        }
+
+        $ticketTypes = $function->ticketTypes->map(function($ticket) {
+            // CORREGIDO: Usar el nuevo método getLockedQuantity
+            $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+            $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+            
+            return [
+                'id' => $ticket->id,
+                'available' => $realAvailable,
+                'locked_quantity' => $lockedQuantity,
+            ];
+        });
+
+        return response()->json([
+            'ticket_types' => $ticketTypes
         ]);
     }
 }

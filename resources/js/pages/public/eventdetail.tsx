@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { formatPrice, formatPriceWithCurrency } from '@/lib/currencyHelpers';
 import { getAvailabilityText } from '@/lib/ticketHelpers';
 import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
@@ -20,6 +20,7 @@ import {
 
 interface TicketTypeData extends TicketType {
     available: number; 
+    locked_quantity?: number; // NUEVO
     color: string;
 }
 
@@ -106,6 +107,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [showEventInfo, setShowEventInfo] = useState(false);
 
+    // NUEVO: Estado para la disponibilidad actualizada
+    const [realTimeAvailability, setRealTimeAvailability] = useState<{[key: number]: number}>({});
+    const [isRefreshingAvailability, setIsRefreshingAvailability] = useState(false);
+
     // Obtener la función seleccionada
     const selectedFunction = eventData.functions.find(f => f.id === selectedFunctionId);
     const currentTicketTypes = selectedFunction?.ticketTypes || [];
@@ -116,6 +121,45 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         setSelectedTickets({}); // Limpiar selección de tickets
     };
 
+    // NUEVO: Función para actualizar disponibilidad en tiempo real
+    const updateAvailability = useCallback(async () => {
+        if (!selectedFunction || isRefreshingAvailability) return;
+
+        try {
+            setIsRefreshingAvailability(true);
+            const response = await fetch(`/events/${eventData.id}/availability?function_id=${selectedFunction.id}`);
+            const data = await response.json();
+            
+            if (data.ticket_types) {
+                const availabilityMap: {[key: number]: number} = {};
+                data.ticket_types.forEach((ticket: any) => {
+                    availabilityMap[ticket.id] = ticket.available;
+                });
+                setRealTimeAvailability(availabilityMap);
+            }
+        } catch (error) {
+            console.warn('Error updating availability:', error);
+        } finally {
+            setIsRefreshingAvailability(false);
+        }
+    }, [eventData.id, selectedFunction, isRefreshingAvailability]);
+
+    // NUEVO: Actualizar disponibilidad automáticamente
+    useEffect(() => {
+        if (selectedFunction) {
+            // Actualizar solo una vez al cargar
+            updateAvailability();
+        }
+    }, [selectedFunction?.id]); // Solo depender del ID de la función, sin updateAvailability
+
+    // NUEVO: Función para obtener la disponibilidad real de un ticket
+    const getRealAvailability = (ticket: TicketTypeData): number => {
+        return realTimeAvailability[ticket.id] !== undefined 
+            ? realTimeAvailability[ticket.id] 
+            : ticket.available;
+    };
+
+    // ACTUALIZAR: Función handleQuantityChange para usar disponibilidad real
     const handleQuantityChange = (ticketId: number, change: number) => {
         setSelectedTickets(prev => {
             const current = prev[ticketId] || 0;
@@ -123,10 +167,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             
             if (!ticketType) return prev;
             
-            // Calcular el máximo permitido considerando:
-            // 1. La disponibilidad real del ticket
-            // 2. El máximo por compra configurado
-            const availableQuantity = ticketType.available;
+            // Usar disponibilidad en tiempo real
+            const availableQuantity = getRealAvailability(ticketType);
             const maxPurchaseQuantity = ticketType.max_purchase_quantity || 10;
             const maxAllowed = Math.min(availableQuantity, maxPurchaseQuantity);
             
@@ -137,8 +179,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                 const { [ticketId]: removed, ...rest } = prev;
                 return rest;
             }
+            
+            // Actualizar disponibilidad después del cambio
+            setTimeout(() => updateAvailability(), 1000);
+            
             return { ...prev, [ticketId]: newQuantity };
         });
+    };
+
+    // NUEVO: Función para mostrar indicador de disponibilidad en tiempo real
+    const getAvailabilityStatus = (ticket: TicketTypeData) => {
+        const realAvailable = getRealAvailability(ticket);
+        const originalAvailable = ticket.available;
+        
+        if (realAvailable < originalAvailable) {
+            const lockedQuantity = originalAvailable - realAvailable;
+            return {
+                showLocked: true,
+                lockedQuantity,
+                realAvailable
+            };
+        }
+        
+        return {
+            showLocked: false,
+            lockedQuantity: 0,
+            realAvailable
+        };
     };
 
     const getTotalPrice = () => {
@@ -212,14 +279,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                 <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     {/* Back Button */}
                     <div className="mb-4 sm:mb-6">
-                        <Link href={route('events')}>
-                            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
-                                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Volver a Eventos</span>
-                                <span className="sm:hidden">Volver</span>
-                            </Button>
-                        </Link>
-                    </div>
+                        <Link href={route('events')}>  {/* Cambiar de 'events' a 'events.index' */}
+        <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Volver a Eventos</span>
+            <span className="sm:hidden">Volver</span>
+        </Button>
+    </Link>
+</div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
@@ -466,6 +533,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     const isBundle = ticket.is_bundle || false;
                                                     const bundleQuantity = ticket.bundle_quantity || 1;
                                                     
+                                                    // Obtener disponibilidad y estado en tiempo real
+                                                    const availabilityStatus = getAvailabilityStatus(ticket);
+                                                    const realAvailable = availabilityStatus.realAvailable;
+                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                    
                                                     return (
                                                         <div
                                                             key={ticket.id}
@@ -473,22 +546,39 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                 <div className="min-w-0 flex-1 mr-2">
-                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <div className="flex items-center space-x-2 mb-1">
+                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
+                                                                        {isRefreshingAvailability && (
+                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                                     <div className="flex flex-col space-y-1 mt-1">
-                                                                        <p className="text-foreground/60 text-xs">
-                                                                            {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                        </p>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <p className="text-foreground/60 text-xs">
+                                                                                {getAvailabilityText(realAvailable, ticket.quantity)}
+                                                                            </p>
+                                                                            {/* NUEVO: Mostrar tickets bloqueados si existen */}
+                                                                            {availabilityStatus.showLocked && (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
+                                                                                    <Clock className="w-3 h-3 mr-1" />
+                                                                                    {availabilityStatus.lockedQuantity} reservados
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        
                                                                         {/* Mostrar información del límite por compra */}
-                                                                        {ticket.max_purchase_quantity < ticket.available && (
+                                                                        {maxPurchaseQuantity < realAvailable && (
                                                                             <p className="text-orange-600 text-xs">
-                                                                                Máximo {ticket.max_purchase_quantity} por compra
+                                                                                Máximo {maxPurchaseQuantity} por compra
                                                                             </p>
                                                                         )}
+                                                                        
                                                                         {/* Mostrar advertencia cuando queda poco stock */}
-                                                                        {ticket.available <= 5 && ticket.available > 0 && (
+                                                                        {realAvailable <= 5 && realAvailable > 0 && (
                                                                             <p className="text-red-600 text-xs font-medium">
-                                                                                ¡Solo quedan {ticket.available}!
+                                                                                ¡Solo quedan {realAvailable} disponibles!
                                                                             </p>
                                                                         )}
                                                                     </div>
@@ -517,12 +607,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= maxAllowed}
                                                                         className="w-8 h-8 p-0"
                                                                         title={
-                                                                            selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10) 
-                                                                                ? `Límite alcanzado (${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})` 
-                                                                                : `Agregar (máx. ${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})`
+                                                                            selectedQuantity >= maxAllowed 
+                                                                                ? `Límite alcanzado (${maxAllowed})` 
+                                                                                : `Agregar (máx. ${maxAllowed})`
                                                                         }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
@@ -758,6 +848,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     const isBundle = ticket.is_bundle || false;
                                                     const bundleQuantity = ticket.bundle_quantity || 1;
                                                     
+                                                    // Obtener disponibilidad y estado en tiempo real
+                                                    const availabilityStatus = getAvailabilityStatus(ticket);
+                                                    const realAvailable = availabilityStatus.realAvailable;
+                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                    
                                                     return (
                                                         <div
                                                             key={ticket.id}
@@ -765,22 +861,39 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                 <div className="min-w-0 flex-1 mr-2">
-                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <div className="flex items-center space-x-2 mb-1">
+                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
+                                                                        {isRefreshingAvailability && (
+                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                                     <div className="flex flex-col space-y-1 mt-1">
-                                                                        <p className="text-foreground/60 text-xs">
-                                                                            {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                        </p>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <p className="text-foreground/60 text-xs">
+                                                                                {getAvailabilityText(realAvailable, ticket.quantity)}
+                                                                            </p>
+                                                                            {/* NUEVO: Mostrar tickets bloqueados si existen */}
+                                                                            {availabilityStatus.showLocked && (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
+                                                                                    <Clock className="w-3 h-3 mr-1" />
+                                                                                    {availabilityStatus.lockedQuantity} reservados
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        
                                                                         {/* Mostrar información del límite por compra */}
-                                                                        {ticket.max_purchase_quantity < ticket.available && (
+                                                                        {maxPurchaseQuantity < realAvailable && (
                                                                             <p className="text-orange-600 text-xs">
-                                                                                Máximo {ticket.max_purchase_quantity} por compra
+                                                                                Máximo {maxPurchaseQuantity} por compra
                                                                             </p>
                                                                         )}
+                                                                        
                                                                         {/* Mostrar advertencia cuando queda poco stock */}
-                                                                        {ticket.available <= 5 && ticket.available > 0 && (
+                                                                        {realAvailable <= 5 && realAvailable > 0 && (
                                                                             <p className="text-red-600 text-xs font-medium">
-                                                                                ¡Solo quedan {ticket.available}!
+                                                                                ¡Solo quedan {realAvailable} disponibles!
                                                                             </p>
                                                                         )}
                                                                     </div>
@@ -809,12 +922,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= maxAllowed}
                                                                         className="w-8 h-8 p-0"
                                                                         title={
-                                                                            selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10) 
-                                                                                ? `Límite alcanzado (${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})` 
-                                                                                : `Agregar (máx. ${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})`
+                                                                            selectedQuantity >= maxAllowed 
+                                                                                ? `Límite alcanzado (${maxAllowed})` 
+                                                                                : `Agregar (máx. ${maxAllowed})`
                                                                         }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
@@ -848,7 +961,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         </div>
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">Selecciona una función para ver las entradas disponibles</p>
+                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                Selecciona una función para ver las entradas disponibles
+                                            </p>
                                             <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
                                                 Selecciona función
                                             </Badge>

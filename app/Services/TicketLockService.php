@@ -415,7 +415,53 @@ class TicketLockService
     }
 
     /**
-     * Obtener información de disponibilidad en tiempo real
+     * NUEVO: Obtener la cantidad bloqueada para un tipo de ticket específico
+     */
+    public function getLockedQuantity(int $ticketTypeId): int
+    {
+        $lockKey = $this->getLockKey($ticketTypeId);
+        $locks = Cache::get($lockKey, []);
+        
+        // Limpiar locks expirados
+        $activeLocks = $this->cleanExpiredLocks($locks);
+        
+        // Actualizar cache si había locks expirados
+        if (count($activeLocks) !== count($locks)) {
+            if (empty($activeLocks)) {
+                Cache::forget($lockKey);
+            } else {
+                Cache::put($lockKey, $activeLocks, now()->addMinutes(self::LOCK_DURATION + 5));
+            }
+        }
+        
+        // Sumar todas las cantidades bloqueadas activas
+        return array_sum(array_column($activeLocks, 'quantity'));
+    }
+
+    /**
+     * NUEVO: Obtener la cantidad bloqueada por una sesión específica
+     */
+    public function getLockedQuantityBySession(int $ticketTypeId, string $sessionId): int
+    {
+        $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
+        $lockData = Cache::get($sessionKey);
+        
+        if (!$lockData) {
+            return 0;
+        }
+        
+        // Verificar si el lock no ha expirado
+        if (Carbon::parse($lockData['expires_at'])->isFuture()) {
+            return $lockData['quantity'];
+        }
+        
+        // Si el lock expiró, limpiarlo
+        Cache::forget($sessionKey);
+        return 0;
+    }
+
+    /**
+     * ACTUALIZADO: Obtener información de disponibilidad en tiempo real
      */
     public function getAvailability(int $ticketTypeId): array
     {
@@ -430,11 +476,7 @@ class TicketLockService
             ];
         }
 
-        $lockKey = $this->getLockKey($ticketTypeId);
-        $locks = Cache::get($lockKey, []);
-        $locks = $this->cleanExpiredLocks($locks);
-        
-        $totalLocked = array_sum(array_column($locks, 'quantity'));
+        $totalLocked = $this->getLockedQuantity($ticketTypeId);
         $available = $ticketType->quantity - $ticketType->quantity_sold - $totalLocked;
         
         return [
