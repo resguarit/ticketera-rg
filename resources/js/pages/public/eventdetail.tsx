@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
+import VenueMap from '@/components/VenueMap';
 
 import {
     Event,
@@ -21,6 +22,14 @@ import {
 interface TicketTypeData extends TicketType {
     available: number; 
     color: string;
+}
+
+interface VenueData {
+    id: number;
+    name: string;
+    address: string;
+    coordinates: string | null;
+    full_address: string;
 }
 
 interface EventFunctionData extends EventFunction {
@@ -40,7 +49,8 @@ interface EventData extends Event {
     functions: EventFunctionData[];
     date: string;
     time: string;
-    hero_image_url?: string; // Agregar esta línea
+    hero_image_url?: string;
+    venue: VenueData; // Agregar información completa del venue
 }
 
 interface EventDetailProps {
@@ -274,6 +284,36 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Venue Map */}
+                            {eventData.venue.coordinates && (
+                                    <div>
+                                        
+                                        {/* Mapa */}
+                                        <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
+                                            <VenueMap 
+                                                coordinates={eventData.venue.coordinates}
+                                                venueName={eventData.venue.name}
+                                                venueAddress={eventData.venue.full_address}
+                                            />
+                                        </div>
+                                        
+                                        {/* Botón para abrir en Google Maps */}
+                                        <div className="pt-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                    const [lat, lng] = eventData.venue.coordinates!.split(',');
+                                                    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                                }}
+                                                className="w-full sm:w-auto bg-primary "
+                                            >
+                                                <MapPin className="w-4 h-4 " />
+                                                Ver en Google Maps
+                                            </Button>
+                                        </div>
+                                        </div>
+                            )}
                         </div>
 
                         {/* MOBILE LAYOUT - Completo (menor a lg) */}
@@ -607,6 +647,51 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </Card>
                                 </CollapsibleContent>
                             </Collapsible>
+
+                            {/* Venue Map Mobile */}
+                            {eventData.venue.coordinates && (
+                                <Card className="bg-white border-gray-200 shadow-md sm:shadow-lg">
+                                    <CardHeader className="pb-3 sm:pb-4">
+                                        <CardTitle className="text-foreground text-lg sm:text-xl">Ubicación del Recinto</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3 sm:space-y-4">
+                                        <div className="space-y-2">
+                                            <div className="flex items-start space-x-3">
+                                                <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-semibold text-foreground">{eventData.venue.name}</h4>
+                                                    <p className="text-foreground/80 text-sm">{eventData.venue.full_address}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Mapa Mobile */}
+                                        <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
+                                            <VenueMap 
+                                                coordinates={eventData.venue.coordinates}
+                                                venueName={eventData.venue.name}
+                                                venueAddress={eventData.venue.full_address}
+                                            />
+                                        </div>
+                                        
+                                        {/* Botón para abrir en Google Maps */}
+                                        <div className="pt-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const [lat, lng] = eventData.venue.coordinates!.split(',');
+                                                    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                                }}
+                                                className="w-full"
+                                            >
+                                                <MapPin className="w-4 h-4 mr-2" />
+                                                Ver en Google Maps
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
 
                         {/* DESKTOP - Ticket Selection (lg y superior) */}
@@ -748,18 +833,19 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
-                                                    disabled={isLoading || !selectedFunction}
-                                                    className="w-full bg-primary hover:bg-primary-hover text-white py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-semibold rounded-lg sm:rounded-xl transform hover:scale-105 transition-all duration-200 h-10 sm:h-12"
+                                                    disabled={isLoading}
+                                                    className="w-full bg-primary hover:bg-primary/90 text-white h-10 sm:h-12 text-sm sm:text-base"
                                                 >
                                                     {isLoading ? (
                                                         <div className="flex items-center space-x-2">
-                                                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                            <span>Procesando...</span>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            <span className="hidden sm:inline">Procesando...</span>
+                                                            <span className="sm:hidden">...</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center space-x-1 sm:space-x-2">
+                                                        <div className="flex items-center space-x-2">
                                                             <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            <span className="hidden sm:inline">Comprar Entradas</span>
+                                                            <span className="hidden sm:inline">Continuar con la compra</span>
                                                             <span className="sm:hidden">Comprar</span>
                                                         </div>
                                                     )}

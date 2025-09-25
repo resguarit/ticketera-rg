@@ -126,6 +126,13 @@ class EventController extends Controller
             'duration' => '8 horas',
             'ageRestriction' => '18+',
             'functions' => $functions,
+            'venue' => [
+                'id' => $event->venue->id,
+                'name' => $event->venue->name,
+                'address' => $event->venue->address,
+                'coordinates' => $event->venue->coordinates,
+                'full_address' => $event->venue->getFullAddressAttribute(),
+            ],
             // Para compatibilidad con el código existente
             'date' => $functions->first()['date'] ?? 'Fecha por confirmar',
             'time' => $functions->first()['time'] ?? '',
