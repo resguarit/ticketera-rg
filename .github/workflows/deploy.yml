@@ -7,24 +7,12 @@ on:
       - testing
 
 jobs:
-  deploy:
+  deploy-testing:
+    if: github.ref == 'refs/heads/testing'
     runs-on: ubuntu-latest
 
-    # Definir los parametros segun la rama que activo el workflow
-    strategy:
-      matrix:
-        include:
-          - branch: testing
-            site_user: testr2002
-            site_domain: test.rgentradas.com
-          - branch: main
-            site_user: rgent6815
-            site_domain: rgentradas.com
-          
-    if: github.ref == format('refs/heads/{0}', matrix.branch)
-
     steps:
-      - name: Conectar al VPS y desplegar en ${{ matrix.site_domain }}
+      - name: Conectar y desplegar en test.rgentradas.com
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -33,4 +21,20 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
 
           script: |
-            /home/rgentradas-deployer/deploy.sh ${{ matrix.site_user }} ${{ matrix.branch }} ${{ matrix.site_domain }}
+            /home/rgentradas-deployer/deploy.sh testr2002 testing test.rgentradas.com
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Conectar y desplegar en rgentradas.com
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          
+          script: |
+            /home/rgentradas-deployer/deploy.sh rgent6815 main rgentradas.com
