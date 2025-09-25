@@ -157,7 +157,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-hover z-20 flex items-center justify-center">
                             <div className="text-center text-white px-4">
-                                <h2 className="text-2xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido!</h2>
+                                <h2 className="text-2xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4 font-bold">¡Bienvenido! (esto es una prueba)</h2>
                                 <p className="text-sm sm:text-xl">Descubre los mejores eventos</p>
                             </div>
                         </div>
