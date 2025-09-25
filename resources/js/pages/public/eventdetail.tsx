@@ -556,24 +556,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                                     <div className="flex flex-col space-y-1 mt-1">
                                                                         <div className="flex items-center space-x-2">
-                                                                            <p className="text-foreground/60 text-xs">
-                                                                                {getAvailabilityText(realAvailable, ticket.quantity)}
-                                                                            </p>
-                                                                            {/* NUEVO: Mostrar tickets bloqueados si existen */}
-                                                                            {availabilityStatus.showLocked && (
-                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
-                                                                                    <Clock className="w-3 h-3 mr-1" />
-                                                                                    {availabilityStatus.lockedQuantity} reservados
-                                                                                </span>
-                                                                            )}
+
                                                                         </div>
-                                                                        
-                                                                        {/* Mostrar información del límite por compra */}
-                                                                        {maxPurchaseQuantity < realAvailable && (
-                                                                            <p className="text-orange-600 text-xs">
-                                                                                Máximo {maxPurchaseQuantity} por compra
-                                                                            </p>
-                                                                        )}
                                                                         
                                                                         {/* Mostrar advertencia cuando queda poco stock */}
                                                                         {realAvailable <= 5 && realAvailable > 0 && (
@@ -774,7 +758,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
 
                                                 <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 flex-shrink-0" />
+                                                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-secondary flex-shrink-0" />
                                                     <div>
                                                         <p className="font-semibold text-foreground text-sm sm:text-base">Ubicación</p>
                                                         <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
@@ -871,24 +855,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
                                                                     <div className="flex flex-col space-y-1 mt-1">
                                                                         <div className="flex items-center space-x-2">
-                                                                            <p className="text-foreground/60 text-xs">
-                                                                                {getAvailabilityText(realAvailable, ticket.quantity)}
-                                                                            </p>
-                                                                            {/* NUEVO: Mostrar tickets bloqueados si existen */}
-                                                                            {availabilityStatus.showLocked && (
-                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
-                                                                                    <Clock className="w-3 h-3 mr-1" />
-                                                                                    {availabilityStatus.lockedQuantity} reservados
-                                                                                </span>
-                                                                            )}
+
                                                                         </div>
                                                                         
-                                                                        {/* Mostrar información del límite por compra */}
-                                                                        {maxPurchaseQuantity < realAvailable && (
-                                                                            <p className="text-orange-600 text-xs">
-                                                                                Máximo {maxPurchaseQuantity} por compra
-                                                                            </p>
-                                                                        )}
+
                                                                         
                                                                         {/* Mostrar advertencia cuando queda poco stock */}
                                                                         {realAvailable <= 5 && realAvailable > 0 && (
