@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
 
             // Crear personas y usuarios base
             $person = Person::create([
-                'name' => 'Mariano',
-                'last_name' => 'Salas',
+                'name' => 'Jorge',
+                'last_name' => 'Raul',
             ]);
 
             User::create([
