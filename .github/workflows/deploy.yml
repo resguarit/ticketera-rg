@@ -21,7 +21,10 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
 
           script: |
-            . /home/rgentradas-deployer/.bashrc && /home/rgentradas-deployer/deploy.sh testr2002 testing test.rgentradas.com
+            export NVM_DIR="/home/rgentradas-deployer/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 20
+            /home/rgentradas-deployer/deploy.sh testr2002 testing test.rgentradas.com
 
   deploy-production:
     if: github.ref == 'refs/heads/main'
@@ -37,4 +40,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           
           script: |
-            . /home/rgentradas-deployer/.bashrc && /home/rgentradas-deployer/deploy.sh rgent6815 main rgentradas.com
+            export NVM_DIR="/home/rgentradas-deployer/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 20
+            /home/rgentradas-deployer/deploy.sh rgent6815 main rgentradas.com
