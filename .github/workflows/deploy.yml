@@ -1,0 +1,36 @@
+name: Desplegar Aplicacion
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Definir los parametros segun la rama que activo el workflow
+    strategy:
+      matrix:
+        include:
+          - branch: testing
+            site_user: testr2002
+            site_domain: test.rgentradas.com
+          - branch: main
+            site_user: rgent6815
+            site_domain: rgentradas.com
+          
+    if: github.ref == format('refs/heads/{0}', matrix.branch)
+
+    steps:
+      - name: Conectar al VPS y desplegar en ${{ matrix.site_domain }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+
+          script: |
+            /home/rgentradas-deployer/deploy.sh ${{ matrix.site_user }} ${{ matrix.branch }} ${{ matrix.site_domain }}
