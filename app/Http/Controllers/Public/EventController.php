@@ -90,7 +90,7 @@ class EventController extends Controller
                 'time' => $function->start_time?->format('H:i'),
                 'day_name' => $function->start_time?->format('l'),
                 'is_active' => $function->is_active,
-                'status' => $function->status->value, // Agregar el estado de la función
+                'status' => $function->status->value,
                 'ticketTypes' => $function->ticketTypes->map(function($ticket) {
                     return [
                         'id' => $ticket->id,
@@ -100,9 +100,12 @@ class EventController extends Controller
                         'available' => $ticket->quantity - $ticket->quantity_sold,
                         'quantity' => $ticket->quantity,
                         'quantity_sold' => $ticket->quantity_sold,
+                        'max_purchase_quantity' => $ticket->max_purchase_quantity, // Asegurar que se incluya
                         'sales_start_date' => $ticket->sales_start_date,
                         'sales_end_date' => $ticket->sales_end_date,
                         'is_hidden' => $ticket->is_hidden,
+                        'is_bundle' => $ticket->is_bundle, // Agregar información de bundle
+                        'bundle_quantity' => $ticket->bundle_quantity, // Agregar información de bundle
                         'color' => 'from-blue-500 to-cyan-500',
                     ];
                 }),

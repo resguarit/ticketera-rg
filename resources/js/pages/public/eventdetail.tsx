@@ -123,8 +123,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             
             if (!ticketType) return prev;
             
-            // Para bundles, el límite es max_purchase_quantity (no multiplicado)
-            const maxAllowed = ticketType.max_purchase_quantity || 10;
+            // Calcular el máximo permitido considerando:
+            // 1. La disponibilidad real del ticket
+            // 2. El máximo por compra configurado
+            const availableQuantity = ticketType.available;
+            const maxPurchaseQuantity = ticketType.max_purchase_quantity || 10;
+            const maxAllowed = Math.min(availableQuantity, maxPurchaseQuantity);
+            
+            // Calcular nueva cantidad con validaciones
             const newQuantity = Math.max(0, Math.min(maxAllowed, current + change));
             
             if (newQuantity === 0) {
@@ -469,9 +475,23 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                 <div className="min-w-0 flex-1 mr-2">
                                                                     <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <p className="text-foreground/60 text-xs mt-1">
-                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                    </p>
+                                                                    <div className="flex flex-col space-y-1 mt-1">
+                                                                        <p className="text-foreground/60 text-xs">
+                                                                            {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                        </p>
+                                                                        {/* Mostrar información del límite por compra */}
+                                                                        {ticket.max_purchase_quantity < ticket.available && (
+                                                                            <p className="text-orange-600 text-xs">
+                                                                                Máximo {ticket.max_purchase_quantity} por compra
+                                                                            </p>
+                                                                        )}
+                                                                        {/* Mostrar advertencia cuando queda poco stock */}
+                                                                        {ticket.available <= 5 && ticket.available > 0 && (
+                                                                            <p className="text-red-600 text-xs font-medium">
+                                                                                ¡Solo quedan {ticket.available}!
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right flex-shrink-0">
                                                                     <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
@@ -497,8 +517,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10)}
                                                                         className="w-8 h-8 p-0"
+                                                                        title={
+                                                                            selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10) 
+                                                                                ? `Límite alcanzado (${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})` 
+                                                                                : `Agregar (máx. ${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})`
+                                                                        }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
                                                                     </Button>
@@ -507,13 +532,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <div className="text-sm text-foreground/60 mt-1">
                                                                         {isBundle ? (
                                                                             <div>
-                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
                                                                                 <div className="text-blue-600">
                                                                                     = {selectedQuantity * bundleQuantity} entradas
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
-                                                                            <div>{selectedQuantity} entradas</div>
+                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -742,9 +767,23 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                 <div className="min-w-0 flex-1 mr-2">
                                                                     <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <p className="text-foreground/60 text-xs mt-1">
-                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                    </p>
+                                                                    <div className="flex flex-col space-y-1 mt-1">
+                                                                        <p className="text-foreground/60 text-xs">
+                                                                            {getAvailabilityText(ticket.available, ticket.quantity)}
+                                                                        </p>
+                                                                        {/* Mostrar información del límite por compra */}
+                                                                        {ticket.max_purchase_quantity < ticket.available && (
+                                                                            <p className="text-orange-600 text-xs">
+                                                                                Máximo {ticket.max_purchase_quantity} por compra
+                                                                            </p>
+                                                                        )}
+                                                                        {/* Mostrar advertencia cuando queda poco stock */}
+                                                                        {ticket.available <= 5 && ticket.available > 0 && (
+                                                                            <p className="text-red-600 text-xs font-medium">
+                                                                                ¡Solo quedan {ticket.available}!
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right flex-shrink-0">
                                                                     <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
@@ -770,8 +809,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10)}
                                                                         className="w-8 h-8 p-0"
+                                                                        title={
+                                                                            selectedQuantity >= Math.min(ticket.available, ticket.max_purchase_quantity || 10) 
+                                                                                ? `Límite alcanzado (${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})` 
+                                                                                : `Agregar (máx. ${Math.min(ticket.available, ticket.max_purchase_quantity || 10)})`
+                                                                        }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
                                                                     </Button>
@@ -780,13 +824,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <div className="text-sm text-foreground/60 mt-1">
                                                                         {isBundle ? (
                                                                             <div>
-                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
                                                                                 <div className="text-blue-600">
                                                                                     = {selectedQuantity * bundleQuantity} entradas
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
-                                                                            <div>{selectedQuantity} entradas</div>
+                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
                                                                         )}
                                                                     </div>
                                                                 )}
