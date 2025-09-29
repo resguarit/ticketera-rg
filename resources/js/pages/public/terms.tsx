@@ -11,7 +11,7 @@ export default function Terms() {
 
     return (
         <>
-            <Head title="Términos y Condiciones - Ticketera RG ENTRADAS" />
+            <Head title="Términos y Condiciones" />
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">

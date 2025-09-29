@@ -25,7 +25,7 @@ export default function Refunds() {
 
     return (
         <>
-            <Head title="Solicitud de Reembolso - Ticketera RG ENTRADAS" />
+            <Head title="Solicitud de Reembolso" />
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">

@@ -254,7 +254,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
 
     return (
         <>
-            <Head title="Confirmar Compra - TicketMax" />
+            <Head title="Confirmar Compra" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />

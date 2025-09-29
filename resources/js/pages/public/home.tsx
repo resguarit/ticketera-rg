@@ -104,7 +104,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
 
     return (
         <>
-            <Head title="Ticketera RG - Eventos" />
+            <Head title="Home" />
             <Header className="" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">

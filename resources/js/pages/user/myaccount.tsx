@@ -19,7 +19,7 @@ const sidebarItems = [
         id: "personal",
         label: "Personal",
         icon: User,
-        color: "bg-foreground",
+        color: "bg-chart-2",
     },
     {
         id: "security",
@@ -94,7 +94,7 @@ export default function MyAccount() {
     if (!auth.user) {
         return (
             <>
-                <Head title="Mi Cuenta - TicketMax" />
+                <Head title="Mi Cuenta" />
                 <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                     <Header />
                     <div className="container mx-auto px-4 py-16 text-center">
@@ -196,9 +196,9 @@ export default function MyAccount() {
 
     return (
         <>
-            <Head title="Mi Cuenta - TicketMax" />
+            <Head title="Mi Cuenta" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
+            <div className="min-h-screen bg-primary">
                 <Header />
 
                 <div className="container mx-0 lg:mx-auto px-0 lg:px-4 py-0 lg:py-8">
@@ -226,12 +226,12 @@ export default function MyAccount() {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${
                     activeTab === item.id
-                        ? "bg-foreground text-white border-r-2 border-primary"
-                        : "text-foreground/80 hover:bg-gray-50 hover:text-foreground"
+                        ? "bg-primary text-white hover:bg-secondary"
+                        : "text-foreground/80 hover:bg-secondary"
                 }`}
             >
                 <div
-                    className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}
+                    className={`w-8 h-8 rounded-lg bg-primary hover:bg-secondary flex items-center justify-center`}
                 >
                     <item.icon className="w-4 h-4 text-white" />
                 </div>

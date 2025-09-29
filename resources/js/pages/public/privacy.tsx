@@ -11,7 +11,7 @@ export default function Privacy() {
 
     return (
         <>
-            <Head title="Política de Privacidad - Ticketera RG ENTRADAS" />
+            <Head title="Política de Privacidad" />
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">

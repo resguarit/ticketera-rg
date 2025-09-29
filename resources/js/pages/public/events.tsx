@@ -104,7 +104,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
     if (!eventsArray || eventsArray.length === 0) {
         return (
             <>
-                <Head title="Eventos - Ticketera RG" />
+                <Head title="Eventos" />
                 <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                     <Header />
                     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
@@ -122,7 +122,7 @@ export default function Events({ events, categories, cities, filters }: PublicEv
 
     return (
         <>
-            <Head title="Eventos - Ticketera RG" />
+            <Head title="Eventos" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />
