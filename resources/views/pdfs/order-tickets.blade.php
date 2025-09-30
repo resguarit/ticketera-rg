@@ -172,6 +172,12 @@
             color: #666;
         }
         
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
         .qr-code-text {
             font-family: 'Courier New', monospace;
             font-size: 10px;
@@ -280,11 +286,15 @@
                         <!-- QR Code (derecha) -->
                         <div class="ticket-info-right">
                             <div class="qr-code">
-                                <!-- Aquí iría el QR real -->
-                                ████████████<br>
-                                ████████████<br>
-                                ████████████<br>
-                                ████████████
+                                @if(isset($ticket->qrCode))
+                                    {!! '<img src="data:image/svg+xml;base64,' . $ticket->qrCode . '" width="120" height="120" alt="QR Code" />' !!}
+                                @else
+                                    <!-- Fallback si no hay QR -->
+                                    ████████████<br>
+                                    ████████████<br>
+                                    ████████████<br>
+                                    ████████████
+                                @endif
                             </div>
                             <div class="qr-code-text">{{ $ticket->unique_code }}</div>
                         </div>

@@ -61,6 +61,7 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
             Route::post('/', [AssistantController::class, 'store'])->name('store');
             Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
+            Route::patch('/order/{order}/resend-purchase', [AssistantController::class, 'resendPurchase'])->name('resendPurchase');
         });
     });
     
