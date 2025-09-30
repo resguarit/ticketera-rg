@@ -55,7 +55,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
 
     return (
         <>
-            <Head title="¡Compra Exitosa! - TicketMax" />
+            <Head title="¡Compra Exitosa!" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary relative overflow-hidden">
                 {/* Confetti Effect */}

@@ -11,7 +11,7 @@ export default function Terms() {
 
     return (
         <>
-            <Head title="Términos y Condiciones - Ticketera RG ENTRADAS" />
+            <Head title="Términos y Condiciones" />
             <Header />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
@@ -39,10 +39,9 @@ export default function Terms() {
                     {/* Content */}
                     <div className="max-w-4xl mx-auto space-y-8">
                         {/* Introducción */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground flex items-center">
-                                    <Shield className="w-5 h-5 mr-2 text-primary" />
+                                <CardTitle className="text-primary flex items-center">
                                     1. Introducción
                                 </CardTitle>
                             </CardHeader>
@@ -60,9 +59,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Definiciones */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">2. Definiciones</CardTitle>
+                                <CardTitle className="text-primary">2. Definiciones</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4 text-foreground/80">
@@ -86,9 +85,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Uso de la Plataforma */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">3. Uso de la Plataforma</CardTitle>
+                                <CardTitle className="text-primary">3. Uso de la Plataforma</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
@@ -117,9 +116,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Compra de Entradas */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">4. Compra de Entradas</CardTitle>
+                                <CardTitle className="text-primary">4. Compra de Entradas</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
@@ -138,9 +137,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Cancelaciones, Reembolsos y Arrepentimiento */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">5. Cancelaciones, Reembolsos y Arrepentimiento</CardTitle>
+                                <CardTitle className="text-primary">5. Cancelaciones, Reembolsos y Arrepentimiento</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
@@ -164,9 +163,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Responsabilidades */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">6. Responsabilidades</CardTitle>
+                                <CardTitle className="text-primary">6. Responsabilidades</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4 text-foreground/80">
                                 <div>
@@ -190,9 +189,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Entradas Digitales */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">7. Entradas Digitales</CardTitle>
+                                <CardTitle className="text-primary">7. Entradas Digitales</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
                                 <ul className="list-disc list-inside space-y-2">
@@ -204,9 +203,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Propiedad Intelectual */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">8. Propiedad Intelectual</CardTitle>
+                                <CardTitle className="text-primary">8. Propiedad Intelectual</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
                                 <p>El contenido de la Plataforma, incluyendo textos, gráficos, logos, imágenes y software, está protegido por derechos de autor y propiedad intelectual. Queda prohibida su reproducción, distribución o modificación sin autorización expresa.</p>
@@ -214,9 +213,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Contacto y Atención al Usuario */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">9. Contacto y Atención al Usuario</CardTitle>
+                                <CardTitle className="text-primary">9. Contacto y Atención al Usuario</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
                                 <p className="mb-4">El Usuario podrá realizar consultas, reclamos o solicitudes de reembolso a través de los siguientes medios de contacto:</p>
@@ -229,9 +228,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Modificaciones de los Términos */}
-                        <Card className="bg-white shadow-lg">
+                        <Card className="bg-white shadow-lg gap-2">
                             <CardHeader>
-                                <CardTitle className="text-foreground">10. Modificaciones de los Términos</CardTitle>
+                                <CardTitle className="text-primary">10. Modificaciones de los Términos</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
                                 <p>Ticketera RG ENTRADAS podrá modificar estos Términos en cualquier momento. Las modificaciones entrarán en vigencia al ser publicadas en la Plataforma. El uso posterior implicará aceptación de los cambios.</p>
@@ -239,10 +238,9 @@ export default function Terms() {
                         </Card>
 
                         {/* Ley Aplicable y Jurisdicción */}
-                        <Card className="bg-blue-50 border-blue-200 shadow-lg">
+                        <Card className="bg-blue-50 border-blue-200 shadow-lg gap-2">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center">
-                                    <AlertTriangle className="w-5 h-5 mr-2 text-blue-500" />
                                     11. Ley Aplicable y Jurisdicción
                                 </CardTitle>
                             </CardHeader>

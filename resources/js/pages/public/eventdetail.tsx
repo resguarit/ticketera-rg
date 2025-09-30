@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { formatPrice, formatPriceWithCurrency } from '@/lib/currencyHelpers';
 import { getAvailabilityText } from '@/lib/ticketHelpers';
 import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
@@ -20,7 +20,16 @@ import {
 
 interface TicketTypeData extends TicketType {
     available: number; 
+    locked_quantity?: number; // NUEVO
     color: string;
+}
+
+interface VenueData {
+    id: number;
+    name: string;
+    address: string;
+    coordinates: string | null;
+    full_address: string;
 }
 
 interface EventFunctionData extends EventFunction {
@@ -40,12 +49,53 @@ interface EventData extends Event {
     functions: EventFunctionData[];
     date: string;
     time: string;
-    hero_image_url?: string; // Agregar esta línea
+    hero_image_url?: string;
+    venue: VenueData; // Agregar información completa del venue
 }
 
 interface EventDetailProps {
     eventData: EventData;
 }
+
+// Crear un componente simple para el mapa de Google
+const GoogleMapEmbed = ({ coordinates, venueName, venueAddress }: { coordinates: string, venueName: string, venueAddress: string }) => {
+    const [lat, lng] = coordinates.split(',');
+    
+    // URL para Google Maps Embed
+    const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15&maptype=roadmap`;
+    
+    // URL para abrir Google Maps directamente
+    const openUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+    
+    return (
+        <div className="relative group">
+            {/* Iframe del mapa */}
+            <iframe
+                src={embedUrl}
+                width="100%"
+                height="400px"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="rounded-lg"
+            />
+            
+            {/* Overlay clickeable para abrir Google Maps */}
+            <div 
+                className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
+                onClick={() => window.open(openUrl, '_blank')}
+            >
+                <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
+                    <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Abrir en Google Maps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function EventDetail({ eventData }: EventDetailProps) {
     // Estado para la función seleccionada
@@ -57,6 +107,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [showEventInfo, setShowEventInfo] = useState(false);
 
+    // NUEVO: Estado para la disponibilidad actualizada
+    const [realTimeAvailability, setRealTimeAvailability] = useState<{[key: number]: number}>({});
+    const [isRefreshingAvailability, setIsRefreshingAvailability] = useState(false);
+
     // Obtener la función seleccionada
     const selectedFunction = eventData.functions.find(f => f.id === selectedFunctionId);
     const currentTicketTypes = selectedFunction?.ticketTypes || [];
@@ -67,6 +121,45 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         setSelectedTickets({}); // Limpiar selección de tickets
     };
 
+    // NUEVO: Función para actualizar disponibilidad en tiempo real
+    const updateAvailability = useCallback(async () => {
+        if (!selectedFunction || isRefreshingAvailability) return;
+
+        try {
+            setIsRefreshingAvailability(true);
+            const response = await fetch(`/events/${eventData.id}/availability?function_id=${selectedFunction.id}`);
+            const data = await response.json();
+            
+            if (data.ticket_types) {
+                const availabilityMap: {[key: number]: number} = {};
+                data.ticket_types.forEach((ticket: any) => {
+                    availabilityMap[ticket.id] = ticket.available;
+                });
+                setRealTimeAvailability(availabilityMap);
+            }
+        } catch (error) {
+            console.warn('Error updating availability:', error);
+        } finally {
+            setIsRefreshingAvailability(false);
+        }
+    }, [eventData.id, selectedFunction, isRefreshingAvailability]);
+
+    // NUEVO: Actualizar disponibilidad automáticamente
+    useEffect(() => {
+        if (selectedFunction) {
+            // Actualizar solo una vez al cargar
+            updateAvailability();
+        }
+    }, [selectedFunction?.id]); // Solo depender del ID de la función, sin updateAvailability
+
+    // NUEVO: Función para obtener la disponibilidad real de un ticket
+    const getRealAvailability = (ticket: TicketTypeData): number => {
+        return realTimeAvailability[ticket.id] !== undefined 
+            ? realTimeAvailability[ticket.id] 
+            : ticket.available;
+    };
+
+    // ACTUALIZAR: Función handleQuantityChange para usar disponibilidad real
     const handleQuantityChange = (ticketId: number, change: number) => {
         setSelectedTickets(prev => {
             const current = prev[ticketId] || 0;
@@ -74,16 +167,45 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             
             if (!ticketType) return prev;
             
-            // Para bundles, el límite es max_purchase_quantity (no multiplicado)
-            const maxAllowed = ticketType.max_purchase_quantity || 10;
+            // Usar disponibilidad en tiempo real
+            const availableQuantity = getRealAvailability(ticketType);
+            const maxPurchaseQuantity = ticketType.max_purchase_quantity || 10;
+            const maxAllowed = Math.min(availableQuantity, maxPurchaseQuantity);
+            
+            // Calcular nueva cantidad con validaciones
             const newQuantity = Math.max(0, Math.min(maxAllowed, current + change));
             
             if (newQuantity === 0) {
                 const { [ticketId]: removed, ...rest } = prev;
                 return rest;
             }
+            
+            // Actualizar disponibilidad después del cambio
+            setTimeout(() => updateAvailability(), 1000);
+            
             return { ...prev, [ticketId]: newQuantity };
         });
+    };
+
+    // NUEVO: Función para mostrar indicador de disponibilidad en tiempo real
+    const getAvailabilityStatus = (ticket: TicketTypeData) => {
+        const realAvailable = getRealAvailability(ticket);
+        const originalAvailable = ticket.available;
+        
+        if (realAvailable < originalAvailable) {
+            const lockedQuantity = originalAvailable - realAvailable;
+            return {
+                showLocked: true,
+                lockedQuantity,
+                realAvailable
+            };
+        }
+        
+        return {
+            showLocked: false,
+            lockedQuantity: 0,
+            realAvailable
+        };
     };
 
     const getTotalPrice = () => {
@@ -148,7 +270,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
     return (
         <>
-            <Head title={`${eventData.name} - TicketMax`} />
+            <Head title={`${eventData.name}`} />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
@@ -157,14 +279,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                 <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     {/* Back Button */}
                     <div className="mb-4 sm:mb-6">
-                        <Link href={route('events')}>
-                            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
-                                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Volver a Eventos</span>
-                                <span className="sm:hidden">Volver</span>
-                            </Button>
-                        </Link>
-                    </div>
+                        <Link href={route('events')}>  {/* Cambiar de 'events' a 'events.index' */}
+        <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Volver a Eventos</span>
+            <span className="sm:hidden">Volver</span>
+        </Button>
+    </Link>
+</div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
@@ -274,6 +396,20 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Venue Map Desktop */}
+                            {eventData.venue.coordinates && (
+                                <div>
+                                        {/* Mapa con Google Maps Embed */}
+                                        <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
+                                            <GoogleMapEmbed 
+                                                coordinates={eventData.venue.coordinates}
+                                                venueName={eventData.venue.name}
+                                                venueAddress={eventData.venue.full_address}
+                                            />
+                                        </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* MOBILE LAYOUT - Completo (menor a lg) */}
@@ -397,6 +533,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     const isBundle = ticket.is_bundle || false;
                                                     const bundleQuantity = ticket.bundle_quantity || 1;
                                                     
+                                                    // Obtener disponibilidad y estado en tiempo real
+                                                    const availabilityStatus = getAvailabilityStatus(ticket);
+                                                    const realAvailable = availabilityStatus.realAvailable;
+                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                    
                                                     return (
                                                         <div
                                                             key={ticket.id}
@@ -404,11 +546,26 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                 <div className="min-w-0 flex-1 mr-2">
-                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <div className="flex items-center space-x-2 mb-1">
+                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
+                                                                        {isRefreshingAvailability && (
+                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <p className="text-foreground/60 text-xs mt-1">
-                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                    </p>
+                                                                    <div className="flex flex-col space-y-1 mt-1">
+                                                                        <div className="flex items-center space-x-2">
+
+                                                                        </div>
+                                                                        
+                                                                        {/* Mostrar advertencia cuando queda poco stock */}
+                                                                        {realAvailable <= 5 && realAvailable > 0 && (
+                                                                            <p className="text-red-600 text-xs font-medium">
+                                                                                ¡Solo quedan {realAvailable} disponibles!
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right flex-shrink-0">
                                                                     <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
@@ -434,8 +591,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= maxAllowed}
                                                                         className="w-8 h-8 p-0"
+                                                                        title={
+                                                                            selectedQuantity >= maxAllowed 
+                                                                                ? `Límite alcanzado (${maxAllowed})` 
+                                                                                : `Agregar (máx. ${maxAllowed})`
+                                                                        }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
                                                                     </Button>
@@ -444,13 +606,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <div className="text-sm text-foreground/60 mt-1">
                                                                         {isBundle ? (
                                                                             <div>
-                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
                                                                                 <div className="text-blue-600">
                                                                                     = {selectedQuantity * bundleQuantity} entradas
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
-                                                                            <div>{selectedQuantity} entradas</div>
+                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -596,7 +758,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
 
                                                 <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
-                                                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 flex-shrink-0" />
+                                                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-secondary flex-shrink-0" />
                                                     <div>
                                                         <p className="font-semibold text-foreground text-sm sm:text-base">Ubicación</p>
                                                         <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
@@ -607,6 +769,20 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     </Card>
                                 </CollapsibleContent>
                             </Collapsible>
+
+                            {/* Venue Map Mobile */}
+                            {eventData.venue.coordinates && (
+                                        <div>
+                                        {/* Mapa Mobile */}
+                                        <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
+                                            <GoogleMapEmbed 
+                                                coordinates={eventData.venue.coordinates}
+                                                venueName={eventData.venue.name}
+                                                venueAddress={eventData.venue.full_address}
+                                            />
+                                        </div>
+                                    </div>
+                            )}
                         </div>
 
                         {/* DESKTOP - Ticket Selection (lg y superior) */}
@@ -656,6 +832,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     const isBundle = ticket.is_bundle || false;
                                                     const bundleQuantity = ticket.bundle_quantity || 1;
                                                     
+                                                    // Obtener disponibilidad y estado en tiempo real
+                                                    const availabilityStatus = getAvailabilityStatus(ticket);
+                                                    const realAvailable = availabilityStatus.realAvailable;
+                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                    
                                                     return (
                                                         <div
                                                             key={ticket.id}
@@ -663,11 +845,28 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                 <div className="min-w-0 flex-1 mr-2">
-                                                                    <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                    <div className="flex items-center space-x-2 mb-1">
+                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
+                                                                        {isRefreshingAvailability && (
+                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <p className="text-foreground/60 text-xs mt-1">
-                                                                        {getAvailabilityText(ticket.available, ticket.quantity)}
-                                                                    </p>
+                                                                    <div className="flex flex-col space-y-1 mt-1">
+                                                                        <div className="flex items-center space-x-2">
+
+                                                                        </div>
+                                                                        
+
+                                                                        
+                                                                        {/* Mostrar advertencia cuando queda poco stock */}
+                                                                        {realAvailable <= 5 && realAvailable > 0 && (
+                                                                            <p className="text-red-600 text-xs font-medium">
+                                                                                ¡Solo quedan {realAvailable} disponibles!
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right flex-shrink-0">
                                                                     <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
@@ -693,8 +892,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= (ticket.max_purchase_quantity || 10)}
+                                                                        disabled={selectedQuantity >= maxAllowed}
                                                                         className="w-8 h-8 p-0"
+                                                                        title={
+                                                                            selectedQuantity >= maxAllowed 
+                                                                                ? `Límite alcanzado (${maxAllowed})` 
+                                                                                : `Agregar (máx. ${maxAllowed})`
+                                                                        }
                                                                     >
                                                                         <Plus className="w-4 h-4" />
                                                                     </Button>
@@ -703,13 +907,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <div className="text-sm text-foreground/60 mt-1">
                                                                         {isBundle ? (
                                                                             <div>
-                                                                                <div>{selectedQuantity} lotes seleccionados</div>
+                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
                                                                                 <div className="text-blue-600">
                                                                                     = {selectedQuantity * bundleQuantity} entradas
                                                                                 </div>
                                                                             </div>
                                                                         ) : (
-                                                                            <div>{selectedQuantity} entradas</div>
+                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -727,7 +931,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         </div>
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">Selecciona una función para ver las entradas disponibles</p>
+                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                Selecciona una función para ver las entradas disponibles
+                                            </p>
                                             <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
                                                 Selecciona función
                                             </Badge>
@@ -748,18 +954,19 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
-                                                    disabled={isLoading || !selectedFunction}
-                                                    className="w-full bg-primary hover:bg-primary-hover text-white py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-semibold rounded-lg sm:rounded-xl transform hover:scale-105 transition-all duration-200 h-10 sm:h-12"
+                                                    disabled={isLoading}
+                                                    className="w-full bg-primary hover:bg-primary/90 text-white h-10 sm:h-12 text-sm sm:text-base"
                                                 >
                                                     {isLoading ? (
                                                         <div className="flex items-center space-x-2">
-                                                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                            <span>Procesando...</span>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            <span className="hidden sm:inline">Procesando...</span>
+                                                            <span className="sm:hidden">...</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center space-x-1 sm:space-x-2">
+                                                        <div className="flex items-center space-x-2">
                                                             <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            <span className="hidden sm:inline">Comprar Entradas</span>
+                                                            <span className="hidden sm:inline">Continuar con la compra</span>
                                                             <span className="sm:hidden">Comprar</span>
                                                         </div>
                                                     )}

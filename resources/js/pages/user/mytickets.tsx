@@ -117,7 +117,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
 
     return (
         <>
-            <Head title="Mis Tickets - TicketMax" />
+            <Head title="Mis Tickets" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
