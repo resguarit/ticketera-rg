@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'payway' => [
+        'public_key' => env('PAYWAY_PUBLIC_KEY'),
+        'private_key' => env('PAYWAY_PRIVATE_KEY'),
+        'ambient' => env('PAYWAY_ENV', 'test'),
+        'env' => env('PAYWAY_ENV', 'test'),
+        'url' => env('PAYWAY_ENV', 'test') === 'production' 
+            ? 'https://live.decidir.com/api/v2'
+            : 'https://developers-ventasonline.payway.com.ar/api/v2',
+    ],
+
 ];

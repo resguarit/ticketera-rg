@@ -40,10 +40,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
 
-Route::post('/checkout/process-payment', [CheckoutController::class, 'processPayment'])->name('checkout.process');
-Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/error', [CheckoutController::class, 'error'])->name('checkout.error'); // Nueva ruta
-Route::get('/checkout/{event}', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
+require __DIR__.'/checkout.php';
 
 Route::get('/help', [HelpController::class, 'index'])->name('help');
 
