@@ -91,6 +91,16 @@ if (app()->environment('local')) {
         }
     });
 }
+
+Route::post('/api/release-locks', function (\Illuminate\Http\Request $request) {
+    $sessionId = $request->input('session_id');
+    if ($sessionId) {
+        app(\App\Services\TicketLockService::class)->releaseTickets($sessionId);
+        return response()->json(['success' => true]);
+    }
+    return response()->json(['success' => false], 400);
+});
+
 use Illuminate\Support\Facades\Mail;
 
 Route::get('/test-email', function () {
