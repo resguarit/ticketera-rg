@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
 
             // Crear personas y usuarios base
             $person = Person::create([
-                'name' => 'Juan',
-                'last_name' => 'Gimenez',
+                'name' => 'Jorge',
+                'last_name' => 'Raul',
             ]);
 
             User::create([
@@ -38,10 +38,10 @@ class DatabaseSeeder extends Seeder
                 CategorySeeder::class,
                 VenueSeeder::class,
                 SectorSeeder::class,
-                OrganizerSeeder::class,
-                EventSeeder::class,
-                EventFunctionSeeder::class,
-                TicketTypeSeeder::class,
+                //OrganizerSeeder::class,
+                //EventSeeder::class,
+                //EventFunctionSeeder::class,
+                //TicketTypeSeeder::class,
                 FaqCategorySeeder::class, // <-- AÑADIR ESTA LÍNEA
                 FaqSeeder::class,         // <-- AÑADIR ESTA LÍNEA
             ]);
