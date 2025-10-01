@@ -181,7 +181,6 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
-        // --- FIN MODIFICADO ---
     };
 
     const handlePrevStep = () => {
@@ -190,9 +189,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         }
     };
 
-    // --- NUEVO: Manejadores para el modal de verificación ---
     const handleConfirmEmail = () => {
-        // Simula el envío de un email y pasa al paso de introducir el código
+        // aca hacemos post al back
         setVerificationStep('code');
     };
 

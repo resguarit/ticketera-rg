@@ -9,6 +9,7 @@ use App\Http\Controllers\Organizer\TicketTypeController;
 use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
 use App\Http\Controllers\Organizer\AssistantController;
 use App\Http\Controllers\Organizer\AttendeeInvitationController;
+use App\Http\Controllers\Organizer\OrganizerUserController;
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -63,6 +64,15 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
             Route::patch('/order/{order}/resend-purchase', [AssistantController::class, 'resendPurchase'])->name('resendPurchase');
         });
+    });
+
+    // Rutas para usuarios del organizador
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [OrganizerUserController::class, 'index'])->name('index');
+        Route::get('/create', [OrganizerUserController::class, 'create'])->name('create');
+        Route::post('/', [OrganizerUserController::class, 'store'])->name('store');
+        Route::patch('/{user}/toggle-status', [OrganizerUserController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::delete('/{user}', [OrganizerUserController::class, 'destroy'])->name('destroy');
     });
     
 
