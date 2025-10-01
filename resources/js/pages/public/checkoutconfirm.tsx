@@ -181,7 +181,6 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
-        // --- FIN MODIFICADO ---
     };
 
     const handlePrevStep = () => {
@@ -190,9 +189,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         }
     };
 
-    // --- NUEVO: Manejadores para el modal de verificación ---
     const handleConfirmEmail = () => {
-        // Simula el envío de un email y pasa al paso de introducir el código
+        // aca hacemos post al back
         setVerificationStep('code');
     };
 
@@ -254,7 +252,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
 
     return (
         <>
-            <Head title="Confirmar Compra - TicketMax" />
+            <Head title="Confirmar Compra" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />
