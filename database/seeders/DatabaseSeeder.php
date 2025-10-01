@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'role' => UserRole::ADMIN,
                 'person_id' => $person->id,
+                'password_changed_at' => now(),
             ]);
 
             // Ejecutar seeders de las tablas principales
