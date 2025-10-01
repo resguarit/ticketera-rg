@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus } from 'lucide-react';
@@ -7,6 +7,8 @@ import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import ChangePasswordDialog from '@/components/change-password-modal';
 
 interface Stat {
     totalRevenue: number;
@@ -55,6 +57,19 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4' },
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
+
+    const { must_change_password } = usePage().props as any;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (must_change_password) {
+            setIsModalOpen(true);
+        }
+    }, [must_change_password]);
+
+    const handleModalOpenChange = (open: boolean) => {
+        setIsModalOpen(open);
+    };
 
     return (
         <>
@@ -185,6 +200,13 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     </CardContent>
                 </Card>
             </div>
+
+            <ChangePasswordDialog 
+                open={isModalOpen}
+                onOpenChange={handleModalOpenChange}
+                showDisclaimer={must_change_password}
+                required={must_change_password}
+            />
         </>
     );
 }
