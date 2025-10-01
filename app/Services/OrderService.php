@@ -25,18 +25,14 @@ class OrderService
             $userId = null;
             $accountCreated = false;
     
-            // Si no hay usuario autenticado, crear uno nuevo
             if (!Auth::check()) {                
-                // Verificar si el usuario ya existe
                 $existingUser = User::where('email', $orderData['billing_info']['email'])->first();
                 
                 if (!$existingUser) {
-                    // Crear nuevo usuario
                     $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
                     $accountCreated = true;
                 } else {
                     $userId = $existingUser->id;
-                    // Si el usuario existe, nos aseguramos de que los datos de la persona estén actualizados si es necesario.
                     $user = User::with('person')->find($userId);
                     if ($user->person) {
                         $user->person->update([
@@ -57,7 +53,6 @@ class OrderService
                 $orderData['tax'] ?? 0
             );
 
-            // Crear la orden principal
             $orderCreateData = [
                 'client_id' => $userId,
                 'order_date' => now(),
@@ -74,23 +69,12 @@ class OrderService
 
             $order = Order::create($orderCreateData);
     
-            // Crear los tickets individuales y verificar disponibilidad
             foreach ($orderData['selected_tickets'] as $index => $ticketData) {
 
                 $ticketType = TicketType::findOrFail($ticketData['id']);
-    
-                // Verificar disponibilidad
-                $availableQuantity = $ticketType->quantity - $ticketType->quantity_sold;
-
-                if ($availableQuantity < $ticketData['quantity']) {
-                    $errorMsg = "No hay suficientes tickets disponibles para {$ticketType->name}. Disponibles: {$availableQuantity}";
-                    Log::error('Error de disponibilidad', ['error' => $errorMsg]);
-                    throw new \Exception($errorMsg);
-                }
 
                 $this->createTicketsForType($order, $ticketType, $ticketData['quantity'], $userId);
     
-                // Actualizar cantidad vendida
                 $ticketType->increment('quantity_sold', $ticketData['quantity']);
             }
     
@@ -105,10 +89,8 @@ class OrderService
     {
 
         if ($ticketType->isBundle()) {
-            // Para bundles, crear múltiples tickets por cada bundle comprado
             for ($i = 0; $i < $quantity; $i++) {
                 $bundleReference = Str::uuid()->toString();                
-                // Crear la cantidad de tickets definida en bundle_quantity
                 for ($j = 0; $j < $ticketType->bundle_quantity; $j++) {
                     $ticketData = [
                         'order_id' => $order->id,
@@ -126,7 +108,6 @@ class OrderService
                 }
             }
         } else {
-            // Para tickets individuales, crear uno por cada cantidad
             for ($i = 0; $i < $quantity; $i++) {
                 $ticketData = [
                     'order_id' => $order->id,
@@ -145,18 +126,14 @@ class OrderService
 
     private function createUserFromBillingInfo(array $billingInfo): int
     {
-        // Verificar si ya existe un usuario con ese email
         $existingUser = User::where('email', $billingInfo['email'])->first();
         
         if ($existingUser) {
-            // Si el usuario existe, usarlo
             return $existingUser->id;
         }
 
-        // Contraseña por defecto
         $defaultPassword = $billingInfo['documentNumber'] ?? '12345678';
         
-        // Crear el registro de persona
         $person = Person::create([
             'name' => $billingInfo['firstName'],
             'last_name' => $billingInfo['lastName'],
@@ -164,7 +141,6 @@ class OrderService
             'dni' => $billingInfo['documentNumber'],
         ]);
 
-        // Crear el usuario
         $user = User::create([
             'email' => $billingInfo['email'],
             'password' => Hash::make($defaultPassword),
@@ -173,20 +149,17 @@ class OrderService
             'email_verified_at' => now(),
         ]);
 
-
         return $user->id;
     }
 
     public function processPayment(Order $order, array $paymentData): bool
     {
-
         try {
             $transactionId = 'TXN-' . time() . '-' . rand(1000, 9999);
             
             $paymentSuccessful = $this->simulatePaymentProcess($order, $paymentData);
             
             if ($paymentSuccessful) {
-                
                 $order->update([
                     'status' => OrderStatus::PAID,
                     'transaction_id' => $transactionId,
@@ -239,7 +212,6 @@ class OrderService
                 $ticketType = $firstTicket->ticketType;
                 
                 if ($ticketType->isBundle()) {
-                    // Para bundles, contar por bundle_reference
                     $bundleCount = $tickets->whereNotNull('bundle_reference')
                         ->groupBy('bundle_reference')
                         ->count();
@@ -284,20 +256,20 @@ class OrderService
         $success = rand(1, 100) <= 95;
         
         // Simular tiempo de procesamiento
-        usleep(500000); // 0.5 segundos
+        usleep(500000); 
         
         return $success;
     }
 
     private function generateUniqueCode(Order $order, TicketType $ticketType, string $suffix = null): string
     {
-        // Generar un código más corto pero único
-        $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr(time(), -6) . '-' . rand(100, 999);
+        $uuid = Str::uuid()->toString();
+        
+        $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr($uuid, 0, 8);
         
         if ($suffix) {
-            // Para bundles, usar solo los primeros 8 caracteres del UUID + número
             $bundleParts = explode('-', $suffix);
-            $shortSuffix = substr($bundleParts[0], 0, 8) . '-' . end($bundleParts);
+            $shortSuffix = end($bundleParts);
             return $baseCode . '-' . $shortSuffix;
         }
         
@@ -315,7 +287,6 @@ class OrderService
             $ticketType = $tickets->first()->ticketType;
             
             if ($ticketType->isBundle()) {
-                // Para bundles, contar por bundle_reference
                 return $tickets->whereNotNull('bundle_reference')
                     ->groupBy('bundle_reference')
                     ->count();
@@ -372,5 +343,19 @@ class OrderService
         ];
         
         return $result;
+    }
+
+    /**
+     * Genera un código único para tickets de invitación u otros usos
+     * Método público para ser usado desde otros servicios/controladores
+     */
+    public function generateUniqueTicketCode(TicketType $ticketType, string $prefix = 'INV'): string
+    {
+        $uuid = Str::uuid()->toString();
+        
+        // Formato: {PREFIX}-{ticket_type_id}-{uuid_part}
+        $baseCode = $prefix . '-' . $ticketType->id . '-' . substr($uuid, 0, 12);
+        
+        return $baseCode;
     }
 }

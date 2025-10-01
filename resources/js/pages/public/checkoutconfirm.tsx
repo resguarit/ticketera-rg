@@ -596,9 +596,9 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                 />
                                                 <Label htmlFor="terms" className="text-foreground text-sm">
                                                     Acepto los{" "}
-                                                    <Link href='/terms' className="text-primary hover:text-primary-hover underline">
+                                                    <a href='/terms' target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover underline">
                                                         términos y condiciones
-                                                    </Link>{" "}
+                                                    </a>{" "}
                                                     *
                                                 </Label>
                                             </div>
@@ -613,9 +613,9 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                                 />
                                                 <Label htmlFor="privacy" className="text-foreground text-sm">
                                                     Acepto la{" "}
-                                                    <Link href='/privacy' className="text-primary hover:text-primary-hover underline">
+                                                    <a href='/privacy' target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover underline">
                                                         política de privacidad
-                                                    </Link>{" "}
+                                                    </a>{" "}
                                                     *
                                                 </Label>
                                             </div>

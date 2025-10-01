@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Order;
+use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
 use App\Services\TicketLockService; // NUEVO
 use Illuminate\Http\Request;
@@ -20,12 +21,14 @@ use Illuminate\Support\Facades\Redirect;
 class CheckoutController extends Controller
 {
     protected OrderService $orderService;
-    protected TicketLockService $ticketLockService; // NUEVO
+    protected EmailDispatcherService $emailDispatcher;
+    protected TicketLockService $ticketLockService;
 
-    public function __construct(OrderService $orderService, TicketLockService $ticketLockService)
+    public function __construct(OrderService $orderService, EmailDispatcherService $emailDispatcher, TicketLockService $ticketLockService)
     {
         $this->orderService = $orderService;
-        $this->ticketLockService = $ticketLockService; // NUEVO
+        $this->emailDispatcher = $emailDispatcher;
+        $this->ticketLockService = $ticketLockService;
     }
 
     public function confirm(Request $request, Event $event): RedirectResponse | Response
@@ -226,7 +229,6 @@ class CheckoutController extends Controller
                 'tax' => $eventTax,
             ];
 
-
             // 🔥 IMPORTANTE: Liberar locks ANTES de crear la orden
             Log::info('=== ANTES DE LIBERAR LOCKS ===', [
                 'session_id' => substr($sessionId, -8),
@@ -240,8 +242,12 @@ class CheckoutController extends Controller
                 'availability_after' => $this->ticketLockService->getAvailability($validated['selected_tickets'][0]['id'])
             ]);
 
-            // Crear la orden usando el servicio
+            // Crear la orden usando el servicio (esto manejará la creación del usuario si es necesario)
             $orderResult = $this->orderService->createOrder($orderData);
+            
+            // Verificar si se creó una nueva cuenta
+            $accountCreated = $orderResult['account_created'] ?? false;
+
             $order = $orderResult['order'];
 
             Log::info('=== DESPUÉS DE CREAR ORDEN ===', [
@@ -257,7 +263,9 @@ class CheckoutController extends Controller
                 
                 // Limpiar sesión
                 $request->session()->forget(['checkout_session_id', 'locked_tickets']);
-                
+
+                $this->emailDispatcher->sendTicketPurchaseConfirmation($order);
+              
                 $redirectParams = ['order' => $order->id];
                 if ($orderResult['account_created'] ?? false) {
                     $redirectParams['account_created'] = '1';
