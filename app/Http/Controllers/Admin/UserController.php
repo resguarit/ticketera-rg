@@ -287,11 +287,11 @@ class UserController extends Controller
             // Actualizar usuario
             $userData = [
                 'email' => $validated['email'],
-                // No cambiamos email_verified_at en la edición
             ];
 
             if (!empty($validated['password'])) {
                 $userData['password'] = Hash::make($validated['password']);
+                $userData['password_changed_at'] = now();
             }
 
             $user->update($userData);
