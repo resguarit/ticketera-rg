@@ -237,23 +237,18 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
-        // Verificar que el evento pertenezca al organizador autenticado
         $organizer = Auth::user()->organizer;
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para editar este evento');
         }
 
-        // Cargar relaciones
         $event->load(['functions']);
 
-        // Agregar hero_image_url al evento que se pasa al frontend
         $eventData = $event->toArray();
         $eventData['hero_image_url'] = $event->hero_image_url;
 
-        // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
             
-        // Get venues for select
         $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
 
         return Inertia::render('organizer/events/edit', [
@@ -265,7 +260,6 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
-        // Verificar que el evento pertenezca al organizador autenticado
         $organizer = Auth::user()->organizer;
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para actualizar este evento');
@@ -278,7 +272,6 @@ class EventController extends Controller
             'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            // Remover 'featured' => 'boolean',
         ]);
 
         try {

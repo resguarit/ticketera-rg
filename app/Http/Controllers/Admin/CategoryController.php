@@ -1,5 +1,4 @@
 <?php
-// filepath: app/Http/Controllers/Admin/CategoryController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -19,7 +18,7 @@ class CategoryController extends Controller
         return Inertia::render('admin/categories/index', [
             'categories' => $categories
         ]);
-    } /*----------------------------------------------------------------*/
+    }
 
     public function store(Request $request): RedirectResponse
     {
@@ -49,7 +48,6 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): RedirectResponse
     {
-        // Verificar si tiene eventos asociados
         if ($category->events()->count() > 0) {
             return redirect()->back()->with('error', 'No se puede eliminar una categoría que tiene eventos asociados');
         }
@@ -59,7 +57,6 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Categoría eliminada exitosamente');
     }
 
-    // API endpoint para select options
     public function getForSelect()
     {
         $categories = Category::select('id', 'name', 'icon', 'color')->get();

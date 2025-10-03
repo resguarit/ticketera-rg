@@ -21,17 +21,14 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        // Filtros
         $search = $request->get('search', '');
         $status = $request->get('status', 'all');
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        // Consulta base - solo clientes
         $query = User::with(['person'])
             ->where('role', UserRole::CLIENT);
 
-        // Aplicar filtros de búsqueda
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
@@ -43,7 +40,6 @@ class UserController extends Controller
             });
         }
 
-        // Filtro por estado
         if ($status !== 'all') {
             switch ($status) {
                 case 'active':
@@ -55,7 +51,6 @@ class UserController extends Controller
             }
         }
 
-        // Ordenamiento
         switch ($sortBy) {
             case 'name':
                 $query->leftJoin('person', 'users.person_id', '=', 'person.id')
@@ -81,12 +76,9 @@ class UserController extends Controller
                 $query->orderBy('created_at', $sortDirection);
         }
 
-        // Paginación
         $users = $query->paginate(15)->withQueryString();
 
-        // Procesar datos para el frontend
         $usersData = $users->getCollection()->map(function ($user) {
-            // Estadísticas del usuario
             $totalPurchases = Order::where('client_id', $user->id)
                 ->where('status', 'PAID')
                 ->count();
@@ -116,10 +108,8 @@ class UserController extends Controller
             ];
         });
 
-        // Reemplazar la colección
         $users->setCollection($usersData);
 
-        // Estadísticas generales
         $stats = $this->getUserStats();
 
         return Inertia::render('admin/users', [
@@ -138,12 +128,10 @@ class UserController extends Controller
     {
         $user = User::with(['person'])->findOrFail($userId);
 
-        // Verificar que sea cliente
         if ($user->role !== UserRole::CLIENT) {
             abort(404);
         }
 
-        // Órdenes del usuario
         $orders = Order::where('client_id', $user->id)
             ->with(['items.ticketType.eventFunction.event'])
             ->orderBy('created_at', 'desc')
@@ -162,7 +150,6 @@ class UserController extends Controller
                 ];
             });
 
-        // Estadísticas del usuario
         $userStats = [
             'total_orders' => $orders->count(),
             'confirmed_orders' => $orders->where('status', 'PAID')->count(),
@@ -208,7 +195,6 @@ class UserController extends Controller
         ]);
 
         DB::transaction(function() use ($validated) {
-            // Crear persona
             $person = Person::create([
                 'name' => $validated['firstName'],
                 'last_name' => $validated['lastName'],
@@ -217,13 +203,12 @@ class UserController extends Controller
                 'address' => $validated['address'],
             ]);
 
-            // Crear usuario - email no verificado por defecto
             User::create([
                 'person_id' => $person->id,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => UserRole::CLIENT,
-                'email_verified_at' => null, // Siempre null inicialmente
+                'email_verified_at' => null,
             ]);
         });
 
@@ -235,7 +220,6 @@ class UserController extends Controller
     {
         $user = User::with(['person'])->findOrFail($userId);
 
-        // Verificar que sea cliente
         if ($user->role !== UserRole::CLIENT) {
             abort(404);
         }
@@ -259,7 +243,6 @@ class UserController extends Controller
     {
         $user = User::with(['person'])->findOrFail($userId);
 
-        // Verificar que sea cliente
         if ($user->role !== UserRole::CLIENT) {
             abort(404);
         }
@@ -275,7 +258,6 @@ class UserController extends Controller
         ]);
 
         DB::transaction(function() use ($user, $validated) {
-            // Actualizar persona
             $user->person->update([
                 'name' => $validated['firstName'],
                 'last_name' => $validated['lastName'],
@@ -284,7 +266,6 @@ class UserController extends Controller
                 'address' => $validated['address'],
             ]);
 
-            // Actualizar usuario
             $userData = [
                 'email' => $validated['email'],
             ];
@@ -305,12 +286,10 @@ class UserController extends Controller
     {
         $user = User::with(['person'])->findOrFail($userId);
 
-        // Verificar que sea cliente
         if ($user->role !== UserRole::CLIENT) {
             abort(404);
         }
 
-        // Verificar si tiene órdenes
         $hasOrders = Order::where('client_id', $user->id)->exists();
         
         if ($hasOrders) {
@@ -334,7 +313,6 @@ class UserController extends Controller
     {
         $user = User::findOrFail($userId);
 
-        // Verificar que sea cliente
         if ($user->role !== UserRole::CLIENT) {
             abort(404);
         }
@@ -359,7 +337,6 @@ class UserController extends Controller
             ->whereNull('email_verified_at')
             ->count();
 
-        // Usuarios nuevos este mes
         $newUsersThisMonth = User::where('role', UserRole::CLIENT)
             ->whereBetween('created_at', [
                 Carbon::now()->startOfMonth(),
@@ -367,10 +344,8 @@ class UserController extends Controller
             ])
             ->count();
 
-        // Total de órdenes confirmadas
         $totalOrders = Order::where('status', 'PAID')->count();
 
-        // Ingresos totales
         $totalRevenue = Order::where('status', 'PAID')
             ->sum('total_amount');
 

@@ -18,7 +18,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
     
-    // Gestión de eventos
     Route::prefix('events')->name('events.')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('index');
         Route::get('/{event}', [EventController::class, 'show'])->name('show');
@@ -26,7 +25,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::patch('/functions/{function}/toggle', [EventController::class, 'toggleFunction'])->name('functions.toggle');
     });
     
-    // Gestión de usuarios
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
@@ -38,7 +36,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
     });
     
-    // Gestión de organizadores
     Route::prefix('organizers')->name('organizers.')->group(function () {
         Route::get('/', [OrganizerController::class, 'index'])->name('index');
         Route::get('/create', [OrganizerController::class, 'create'])->name('create');
@@ -53,7 +50,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{organizerId}/users/{userId}/regenerate-credentials', [OrganizerController::class, 'regenerateCredentials'])->name('regenerate-credentials');
     });
     
-    // Reportes - CORREGIDO: usar solo 'admin' middleware
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
@@ -61,27 +57,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/real-time', [ReportController::class, 'realTimeStats'])->name('real-time');
     });
     
-    // Configuración
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', function () {
             return Inertia::render('admin/settings');
         })->name('index');
     });
 
-    // Gestión de categorías
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
     
-    // Gestión de venues
     Route::resource('venues', VenueController::class);
     Route::post('/venues/{venue}/sectors', [SectorController::class, 'store'])->name('venues.sectors.store');
     Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
     
-    // Gestión de sectores
     Route::resource('sectors', SectorController::class);
     Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);
 
-    // Gestión de FAQs
     Route::resource('faq-categories', FaqCategoryController::class)->except(['show', 'create', 'edit'])->names('faqs.categories');
     Route::resource('faqs', FaqController::class)->only(['store', 'update', 'destroy']);
     Route::get('faqs', [FaqCategoryController::class, 'index'])->name('faqs.index');

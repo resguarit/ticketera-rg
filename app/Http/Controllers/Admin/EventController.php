@@ -27,7 +27,6 @@ class EventController extends Controller
 
     public function index(Request $request): Response
     {
-        // Obtener filtros
         $search = $request->get('search', '');
         $status = $request->get('status', 'all');
         $category = $request->get('category', 'all');
@@ -35,15 +34,13 @@ class EventController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        // Consulta base con relaciones ACTUALIZADA
         $query = Event::with([
             'organizer',
             'category',
-            'venue.ciudad.provincia', // NUEVO: incluir ciudad y provincia
+            'venue.ciudad.provincia',
             'functions.ticketTypes'
         ]);
 
-        // Aplicar filtros de búsqueda
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -56,21 +53,18 @@ class EventController extends Controller
             });
         }
 
-        // Filtro por categoría
         if ($category !== 'all') {
             $query->whereHas('category', function($q) use ($category) {
                 $q->where('name', $category);
             });
         }
 
-        // ACTUALIZADO: Filtro por ciudad usando la nueva relación
         if ($city !== 'all') {
             $query->whereHas('venue.ciudad', function($q) use ($city) {
                 $q->where('name', $city);
             });
         }
 
-        // Filtro por estado (basado en funciones)
         if ($status !== 'all') {
             switch ($status) {
                 case 'active':
@@ -95,7 +89,6 @@ class EventController extends Controller
             }
         }
 
-        // Ordenamiento
         switch ($sortBy) {
             case 'name':
                 $query->orderBy('name', $sortDirection);
@@ -115,10 +108,8 @@ class EventController extends Controller
                 $query->orderBy('created_at', $sortDirection);
         }
 
-        // Paginación
         $events = $query->paginate(10)->withQueryString();
 
-        // Procesar datos para el frontend
         $eventsData = $events->getCollection()->map(function ($event) {
             $firstFunction = $event->functions->first();
             $totalTickets = $event->functions->sum(function($func) {
@@ -129,10 +120,8 @@ class EventController extends Controller
             });
             $revenue = $event->getRevenue();
 
-            // Determinar estado basado en funciones
             $status = $this->determineEventStatus($event);
 
-            // Calcular rango de precios
             $priceRange = $this->calculatePriceRange($event);
 
             return [
@@ -148,7 +137,6 @@ class EventController extends Controller
                 'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
                 'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null,
                 'location' => $event->venue->name ?? 'Sin venue',
-                // ACTUALIZADO: usar la nueva estructura de ciudad
                 'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                 'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                     $event->venue->ciudad->provincia->name : null,
@@ -165,16 +153,12 @@ class EventController extends Controller
             ];
         });
 
-        // Reemplazar la colección original
         $events->setCollection($eventsData);
 
-        // Estadísticas
         $stats = $this->getEventStats();
 
-        // Filtros para el frontend
         $categories = Category::pluck('name')->unique();
         
-        // ACTUALIZADO: Obtener ciudades de la nueva tabla
         $cities = Ciudad::orderBy('name')->pluck('name');
 
         return Inertia::render('admin/events', [
@@ -195,7 +179,6 @@ class EventController extends Controller
 
     public function show(int $eventId): Response
     {
-        // ACTUALIZADO: incluir ciudad y provincia en la consulta
         $event = Event::with([
             'organizer',
             'category',
@@ -203,7 +186,6 @@ class EventController extends Controller
             'functions.ticketTypes'
         ])->findOrFail($eventId);
 
-        // Datos procesados para el detalle
         $eventData = [
             'id' => $event->id,
             'name' => $event->name,
@@ -224,11 +206,10 @@ class EventController extends Controller
                 'id' => $event->venue->id,
                 'name' => $event->venue->name,
                 'address' => $event->venue->address,
-                // ACTUALIZADO: usar la nueva estructura
                 'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                 'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                     $event->venue->ciudad->provincia->name : null,
-                'full_address' => $event->venue->getFullAddressAttribute(), // Usar el helper del modelo
+                'full_address' => $event->venue->getFullAddressAttribute(),
             ],
             'functions' => $event->functions->map(function($function) {
                 return [
@@ -317,10 +298,8 @@ class EventController extends Controller
 
         $draftEvents = Event::whereDoesntHave('functions')->count();
 
-        // Calcular tickets vendidos totales
         $totalTicketsSold = $this->revenueService->ticketsSold();
 
-        // Calcular ingresos totales
         $totalRevenue = $this->revenueService->forPlatform();
 
         return [

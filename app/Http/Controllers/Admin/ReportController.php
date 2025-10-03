@@ -1,5 +1,4 @@
 <?php
-// filepath: app/Http/Controllers/Admin/ReportController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -28,8 +27,6 @@ class ReportController extends Controller
     {
         $timeRange = $request->get('timeRange', '6m');
         $startDate = $this->getStartDate($timeRange);
-
-        // Obtener datos principales
         $salesData = $this->getSalesData($startDate);
         $topEvents = $this->getTopEvents($startDate, 10);
         $monthlyData = $this->getMonthlyData($startDate);
@@ -46,9 +43,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Descargar reporte específico en PDF
-     */
     public function downloadReport(Request $request, string $reportType)
     {
         $timeRange = $request->get('timeRange', '6m');
@@ -64,9 +58,6 @@ class ReportController extends Controller
         };
     }
 
-    /**
-     * Obtener estadísticas en tiempo real para el dashboard
-     */
     public function realTimeStats()
     {
         $today = Carbon::today();
@@ -95,9 +86,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /**
-     * Exportar datos para procesamiento externo (no PDF)
-     */
     public function export(Request $request)
     {
         $type = $request->get('type', 'sales');
@@ -117,7 +105,6 @@ class ReportController extends Controller
         ]);
     }
 
-    // Métodos privados de utilidad
     private function getStartDate(string $timeRange): Carbon
     {
         return match($timeRange) {
@@ -153,7 +140,6 @@ class ReportController extends Controller
             ->where('created_at', '>=', $startDate)
             ->count();
 
-        // Calcular tasa de crecimiento comparando con período anterior
         $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
         $previousRevenue = Order::where('status', OrderStatus::PAID)
             ->whereBetween('created_at', [$previousPeriod, $startDate])
@@ -168,7 +154,7 @@ class ReportController extends Controller
             'totalTickets' => $totalTickets,
             'monthlyTickets' => $monthlyTickets,
             'averageTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
-            'conversionRate' => 73.5, // Puedes calcular esto basado en visitas vs compras
+            'conversionRate' => 73.5,
             'growthRate' => round($growthRate, 1),
         ];
     }
@@ -215,7 +201,7 @@ class ReportController extends Controller
                     'category' => $event->category->name ?? 'Sin categoría',
                     'revenue' => $revenue,
                     'tickets_sold' => $ticketsSold,
-                    'growth' => '+' . rand(5, 25) . '%', // Puedes calcular el crecimiento real
+                    'growth' => '+' . rand(5, 25) . '%',
                     'status' => $event->functions()->where('start_time', '>', Carbon::now())->exists() ? 'active' : 'completed',
                 ];
             })
@@ -297,7 +283,6 @@ class ReportController extends Controller
 
     private function getUserDemographics(): array
     {
-        // Datos simulados de demografía - puedes implementar la lógica real
         return [
             ['age' => '18-25', 'percentage' => 30, 'users' => 1500],
             ['age' => '26-35', 'percentage' => 35, 'users' => 1750],

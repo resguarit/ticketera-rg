@@ -35,7 +35,6 @@ class SectorController extends Controller
             $incomingSectorIds[] = $sector->id;
         }
 
-        // Eliminar sectores que ya no vienen en la petición
         $sectorsToDelete = array_diff($existingSectorIds, $incomingSectorIds);
         if (!empty($sectorsToDelete)) {
             Sector::destroy($sectorsToDelete);

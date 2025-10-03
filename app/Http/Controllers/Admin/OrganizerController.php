@@ -67,7 +67,6 @@ class OrganizerController extends Controller
             $file = $request->file('logo_url');
             $filename = time() . '_' . $file->getClientOriginalName();
             $path = $request->file('logo_url')->storeAs('logos', $filename, 'public');
-            // Guardar solo el nombre del archivo en la base de datos
             $validated['logo_url'] = $path;
         }
 
@@ -99,7 +98,6 @@ class OrganizerController extends Controller
         $validated = $request->validated();
 
         if ($request->hasFile('logo_url')) {
-            // Eliminar el logo anterior si existe
             if ($organizer->logo_url) {
                 $oldLogoPath = public_path('images/organizers/' . $organizer->logo_url);
                 if (file_exists($oldLogoPath)) {
@@ -110,7 +108,6 @@ class OrganizerController extends Controller
             $file = $request->file('logo_url');
             $filename = time() . '_' . $file->getClientOriginalName();
             
-            // Mover el nuevo archivo
             $file->move(public_path('images/organizers'), $filename);
             
             $validated['logo_url'] = $filename;
@@ -126,7 +123,6 @@ class OrganizerController extends Controller
     {
         $organizer = Organizer::findOrFail($organizerId);
         
-        // Eliminar el logo si existe
         if ($organizer->logo_url) {
             $logoPath = public_path('images/organizers/' . $organizer->logo_url);
             if (file_exists($logoPath)) {
@@ -210,7 +206,7 @@ class OrganizerController extends Controller
         $user = User::where('organizer_id', $organizer->id)->findOrFail($userId);
 
         $user->organizer_id = null;
-        $user->role = UserRole::CLIENT; // vuelve a cliente
+        $user->role = UserRole::CLIENT;
         $user->save();
 
         return redirect()->back()->with('success', 'Usuario removido del organizador.');
@@ -247,7 +243,7 @@ class OrganizerController extends Controller
         $user = User::where('organizer_id', $organizer->id)->findOrFail($userId);
 
         $newPassword = Str::password(12);
-        $user->password = $newPassword; // hashed via cast
+        $user->password = $newPassword;
         $user->password_changed_at = null;
         $user->save();
 

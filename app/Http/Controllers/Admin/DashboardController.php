@@ -24,22 +24,16 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): Response
     {
-        // Obtener rango de tiempo (por defecto 7 días)
         $timeRange = $request->get('timeRange', '7d');
         $startDate = $this->getStartDate($timeRange);
-        // Estadísticas principales
         $stats = $this->getDashboardStats($startDate);
         
-        // Eventos recientes
         $recentEvents = $this->getRecentEvents();
         
-        // Usuarios recientes
         $recentUsers = $this->getRecentUsers();
         
-        // Alertas del sistema
         $systemAlerts = $this->getSystemAlerts();
         
-        // Estado del sistema
         $systemStatus = $this->getSystemStatus();
 
         return Inertia::render('admin/dashboard', [
@@ -76,13 +70,11 @@ class DashboardController extends Controller
             ? round((($newUsersThisPeriod - $previousPeriodUsers) / $previousPeriodUsers) * 100)
             : 0;
 
-        // Eventos activos (sin filtro de status, solo eventos con funciones futuras)
         $activeEvents = Event::whereHas('functions', function($query) {
             $query->where('start_time', '>=', Carbon::now());
         })->count();
         $newEventsThisPeriod = Event::where('created_at', '>=', $startDate)->count();
         
-        // Ingresos totales
         $totalRevenue = $this->revenueService->forPlatform($startDate, Carbon::now());
         $previousRevenue = $this->revenueService->forPlatform($startDate->copy()->subDays($startDate->diffInDays(Carbon::now())), $startDate);
 
@@ -126,7 +118,6 @@ class DashboardController extends Controller
 
     private function getRecentEvents(): array
     {
-        // ACTUALIZADO: incluir ciudad y provincia en la consulta
         return Event::with(['organizer', 'venue.ciudad.provincia', 'functions.ticketTypes'])
             ->orderBy('created_at', 'desc')
             ->limit(4)
@@ -141,7 +132,6 @@ class DashboardController extends Controller
                 });
                 $revenue = $event->getRevenue();
 
-                // Determinar status basado en las fechas de las funciones
                 $status = 'draft';
                 if ($event->functions->count() > 0) {
                     $now = Carbon::now();
@@ -164,7 +154,6 @@ class DashboardController extends Controller
                     'tickets_sold' => $soldTickets,
                     'total_tickets' => $totalTickets,
                     'revenue' => $revenue,
-                    // ACTUALIZADO: agregar información de ubicación
                     'venue' => $event->venue->name ?? 'Sin venue',
                     'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                     'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
@@ -209,7 +198,6 @@ class DashboardController extends Controller
     {
         $alerts = [];
         
-        // Verificar alto tráfico (ejemplo)
         $recentOrders = Order::where('created_at', '>=', Carbon::now()->subHour())->count();
         if ($recentOrders > 50) {
             $alerts[] = [
@@ -221,7 +209,6 @@ class DashboardController extends Controller
             ];
         }
 
-        // Verificar eventos próximos sin tickets
         $eventsWithoutTickets = Event::whereHas('functions', function($query) {
             $query->where('start_time', '>=', Carbon::now())
                   ->where('start_time', '<=', Carbon::now()->addDays(7));
@@ -244,7 +231,6 @@ class DashboardController extends Controller
     {
         $status = [];
 
-        // 1. Estado de la Base de Datos
         try {
             $dbStart = microtime(true);
             DB::connection()->getPdo();
@@ -275,7 +261,6 @@ class DashboardController extends Controller
             'details' => $dbDetails ?? null
         ];
 
-        // 2. Estado del Cache
         try {
             $cacheStart = microtime(true);
             Cache::put('health_check', true, 1);
@@ -303,7 +288,6 @@ class DashboardController extends Controller
             'details' => $cacheDetails
         ];
 
-        // 3. Uso de Memoria
         $memoryUsage = memory_get_usage(true);
         $memoryLimit = ini_get('memory_limit');
         $memoryLimitBytes = $this->parseBytes($memoryLimit);
@@ -327,7 +311,6 @@ class DashboardController extends Controller
             'details' => $this->formatBytes($memoryUsage) . ' / ' . $memoryLimit . ' (' . round($memoryPercent, 1) . '%)'
         ];
 
-        // 4. Espacio en Disco
         $diskFree = disk_free_space('/');
         $diskTotal = disk_total_space('/');
         $diskUsedPercent = (($diskTotal - $diskFree) / $diskTotal) * 100;
@@ -350,7 +333,6 @@ class DashboardController extends Controller
             'details' => $this->formatBytes($diskFree) . ' libre (' . round(100 - $diskUsedPercent, 1) . '%)'
         ];
 
-        // 5. Cola de Trabajos (Jobs Queue)
         try {
             $failedJobs = DB::table('failed_jobs')->count();
             $queueStatus = 'operational';

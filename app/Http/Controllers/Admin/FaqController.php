@@ -11,14 +11,10 @@ use Illuminate\Http\RedirectResponse;
 
 class FaqController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): Response
     {
         $faqs = Faq::orderBy('category')->orderBy('order')->get()->groupBy('category');
         
-        // Para mantener la consistencia con help.tsx, definimos iconos y colores
         $categoryDetails = [
             'Compra de Tickets' => ['icon' => 'Ticket', 'color' => 'primary'],
             'Pagos y Facturación' => ['icon' => 'CreditCard', 'color' => 'red-500'],
@@ -32,9 +28,6 @@ class FaqController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): Response
     {
         $categories = Faq::select('category')->distinct()->pluck('category');
@@ -43,9 +36,6 @@ class FaqController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -60,17 +50,11 @@ class FaqController extends Controller
         return redirect()->route('admin.faqs.index')->with('success', 'Pregunta frecuente creada exitosamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Faq $faq): Response
     {
         $categories = Faq::select('category')->distinct()->pluck('category');
@@ -80,9 +64,6 @@ class FaqController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Faq $faq): RedirectResponse
     {
         $validated = $request->validate([
@@ -96,9 +77,6 @@ class FaqController extends Controller
         return redirect()->route('admin.faqs.index')->with('success', 'Pregunta frecuente actualizada exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Faq $faq): RedirectResponse
     {
         $faq->delete();
