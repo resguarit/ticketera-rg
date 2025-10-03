@@ -248,6 +248,7 @@ class OrganizerController extends Controller
 
         $newPassword = Str::password(12);
         $user->password = $newPassword; // hashed via cast
+        $user->password_changed_at = null;
         $user->save();
 
         return redirect()->back()->with([
