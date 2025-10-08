@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House} from 'lucide-react';
+import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle} from 'lucide-react';
 import logoResguarit from '../../../public/favicon.ico'
 
 interface FooterProps {
@@ -122,6 +122,15 @@ export default function Footer({ className = '' }: FooterProps) {
                                 aria-label="Instagram"
                             >
                                 <Instagram className="w-4 h-4" />
+                            </a>
+                            <a 
+                                href="https://wa.me/5492216914649" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
+                                aria-label="WhatsApp"
+                            >
+                                <MessageCircle  className="w-4 h-4" />
                             </a>
                             <a 
                                 href="https://www.youtube.com/@RGEntradas" 
