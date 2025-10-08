@@ -25,6 +25,12 @@ class TicketLockService
      */
     public function lockTickets(array $ticketRequests, string $sessionId): array
     {
+        Log::info('Iniciando bloqueo de tickets', [
+            'session_id' => substr($sessionId, -8),
+            'base_session_id' => substr(explode('_', $sessionId)[0], -8),
+            'ticket_requests' => count($ticketRequests)
+        ]);
+
         $lockedTickets = [];
         $failures = [];
 
@@ -41,6 +47,12 @@ class TicketLockService
                         'quantity' => $quantity,
                         'lock_key' => $result['lock_key']
                     ];
+                    
+                    Log::info('Ticket bloqueado exitosamente', [
+                        'ticket_type_id' => $ticketTypeId,
+                        'quantity' => $quantity,
+                        'session_id' => substr($sessionId, -8)
+                    ]);
                 } else {
                     $failures[] = [
                         'ticket_type_id' => $ticketTypeId,
@@ -48,12 +60,19 @@ class TicketLockService
                         'available' => $result['available'],
                         'message' => $result['message']
                     ];
+                    
+                    Log::warning('Fallo al bloquear ticket', [
+                        'ticket_type_id' => $ticketTypeId,
+                        'requested' => $quantity,
+                        'available' => $result['available'] ?? 0,
+                        'session_id' => substr($sessionId, -8)
+                    ]);
                 }
             } catch (\Exception $e) {
                 Log::error('Error bloqueando tickets', [
                     'ticket_type_id' => $ticketTypeId,
                     'quantity' => $quantity,
-                    'session_id' => $sessionId,
+                    'session_id' => substr($sessionId, -8),
                     'error' => $e->getMessage()
                 ]);
                 
@@ -64,11 +83,20 @@ class TicketLockService
             }
         }
 
-        return [
+        $result = [
             'success' => empty($failures),
             'locked_tickets' => $lockedTickets,
             'failures' => $failures
         ];
+
+        Log::info('Resultado del bloqueo de tickets', [
+            'session_id' => substr($sessionId, -8),
+            'success' => $result['success'],
+            'locked_count' => count($lockedTickets),
+            'failures_count' => count($failures)
+        ]);
+
+        return $result;
     }
 
     /**
@@ -512,5 +540,124 @@ class TicketLockService
             'available' => $ticketType ? max(0, $ticketType->quantity - $ticketType->quantity_sold - array_sum(array_column($locks, 'quantity'))) : 0,
             'timestamp' => now()->toISOString()
         ];
+    }
+
+    /**
+     * NUEVO: Liberar todos los locks de una sesión base (sin timestamp)
+     * Útil para cuando una sesión inicia un nuevo checkout
+     */
+    public function releaseAllSessionLocks(string $baseSessionId): void
+    {
+        Log::info('Liberando todos los locks de sesión base', [
+            'base_session_id' => substr($baseSessionId, -8)
+        ]);
+
+        try {
+            // Estrategia 1: Buscar por patrón de sesión base
+            $this->releaseSessionLocksByPattern($baseSessionId);
+            
+            // Estrategia 2: Fallback para Redis si está disponible
+            if (config('cache.default') === 'redis') {
+                $this->releaseSessionLocksRedis($baseSessionId);
+            }
+            
+            Log::info('Liberación de locks de sesión base completada', [
+                'base_session_id' => substr($baseSessionId, -8)
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error liberando locks de sesión base', [
+                'base_session_id' => substr($baseSessionId, -8),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * NUEVO: Liberar locks buscando por patrón de sesión
+     */
+    protected function releaseSessionLocksByPattern(string $baseSessionId): void
+    {
+        // Obtener todos los tipos de ticket para verificar locks
+        $allTicketTypes = TicketType::pluck('id');
+        $releasedCount = 0;
+
+        foreach ($allTicketTypes as $ticketTypeId) {
+            $lockKey = $this->getLockKey($ticketTypeId);
+            $locks = Cache::get($lockKey, []);
+            
+            if (empty($locks)) {
+                continue;
+            }
+
+            // Filtrar locks que pertenezcan a esta sesión base
+            $originalCount = count($locks);
+            $updatedLocks = array_filter($locks, function ($lock) use ($baseSessionId) {
+                // Verificar si el session_id del lock comienza con el baseSessionId
+                return !str_starts_with($lock['session_id'], $baseSessionId);
+            });
+
+            if (count($updatedLocks) !== $originalCount) {
+                $removedCount = $originalCount - count($updatedLocks);
+                $releasedCount += $removedCount;
+                
+                Log::info('Locks encontrados y liberados para ticket type', [
+                    'ticket_type_id' => $ticketTypeId,
+                    'base_session_id' => substr($baseSessionId, -8),
+                    'removed_count' => $removedCount
+                ]);
+
+                // Actualizar cache
+                if (empty($updatedLocks)) {
+                    Cache::forget($lockKey);
+                } else {
+                    Cache::put($lockKey, array_values($updatedLocks), now()->addMinutes(self::LOCK_DURATION + 5));
+                }
+            }
+        }
+
+        Log::info('Liberación por patrón completada', [
+            'base_session_id' => substr($baseSessionId, -8),
+            'total_released' => $releasedCount
+        ]);
+    }
+
+    /**
+     * NUEVO: Método específico para Redis - liberar por patrón de sesión
+     */
+    protected function releaseSessionLocksRedis(string $baseSessionId): void
+    {
+        try {
+            $prefix = config('cache.prefix', '');
+            $pattern = $prefix ? "{$prefix}:*:session:{$baseSessionId}_*" : "*:session:{$baseSessionId}_*";
+            
+            $keys = Cache::getRedis()->keys($pattern);
+            
+            Log::info('Encontradas claves Redis para liberar por patrón', [
+                'base_session_id' => substr($baseSessionId, -8),
+                'keys_count' => count($keys),
+                'pattern' => $pattern
+            ]);
+
+            foreach ($keys as $sessionKey) {
+                $cleanKey = str_replace($prefix . ':', '', $sessionKey);
+                $ticketTypeId = $this->extractTicketTypeIdFromKey($cleanKey);
+                
+                if ($ticketTypeId) {
+                    // Extraer el session_id completo de la clave
+                    if (preg_match('/session:(.+)$/', $cleanKey, $matches)) {
+                        $fullSessionId = $matches[1];
+                        $this->releaseTicketType($ticketTypeId, $fullSessionId);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error en liberación Redis por patrón', [
+                'base_session_id' => substr($baseSessionId, -8),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
