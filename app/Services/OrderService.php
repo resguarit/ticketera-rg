@@ -358,4 +358,19 @@ class OrderService
         
         return $baseCode;
     }
+
+    public function processOrder(/* parámetros */) 
+    {
+        // ... lógica existente de procesamiento ...
+        
+        // Después de actualizar quantity_sold
+        foreach ($orderItems as $item) {
+            $ticketType = $item['ticketType'];
+            
+            // Verificar activación de siguiente tanda
+            app(StageTicketService::class)->checkAndActivateNextStage($ticketType);
+        }
+        
+        // ... resto del método ...
+    }
 }

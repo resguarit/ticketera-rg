@@ -35,13 +35,17 @@ export default function CreateTicketType() {
         description: '',
         price: 0,
         quantity: sectorsWithAvailability?.[0]?.available_capacity ?? 0,
-        max_purchase_quantity: 10, // Valor por defecto
+        max_purchase_quantity: 10,
         sector_id: sectorsWithAvailability?.[0]?.id ?? undefined,
         sales_start_date: '',
         sales_end_date: '',
         is_hidden: false,
-        is_bundle: false,           // ← NUEVO
-        bundle_quantity: undefined, // ← NUEVO
+        is_bundle: false,           
+        bundle_quantity: undefined, 
+        // NUEVOS: Campos para tandas
+        create_stages: false,
+        stages_count: 2,
+        price_increment: 0,
     });
 
     useEffect(() => {

@@ -43,6 +43,8 @@ class TicketType extends Model
         'sales_end_date' => 'datetime',
     ];
 
+    protected $appends = ['stage_group', 'stage_number'];
+
     public function eventFunction()
     {
         return $this->belongsTo(EventFunction::class);
@@ -89,5 +91,36 @@ class TicketType extends Model
     public function getRevenue(?Carbon $startDate = null, ?Carbon $endDate = null): float
     {
         return app(RevenueService::class)->forTicketType($this, $startDate, $endDate);
+    }
+
+    public function getStageGroupAttribute(): ?string
+    {
+        // Extraer el grupo base del nombre (ej: "General 1" -> "General")
+        if (preg_match('/^(.+)\s+(\d+)$/', $this->name, $matches)) {
+            return trim($matches[1]);
+        }
+        return null;
+    }
+
+    public function getStageNumberAttribute(): ?int
+    {
+        // Extraer el número de tanda del nombre
+        if (preg_match('/^(.+)\s+(\d+)$/', $this->name, $matches)) {
+            return (int) $matches[2];
+        }
+        return null;
+    }
+
+    // Método para obtener tandas del mismo grupo
+    public function getStageSiblings()
+    {
+        if (!$this->stage_group) {
+            return collect([]);
+        }
+        
+        return TicketType::where('event_function_id', $this->event_function_id)
+            ->where('name', 'LIKE', $this->stage_group . ' %')
+            ->orderBy('name')
+            ->get();
     }
 }

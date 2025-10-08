@@ -22,7 +22,10 @@ interface SectorWithAvailability {
 
 // Extender el tipo base para el formulario
 export interface TicketTypeFormData extends Partial<TicketType> {
-    // Puedes agregar campos temporales si lo necesitas, pero los principales ya están en TicketType
+    // Campos específicos para tandas en el formulario
+    create_stages?: boolean;
+    stages_count?: number;
+    price_increment?: number;
 }
 
 interface TicketTypeFormProps {
@@ -43,6 +46,9 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
     const selectedSectorAvailability = sectorsWithAvailability?.find(s => s.id.toString() === data.sector_id?.toString());
     const isBundle = data.is_bundle || false;
     const bundleQuantity = data.bundle_quantity || 1;
+    const createStages = data.create_stages || false;
+    const stagesCount = data.stages_count || 2;
+    const priceIncrement = data.price_increment || 0;
     
     // Calcular cantidad real de entradas
     const realQuantity = isBundle ? (data.quantity || 0) * bundleQuantity : (data.quantity || 0);
@@ -182,7 +188,6 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                     )}
                     
                     {/* Mensaje de advertencia si se supera la capacidad */}
-                    
                     {willExceedCapacity && selectedSectorAvailability && (
                         <Alert className="border-primary bg-primary/10">
                             <Info className="h-4 w-4 text-primary" />
@@ -245,6 +250,75 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 <Checkbox id="is_hidden" checked={data.is_hidden} onCheckedChange={checked => setData('is_hidden', Boolean(checked))} />
                 <Label htmlFor="is_hidden">Ocultar este tipo de entrada al público</Label>
                 <InputError message={errors.is_hidden} />
+            </div>
+
+            {/* SECCIÓN NUEVA: Configuración de Tandas */}
+            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center space-x-2">
+                    <Checkbox 
+                        id="create_stages" 
+                        checked={createStages} 
+                        onCheckedChange={checked => setData('create_stages', Boolean(checked))} 
+                    />
+                    <Label htmlFor="create_stages" className="font-medium">
+                        Crear entrada por tandas
+                    </Label>
+                </div>
+                
+                {createStages && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Número de tandas</Label>
+                                <Input
+                                    type="number"
+                                    min="2"
+                                    max="10"
+                                    value={stagesCount}
+                                    onChange={(e) => setData('stages_count', parseInt(e.target.value) || 2)}
+                                />
+                                <InputError message={errors.stages_count} />
+                            </div>
+                            <div>
+                                <Label>Incremento de precio (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    placeholder="10"
+                                    value={priceIncrement}
+                                    onChange={(e) => setData('price_increment', parseInt(e.target.value) || 0)}
+                                />
+                                <InputError message={errors.price_increment} />
+                            </div>
+                        </div>
+                        
+                        {/* Preview de las tandas */}
+                        <div className="border rounded p-3 space-y-2">
+                            <Label className="text-sm font-medium">Vista previa de tandas:</Label>
+                            {Array.from({length: stagesCount}, (_, i) => {
+                                const stagePrice = (data.price || 0) * (1 + (priceIncrement / 100 * i));
+                                return (
+                                    <div key={i} className="flex justify-between text-sm">
+                                        <span>{data.name || 'Entrada'} {i + 1}</span>
+                                        <span>${stagePrice.toFixed(2)}</span>
+                                        <span className={i === 0 ? 'text-green-600' : 'text-gray-500'}>
+                                            {i === 0 ? 'Activa' : 'Oculta'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                                <strong>Sistema de tandas:</strong> Se crearán {stagesCount} entradas diferentes.
+                                Solo la primera estará visible inicialmente. Cuando se agote, se activará automáticamente la siguiente.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center justify-end gap-4 pt-4">

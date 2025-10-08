@@ -70,6 +70,8 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
   const entradasEmitidas = isBundle ? lotesVendidos * bundleQuantity : lotesVendidos;
   const totalEntradas = isBundle ? ticket.quantity * bundleQuantity : ticket.quantity;
 
+  const isStaged = ticket.stage_group && ticket.stage_number;
+
   return (
     <Card className="w-80 hover:shadow-md transition-shadow relative">
       <CardHeader className='pt-2 flex-grow'>
@@ -80,6 +82,16 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
               {isBundle && (
                 <Badge variant="secondary" className="text-xs">
                   Lote x{bundleQuantity}
+                </Badge>
+              )}
+              {isStaged && (
+                <Badge variant="outline" className="text-xs">
+                  Tanda {ticket.stage_number}
+                </Badge>
+              )}
+              {ticket.is_hidden && isStaged && (
+                <Badge variant="secondary" className="text-xs">
+                  En espera
                 </Badge>
               )}
             </div>
