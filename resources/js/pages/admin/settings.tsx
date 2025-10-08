@@ -101,7 +101,7 @@ export default function Settings({ auth }: any) {
 
     return (
         <>
-            <Head title="Configuración - Panel Admin" />
+            <Head title="Configuración" />
             
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
