@@ -217,7 +217,7 @@ export default function AdminDashboard({
 
     return (
         <>
-            <Head title="Panel de Administración" />
+            <Head title="Dashboard - Panel de Administración" />
             
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
