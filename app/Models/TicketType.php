@@ -123,4 +123,12 @@ class TicketType extends Model
             ->orderBy('name')
             ->get();
     }
+
+    /**
+     * Obtener cantidad disponible
+     */
+    public function getQuantityAvailableAttribute(): int
+    {
+        return max(0, $this->quantity - $this->quantity_sold);
+    }
 }
