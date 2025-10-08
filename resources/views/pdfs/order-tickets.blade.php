@@ -278,7 +278,7 @@
                             <div class="detail-row">
                                 <div class="detail-label">Contacto:</div>
                                 <div class="detail-value" style="color: #0066cc;">
-                                    {{ $event->organizer->email ?? 'info@ticketmax.com' }}
+                                    {{ $event->organizer->email ?? 'info@rgentradas.com' }}
                                 </div>
                             </div>
                         </div>

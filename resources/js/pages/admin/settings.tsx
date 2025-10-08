@@ -35,10 +35,10 @@ export default function Settings({ auth }: any) {
 
     // Estados para configuraciones
     const [generalSettings, setGeneralSettings] = useState({
-        siteName: "TicketMax",
+        siteName: "RG Entradas",
         siteDescription: "La mejor plataforma de venta de tickets",
-        contactEmail: "contact@ticketmax.com",
-        supportEmail: "support@ticketmax.com",
+        contactEmail: "contact@rgentradas.com",
+        supportEmail: "support@rgentradas.com",
         timezone: "America/Argentina/Buenos_Aires",
         currency: "ARS",
         language: "es"
@@ -50,8 +50,8 @@ export default function Settings({ auth }: any) {
         smtpUsername: "",
         smtpPassword: "",
         smtpEncryption: "tls",
-        fromEmail: "noreply@ticketmax.com",
-        fromName: "TicketMax"
+        fromEmail: "noreply@rgentradas.com",
+        fromName: "RG Entradas"
     });
 
     const [paymentSettings, setPaymentSettings] = useState({

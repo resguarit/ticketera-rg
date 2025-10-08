@@ -71,7 +71,7 @@ const contactOptions = [
         icon: Mail,
         color: "red-500",
         available: "Respuesta en 24hs",
-        action: "soporte@ticketmax.com",
+        action: "soporte@rgentradas.com",
     },
 ];
 
