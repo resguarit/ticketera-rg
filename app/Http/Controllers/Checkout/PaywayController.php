@@ -34,6 +34,12 @@ class PaywayController extends Controller
             "installments" => 1,
             "payment_method_id" => 1, // Esto debería ser dinámico según el BIN, pero 1 (Visa) es un buen default.
             "payment_type" => "single",
+            "sub_payments" => [], // Campo obligatorio
+            "fraud_detection" => [
+                "send_to_cs" => false,
+                "channel" => "Web",
+                "device_unique_identifier" => "fingerprint-" . time()
+            ],
             "customer" => [
                 "id" => (string) $usuario->id,
                 "email" => $usuario->email
