@@ -236,7 +236,10 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="sales_end_date">Fin de Venta</Label>
-                    <Input id="sales_end_date" type="datetime-local" value={data.sales_end_date} onChange={e => setData('sales_end_date', e.target.value)} required />
+                    <Input id="sales_end_date" type="datetime-local" value={data.sales_end_date || ''} onChange={e => setData('sales_end_date', e.target.value || null)} />
+                    <p className="text-sm text-muted-foreground">
+                        Si no se especifica, las ventas continuarán hasta el día del evento
+                    </p>
                     <InputError message={errors.sales_end_date} />
                 </div>
             </div>

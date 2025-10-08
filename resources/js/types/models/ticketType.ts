@@ -15,7 +15,7 @@ export interface TicketType {
     is_bundle: boolean;        // ← NUEVO
     bundle_quantity: number;   // ← NUEVO
     sales_start_date: string;
-    sales_end_date: string;
+    sales_end_date?: string;
     created_at: string;
     updated_at: string;
 

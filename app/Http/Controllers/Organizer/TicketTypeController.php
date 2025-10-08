@@ -80,7 +80,7 @@ class TicketTypeController extends Controller
                 },
             ],
             'sales_start_date' => 'required|date',
-            'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
+            'sales_end_date' => 'nullable|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
             'is_bundle' => 'sometimes|boolean',
             'bundle_quantity' => [
@@ -180,7 +180,7 @@ class TicketTypeController extends Controller
                 },
             ],
             'sales_start_date' => 'required|date',
-            'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
+            'sales_end_date' => 'nullable|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
             'is_bundle' => 'sometimes|boolean',
             'bundle_quantity' => [
