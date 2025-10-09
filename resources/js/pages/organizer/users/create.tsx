@@ -36,18 +36,17 @@ export default function CreateUser() {
         <AppLayout>
             <Head title="Crear Usuario" />
 
-            <div className="space-y-6">
+            <div className="space-y-6 p-6">
                 <div className="flex items-center space-x-3">
-                    <UserPlus className="h-8 w-8 text-blue-600" />
                     <div>
-                        <h1 className="text-3xl font-bold">Crear Usuario</h1>
+                        <h1 className="text-2xl font-bold">Crear Usuario</h1>
                         <p className="text-muted-foreground mt-1">
                             Añade un nuevo usuario a tu organización
                         </p>
                     </div>
                 </div>
 
-                <div className="max-w-4xl">
+                <div className="w-full flex justify-center">
                     <Card>
                         <CardHeader>
                             <CardTitle>Información del Usuario</CardTitle>
