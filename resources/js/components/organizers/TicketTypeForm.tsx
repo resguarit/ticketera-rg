@@ -97,7 +97,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             </div>
 
             {/* NUEVA SECCIÓN: Configuración de Lote */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+            <div className="bg-muted/50 rounded-lg py-4 space-y-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox 
                         id="is_bundle" 
@@ -253,7 +253,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             </div>
 
             {/* SECCIÓN NUEVA: Configuración de Tandas */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+            <div className="bg-muted/50 rounded-lg py-4 space-y-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox 
                         id="create_stages" 
