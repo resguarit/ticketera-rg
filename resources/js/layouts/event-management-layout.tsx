@@ -55,12 +55,6 @@ export default function EventManagementLayout({
             icon: Users, 
             href: route('organizer.events.attendees', event.id)
         },
-        { 
-            name: 'Configuración', 
-            id: 'settings', 
-            icon: Settings, 
-            href: `#settings` // TODO: Agregar ruta cuando esté disponible
-        },
     ];
 
     return (
