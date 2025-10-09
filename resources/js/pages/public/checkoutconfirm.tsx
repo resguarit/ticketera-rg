@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
 import { formatPrice, formatPriceWithCurrency, formatNumber } from '@/lib/currencyHelpers';
-import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +53,8 @@ interface EventData extends Event {
 interface CheckoutConfirmProps {
     eventData: EventData;
     eventId: number;
+    sessionId: string;
+    lockExpiration: string;
 }
 
 const paymentMethods = [
@@ -79,7 +81,7 @@ const paymentMethods = [
     },
 ];
 
-export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmProps) {
+export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExpiration }: CheckoutConfirmProps) {
     const { auth } = usePage<SharedData>().props;
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -181,7 +183,6 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         } else if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
-        // --- FIN MODIFICADO ---
     };
 
     const handlePrevStep = () => {
@@ -190,9 +191,8 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         }
     };
 
-    // --- NUEVO: Manejadores para el modal de verificación ---
     const handleConfirmEmail = () => {
-        // Simula el envío de un email y pasa al paso de introducir el código
+        // aca hacemos post al back
         setVerificationStep('code');
     };
 
@@ -252,14 +252,59 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         }
     };
 
+    const [timeLeft, setTimeLeft] = useState<number>(() => {
+        // Calcular segundos restantes desde lockExpiration
+        const expires = new Date(lockExpiration).getTime();
+        return Math.max(0, Math.floor((expires - Date.now()) / 1000));
+    });
+    const [expired, setExpired] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Contador regresivo
+    useEffect(() => {
+        if (expired) return;
+        if (timeLeft <= 0) {
+            setExpired(true);
+            // Llamar al backend para liberar locks
+            fetch(`/api/release-locks?session_id=${sessionId}`, { method: 'POST' });
+            return;
+        }
+        timerRef.current = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [timeLeft, expired, sessionId]);
+
+    // Formatear tiempo mm:ss
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
     return (
         <>
-            <Head title="Confirmar Compra - TicketMax" />
+            <Head title="Confirmar Compra" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
+                    {/* Contador de tiempo */}
+                    <div className="flex justify-center mb-6">
+                        {!expired ? (
+                            <div className="flex items-center gap-2 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg font-semibold text-lg">
+                                <Clock className="w-5 h-5" />
+                                Tiempo restante para completar la compra: <span className="ml-2 font-mono">{formatTime(timeLeft)}</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 bg-red-100 border border-red-300 text-red-800 px-4 py-2 rounded-lg font-semibold text-lg">
+                                <AlertCircle className="w-5 h-5" />
+                                El tiempo para completar la compra ha expirado. Los tickets han sido liberados.
+                            </div>
+                        )}
+                    </div>
+
                     {/* Back Button */}
                     <div className="mb-6">
                         <Link href={route('event.detail', eventId)}>
@@ -656,7 +701,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     onClick={handlePrevStep}
                                     variant="outline"
                                     className="border-gray-300 text-foreground hover:bg-gray-50"
-                                    disabled={currentStep === 1}
+                                    disabled={currentStep === 1 || expired}
                                 >
                                     Anterior
                                 </Button>
@@ -665,13 +710,14 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     <Button
                                         onClick={handleNextStep}
                                         className="bg-primary hover:bg-primary-hover text-white px-8"
+                                        disabled={expired}
                                     >
                                         Siguiente
                                     </Button>
                                 ) : (
                                     <Button
                                         onClick={handleSubmitPayment}
-                                        disabled={isLoading || !agreements.terms || !agreements.privacy}
+                                        disabled={isLoading || !agreements.terms || !agreements.privacy || expired}
                                         className="bg-green-500 hover:bg-green-600 text-white px-8"
                                     >
                                         {isLoading ? (

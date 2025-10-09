@@ -12,7 +12,7 @@ export default function Footer({ className = '' }: FooterProps) {
     return (
         <footer className={`bg-dark text-white ${className}`}>
             {/* Main Footer Content */}
-            <div className="px-16 py-8 sm:py-12">
+            <div className="px-6 sm:px-16 py-8 sm:py-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                     
                     {/* Company Info */}
@@ -21,7 +21,7 @@ export default function Footer({ className = '' }: FooterProps) {
                             <h3 className="text-lg sm:text-xl font-bold mb-3">
                                 RG <span className="font-medium">ENTRADAS</span>
                             </h3>
-                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                            <p className="text-gray-300 text-sm leading-relaxed">
                                 Tu plataforma de confianza para los mejores eventos de música, teatro, deportes y entretenimiento en Argentina.
                             </p>
                         </div>

@@ -113,7 +113,7 @@ export default function Help() {
 
     return (
         <>
-            <Head title="Centro de Ayuda - TicketMax" />
+            <Head title="Centro de Ayuda" />
             
             <div className="min-h-screen bg-primary">
                 {/* Header */}

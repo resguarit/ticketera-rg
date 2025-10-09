@@ -104,7 +104,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
 
     return (
         <>
-            <Head title="Ticketera RG - Eventos" />
+            <Head title="Home" />
             <Header className="" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
@@ -205,12 +205,12 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                             placeholder="Buscar eventos..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10"
+                                            className="pl-8 sm:pl-10 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10"
                                         />
                                     </div>
 
                                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <SelectValue placeholder="Categoría" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -224,7 +224,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     </Select>
 
                                     <Select value={selectedCity} onValueChange={setSelectedCity}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <SelectValue placeholder="Ciudad" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -238,7 +238,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                     </Select>
 
                                     <Select value={sortBy} onValueChange={setSortBy}>
-                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-base h-7 sm:h-10">
+                                        <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs sm:text-sm h-7 sm:h-10">
                                             <ArrowUpDown className="w-4 h-4 mr-2" />
                                             <SelectValue placeholder="Ordenar" />
                                         </SelectTrigger>
@@ -259,7 +259,7 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 <section className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl text-foreground mb-4 sm:mb-6 lg:mb-8 font-bold px-1">Próximos Eventos</h2>
                     {filteredAndSortedEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 ">
                             {filteredAndSortedEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}

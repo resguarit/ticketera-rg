@@ -43,7 +43,7 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
 
     return (
         <>
-            <Head title="Error en la Compra - TicketMax" />
+            <Head title="Error en la Compra" />
             
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background relative overflow-hidden">
                 {/* Error particles effect */}

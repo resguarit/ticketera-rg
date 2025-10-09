@@ -85,6 +85,11 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     title: 'Eventos',
                     href: '/organizer/events',
                     icon: Calendar,
+                },
+                {
+                    title: 'Usuarios',
+                    href: '/organizer/users',
+                    icon: Users,
                 }
             ];
         

@@ -85,3 +85,10 @@ export interface User {
     };
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface PageProps<T extends Record<string, unknown> = Record<string, unknown>> {
+    auth: {
+        user: User;
+    };
+    [key: string]: any;
+}
