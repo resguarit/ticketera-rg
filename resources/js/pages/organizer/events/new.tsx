@@ -20,6 +20,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { Category } from '@/types';
+import { toast, Toaster } from 'sonner';
 
 interface EventFunction {
     id: string;
@@ -186,25 +187,25 @@ export default function EventsNew({ categories, venues }: Props) {
     const addFunction = () => {
         // Validate required fields
         if (!functionForm.name || !functionForm.start_time) {
-            alert('Debe completar todos los campos obligatorios de la función.');
+            toast.error('Debe completar todos los campos obligatorios de la función');
             return;
         }
 
         // Validate start_time is a valid date
         if (!isValidDate(functionForm.start_time)) {
-            alert('La fecha de inicio no es válida.');
+            toast.error('La fecha de inicio no es válida');
             return;
         }
 
         // Only validate end_time if it's provided
         if (functionForm.end_time) {
             if (!isValidDate(functionForm.end_time)) {
-                alert('La fecha de fin no es válida.');
+                toast.error('La fecha de fin no es válida');
                 return;
             }
             
             if (!isDateAfter(functionForm.end_time, functionForm.start_time)) {
-                alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+                toast.error('La fecha de fin debe ser posterior a la fecha de inicio');
                 return;
             }
         }
@@ -223,10 +224,12 @@ export default function EventsNew({ categories, venues }: Props) {
                 f.id === editingFunction.id ? newFunction : f
             );
             setFunctions(updatedFunctions);
+            toast.success('Función actualizada correctamente');
         } else {
             // Add new function
             const updatedFunctions = [...functions, newFunction];
             setFunctions(updatedFunctions);
+            toast.success('Función agregada correctamente');
         }
 
         // Clear form
@@ -278,9 +281,30 @@ export default function EventsNew({ categories, venues }: Props) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         
+        // Validar campos obligatorios uno por uno
+        if (!data.name.trim()) {
+            toast.error('El nombre del evento es obligatorio');
+            return;
+        }
+
+        if (!data.description.trim()) {
+            toast.error('La descripción del evento es obligatoria');
+            return;
+        }
+
+        if (!data.category_id) {
+            toast.error('Debe seleccionar una categoría para el evento');
+            return;
+        }
+
+        if (!data.venue_id) {
+            toast.error('Debe seleccionar un recinto para el evento');
+            return;
+        }
+        
         // Validate at least one function
         if (functions.length === 0) {
-            alert('Debe agregar al menos una función al evento.');
+            toast.error('Debe agregar al menos una función al evento');
             return;
         }
         
@@ -297,10 +321,27 @@ export default function EventsNew({ categories, venues }: Props) {
             ...data,
             functions: functionsData
         }, {
+            onStart: () => {
+                toast.loading('Creando evento...', { id: 'create-event' });
+            },
             onSuccess: () => {
-                console.log('Event created successfully');
+                toast.success('Evento creado exitosamente', { id: 'create-event' });
             },
             onError: (errors: any) => {
+                // Mostrar errores específicos del servidor
+                if (errors.name) {
+                    toast.error(`Nombre: ${errors.name}`, { id: 'create-event' });
+                } else if (errors.description) {
+                    toast.error(`Descripción: ${errors.description}`, { id: 'create-event' });
+                } else if (errors.category_id) {
+                    toast.error(`Categoría: ${errors.category_id}`, { id: 'create-event' });
+                } else if (errors.venue_id) {
+                    toast.error(`Recinto: ${errors.venue_id}`, { id: 'create-event' });
+                } else if (errors.functions) {
+                    toast.error(`Funciones: ${errors.functions}`, { id: 'create-event' });
+                } else {
+                    toast.error('Error al crear el evento. Verifique todos los campos', { id: 'create-event' });
+                }
                 console.log('Form errors:', errors);
             }
         });
@@ -333,7 +374,7 @@ export default function EventsNew({ categories, venues }: Props) {
                     <form onSubmit={submit} className="space-y-6">
                         {/* Información Básica del Evento */}
                         <Card className='bg-card shadow-lg border-border'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-card-foreground'>Información del Evento</CardTitle>
                             </CardHeader>
                             <CardContent>
