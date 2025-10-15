@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 import { Event, Category, Venue, EventFunction } from '@/types';
 import InputError from '@/components/input-error';
 import { useEffect, useState } from 'react';
+import { toast, Toaster } from 'sonner';
 
 interface EditEventProps {
     event: Event & { 
@@ -80,15 +81,69 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        put(route('organizer.events.update', event.id), {
+        
+        // Validar campos obligatorios
+        if (!data.name.trim()) {
+            toast.error('El nombre del evento es obligatorio');
+            return;
+        }
+
+        if (!data.description.trim()) {
+            toast.error('La descripción del evento es obligatoria');
+            return;
+        }
+
+        if (!data.category_id) {
+            toast.error('Debe seleccionar una categoría para el evento');
+            return;
+        }
+
+        if (!data.venue_id) {
+            toast.error('Debe seleccionar un recinto para el evento');
+            return;
+        }
+
+        router.put(route('organizer.events.update', event.id), data, {
             preserveScroll: true,
+            onStart: () => {
+                toast.loading('Actualizando evento...', { id: 'update-event' });
+            },
+            onSuccess: () => {
+                toast.success('Evento actualizado exitosamente', {
+                    id: 'update-event',
+                    description: 'Los cambios han sido guardados correctamente'
+                });
+            },
+            onError: (errors: any) => {
+                // Mostrar errores específicos del servidor
+                if (errors.name) {
+                    toast.error(`Nombre: ${errors.name}`, { id: 'update-event' });
+                } else if (errors.description) {
+                    toast.error(`Descripción: ${errors.description}`, { id: 'update-event' });
+                } else if (errors.category_id) {
+                    toast.error(`Categoría: ${errors.category_id}`, { id: 'update-event' });
+                } else if (errors.venue_id) {
+                    toast.error(`Recinto: ${errors.venue_id}`, { id: 'update-event' });
+                } else if (errors.banner_url) {
+                    toast.error(`Banner: ${errors.banner_url}`, { id: 'update-event' });
+                } else if (errors.hero_banner_url) {
+                    toast.error(`Hero Banner: ${errors.hero_banner_url}`, { id: 'update-event' });
+                } else if (errors.featured) {
+                    toast.error(`Destacado: ${errors.featured}`, { id: 'update-event' });
+                } else {
+                    toast.error('Error al actualizar el evento', {
+                        id: 'update-event',
+                        description: 'Verifique todos los campos e intente nuevamente'
+                    });
+                }
+                console.log('Form errors:', errors);
+            }
         });
     }
 
     return (
         <>
             <Head title={`Editar Evento - ${event.name}`} />
-
             <div className="container mx-auto p-6">
                 <div className="flex items-center mb-6">
                     <Link href={route('organizer.events.index')}>
@@ -122,7 +177,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                         className="mt-1"
-                                        required
+                                        
                                     />
                                     <InputError message={errors.name} className="mt-2" />
                                 </div>
@@ -364,25 +419,12 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                 </div>
                             </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="featured"
-                                    checked={data.featured}
-                                    onCheckedChange={(checked) => setData('featured', Boolean(checked))}
-                                />
-                                <Label htmlFor="featured" className="font-normal">
-                                    Marcar como evento destacado
-                                </Label>
-                            </div>
-                            <InputError message={errors.featured} className="mt-2" />
-
                             <div className="flex justify-end gap-2">
                                 <Link href={route('organizer.events.index')}>
                                     <Button type="button" variant="outline">Cancelar</Button>
                                 </Link>
                                 <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover">
-                                    <Save className="w-4 h-4 mr-2" />
-                                    {processing ? 'Guardando...' : 'Guardar Cambios'}
+                                    {processing ? <><LoaderCircle className='h-4 w-4 animate-spin' /> Guardando... </> : <><Save className="w-4 h-4 mr-2" /> Guardar Cambios</>}
                                 </Button>
                             </div>
                         </CardContent>
