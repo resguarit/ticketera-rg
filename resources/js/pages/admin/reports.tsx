@@ -184,7 +184,7 @@ export default function Reports({ auth }: any) {
 
     return (
         <>
-            <Head title="Reportes - Panel Admin" />
+            <Head title="Reportes" />
             
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">

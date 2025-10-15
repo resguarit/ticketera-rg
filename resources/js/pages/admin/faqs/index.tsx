@@ -88,7 +88,7 @@ export default function FaqsIndex() {
 
     return (
         <>
-            <Head title="Gestionar FAQs" />
+            <Head title="Gestión de FAQs" />
             <div className="container mx-auto p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>

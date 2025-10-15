@@ -80,7 +80,7 @@ class TicketTypeController extends Controller
                 },
             ],
             'sales_start_date' => 'required|date',
-            'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
+            'sales_end_date' => 'nullable|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
             'is_bundle' => 'sometimes|boolean',
             'bundle_quantity' => [
@@ -90,6 +90,10 @@ class TicketTypeController extends Controller
                 'max:20',
                 'required_if:is_bundle,true',
             ],
+            // NUEVO: Validaciones para tandas
+            'create_stages' => 'sometimes|boolean',
+            'stages_count' => 'nullable|integer|min:2|max:10|required_if:create_stages,true',
+            'price_increment' => 'nullable|numeric|min:0|max:100|required_if:create_stages,true',
         ]);
 
         // Asociar el ID de la función a los datos validados
@@ -100,6 +104,82 @@ class TicketTypeController extends Controller
             $validated['bundle_quantity'] = null;
         }
 
+        // NUEVA LÓGICA: Crear tandas o entrada normal
+        if ($validated['create_stages'] ?? false) {
+            return $this->createStages($validated, $event, $function);
+        }
+
+        // Lógica existente para entrada normal
+        return $this->createSingleTicketType($validated, $event, $function);
+    }
+
+    /**
+     * Crea múltiples tandas de un tipo de entrada
+     */
+    private function createStages(array $validated, Event $event, EventFunction $function): RedirectResponse
+    {
+        $stagesCount = $validated['stages_count'];
+        $priceIncrement = $validated['price_increment'] / 100; // Convertir porcentaje a decimal
+        $basePrice = $validated['price'];
+        $baseName = $validated['name'];
+        
+        // Verificar capacidad total para todas las tandas
+        $sector = Sector::find($validated['sector_id']);
+        $isBundle = $validated['is_bundle'] ?? false;
+        $bundleQuantity = $validated['bundle_quantity'] ?? 1;
+        $realQuantityPerStage = $isBundle ? $validated['quantity'] * $bundleQuantity : $validated['quantity'];
+        $totalRealQuantity = $realQuantityPerStage * $stagesCount;
+        
+        // Calcular capacidad ya utilizada
+        $usedCapacity = TicketType::where('event_function_id', $function->id)
+            ->where('sector_id', $sector->id)
+            ->get()
+            ->sum(function ($ticketType) {
+                return $ticketType->is_bundle 
+                    ? $ticketType->quantity * $ticketType->bundle_quantity
+                    : $ticketType->quantity;
+            });
+        
+        $totalAfterCreation = $usedCapacity + $totalRealQuantity;
+        $createdStages = [];
+        
+        // Crear cada tanda
+        for ($i = 1; $i <= $stagesCount; $i++) {
+            $stagePrice = $basePrice * (1 + ($priceIncrement * ($i - 1)));
+            
+            $stageData = $validated;
+            $stageData['name'] = $baseName . ' ' . $i;
+            $stageData['price'] = $stagePrice;
+            $stageData['is_hidden'] = $i > 1; // Solo la primera tanda visible
+            
+            // Remover campos específicos de tandas antes de crear
+            unset($stageData['create_stages'], $stageData['stages_count'], $stageData['price_increment']);
+            
+            $ticketType = TicketType::create($stageData);
+            $createdStages[] = $ticketType;
+        }
+        
+        // Preparar mensaje
+        $message = "Se crearon {$stagesCount} tandas exitosamente:";
+        foreach ($createdStages as $stage) {
+            $status = $stage->is_hidden ? '(Oculta)' : '(Activa)';
+            $message .= "\n• {$stage->name}: \${$stage->price} {$status}";
+        }
+        
+        if ($totalAfterCreation > $sector->capacity) {
+            $excess = $totalAfterCreation - $sector->capacity;
+            $message .= "\n\n⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterCreation}/{$sector->capacity}.";
+        }
+
+        return redirect()->route('organizer.events.tickets', $event->id)
+            ->with($totalAfterCreation > $sector->capacity ? 'warning' : 'success', $message);
+    }
+
+    /**
+     * Crea una sola entrada (lógica existente)
+     */
+    private function createSingleTicketType(array $validated, Event $event, EventFunction $function): RedirectResponse
+    {
         // Verificar si se supera la capacidad y agregar mensaje de advertencia
         $sector = Sector::find($validated['sector_id']);
         $isBundle = $validated['is_bundle'] ?? false;
@@ -124,6 +204,9 @@ class TicketTypeController extends Controller
             $message = "Tipo de entrada creado exitosamente. ⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterCreation}/{$sector->capacity}.";
         }
 
+        // Remover campos específicos de tandas antes de crear
+        unset($validated['create_stages'], $validated['stages_count'], $validated['price_increment']);
+        
         TicketType::create($validated);
 
         return redirect()->route('organizer.events.tickets', $event->id)
@@ -180,7 +263,7 @@ class TicketTypeController extends Controller
                 },
             ],
             'sales_start_date' => 'required|date',
-            'sales_end_date' => 'required|date|after_or_equal:sales_start_date',
+            'sales_end_date' => 'nullable|date|after_or_equal:sales_start_date',
             'is_hidden' => 'sometimes|boolean',
             'is_bundle' => 'sometimes|boolean',
             'bundle_quantity' => [

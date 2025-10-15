@@ -32,7 +32,7 @@ export default function CreateVenue() {
 
     return (
         <>
-            <Head title="Crear Nuevo Recinto" />
+            <Head title="Crear Recinto" />
             <div className="container mx-auto p-6">
                 <Card className="max-w-4xl mx-auto bg-white">
                     <CardHeader>

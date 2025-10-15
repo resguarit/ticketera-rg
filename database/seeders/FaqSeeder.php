@@ -76,7 +76,7 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $eventsCategory->id,
                 'question' => '¿Puedo transferir mis tickets a otra persona?',
-                'answer' => 'Sí, puedes transferir tus tickets a través de tu cuenta. La persona que recibe debe tener una cuenta en TicketMax.',
+                'answer' => 'Sí, puedes transferir tus tickets a través de tu cuenta. La persona que recibe debe tener una cuenta en RG Entradas.',
                 'order' => 2,
             ],
             [
