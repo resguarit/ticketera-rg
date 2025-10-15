@@ -352,7 +352,21 @@ export default function EventsNew({ categories, venues }: Props) {
             <Head title='Crear Evento' />
             <div className='min-h-screen bg-background'>
                 <div className='container mx-auto px-4 py-6'>
-                    <div className='flex items-center justify-between mb-6'>
+                <div className="flex items-center mb-6">
+                    <Link href={route('organizer.events.index')}>
+                        <Button variant="outline" size="icon" className="mr-4">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Crear Evento</h1>
+                        <p className="text-gray-600 mt-1">
+                            Complete el formulario para crear un nuevo evento.
+                        </p>
+                    </div>
+                </div>
+
+{/*                     <div className='flex items-center justify-between mb-6'>
                         <div>
                             <h2 className="section text-2xl text-foreground">Crear Evento</h2>
                             <p className='text-muted-foreground'>Complete el formulario para crear un nuevo evento.</p>
@@ -369,7 +383,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                 Guardar Evento
                             </Button>
                         </div>
-                    </div>
+                    </div> */}
 
                     <form onSubmit={submit} className="space-y-6">
                         {/* Información Básica del Evento */}
@@ -812,6 +826,16 @@ export default function EventsNew({ categories, venues }: Props) {
                                             </div>
                                         )}
                                     </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 mt-6">
+                                    <Link href={route('organizer.events.index')}>
+                                        <Button type="button" variant="outline">Cancelar</Button>
+                                    </Link>
+                                    <Button onClick={submit} disabled={processing} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                                        <Save className="w-4 h-4 mr-2" />
+                                        Guardar Evento
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
