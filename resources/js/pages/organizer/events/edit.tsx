@@ -60,6 +60,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
         if (file) {
             setBannerPreview(URL.createObjectURL(file));
         } else {
+            // Si no hay archivo nuevo, mantener la preview existente
             setBannerPreview(event.image_url || null);
         }
     }
@@ -75,6 +76,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
         if (file) {
             setHeroBannerPreview(URL.createObjectURL(file));
         } else {
+            // Si no hay archivo nuevo, mantener la preview existente  
             setHeroBannerPreview(event.hero_image_url || null);
         }
     }
@@ -103,8 +105,28 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
             return;
         }
 
-        put(route('organizer.events.update', event.id), {
+        // Crear FormData para enviar archivos correctamente
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('name', data.name);
+        formData.append('description', data.description);
+        formData.append('category_id', data.category_id.toString());
+        formData.append('venue_id', data.venue_id.toString());
+        
+        // Solo agregar archivos si se seleccionaron nuevos
+        if (data.banner_url instanceof File) {
+            formData.append('banner_url', data.banner_url);
+        }
+        
+        if (data.hero_banner_url instanceof File) {
+            formData.append('hero_banner_url', data.hero_banner_url);
+        }
+
+        // Usar router.post en lugar de put para FormData
+        router.post(route('organizer.events.update', event.id), formData, {
             preserveScroll: true,
+            preserveState: true,
+            forceFormData: true,
             onStart: () => {
                 toast.loading('Actualizando evento...', { id: 'update-event' });
             },
@@ -116,20 +138,9 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
             },
             onError: (errors: any) => {
                 // Mostrar errores específicos del servidor
-                if (errors.name) {
-                    toast.error(`Nombre: ${errors.name}`, { id: 'update-event' });
-                } else if (errors.description) {
-                    toast.error(`Descripción: ${errors.description}`, { id: 'update-event' });
-                } else if (errors.category_id) {
-                    toast.error(`Categoría: ${errors.category_id}`, { id: 'update-event' });
-                } else if (errors.venue_id) {
-                    toast.error(`Recinto: ${errors.venue_id}`, { id: 'update-event' });
-                } else if (errors.banner_url) {
-                    toast.error(`Banner: ${errors.banner_url}`, { id: 'update-event' });
-                } else if (errors.hero_banner_url) {
-                    toast.error(`Hero Banner: ${errors.hero_banner_url}`, { id: 'update-event' });
-                } else if (errors.featured) {
-                    toast.error(`Destacado: ${errors.featured}`, { id: 'update-event' });
+                const firstError = Object.values(errors)[0];
+                if (firstError) {
+                    toast.error(Array.isArray(firstError) ? firstError[0] : firstError, { id: 'update-event' });
                 } else {
                     toast.error('Error al actualizar el evento', {
                         id: 'update-event',
@@ -143,9 +154,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
     return (
         <>
-            <Head title={`Editar Evento - ${event.name}`} />
-            <Toaster position="top-center" richColors />
-            
+            <Head title={`Editar Evento - ${event.name}`} />            
             <div className='min-h-screen bg-background'>
                 <div className='container mx-auto px-4 py-6'>
                     <div className="flex items-center mb-6">
@@ -405,7 +414,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                         <div className="flex items-start space-x-2">
                                             <div className="text-blue-600 mt-1">
                                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                                 </svg>
                                             </div>
                                             <div>
