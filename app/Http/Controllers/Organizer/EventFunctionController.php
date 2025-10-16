@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\EventFunction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -63,10 +64,23 @@ class EventFunctionController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
-        $event->functions()->create($validated);
+        try {
+            DB::beginTransaction();
+            
+            $event->functions()->create($validated);
+            
+            DB::commit();
 
-        return redirect()->route('organizer.events.functions', $event->id)
-            ->with('success', 'Función creada exitosamente.');
+            return redirect()->route('organizer.events.functions', $event->id)
+                ->with('success', 'Función creada exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error creating function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al crear la función: ' . $e->getMessage()])
+                        ->withInput();
+        }
     }
 
     /**
@@ -97,10 +111,23 @@ class EventFunctionController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
-        $function->update($validated);
+        try {
+            DB::beginTransaction();
+            
+            $function->update($validated);
+            
+            DB::commit();
 
-        return redirect()->route('organizer.events.functions', $event->id)
-            ->with('success', 'Función actualizada exitosamente.');
+            return redirect()->route('organizer.events.functions', $event->id)
+                ->with('success', 'Función actualizada exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error updating function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al actualizar la función: ' . $e->getMessage()])
+                        ->withInput();
+        }
     }
 
     /**
@@ -110,15 +137,26 @@ class EventFunctionController extends Controller
     {
         $this->checkOwnership($event);
 
-        // Add logic to check if tickets are sold before deleting
-        if ($function->ticketTypes()->where('quantity_sold', '>', 0)->exists()) {
+        try {
+            // Add logic to check if tickets are sold before deleting
+            if ($function->ticketTypes()->where('quantity_sold', '>', 0)->exists()) {
+                return back()->withErrors(['error' => 'No se puede eliminar una función con entradas vendidas.']);
+            }
+
+            DB::beginTransaction();
+            
+            $function->delete();
+            
+            DB::commit();
+
             return redirect()->route('organizer.events.functions', $event->id)
-                ->with('error', 'No se puede eliminar una función con entradas vendidas.');
+                ->with('success', 'Función eliminada exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error deleting function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al eliminar la función: ' . $e->getMessage()]);
         }
-
-        $function->delete();
-
-        return redirect()->route('organizer.events.functions', $event->id)
-            ->with('success', 'Función eliminada exitosamente.');
     }
 }

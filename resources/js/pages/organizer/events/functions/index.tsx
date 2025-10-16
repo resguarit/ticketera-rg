@@ -2,9 +2,12 @@ import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Calendar, Clock, Edit, Trash2 } from 'lucide-react';
-import { Link, Head } from '@inertiajs/react';
+import { Link, Head, router, usePage } from '@inertiajs/react';
 import { Event, EventFunction } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface EventWithFunctions extends Event {
     functions: EventFunction[];
@@ -15,6 +18,24 @@ interface FunctionsIndexProps {
 }
 
 export default function FunctionsIndex({ event }: FunctionsIndexProps) {
+    const { flash } = usePage().props as any;
+    const [functionToDelete, setFunctionToDelete] = useState<EventFunction | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    
+    // Manejar mensajes flash de Laravel
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success, {
+                description: 'La operación se completó correctamente'
+            });
+        }
+        
+        if (flash.error) {
+            toast.error('Error en la operación', {
+                description: flash.error
+            });
+        }
+    }, [flash]);
     
     const formatDateTime = (dateTime: string) => {
         const date = new Date(dateTime);
@@ -22,6 +43,36 @@ export default function FunctionsIndex({ event }: FunctionsIndexProps) {
             date: date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }),
             time: date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
         };
+    };
+
+    const handleDeleteFunction = () => {
+        if (!functionToDelete) return;
+
+        setIsDeleting(true);
+        
+        router.delete(route('organizer.events.functions.destroy', { event: event.id, function: functionToDelete.id }), {
+            preserveScroll: true,
+            onStart: () => {
+                toast.loading('Eliminando función...', { id: 'delete-function' });
+            },
+            onSuccess: () => {
+                toast.success('Función eliminada exitosamente', {
+                    id: 'delete-function',
+                    description: `La función "${functionToDelete.name}" ha sido eliminada correctamente`
+                });
+                setFunctionToDelete(null);
+            },
+            onError: (errors) => {
+                const errorMessage = Object.values(errors)[0] as string;
+                toast.error('Error al eliminar la función', {
+                    id: 'delete-function',
+                    description: errorMessage || 'No se pudo eliminar la función. Intenta nuevamente.'
+                });
+            },
+            onFinish: () => {
+                setIsDeleting(false);
+            }
+        });
     };
 
     return (
@@ -74,11 +125,13 @@ export default function FunctionsIndex({ event }: FunctionsIndexProps) {
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
-                                                <Link href={route('organizer.events.functions.destroy', { event: event.id, function: func.id })} method="delete" as="button" preserveScroll>
-                                                    <Button variant="destructive" size="icon">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
+                                                <Button 
+                                                    variant="destructive" 
+                                                    size="icon"
+                                                    onClick={() => setFunctionToDelete(func)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
                                         </li>
                                     ))}
@@ -96,6 +149,22 @@ export default function FunctionsIndex({ event }: FunctionsIndexProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Modal de confirmación para eliminar función */}
+            <ConfirmationModal
+                isOpen={!!functionToDelete}
+                onClose={() => setFunctionToDelete(null)}
+                onConfirm={handleDeleteFunction}
+                accionTitulo="Eliminación"
+                accion="eliminar"
+                pronombre="la"
+                entidad="función"
+                accionando="Eliminando"
+                nombreElemento={functionToDelete?.name}
+                advertencia="Esta acción no se puede deshacer. Si hay entradas vendidas para esta función, no se podrá eliminar."
+                confirmVariant="destructive"
+                isLoading={isDeleting}
+            />
         </EventManagementLayout>
     );
 }

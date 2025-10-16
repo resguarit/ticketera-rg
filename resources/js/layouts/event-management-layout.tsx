@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
 import { Event, EventRelations } from '@/types/models/event';
+import { Toaster } from 'sonner';
+
 
 interface EventFunctionDetail extends EventFunction {
     date: string;       
@@ -60,7 +62,19 @@ export default function EventManagementLayout({
     return (
         <>
             <Head title={`Gestión - ${event.name}`} />
-            
+            <Toaster 
+                position="top-right"
+                richColors
+                expand={true}
+                duration={4000}
+                toastOptions={{
+                    style: {
+                        background: 'white',
+                        border: '1px solid #e5e7eb',
+                        color: '#374151',
+                    },
+                }}
+            />
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
                 <div className="bg-white border-b border-gray-200">
