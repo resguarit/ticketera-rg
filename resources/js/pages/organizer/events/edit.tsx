@@ -260,7 +260,6 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 id="banner" 
                                                 type="file" 
                                                 onChange={handleBannerChange}
-                                                accept="image/*"
                                             />
                                             <InputError message={errors.banner_url} className="mt-1" />
                                         </div>
@@ -392,7 +391,6 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 id="hero_banner" 
                                                 type="file" 
                                                 onChange={handleHeroBannerChange}
-                                                accept="image/*"
                                             />
                                             <InputError message={errors.hero_banner_url} className="mt-1" />
                                         </div>
