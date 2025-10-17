@@ -27,7 +27,7 @@ export default function TestPayway() {
         return () => {
             form?.removeEventListener('submit', handleSubmit);
         };
-    }, []);
+    }, []); 
 
     const handleTokenResponse = (status: number, response: any) => {
                 if (status !== 200 && status !== 201) {

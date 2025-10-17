@@ -19,7 +19,6 @@ require __DIR__.'/organizer.php';
 
 /*-------Rutas protegidas para usuarios autenticados----------*/ 
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
-    Route::get('/tickets', [UserTicketController::class, 'index'])->name('tickets.index');
     Route::get('/tickets/{ticket}/download', [UserTicketController::class, 'download'])->name('tickets.download');
     Route::get('/tickets/{ticket}/qr', [UserTicketController::class, 'qrCode'])->name('tickets.qr');
     Route::post('/tickets/{ticket}/transfer', [UserTicketController::class, 'transfer'])->name('tickets.transfer');

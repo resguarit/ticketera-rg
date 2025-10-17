@@ -206,14 +206,14 @@ class PaywayDebugController extends Controller
                 "site_transaction_id" => $siteTransactionId,
                 "token" => $request->input('payment_token'),
                 "bin" => $request->input('bin'),
-                "amount" => (int) ($request->input('amount') * 100), // Convertir a centavos
+                "amount" => (int) ($request->input('amount') * 100),
                 "currency" => "ARS",
                 "installments" => (int) $request->input('installments'),
-                "payment_method_id" => 1, // Visa por defecto
+                "payment_method_id" => 111, // prueba amex
                 "payment_type" => "single",
-                "sub_payments" => [], // Campo obligatorio (array vacío si no hay sub-pagos)
-                "fraud_detection" => [ // Datos de prevención de fraude
-                    "send_to_cs" => false, // No enviar a Cybersource en testing
+                "sub_payments" => [],
+                "fraud_detection" => [ 
+                    "send_to_cs" => false,
                     "channel" => "Web",
                     "device_unique_identifier" => "12345"
                 ],
