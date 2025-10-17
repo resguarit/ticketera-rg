@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
 import { formatPrice, formatPriceWithCurrency, formatNumber } from '@/lib/currencyHelpers';
-import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +53,8 @@ interface EventData extends Event {
 interface CheckoutConfirmProps {
     eventData: EventData;
     eventId: number;
+    sessionId: string;
+    lockExpiration: string;
 }
 
 const paymentMethods = [
@@ -79,7 +81,7 @@ const paymentMethods = [
     },
 ];
 
-export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmProps) {
+export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExpiration }: CheckoutConfirmProps) {
     const { auth } = usePage<SharedData>().props;
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +93,19 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
     const [verificationStep, setVerificationStep] = useState<'prompt' | 'code'>('prompt');
     const [verificationCode, setVerificationCode] = useState('');
     // --- FIN NUEVO ---
+
+    // CORREGIDO: Usar useRef para mantener una única instancia del SDK
+    const decidirSandboxRef = useRef<any>(null);
+
+    // Inicializar el SDK solo una vez cuando el componente se monta
+    useEffect(() => {
+        if (!decidirSandboxRef.current) {
+            const urlSandbox = "https://developers-ventasonline.payway.com.ar/api/v2";
+            decidirSandboxRef.current = new (window as any).Decidir(urlSandbox);
+            decidirSandboxRef.current.setPublishableKey('2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y');
+            console.log('Decidir Sandbox inicializado:', decidirSandboxRef.current);
+        }
+    }, []); // Array vacío = solo se ejecuta una vez al montar
 
     const [billingInfo, setBillingInfo] = useState({
         firstName: auth.user?.person?.name ?? "",
@@ -214,24 +229,96 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
             return;
         }
 
+        // Validar que todos los campos de pago estén completos
+        if (!paymentInfo.cardNumber || !paymentInfo.cvv || !paymentInfo.expiryDate || !paymentInfo.cardName) {
+            alert("Por favor completa todos los campos de la tarjeta");
+            return;
+        }
+
+        if (!billingInfo.documentNumber || !billingInfo.documentType) {
+            alert("Por favor completa el tipo y número de documento");
+            return;
+        }
+
         setIsLoading(true);
 
-        // Enviar datos al backend incluyendo información de la función
-        const formData = {
-            event_id: eventId,
-            function_id: eventData.function?.id,
-            billing_info: billingInfo,
-            payment_info: paymentInfo,
-            selected_tickets: eventData.selectedTickets,
-            agreements: agreements,
+        // PASO 1: Crear formulario fantasma para el SDK de Payway
+        const phantomForm = document.createElement('form');
+        phantomForm.style.display = 'none';
+        
+        // Poblar el formulario con los datos de la tarjeta desde el estado
+        const cardNumberClean = paymentInfo.cardNumber.replace(/\s+/g, ''); // Remover espacios
+        const [expiryMonth, expiryYear] = paymentInfo.expiryDate.split('/').map(s => s.trim());
+        
+        const formFields = [
+            { name: 'card_number', value: cardNumberClean },
+            { name: 'security_code', value: paymentInfo.cvv },
+            { name: 'card_expiration_month', value: expiryMonth },
+            { name: 'card_expiration_year', value: expiryYear },
+            { name: 'card_holder_name', value: paymentInfo.cardName },
+            { name: 'card_holder_doc_type', value: billingInfo.documentType.toLowerCase() },
+            { name: 'card_holder_doc_number', value: billingInfo.documentNumber },
+        ];
+
+        formFields.forEach(field => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.setAttribute('data-decidir', field.name);
+            input.value = field.value;
+            phantomForm.appendChild(input);
+        });
+
+        // Agregar el formulario al DOM temporalmente
+        document.body.appendChild(phantomForm);
+
+        // PASO 2: Callback para manejar la respuesta del SDK
+        const handleTokenResponse = (status: number, response: any) => {
+            // Remover el formulario fantasma
+            document.body.removeChild(phantomForm);
+
+            if (status !== 200 && status !== 201) {
+                // Error en la tokenización
+                console.error('Error en tokenización:', response);
+                setIsLoading(false);
+                alert('Error al validar los datos de la tarjeta. Por favor, revisa la información e intenta nuevamente.');
+                return;
+            }
+
+            // PASO 3: Tokenización exitosa, enviar al backend
+            console.log('Token creado exitosamente:', response);
+            
+            const formData = {
+                event_id: eventId,
+                function_id: eventData.function?.id,
+                billing_info: billingInfo,
+                payment_info: {
+                    method: paymentInfo.method,
+                    installments: paymentInfo.installments,
+                    // NO enviar datos sensibles de la tarjeta
+                },
+                token: response.id,
+                bin: response.bin,
+                selected_tickets: eventData.selectedTickets,
+                agreements: agreements,
+            };
+
+            try {
+                router.post(route('checkout.process'), formData as any);
+            } catch (error) {
+                console.error('Error procesando el pago:', error);
+                setIsLoading(false);
+                alert('Error procesando el pago. Por favor intenta de nuevo.');
+            }
         };
 
+        // PASO 4: Llamar al SDK de Payway para crear el token
         try {
-            router.post(route('checkout.process'), formData as any);
+            decidirSandboxRef.current.createToken(phantomForm, handleTokenResponse);
         } catch (error) {
-            console.error('Error procesando el pago:', error);
+            console.error('Error al llamar al SDK de Payway:', error);
+            document.body.removeChild(phantomForm);
             setIsLoading(false);
-            alert('Error procesando el pago. Por favor intenta de nuevo.');
+            alert('Error al procesar la tarjeta. Por favor intenta de nuevo.');
         }
     };
 
@@ -250,6 +337,36 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
         }
     };
 
+    const [timeLeft, setTimeLeft] = useState<number>(() => {
+        // Calcular segundos restantes desde lockExpiration
+        const expires = new Date(lockExpiration).getTime();
+        return Math.max(0, Math.floor((expires - Date.now()) / 1000));
+    });
+    const [expired, setExpired] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Contador regresivo
+    useEffect(() => {
+        if (expired) return;
+        if (timeLeft <= 0) {
+            setExpired(true);
+            // Llamar al backend para liberar locks
+            fetch(`/api/release-locks?session_id=${sessionId}`, { method: 'POST' });
+            return;
+        }
+        timerRef.current = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [timeLeft, expired, sessionId]);
+
+    // Formatear tiempo mm:ss
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
     return (
         <>
             <Head title="Confirmar Compra" />
@@ -258,6 +375,21 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                 <Header />
 
                 <div className="container mx-auto px-4 py-8">
+                    {/* Contador de tiempo */}
+                    <div className="flex justify-center mb-6">
+                        {!expired ? (
+                            <div className="flex items-center gap-2 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg font-semibold text-lg">
+                                <Clock className="w-5 h-5" />
+                                Tiempo restante para completar la compra: <span className="ml-2 font-mono">{formatTime(timeLeft)}</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 bg-red-100 border border-red-300 text-red-800 px-4 py-2 rounded-lg font-semibold text-lg">
+                                <AlertCircle className="w-5 h-5" />
+                                El tiempo para completar la compra ha expirado. Los tickets han sido liberados.
+                            </div>
+                        )}
+                    </div>
+
                     {/* Back Button */}
                     <div className="mb-6">
                         <Link href={route('event.detail', eventId)}>
@@ -654,7 +786,7 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     onClick={handlePrevStep}
                                     variant="outline"
                                     className="border-gray-300 text-foreground hover:bg-gray-50"
-                                    disabled={currentStep === 1}
+                                    disabled={currentStep === 1 || expired}
                                 >
                                     Anterior
                                 </Button>
@@ -663,13 +795,14 @@ export default function CheckoutConfirm({ eventData, eventId }: CheckoutConfirmP
                                     <Button
                                         onClick={handleNextStep}
                                         className="bg-primary hover:bg-primary-hover text-white px-8"
+                                        disabled={expired}
                                     >
                                         Siguiente
                                     </Button>
                                 ) : (
                                     <Button
                                         onClick={handleSubmitPayment}
-                                        disabled={isLoading || !agreements.terms || !agreements.privacy}
+                                        disabled={isLoading || !agreements.terms || !agreements.privacy || expired}
                                         className="bg-green-500 hover:bg-green-600 text-white px-8"
                                     >
                                         {isLoading ? (

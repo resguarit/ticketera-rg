@@ -19,7 +19,6 @@ require __DIR__.'/organizer.php';
 
 /*-------Rutas protegidas para usuarios autenticados----------*/ 
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
-    Route::get('/tickets', [UserTicketController::class, 'index'])->name('tickets.index');
     Route::get('/tickets/{ticket}/download', [UserTicketController::class, 'download'])->name('tickets.download');
     Route::get('/tickets/{ticket}/qr', [UserTicketController::class, 'qrCode'])->name('tickets.qr');
     Route::post('/tickets/{ticket}/transfer', [UserTicketController::class, 'transfer'])->name('tickets.transfer');
@@ -41,10 +40,7 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
     Route::get('/{event}/availability', [PublicEventController::class, 'getAvailability'])->name('availability'); 
 
-Route::post('/checkout/process-payment', [CheckoutController::class, 'processPayment'])->name('checkout.process');
-Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/error', [CheckoutController::class, 'error'])->name('checkout.error'); // Nueva ruta
-Route::get('/checkout/{event}', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
+require __DIR__.'/checkout.php';
 
 Route::get('/help', [HelpController::class, 'index'])->name('help');
 
@@ -91,6 +87,16 @@ if (app()->environment('local')) {
         }
     });
 }
+
+Route::post('/api/release-locks', function (\Illuminate\Http\Request $request) {
+    $sessionId = $request->input('session_id');
+    if ($sessionId) {
+        app(\App\Services\TicketLockService::class)->releaseTickets($sessionId);
+        return response()->json(['success' => true]);
+    }
+    return response()->json(['success' => false], 400);
+});
+
 use Illuminate\Support\Facades\Mail;
 
 Route::get('/test-email', function () {
