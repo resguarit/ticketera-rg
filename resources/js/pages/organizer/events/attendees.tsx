@@ -14,6 +14,7 @@ import { EventFunction } from '@/types/models/eventFunction';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModal';
 import { PaginatedResponse } from '@/types/ui/ui';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface EventAttendeeFunction {
     id: number;
@@ -59,6 +60,9 @@ export default function EventAttendees({
         loading: false,
         data: null as TicketDetails | null,
     });
+
+    const [confirmResendModal, setConfirmResendModal] = useState(false);
+    const [selectedAttendee, setSelectedAttendee] = useState<AttendeeForTable | null>(null);
 
     const handleFunctionFilter = (value: string) => {
         setFilterFunction(value);
@@ -224,6 +228,11 @@ export default function EventAttendees({
             // TODO: mostrar toast de error
             alert('Error al reenviar. Por favor, inténtalo de nuevo.');
         }
+    };
+
+    const confirmResendInvitation = (attendee: AttendeeForTable) => {
+        setConfirmResendModal(true);
+        setSelectedAttendee(attendee);
     };
 
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
@@ -488,7 +497,7 @@ export default function EventAttendees({
                                                         </DropdownMenuItem>
                                                         {attendee.type === 'invited' && (
                                                             <>
-                                                                <DropdownMenuItem onClick={() => handleResendInvitation(attendee.assistant_id, attendee.type)}>
+                                                                <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
                                                                     <Mail className="mr-2 h-4 w-4" />
                                                                     Reenviar invitación
                                                                 </DropdownMenuItem>
@@ -548,6 +557,24 @@ export default function EventAttendees({
                 onClose={closeTicketDetailsModal}
                 loading={ticketDetailsModal.loading}
                 data={ticketDetailsModal.data}
+            />
+
+            <ConfirmationModal
+                isOpen={confirmResendModal}
+                onClose={() => setConfirmResendModal(false)}
+                onConfirm={() => {
+                    if (selectedAttendee) {
+                        const id = selectedAttendee.type === 'invited' ? (selectedAttendee.assistant_id as number) : (selectedAttendee.order_id as number);
+                        handleResendInvitation(id, selectedAttendee.type);
+                    }
+                    setConfirmResendModal(false);
+                }}
+                accionTitulo="Reenvío de invitación"
+                accion="Reenviar"
+                pronombre="esta"
+                entidad="invitación"
+                accionando="reenviando"
+                confirmVariant='destructive'
             />
         </EventManagementLayout>
     );
