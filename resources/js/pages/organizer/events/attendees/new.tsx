@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,7 @@ interface InviteAttendeeProps {
 }
 
 export default function InviteAttendee({ auth, event, eventFunctions }: InviteAttendeeProps) {
+    const { flash } = usePage().props as any;
     const [tickets, setTickets] = useState<TicketRequest[]>([]);
     const [totalAmount, setTotalAmount] = useState(0);
     const [processing, setProcessing] = useState(false);
@@ -80,6 +82,21 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
         phone: '',
         address: '',
     });
+
+    // Manejar mensajes flash
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success('Asistente invitado exitosamente', {
+                description: flash.success
+            });
+        }
+        
+        if (flash?.error) {
+            toast.error('Error al invitar asistente', {
+                description: flash.error
+            });
+        }
+    }, [flash]);
 
     // Actualizar tickets cuando cambia el estado local
     useEffect(() => {
@@ -126,8 +143,82 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
         setTickets(newTickets);
     };
 
+    const validateForm = (): boolean => {
+        // Validar datos personales
+        if (!personData.name.trim()) {
+            toast.error('Nombre requerido', {
+                description: 'El nombre del asistente es obligatorio'
+            });
+            return false;
+        }
+
+        if (!personData.last_name.trim()) {
+            toast.error('Apellido requerido', {
+                description: 'El apellido del asistente es obligatorio'
+            });
+            return false;
+        }
+
+        if (!personData.email.trim()) {
+            toast.error('Email requerido', {
+                description: 'El email del asistente es obligatorio'
+            });
+            return false;
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(personData.email)) {
+            toast.error('Email inválido', {
+                description: 'Por favor ingresa un email válido'
+            });
+            return false;
+        }
+
+        // Validar tickets
+        if (tickets.length === 0) {
+            toast.error('Entradas requeridas', {
+                description: 'Debe agregar al menos una entrada'
+            });
+            return false;
+        }
+
+        // Validar que todos los tickets estén completos
+        for (let i = 0; i < tickets.length; i++) {
+            const ticket = tickets[i];
+            if (!ticket.event_function_id) {
+                toast.error(`Función requerida`, {
+                    description: `Selecciona una función para la entrada #${i + 1}`
+                });
+                return false;
+            }
+
+            if (!ticket.ticket_type_id) {
+                toast.error(`Tipo de entrada requerido`, {
+                    description: `Selecciona un tipo de entrada para la entrada #${i + 1}`
+                });
+                return false;
+            }
+
+            if (!ticket.quantity || ticket.quantity < 1) {
+                toast.error(`Cantidad inválida`, {
+                    description: `La cantidad debe ser mayor a 0 para la entrada #${i + 1}`
+                });
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Ejecutar validaciones del frontend
+        if (!validateForm()) {
+            return;
+        }
+
         setProcessing(true);
         setErrors({});
         
@@ -135,7 +226,17 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
             person: personData,
             tickets: tickets,
         } as any, {
+            preserveScroll: true,
+            onStart: () => {
+                toast.loading('Invitando asistente...', { id: 'invite-attendee' });
+            },
             onSuccess: () => {
+                toast.success('Asistente invitado exitosamente', {
+                    id: 'invite-attendee',
+                    description: 'Se ha enviado la invitación por email'
+                });
+                
+                // Limpiar formulario
                 setPersonData({
                     name: '',
                     last_name: '',
@@ -148,9 +249,37 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                 setProcessing(false);
             },
             onError: (errors: any) => {
+                // Manejar errores específicos del servidor
+                if (errors['person.name']) {
+                    toast.error('Error en el nombre', {
+                        id: 'invite-attendee',
+                        description: errors['person.name']
+                    });
+                } else if (errors['person.email']) {
+                    toast.error('Error en el email', {
+                        id: 'invite-attendee',
+                        description: errors['person.email']
+                    });
+                } else if (errors.tickets) {
+                    toast.error('Error en las entradas', {
+                        id: 'invite-attendee',
+                        description: errors.tickets
+                    });
+                } else if (errors.general) {
+                    toast.error('Error al invitar asistente', {
+                        id: 'invite-attendee',
+                        description: errors.general
+                    });
+                } else {
+                    toast.error('Error al invitar asistente', {
+                        id: 'invite-attendee',
+                        description: 'Verifica todos los campos e intenta nuevamente'
+                    });
+                }
+                
                 setErrors(errors);
                 setProcessing(false);
-            },
+            }
         });
     };
 
@@ -202,7 +331,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             value={personData.name}
                                             onChange={(e) => setPersonData({...personData, name: e.target.value})}
                                             className={errors['person.name'] ? 'border-red-500' : ''}
-                                            required
                                         />
                                         {errors['person.name'] && (
                                             <p className="text-sm text-red-600 mt-1">{errors['person.name']}</p>
@@ -216,7 +344,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             value={personData.last_name}
                                             onChange={(e) => setPersonData({...personData, last_name: e.target.value})}
                                             className={errors['person.last_name'] ? 'border-red-500' : ''}
-                                            required
                                         />
                                         {errors['person.last_name'] && (
                                             <p className="text-sm text-red-600 mt-1">{errors['person.last_name']}</p>
@@ -235,7 +362,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         value={personData.email}
                                         onChange={(e) => setPersonData({...personData, email: e.target.value})}
                                         className={errors['person.email'] ? 'border-red-500' : ''}
-                                        required
                                     />
                                     {errors['person.email'] && (
                                         <p className="text-sm text-red-600 mt-1">{errors['person.email']}</p>
@@ -255,7 +381,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     {errors['person.dni'] && (
                                         <p className="text-sm text-red-600 mt-1">{errors['person.dni']}</p>
                                     )}
-                                    <p className="text-xs text-gray-500 mt-1">No es necesario completar este campo</p>
                                 </div>
 
                                 <div>
@@ -273,7 +398,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     {errors['person.phone'] && (
                                         <p className="text-sm text-red-600 mt-1">{errors['person.phone']}</p>
                                     )}
-                                    <p className="text-xs text-gray-500 mt-1">No es necesario completar este campo</p>
                                 </div>
 
                                 <div>
@@ -291,7 +415,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     {errors['person.address'] && (
                                         <p className="text-sm text-red-600 mt-1">{errors['person.address']}</p>
                                     )}
-                                    <p className="text-xs text-gray-500 mt-1">No es necesario completar este campo</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -328,12 +451,15 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                 value={ticket.event_function_id.toString()}
                                                 onValueChange={(value) => updateTicket(index, 'event_function_id', parseInt(value))}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger className='text-start'>
                                                     <SelectValue placeholder="Selecciona una función" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {(eventFunctions || []).map((func) => (
-                                                        <SelectItem key={func.id} value={func.id.toString()}>
+                                                    {(eventFunctions || []).map((func) => {
+                                                        const funcion = func;
+                                                        console.log('Funcion:',funcion);
+                                                        return (
+                                                        <SelectItem key={func.id} value={func.id.toString()} >
                                                             <div className="flex items-center gap-2">
                                                                 <div>
                                                                     <p className="font-medium">{func.name}</p>
@@ -350,7 +476,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                                 </div>
                                                             </div>
                                                         </SelectItem>
-                                                    ))}
+                                                    )})}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -362,7 +488,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                     value={ticket.ticket_type_id.toString()}
                                                     onValueChange={(value) => updateTicket(index, 'ticket_type_id', parseInt(value))}
                                                 >
-                                                    <SelectTrigger>
+                                                    <SelectTrigger className='text-start'>
                                                         <SelectValue placeholder="Selecciona un tipo de entrada" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -372,7 +498,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                                 value={ticketType.id.toString()}
                                                                 disabled={ticketType.available === 0}
                                                             >
-                                                                <div className="flex items-center justify-between w-full">
+                                                                <div className="flex items-center gap-6 justify-between w-full">
                                                                     <div>
                                                                         <p className="font-medium">{ticketType.name}</p>
                                                                         <p className="text-sm text-gray-600">
