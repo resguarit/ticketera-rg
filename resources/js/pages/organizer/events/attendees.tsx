@@ -15,6 +15,7 @@ import { formatCurrency } from '@/lib/currencyHelpers';
 import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModal';
 import { PaginatedResponse } from '@/types/ui/ui';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ConfirmDeleteModal from '@/components/ConfirmationModal';
 
 interface EventAttendeeFunction {
     id: number;
@@ -63,6 +64,8 @@ export default function EventAttendees({
 
     const [confirmResendModal, setConfirmResendModal] = useState(false);
     const [selectedAttendee, setSelectedAttendee] = useState<AttendeeForTable | null>(null);
+    const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
+    const [eliminatedAttendee, setEliminatedAttendee] = useState<AttendeeForTable | null>(null);
 
     const handleFunctionFilter = (value: string) => {
         setFilterFunction(value);
@@ -235,12 +238,17 @@ export default function EventAttendees({
         setSelectedAttendee(attendee);
     };
 
+    const handleConfirmDeleteAttendee = (attendee: AttendeeForTable) => {
+        setConfirmDeleteModal(true);
+        setEliminatedAttendee(attendee);
+    }
+
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
         if (attendeeType === 'buyer') {
             return;
         }
         
-        if (confirm('¿Estás seguro de que quieres eliminar este asistente?')) {
+        if (attendeeType === 'invited') {
             router.delete(
                 route('organizer.events.assistants.destroy', {
                     event: event.id,
@@ -502,7 +510,7 @@ export default function EventAttendees({
                                                                     Reenviar invitación
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem 
-                                                                    onClick={() => handleDeleteAttendee(attendee.assistant_id, attendee.type)}
+                                                                    onClick={() => handleConfirmDeleteAttendee(attendee)}
                                                                     className="text-red-600"
                                                                 >
                                                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -574,6 +582,25 @@ export default function EventAttendees({
                 pronombre="esta"
                 entidad="invitación"
                 accionando="reenviando"
+                confirmVariant='destructive'
+            />
+
+            <ConfirmDeleteModal
+                isOpen={confirmDeleteModal}
+                onClose={() => setConfirmDeleteModal(false)}
+                onConfirm={() => {
+                    if (eliminatedAttendee) {
+                        handleDeleteAttendee(eliminatedAttendee.assistant_id as number, eliminatedAttendee.type);
+                    }
+                    setConfirmDeleteModal(false);
+                }}
+                accionTitulo="Eliminación de asistente"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="asistente"
+                accionando="eliminando"
+                nombreElemento={eliminatedAttendee?.full_name}
+                advertencia="Todos los datos asociados a este asistente también serán eliminados."
                 confirmVariant='destructive'
             />
         </EventManagementLayout>
