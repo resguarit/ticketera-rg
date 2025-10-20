@@ -62,12 +62,12 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="name">Nombre de la Entrada</Label>
-                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
+                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)}  />
                     <InputError message={errors.name} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="sector_id">Sector</Label>
-                    <Select value={data.sector_id !== undefined ? data.sector_id.toString() : ''} onValueChange={value => setData('sector_id', value)} required>
+                    <Select value={data.sector_id !== undefined ? data.sector_id.toString() : ''} onValueChange={value => setData('sector_id', value)} >
                         <SelectTrigger>
                             <SelectValue placeholder="Selecciona un sector" />
                         </SelectTrigger>
@@ -97,7 +97,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             </div>
 
             {/* NUEVA SECCIÓN: Configuración de Lote */}
-            <div className="bg-muted/50 rounded-lg py-4 space-y-4">
+            <div className=" rounded-lg py-4 space-y-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox 
                         id="is_bundle" 
@@ -120,7 +120,6 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                             type="number"
                             value={data.bundle_quantity || ''}
                             onChange={e => setData('bundle_quantity', parseInt(e.target.value) || null)}
-                            required={isBundle}
                             min="2"
                             max="20"
                             placeholder="Ej: 4 para pack x4"
@@ -148,7 +147,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="price">Precio {isBundle ? 'del Lote' : ''} (ARS)</Label>
-                    <Input id="price" type="number" value={data.price} onChange={e => setData('price', e.target.value)} required min="0" step="0.01" />
+                    <Input id="price" type="number" value={data.price} onChange={e => setData('price', e.target.value)} min="0" step="0.01" />
                     {isBundle && data.price && bundleQuantity > 1 && (
                         <p className="text-sm text-green-600">
                             Precio por entrada individual: ${((data.price || 0) / bundleQuantity).toFixed(2)}
@@ -165,7 +164,6 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         type="number"
                         value={data.quantity}
                         onChange={e => setData('quantity', e.target.value)}
-                        required
                         min="1"
                     />
                     {selectedSector && selectedSectorAvailability && (
@@ -213,7 +211,6 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                         type="number"
                         value={data.max_purchase_quantity}
                         onChange={e => setData('max_purchase_quantity', e.target.value)}
-                        required
                         min="1"
                         max="50"
                     />
@@ -236,7 +233,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="sales_start_date">Inicio de Venta</Label>
-                    <Input id="sales_start_date" type="datetime-local" value={data.sales_start_date} onChange={e => setData('sales_start_date', e.target.value)} required />
+                    <Input id="sales_start_date" type="datetime-local" value={data.sales_start_date} onChange={e => setData('sales_start_date', e.target.value)}  />
                     <InputError message={errors.sales_start_date} />
                 </div>
                 <div className="space-y-2">
@@ -246,14 +243,14 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 py-4">
                 <Checkbox id="is_hidden" checked={data.is_hidden} onCheckedChange={checked => setData('is_hidden', Boolean(checked))} />
                 <Label htmlFor="is_hidden">Ocultar este tipo de entrada al público</Label>
                 <InputError message={errors.is_hidden} />
             </div>
 
             {/* SECCIÓN NUEVA: Configuración de Tandas */}
-            <div className="bg-muted/50 rounded-lg py-4 space-y-4">
+            <div className=" rounded-lg py-4 space-y-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox 
                         id="create_stages" 

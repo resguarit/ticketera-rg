@@ -1,16 +1,22 @@
 import { FormEventHandler, useEffect, useMemo } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TicketTypeForm, TicketTypeFormData } from '@/components/organizers/TicketTypeForm';
 import { Event, EventFunction, Sector } from '@/types';
 import type { TicketType } from '@/types/models/ticketType';
+import { toast } from 'sonner';
 
 interface EditTicketTypeProps {
     event: Event;
     function: EventFunction;
     ticketType: TicketType;
     sectors: Sector[];
+    flash?: {
+        success?: string;
+        warning?: string;
+        error?: string;
+    };
 }
 
 /**
@@ -25,9 +31,9 @@ const formatDateTimeForInput = (dateString: string | null | undefined): string =
 };
 
 export default function EditTicketType() {
-    const { event, function: eventFunction, ticketType, sectors } = usePage<EditTicketTypeProps>().props;
+    const { event, function: eventFunction, ticketType, sectors, flash } = usePage<EditTicketTypeProps>().props;
 
-    const { data, setData, put, processing, errors } = useForm<TicketTypeFormData>({
+    const { data, setData, processing, errors } = useForm<TicketTypeFormData>({
         name: ticketType.name,
         description: ticketType.description ?? '',
         price: ticketType.price,
@@ -37,9 +43,30 @@ export default function EditTicketType() {
         sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
         sales_end_date: formatDateTimeForInput(ticketType.sales_end_date),
         is_hidden: ticketType.is_hidden,
-        is_bundle: ticketType.is_bundle || false,           // ← NUEVO
-        bundle_quantity: ticketType.bundle_quantity || null, // ← NUEVO
+        is_bundle: ticketType.is_bundle || false,
+        bundle_quantity: ticketType.bundle_quantity || null,
     });
+
+    // Manejar mensajes flash de Laravel
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success('Entrada actualizada exitosamente', {
+                description: flash.success
+            });
+        }
+        
+        if (flash?.warning) {
+            toast.warning('Entrada actualizada con advertencias', {
+                description: flash.warning
+            });
+        }
+        
+        if (flash?.error) {
+            toast.error('Error al actualizar la entrada', {
+                description: flash.error
+            });
+        }
+    }, [flash]);
 
     // Lógica para actualizar la cantidad si el usuario cambia de sector
     useEffect(() => {
@@ -54,13 +81,113 @@ export default function EditTicketType() {
         return sectors.find(s => s.id === data.sector_id)?.capacity;
     }, [data.sector_id, sectors]);
 
+    const validateForm = (): boolean => {
+        // Validar nombre
+        if (!data.name?.trim()) {
+            toast.error('Nombre requerido', {
+                description: 'El nombre de la entrada es obligatorio'
+            });
+            return false;
+        }
+
+        // Validar precio
+        if (!data.price || data.price <= 0) {
+            toast.error('Precio inválido', {
+                description: 'El precio debe ser mayor a 0'
+            });
+            return false;
+        }
+
+        // Validar sector
+        if (!data.sector_id) {
+            toast.error('Sector requerido', {
+                description: 'Debe seleccionar un sector'
+            });
+            return false;
+        }
+
+        // Validar cantidad
+        if (!data.quantity || data.quantity <= 0) {
+            toast.error('Cantidad inválida', {
+                description: 'La cantidad debe ser mayor a 0'
+            });
+            return false;
+        }
+
+        // Validar que no se reduzca por debajo de las ventas existentes
+        if (data.quantity < ticketType.quantity_sold) {
+            const bundleText = ticketType.is_bundle ? 'lotes' : 'entradas';
+            toast.error('Cantidad insuficiente', {
+                description: `No se puede reducir por debajo de los ${bundleText} ya vendidos (${ticketType.quantity_sold})`
+            });
+            return false;
+        }
+
+        // Validar fecha de inicio de venta
+        if (!data.sales_start_date) {
+            toast.error('Fecha de inicio requerida', {
+                description: 'La fecha de inicio de venta es obligatoria'
+            });
+            return false;
+        }
+
+        // Validar bundle si está marcado
+        if (data.is_bundle && (!data.bundle_quantity || data.bundle_quantity < 2)) {
+            toast.error('Cantidad de lote inválida', {
+                description: 'Un lote debe incluir al menos 2 entradas'
+            });
+            return false;
+        }
+
+        return true;
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('organizer.events.functions.ticket-types.update', {
+        
+        // Ejecutar validaciones del frontend
+        if (!validateForm()) {
+            return;
+        }
+
+        router.put(route('organizer.events.functions.ticket-types.update', {
             event: event.id,
             function: eventFunction.id,
             ticketType: ticketType.id,
-        }));
+        }), data, {
+            preserveScroll: true,
+            onStart: () => {
+                toast.loading('Actualizando entrada...', { id: 'update-ticket' });
+            },
+            onSuccess: () => {
+                // El toast de éxito se maneja en el useEffect con flash messages
+                toast.dismiss('update-ticket');
+            },
+            onError: (errors) => {
+                // Manejar errores específicos del servidor
+                if (errors.name) {
+                    toast.error('Error en el nombre', {
+                        id: 'update-ticket',
+                        description: Array.isArray(errors.name) ? errors.name[0] : errors.name
+                    });
+                } else if (errors.quantity) {
+                    toast.error('Error en la cantidad', {
+                        id: 'update-ticket',
+                        description: Array.isArray(errors.quantity) ? errors.quantity[0] : errors.quantity
+                    });
+                } else {
+                    const firstError = Object.values(errors)[0];
+                    const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+                    
+                    toast.error('Error al actualizar la entrada', {
+                        id: 'update-ticket',
+                        description: errorMessage || 'Verifica todos los campos e intenta nuevamente'
+                    });
+                }
+                
+                console.error('Form errors:', errors);
+            }
+        });
     };
 
     return (
