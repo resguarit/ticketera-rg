@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { router, Head, Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -245,6 +246,10 @@ export default function EventAttendees({
 
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
         if (attendeeType === 'buyer') {
+            toast.error('No se puede eliminar', {
+                description: 'Los compradores no pueden ser eliminados desde esta sección. Las compras deben ser gestionadas desde el sistema de órdenes.',
+                duration: 5000
+            });
             return;
         }
         
@@ -256,8 +261,21 @@ export default function EventAttendees({
                 }),
                 {
                     preserveScroll: true,
+                    onStart: () => {
+                        toast.loading('Eliminando asistente...', { id: 'delete-attendee' });
+                    },
                     onSuccess: () => {
-                        // TODO: mostrar toast de éxito
+                        toast.success('Asistente eliminado exitosamente', {
+                            id: 'delete-attendee',
+                            description: 'El asistente invitado ha sido eliminado del evento'
+                        });
+                    },
+                    onError: (errors) => {
+                        const errorMessage = Object.values(errors)[0] as string;
+                        toast.error('Error al eliminar el asistente', {
+                            id: 'delete-attendee',
+                            description: errorMessage || 'No se pudo eliminar el asistente'
+                        });
                     }
                 }
             );
