@@ -52,7 +52,7 @@ export default function HelpGuide() {
         <AppLayout>
             <Head title="Guía de Ayuda - Organizador" />
             
-            <div className="max-w-4xl mx-auto space-y-6 p-6">
+            <div className="max-w-6xl mx-auto space-y-6 p-6">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         Guía para Organizadores
@@ -67,20 +67,29 @@ export default function HelpGuide() {
                         <h4 className="font-semibold mb-2">Crear un Evento</h4>
                         <StepList steps={[
                             "Ve a 'Eventos' en el menú lateral",
-                            "Haz clic en 'Crear Evento'",
-                            "Completa la información básica (nombre, descripción, fechas)",
-                            "Selecciona la categoría y recinto",
-                            "Configura la visibilidad y estado del evento",
+                            "Haz clic en el botón '+ Crear Evento'",
+                            "Completa la información básica (Los campos marcados con * son obligatorios)",
                             "Guarda el evento"
                         ]} />
                     </div>
                     <Separator />
                     <div>
+                        <h4 className="font-semibold mb-2">Gestionar Evento Específico</h4>
+                        <StepList steps={[
+                            "Ve a 'Eventos' en el menú lateral",
+                            "Selecciona el evento que deseas gestionar tocando el botón 'Gestionar'",
+                            "Tendrás acceso a todas las configuraciones del evento como Información, Funciones, Tipos de Entradas, Asistentes, etc.",
+                        ]} />
+                    </div>
+                </GuideSection>
+
+                <GuideSection icon={Ticket} title="Funciones" badge="Intermedio">
+                    <div>
                         <h4 className="font-semibold mb-2">Gestionar Funciones</h4>
                         <StepList steps={[
                             "Accede a tu evento y ve a la pestaña 'Funciones'",
-                            "Crea funciones para diferentes fechas/horarios",
-                            "Define la capacidad máxima por función",
+                            "Crea funciones para diferentes fechas/horarios tocando el botón '+ Crear Función'",
+                            "Completa la información básica (Los campos marcados con * son obligatorios)",
                             "Configura sectores si tu recinto los tiene"
                         ]} />
                     </div>
