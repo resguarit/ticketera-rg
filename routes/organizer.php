@@ -74,6 +74,9 @@ Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.'
         Route::patch('/{user}/toggle-status', [OrganizerUserController::class, 'toggleStatus'])->name('toggleStatus');
         Route::delete('/{user}', [OrganizerUserController::class, 'destroy'])->name('destroy');
     });
+
+    //Ruta de guia de ayuda para organizadores
+    Route::get('/help-guide', [OrganizerDashboardController::class, 'helpGuide'])->name('helpGuide');
     
 
 });
