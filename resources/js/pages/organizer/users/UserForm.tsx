@@ -44,7 +44,7 @@ export default function UserForm({
                 <div className="space-y-2">
                     <Label htmlFor="firstName">
                         <User className="w-4 h-4 inline mr-2" />
-                        Nombre *
+                        Nombre <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="firstName"
@@ -62,7 +62,7 @@ export default function UserForm({
                 <div className="space-y-2">
                     <Label htmlFor="lastName">
                         <User className="w-4 h-4 inline mr-2" />
-                        Apellido *
+                        Apellido <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="lastName"
@@ -81,7 +81,7 @@ export default function UserForm({
             <div className="space-y-2">
                 <Label htmlFor="email">
                     <Mail className="w-4 h-4 inline mr-2" />
-                    Correo Electrónico *
+                    Correo Electrónico <span className="text-red-500">*</span>
                 </Label>
                 <Input
                     id="email"
@@ -137,7 +137,7 @@ export default function UserForm({
                 <div className="space-y-2">
                     <Label htmlFor="password">
                         <Lock className="w-4 h-4 inline mr-2" />
-                        Contraseña *
+                        Contraseña <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
                         <Input
@@ -171,7 +171,7 @@ export default function UserForm({
                 <div className="space-y-2">
                     <Label htmlFor="password_confirmation">
                         <Lock className="w-4 h-4 inline mr-2" />
-                        Confirmar Contraseña *
+                        Confirmar Contraseña <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
                         <Input
