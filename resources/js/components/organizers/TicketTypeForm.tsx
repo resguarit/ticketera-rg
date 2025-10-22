@@ -16,8 +16,12 @@ interface SectorWithAvailability {
     id: number;
     name: string;
     capacity: number;
-    used_capacity: number;
+    used_by_others?: number; // Para modo edición
+    current_ticket_sold?: number; // Para modo edición
+    current_ticket_original?: number; // Para modo edición
+    used_capacity?: number; // Para modo creación
     available_capacity: number;
+    original_available_capacity?: number; // Para modo edición
 }
 
 // Extender el tipo base para el formulario
@@ -40,6 +44,7 @@ interface TicketTypeFormProps {
     cancelUrl: string;
     maxQuantity?: number;
     hasSales?: boolean; // Nueva prop
+    isEditing?: boolean; // Nueva prop
 }
 
 export function TicketTypeForm({ 
@@ -53,7 +58,8 @@ export function TicketTypeForm({
     submitText, 
     cancelUrl, 
     maxQuantity,
-    hasSales = false // Nueva prop con valor por defecto
+    hasSales = false,
+    isEditing = false // Nueva prop
 }: TicketTypeFormProps) {
     const selectedSector = sectors.find(s => s.id.toString() === data.sector_id?.toString());
     const selectedSectorAvailability = sectorsWithAvailability?.find(s => s.id.toString() === data.sector_id?.toString());
@@ -66,8 +72,9 @@ export function TicketTypeForm({
     // Calcular cantidad real de entradas
     const realQuantity = isBundle ? (data.quantity || 0) * bundleQuantity : (data.quantity || 0);
     
-    // Determinar si se superará la capacidad
+    // Determinar capacidad disponible según el modo
     const availableCapacity = selectedSectorAvailability?.available_capacity || 0;
+    const originalAvailableCapacity = selectedSectorAvailability?.original_available_capacity || availableCapacity;
     const willExceedCapacity = realQuantity > availableCapacity && availableCapacity >= 0;
 
     return (
@@ -193,35 +200,97 @@ export function TicketTypeForm({
                         type="number"
                         value={data.quantity}
                         onChange={e => setData('quantity', e.target.value)}
-                        min="1"
+                        min={hasSales ? (data.quantity_sold || 0) : "1"} // Mínimo basado en ventas
                     />
+                    
                     {selectedSector && selectedSectorAvailability && (
-                        <div className="text-sm space-y-1">
-                            <p className="text-muted-foreground">
-                                Capacidad total del sector: {selectedSector.capacity}
+                        <div className="text-sm space-y-2 p-3 bg-gray-50 rounded-lg">
+                            <p className="font-medium text-gray-900">
+                                Información del sector: {selectedSector.name}
                             </p>
-                            <p className="text-orange-600">
-                                Ya asignadas: {selectedSectorAvailability.used_capacity}
-                            </p>
-                            <p className={`font-medium ${selectedSectorAvailability.available_capacity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                Disponibles: {selectedSectorAvailability.available_capacity}
-                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground">Capacidad total:</p>
+                                    <p className="font-medium">{selectedSector.capacity}</p>
+                                </div>
+                                
+                                {isEditing && (
+                                    <>
+                                        <div className="space-y-1">
+                                            <p className="text-muted-foreground">Usadas por otros tipos:</p>
+                                            <p className="text-orange-600">{selectedSectorAvailability.used_by_others}</p>
+                                        </div>
+                                        
+                                        {hasSales && (
+                                            <>
+                                                <div className="space-y-1">
+                                                    <p className="text-muted-foreground">Ya vendidas de este tipo:</p>
+                                                    <p className="text-red-600 font-medium">{selectedSectorAvailability.current_ticket_sold}</p>
+                                                </div>
+                                                
+                                                <div className="space-y-1">
+                                                    <p className="text-muted-foreground">Configuradas originalmente:</p>
+                                                    <p className="text-blue-600">{selectedSectorAvailability.current_ticket_original}</p>
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                                
+                                {!isEditing && (
+                                    <div className="space-y-1">
+                                        <p className="text-muted-foreground">Ya asignadas:</p>
+                                        <p className="text-orange-600">{selectedSectorAvailability.used_capacity}</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="pt-2 border-t">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Disponibles actualmente:</span>
+                                    <span className={`font-medium ${availableCapacity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {availableCapacity}
+                                    </span>
+                                </div>
+                                
+                                {isEditing && !hasSales && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Disponibles sin configuración previa:</span>
+                                        <span className="text-blue-600">{originalAvailableCapacity}</span>
+                                    </div>
+                                )}
+                            </div>
+                            
                             {isBundle && (
-                                <p className={realQuantity > selectedSectorAvailability.available_capacity ? 'text-red-600 font-medium' : 'text-blue-600'}>
-                                    Entradas reales que se generarán: {realQuantity}
-                                </p>
+                                <div className="pt-2 border-t">
+                                    <p className={realQuantity > availableCapacity ? 'text-red-600 font-medium' : 'text-blue-600'}>
+                                        Entradas reales que se generarán: {realQuantity}
+                                    </p>
+                                </div>
                             )}
                         </div>
                     )}
                     
                     {/* Mensaje de advertencia si se supera la capacidad */}
                     {willExceedCapacity && selectedSectorAvailability && (
-                        <Alert className="border-primary bg-primary/10">
-                            <Info className="h-4 w-4 text-primary" />
-                            <AlertDescription className="text-primary">
-                                <strong>Advertencia:</strong> Estás superando la capacidad disponible del sector por{' '}
-                                {realQuantity - selectedSectorAvailability.available_capacity} entradas.
-                                Esto puede generar sobreventa. 
+                        <Alert className="border-amber-500 bg-amber-50">
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                            <AlertDescription className="text-amber-800">
+                                <strong>Advertencia de sobreventa:</strong> Estás superando la capacidad disponible del sector por{' '}
+                                {realQuantity - availableCapacity} entradas.
+                                {isEditing ? ' Esto afectará la disponibilidad para otros tipos de entrada.' : ' Esto puede generar sobreventa.'}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
+                    {/* Mensaje informativo sobre las limitaciones */}
+                    {hasSales && (
+                        <Alert className="border-blue-500 bg-blue-50">
+                            <Info className="h-4 w-4 text-blue-600" />
+                            <AlertDescription className="text-blue-800 text-sm">
+                                Ya hay {selectedSectorAvailability?.current_ticket_sold} {isBundle ? 'lotes' : 'entradas'} vendidas.
+                                No puedes reducir la cantidad por debajo de este número.
                             </AlertDescription>
                         </Alert>
                     )}

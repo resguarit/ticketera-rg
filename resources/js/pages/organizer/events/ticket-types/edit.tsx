@@ -6,12 +6,25 @@ import { TicketTypeForm, TicketTypeFormData } from '@/components/organizers/Tick
 import { Event, EventFunction, Sector } from '@/types';
 import type { TicketType } from '@/types/models/ticketType';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
+
+interface SectorWithAvailability {
+    id: number;
+    name: string;
+    capacity: number;
+    used_by_others: number;
+    current_ticket_sold: number;
+    current_ticket_original: number;
+    available_capacity: number;
+    original_available_capacity: number;
+}
 
 interface EditTicketTypeProps {
     event: Event;
     function: EventFunction;
     ticketType: TicketType;
     sectors: Sector[];
+    sectorsWithAvailability: SectorWithAvailability[]; // Agregar esta prop
     flash?: {
         success?: string;
         warning?: string;
@@ -31,7 +44,7 @@ const formatDateTimeForInput = (dateString: string | null | undefined): string =
 };
 
 export default function EditTicketType() {
-    const { event, function: eventFunction, ticketType, sectors, flash } = usePage<EditTicketTypeProps>().props;
+    const { event, function: eventFunction, ticketType, sectors, sectorsWithAvailability, flash } = usePage<EditTicketTypeProps>().props;
 
     // Verificar si hay ventas para bloquear la edición del precio
     const hasSales = ticketType.quantity_sold > 0;
@@ -202,8 +215,18 @@ export default function EditTicketType() {
                     <CardDescription>
                         Modifica los datos de la entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
                         {hasSales && (
-                            <div className="mt-2 text-amber-600 text-sm">
-                                Esta entrada ya tiene ventas, por lo que el precio no se puede modificar.
+                            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <div className="flex items-start gap-2">
+                                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                                    <div className="text-amber-800 text-sm">
+                                        <p className="font-medium">Limitaciones por ventas existentes:</p>
+                                        <ul className="mt-1 list-disc list-inside space-y-1">
+                                            <li>El precio no se puede modificar</li>
+                                            <li>La cantidad no se puede reducir por debajo de {ticketType.quantity_sold} {ticketType.is_bundle ? 'lotes' : 'entradas'} vendidas</li>
+                                            <li>El tipo (individual/lote) no se puede cambiar</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </CardDescription>
@@ -216,10 +239,12 @@ export default function EditTicketType() {
                         processing={processing}
                         onSubmit={submit}
                         sectors={sectors}
+                        sectorsWithAvailability={sectorsWithAvailability} // Pasar la prop
                         submitText="Guardar Cambios"
                         cancelUrl={route('organizer.events.tickets', event.id)}
                         maxQuantity={maxQuantity}
-                        hasSales={hasSales} // Nueva prop
+                        hasSales={hasSales}
+                        isEditing={true} // Nueva prop para indicar modo edición
                     />
                 </CardContent>
             </Card>

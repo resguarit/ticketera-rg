@@ -245,11 +245,56 @@ class TicketTypeController extends Controller
     public function edit(Event $event, EventFunction $function, TicketType $ticketType): Response
     {
         $event->load('venue.sectors');
+        
+        // Calcular disponibilidad por sector para esta función (excluyendo el ticket actual)
+        $sectorsWithAvailability = $event->venue->sectors->map(function ($sector) use ($function, $ticketType) {
+            // Obtener todos los ticket types de esta función para este sector (excepto el actual)
+            $otherTicketTypes = TicketType::where('event_function_id', $function->id)
+                ->where('sector_id', $sector->id)
+                ->where('id', '!=', $ticketType->id) // Excluir el ticket actual
+                ->get();
+            
+            // Calcular entradas ya asignadas por otros tipos (considerando bundles)
+            $usedByOthers = $otherTicketTypes->sum(function ($tt) {
+                return $tt->is_bundle 
+                    ? $tt->quantity * $tt->bundle_quantity
+                    : $tt->quantity;
+            });
+            
+            // Calcular entradas vendidas del ticket actual
+            $currentTicketSold = $ticketType->is_bundle 
+                ? $ticketType->quantity_sold * $ticketType->bundle_quantity
+                : $ticketType->quantity_sold;
+                
+            // Calcular entradas configuradas originalmente del ticket actual
+            $currentTicketOriginal = $ticketType->is_bundle 
+                ? $ticketType->quantity * $ticketType->bundle_quantity
+                : $ticketType->quantity;
+            
+            // Disponibilidad actual considerando solo otros tipos + ventas del actual
+            $availableCapacity = $sector->capacity - $usedByOthers - $currentTicketSold;
+            
+            // Disponibilidad si no hubiera ninguna configuración previa de este ticket
+            $originalAvailableCapacity = $sector->capacity - $usedByOthers;
+            
+            return [
+                'id' => $sector->id,
+                'name' => $sector->name,
+                'capacity' => $sector->capacity,
+                'used_by_others' => $usedByOthers,
+                'current_ticket_sold' => $currentTicketSold,
+                'current_ticket_original' => $currentTicketOriginal,
+                'available_capacity' => max(0, $availableCapacity),
+                'original_available_capacity' => max(0, $originalAvailableCapacity),
+            ];
+        });
+
         return Inertia::render('organizer/events/ticket-types/edit', [
             'event' => $event,
             'function' => $function,
             'ticketType' => $ticketType,
             'sectors' => $event->venue->sectors,
+            'sectorsWithAvailability' => $sectorsWithAvailability,
         ]);
     }
 
@@ -261,7 +306,16 @@ class TicketTypeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'price' => 'required|numeric|min:0',
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($ticketType) {
+                    if ($ticketType->quantity_sold > 0 && $value != $ticketType->price) {
+                        $fail("No se puede modificar el precio cuando ya hay ventas realizadas.");
+                    }
+                },
+            ],
             'sector_id' => 'required|exists:sectors,id',
             'quantity' => [
                 'required',
