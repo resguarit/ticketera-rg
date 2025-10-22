@@ -196,6 +196,7 @@ class PaywayDebugController extends Controller
             'amount' => 'required|numeric|min:1',
             'installments' => 'required|integer|min:1',
             'customer_email' => 'required|email',
+            'payment_method_id' => 'required|integer',
         ]);
 
         try {
@@ -209,7 +210,7 @@ class PaywayDebugController extends Controller
                 "amount" => (int) ($request->input('amount') * 100),
                 "currency" => "ARS",
                 "installments" => (int) $request->input('installments'),
-                "payment_method_id" => 111, // prueba amex
+                "payment_method_id" => (int) $request->input('payment_method_id'),
                 "payment_type" => "single",
                 "sub_payments" => [],
                 "fraud_detection" => [ 
@@ -226,7 +227,8 @@ class PaywayDebugController extends Controller
             Log::info('PaywayDebug: Processing payment', [
                 'site_transaction_id' => $siteTransactionId,
                 'amount' => $paymentData['amount'],
-                'bin' => $paymentData['bin']
+                'bin' => $paymentData['bin'],
+                'payment_method_id' => $paymentData['payment_method_id']
             ]);
 
             try {
@@ -254,6 +256,7 @@ class PaywayDebugController extends Controller
                 'card_brand' => $responseData['card_brand'] ?? null,
                 'site_transaction_id' => $siteTransactionId,
                 'installments' => $responseData['installments'] ?? null,
+                'payment_method_id' => $paymentData['payment_method_id'],
                 'fraud_detection' => $responseData['fraud_detection'] ?? null,
                 'raw_response' => $responseData
             ];

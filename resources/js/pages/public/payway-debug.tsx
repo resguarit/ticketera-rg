@@ -82,7 +82,8 @@ export default function PaywayDebug() {
         bin: '',
         amount: '100',
         installments: '1',
-        customer_email: 'test@example.com'
+        customer_email: 'test@example.com',
+        payment_method_id: '1' // Visa Crédito por defecto
     });
 
     const testPayment = async () => {
@@ -403,6 +404,33 @@ export default function PaywayDebug() {
                                     onChange={(e) => setPaymentForm({ ...paymentForm, bin: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                                 />
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Tipo de Tarjeta
+                                    </label>
+                                    <select
+                                        value={paymentForm.payment_method_id}
+                                        onChange={(e) => setPaymentForm({ ...paymentForm, payment_method_id: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    >
+                                        <optgroup label="💳 Tarjetas de Crédito">
+                                            <option value="1">Visa Crédito</option>
+                                            <option value="104">MasterCard Crédito (Prisma)</option>
+                                            <option value="118">MasterCard Crédito (Fiserv)</option>
+                                            <option value="111">American Express (Prisma)</option>
+                                        </optgroup>
+                                        <optgroup label="💰 Tarjetas de Débito">
+                                            <option value="31">Visa Débito</option>
+                                            <option value="105">MasterCard Débito (Prisma)</option>
+                                            <option value="133">MasterCard Débito (Fiserv)</option>
+                                        </optgroup>
+                                        <optgroup label="🎫 Tarjetas Prepaga">
+                                            <option value="114">Visa Prepaga</option>
+                                            <option value="116">MasterCard Prepaga</option>
+                                            <option value="142">MasterCard Prepaga (Fiserv)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <input
                                         type="number"
