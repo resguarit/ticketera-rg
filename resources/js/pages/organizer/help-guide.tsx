@@ -83,11 +83,44 @@ export default function HelpGuide() {
                     title: "Gestionar Funciones",
                     steps: [
                         "Accede a tu evento y ve a la pestaña 'Funciones'",
-                        "Crea funciones para diferentes fechas/horarios tocando el botón '+ Crear Función'",
-                        "Completa la información básica (Los campos marcados con * son obligatorios)",
-                        "Guarda la función con el botón 'Crear Función'"
+                        "Verás la lista de todas las funciones creadas para este evento",
+                        "Si no hay funciones, aparecerá un mensaje invitándote a crear la primera",
                     ]
-                }
+                },
+                {
+            id: "funciones-crear",
+            title: "Crear una Nueva Función",
+            steps: [
+                "Desde la página de funciones, haz clic en '+ Crear Función'",
+                "Completa la información básica (Los campos marcados con * son obligatorios)",
+                "Marca el switch 'Función Activa' (viene activado por defecto)",
+                "Haz clic en 'Crear Función' para guardar"
+            ]
+        },
+        {
+            id: "funciones-acciones",
+            title: "Acciones sobre Funciones",
+            steps: [
+                "Dentro de cada función en la lista, encontrarás varias acciones disponibles:",
+                "Editar: Haz clic en el ícono de lápiz para modificar nombre, descripción, fechas y estado de la función",
+                "Eliminar: Haz clic en el ícono de papelera (rojo) para eliminar permanentemente la función. No puedes eliminar funciones con entradas vendidas.",
+                "Activar/Desactivar: Haz clic en el ícono de ojo para cambiar el estado de la función entre activa e inactiva.",
+                "Las funciones activas muestran badge azul 'Activa', las inactivas muestran badge gris 'Inactiva'",
+                "Las funciones inactivas no aparecen en la venta pública pero conservan sus datos"
+            ]
+        },
+        {
+            id: "funciones-eliminar",
+            title: "Eliminar una Función",
+            steps: [
+                "Haz clic en el ícono de papelera (rojo) junto a la función",
+                "Aparecerá un modal de confirmación de eliminación",
+                "No se puede eliminar funciones con entradas vendidas",
+                "Confirma la eliminación si estás seguro",
+                "La función y todos sus datos asociados serán eliminados permanentemente",
+                "Esta acción no se puede deshacer"
+            ]
+        },
             ]
         },
         {

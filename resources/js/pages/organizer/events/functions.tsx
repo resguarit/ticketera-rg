@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Calendar, Clock, Edit, Trash2 } from 'lucide-react';
-import { Link, Head, router } from '@inertiajs/react';
+import { Plus, Calendar, Clock, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Link, Head, router, usePage } from '@inertiajs/react';
 import { Event, EventFunction } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface EventWithFunctions extends Event {
@@ -17,34 +18,89 @@ interface FunctionsPageProps {
 }
 
 export default function FunctionsPage({ event }: FunctionsPageProps) {
-    // Estados para el modal de confirmación
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const { flash } = usePage().props as any;
     const [functionToDelete, setFunctionToDelete] = useState<EventFunction | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isTogglingVisibility, setIsTogglingVisibility] = useState<number | null>(null);
+
+    // Manejar mensajes flash de Laravel
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success, {
+                description: 'La operación se completó correctamente'
+            });
+        }
+        
+        if (flash.error) {
+            toast.error('Error en la operación', {
+                description: flash.error
+            });
+        }
+    }, [flash]);
 
     const handleDeleteFunction = () => {
         if (!functionToDelete) return;
+
+        setIsDeleting(true);
         
-        setIsLoading(true);
-        router.delete(route('organizer.events.functions.destroy', { 
-            event: event.id, 
-            function: functionToDelete.id 
-        }), {
+        router.delete(route('organizer.events.functions.destroy', { event: event.id, function: functionToDelete.id }), {
             preserveScroll: true,
+            onStart: () => {
+                toast.loading('Eliminando función...', { id: 'delete-function' });
+            },
             onSuccess: () => {
-                setIsConfirmModalOpen(false);
+                toast.success('Función eliminada exitosamente', {
+                    id: 'delete-function',
+                    description: `La función "${functionToDelete.name}" ha sido eliminada correctamente`
+                });
                 setFunctionToDelete(null);
             },
             onError: (errors) => {
-                console.error('Error eliminando función:', errors);
+                const errorMessage = Object.values(errors)[0] as string;
+                toast.error('Error al eliminar la función', {
+                    id: 'delete-function',
+                    description: errorMessage || 'No se pudo eliminar la función. Intenta nuevamente.'
+                });
             },
-            onFinish: () => setIsLoading(false)
+            onFinish: () => {
+                setIsDeleting(false);
+            }
         });
     };
 
-    const openDeleteModal = (func: EventFunction) => {
-        setFunctionToDelete(func);
-        setIsConfirmModalOpen(true);
+    const handleToggleVisibility = (func: EventFunction) => {
+        setIsTogglingVisibility(func.id);
+        
+        router.patch(route('organizer.events.functions.update', { event: event.id, function: func.id }), {
+            is_active: !func.is_active,
+            name: func.name,
+            description: func.description,
+            start_time: func.start_time,
+            end_time: func.end_time,
+        }, {
+            preserveScroll: true,
+            onStart: () => {
+                toast.loading(func.is_active ? 'Desactivando función...' : 'Activando función...', { 
+                    id: `toggle-function-${func.id}` 
+                });
+            },
+            onSuccess: () => {
+                toast.success(`Función ${func.is_active ? 'desactivada' : 'activada'} exitosamente`, {
+                    id: `toggle-function-${func.id}`,
+                    description: `La función "${func.name}" ahora está ${func.is_active ? 'inactiva' : 'activa'}`
+                });
+            },
+            onError: (errors) => {
+                const errorMessage = Object.values(errors)[0] as string;
+                toast.error('Error al cambiar el estado', {
+                    id: `toggle-function-${func.id}`,
+                    description: errorMessage || 'No se pudo cambiar el estado de la función.'
+                });
+            },
+            onFinish: () => {
+                setIsTogglingVisibility(null);
+            }
+        });
     };
     
     const formatDateTime = (dateTime: string) => {
@@ -70,7 +126,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                 </CardDescription>
                             </div>
                             <Link href={route('organizer.events.functions.create', event.id)}>
-                                <Button className="bg-primary hover:bg-primary-hover">
+                                <Button>
                                     <Plus className="mr-2 h-4 w-4" />
                                     Crear Función
                                 </Button>
@@ -85,7 +141,8 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3">
                                                         <h3 className="font-semibold text-foreground">{func.name}</h3>
-                                                        <Badge variant={func.is_active ? 'default' : 'secondary'}>
+                                                        <Badge variant={func.is_active ? 'default' : 'secondary'}     className={func.is_active ? "" : "bg-gray-300 text-gray-600"}
+>
                                                             {func.is_active ? 'Activa' : 'Inactiva'}
                                                         </Badge>
                                                     </div>
@@ -102,6 +159,20 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant={func.is_active ? "default" : "secondary"}
+                                                        size="icon"
+                                                        onClick={() => handleToggleVisibility(func)}
+                                                        disabled={isTogglingVisibility === func.id}
+                                                        title={func.is_active ? 'Desactivar función' : 'Activar función'}
+                                                        className={func.is_active ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-gray-300 text-gray-600 hover:bg-gray-400"}
+                                                    >
+                                                        {func.is_active ? (
+                                                            <Eye className="h-4 w-4" />
+                                                        ) : (
+                                                            <EyeOff className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
                                                     <Link href={route('organizer.events.functions.edit', { event: event.id, function: func.id })}>
                                                         <Button variant="outline" size="icon">
                                                             <Edit className="h-4 w-4" />
@@ -110,9 +181,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                     <Button 
                                                         variant="destructive" 
                                                         size="icon"
-                                                        onClick={() => openDeleteModal(func)}
-                                                        disabled={isLoading}
-                                                        type="button"
+                                                        onClick={() => setFunctionToDelete(func)}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -135,22 +204,20 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                 </div>
             </EventManagementLayout>
             
+            {/* Modal de confirmación para eliminar función */}
             <ConfirmationModal
-                isOpen={isConfirmModalOpen}
-                onClose={() => {
-                    setIsConfirmModalOpen(false);
-                    setFunctionToDelete(null);
-                }}
+                isOpen={!!functionToDelete}
+                onClose={() => setFunctionToDelete(null)}
                 onConfirm={handleDeleteFunction}
                 accionTitulo="Eliminación"
-                accion="Eliminar"
-                pronombre="esta"
+                accion="eliminar"
+                pronombre="la"
                 entidad="función"
-                accionando="eliminando"
+                accionando="Eliminando"
                 nombreElemento={functionToDelete?.name}
-                advertencia="Todos los datos asociados a la función también serán eliminados."
-                confirmVariant='destructive'
-                isLoading={isLoading}
+                advertencia="Esta acción no se puede deshacer. Si hay entradas vendidas para esta función, no se podrá eliminar."
+                confirmVariant="destructive"
+                isLoading={isDeleting}
             />
         </>
     );
