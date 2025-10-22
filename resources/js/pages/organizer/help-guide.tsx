@@ -332,35 +332,49 @@ export default function HelpGuide() {
             icon: <BarChart3 className="w-5 h-5" />,
             subsections: [
                 {
-                    id: "reportes-dashboard",
-                    title: "Dashboard de Evento",
+                    id: "reportes-dashboard-general",
+                    title: "Dashboard General del Organizador",
                     steps: [
-                        "Desde el dashboard de cada evento puedes ver:",
-                        "Estadísticas de ventas en tiempo real",
-                        "Cantidad de asistentes por función",
-                        "Ingresos generados",
-                        "Estado de las entradas (vendidas, usadas, disponibles)"
+                        "Accede al Dashboard desde el menú principal",
+                        "Verás 4 métricas principales de todos tus eventos:",
+                        "Ingresos Totales: suma de todos los ingresos de tus eventos",
+                        "Entradas Vendidas: total de lotes + entradas individuales vendidas",
+                        "Tickets Emitidos: cantidad real de entradas físicas generadas",
+                        "Eventos Activos: eventos que están actualmente en venta",
+                        "Gráfico de ingresos de los últimos 30 días con línea de tendencia",
+                        "Lista de eventos con mayor rendimiento ordenados por ingresos",
+                        "Sección de Eventos Recientes que muestra tus últimos eventos creados",
+
                     ]
-                }
+                },
+                {
+                    id: "reportes-dashboard-evento",
+                    title: "Dashboard Específico de un Evento",
+                    steps: [
+                        "Accede haciendo clic en la tarjeta de un evento o desde el botón 'Gestionar'",
+                        "Visualizarás información básica del evento",
+                        "Badge 'Destacado' si el evento está marcado como featured",
+                        "5 métricas específicas del evento:",
+                        "Total Funciones creadas para el evento",
+                        "Funciones Activas (visibles para venta)",
+                        "Entradas Vendidas (lotes + individuales sin multiplicar)",
+                        "Tickets Emitidos (entradas físicas reales generadas)",
+                        "Ingresos totales generados por el evento"
+                    ]
+                },
+                {
+                    id: "reportes-diferencias-metricas",
+                    title: "Diferencia entre Entradas y Tickets",
+                    steps: [
+                        "Entradas Vendidas: cuenta lotes y entradas individuales (1 lote x4 = 1 entrada vendida)",
+                        "Tickets Emitidos: cuenta entradas físicas reales (1 lote x4 = 4 tickets emitidos)",
+                        "Esta diferencia es importante para entender el impacto real de los lotes",
+                        "Los lotes generan menos 'entradas vendidas' pero más 'tickets emitidos'",
+                        "Ambas métricas son importantes para diferentes análisis de negocio"
+                    ]
+                },
             ]
         },
-        {
-            id: "comunicacion",
-            title: "Comunicación con Asistentes",
-            icon: <Mail className="w-5 h-5" />,
-            subsections: [
-                {
-                    id: "comunicacion-reenvio",
-                    title: "Reenvío de Invitaciones",
-                    steps: [
-                        "Puedes reenviar invitaciones y entradas desde la lista de asistentes:",
-                        "Para invitados: reenvía la invitación con los tickets",
-                        "Para compradores: reenvía el email con las entradas compradas",
-                        "Útil cuando los asistentes no recibieron el email original"
-                    ]
-                }
-            ]
-        }
     ];
 
     return (
@@ -482,9 +496,6 @@ export default function HelpGuide() {
                         <div className="flex gap-4 justify-center">
                             <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                 Contactar Soporte
-                            </button>
-                            <button className="px-6 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium border border-gray-300">
-                                Ver Tutoriales en Video
                             </button>
                         </div>
                     </div>
