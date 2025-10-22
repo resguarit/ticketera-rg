@@ -22,7 +22,8 @@ import {
     CreditCard,
     Trash2,
     Calendar,
-    Clock
+    Clock,
+    IdCard
 } from 'lucide-react';
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -324,7 +325,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="name">Nombre *</Label>
+                                        <Label htmlFor="name">Nombre <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="name"
                                             type="text"
@@ -337,7 +338,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         )}
                                     </div>
                                     <div>
-                                        <Label htmlFor="last_name">Apellido *</Label>
+                                        <Label htmlFor="last_name">Apellido <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="last_name"
                                             type="text"
@@ -354,7 +355,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                 <div>
                                     <Label htmlFor="email" className="flex items-center gap-1">
                                         <Mail className="w-4 h-4" />
-                                        Email *
+                                        Email <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="email"
@@ -369,7 +370,9 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="dni">DNI (opcional)</Label>
+                                    <Label htmlFor="dni" className="flex items-center gap-1">
+                                        <IdCard className="w-4 h-4" />
+                                        DNI (opcional)</Label>
                                     <Input
                                         id="dni"
                                         type="text"
@@ -446,7 +449,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         </div>
 
                                         <div>
-                                            <Label>Función *</Label>
+                                            <Label>Función <span className="text-red-500">*</span></Label>
                                             <Select
                                                 value={ticket.event_function_id.toString()}
                                                 onValueChange={(value) => updateTicket(index, 'event_function_id', parseInt(value))}
@@ -483,7 +486,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
 
                                         {ticket.event_function_id > 0 && (
                                             <div>
-                                                <Label>Tipo de Entrada *</Label>
+                                                <Label>Tipo de Entrada <span className="text-red-500">*</span></Label>
                                                 <Select
                                                     value={ticket.ticket_type_id.toString()}
                                                     onValueChange={(value) => updateTicket(index, 'ticket_type_id', parseInt(value))}
@@ -521,7 +524,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
 
                                         {ticket.ticket_type_id > 0 && (
                                             <div>
-                                                <Label>Cantidad *</Label>
+                                                <Label>Cantidad <span className="text-red-500">*</span></Label>
                                                 <div className="flex items-center gap-2">
                                                     <Button
                                                         type="button"
