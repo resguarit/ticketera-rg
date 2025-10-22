@@ -3,8 +3,11 @@ import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import UserForm from './UserForm';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+
 
 interface UserFormData {
     firstName: string;
@@ -198,7 +201,18 @@ export default function CreateUser() {
             <Head title="Crear Usuario" />
 
             <div className="space-y-6 p-6">
+                
                 <div className="flex items-center space-x-3">
+                                <div className="flex items-center gap-2">
+                <Link 
+                    href={route('organizer.users.index')}
+                    className="inline-flex items-center  text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                    <Button variant="outline" size="icon" className="mr-4">
+                            <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </Link>
+            </div>
                     <UserPlus className="h-8 w-8 text-primary" />
                     <div>
                         <h1 className="text-2xl font-bold">Crear Usuario</h1>
