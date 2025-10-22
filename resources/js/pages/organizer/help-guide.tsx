@@ -28,12 +28,21 @@ const StepList = ({ steps }: { steps: string[] }) => (
 
 export default function HelpGuide() {
     const [expandedSections, setExpandedSections] = useState<string[]>(["eventos"]);
+    const [expandedSubsections, setExpandedSubsections] = useState<string[]>([]);
 
     const toggleSection = (sectionId: string) => {
         setExpandedSections((prev) =>
             prev.includes(sectionId) 
                 ? prev.filter((id) => id !== sectionId) 
                 : [...prev, sectionId]
+        );
+    };
+
+    const toggleSubsection = (subsectionId: string) => {
+        setExpandedSubsections((prev) =>
+            prev.includes(subsectionId) 
+                ? prev.filter((id) => id !== subsectionId) 
+                : [...prev, subsectionId]
         );
     };
 
@@ -44,6 +53,7 @@ export default function HelpGuide() {
             icon: <Calendar className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "eventos-crear",
                     title: "Crear un Evento",
                     steps: [
                         "Ve a 'Eventos' en el menú lateral",
@@ -53,6 +63,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "eventos-gestionar",
                     title: "Gestionar Evento Específico",
                     steps: [
                         "Ve a 'Eventos' en el menú lateral",
@@ -68,6 +79,7 @@ export default function HelpGuide() {
             icon: <Clock className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "funciones-gestionar",
                     title: "Gestionar Funciones",
                     steps: [
                         "Accede a tu evento y ve a la pestaña 'Funciones'",
@@ -84,6 +96,7 @@ export default function HelpGuide() {
             icon: <Ticket className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "entradas-vista",
                     title: "Vista General de Entradas",
                     steps: [
                         "Accede a tu evento y ve a la pestaña 'Entradas'",
@@ -93,6 +106,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "entradas-crear",
                     title: "Crear Tipos de Entradas Básicas",
                     steps: [
                         "Accede a tu evento y ve a la pestaña 'Entradas'",
@@ -105,6 +119,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "entradas-lotes",
                     title: "Lotes de Entradas (Packs)",
                     steps: [
                         "En el formulario de creación, marca la opción 'Este es un lote de entradas'",
@@ -115,6 +130,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "entradas-tandas",
                     title: "Sistema de Tandas (Early Bird)",
                     steps: [
                         "Marca la opción 'Crear entrada por tandas'",
@@ -126,6 +142,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "entradas-capacidad",
                     title: "Gestión de Capacidad por Sectores",
                     steps: [
                         "Al seleccionar un sector, verás la capacidad total disponible",
@@ -135,28 +152,29 @@ export default function HelpGuide() {
                         "Para lotes: el sistema calcula automáticamente las entradas reales que se generarán"
                     ]
                 },
-                        {
-            title: "Acciones sobre Entradas",
-            steps: [
-                "Dentro de la tarjeta de cada tipo de entrada, encontrarás varias acciones:",
-                "Cambiar visibilidad: Botón principal para mostrar/ocultar la entrada de la venta",
-                "Editar: Desde el menú de tres puntos, puedes seleccionar la opción 'Editar' que te permitirá modificar todos los campos menos el precio",
-                "Duplicar: Desde el menú de tres puntos, puedes seleccionar la opción 'Duplicar en funciones' que copiará la entrada a otras funciones seleccionadas",
-                "Eliminar: Botón rojo elimina la entrada (requiere confirmación). No se puede eliminar entradas ya vendidas.",
-                "Las entradas ocultas aparecen con botón rojo 'Oculta', las visibles con 'A la venta'"
-            ]
-            
-        },
-        {
-            title: "Duplicar Entradas entre Funciones",
-            steps: [
-                "Desde el menú de tres puntos, selecciona 'Duplicar en funciones'",
-                "Aparecerá un modal mostrando todas las funciones disponibles",
-                "Las funciones que ya tienen esta entrada estarán marcadas y deshabilitadas",
-                "Selecciona las funciones donde quieres duplicar la entrada",
-                "Confirma y la entrada se creará con los mismos datos en todas las funciones seleccionadas",
-            ]
-        },
+                {
+                    id: "entradas-acciones",
+                    title: "Acciones sobre Entradas",
+                    steps: [
+                        "Dentro de la tarjeta de cada tipo de entrada, encontrarás varias acciones:",
+                        "Cambiar visibilidad: Botón principal para mostrar/ocultar la entrada de la venta",
+                        "Editar: Desde el menú de tres puntos, puedes seleccionar la opción 'Editar' que te permitirá modificar todos los campos menos el precio",
+                        "Duplicar: Desde el menú de tres puntos, puedes seleccionar la opción 'Duplicar en funciones' que copiará la entrada a otras funciones seleccionadas",
+                        "Eliminar: Botón rojo elimina la entrada (requiere confirmación). No se puede eliminar entradas ya vendidas.",
+                        "Las entradas ocultas aparecen con botón rojo 'Oculta', las visibles con 'A la venta'"
+                    ]
+                },
+                {
+                    id: "entradas-duplicar",
+                    title: "Duplicar Entradas entre Funciones",
+                    steps: [
+                        "Desde el menú de tres puntos, selecciona 'Duplicar en funciones'",
+                        "Aparecerá un modal mostrando todas las funciones disponibles",
+                        "Las funciones que ya tienen esta entrada estarán marcadas y deshabilitadas",
+                        "Selecciona las funciones donde quieres duplicar la entrada",
+                        "Confirma y la entrada se creará con los mismos datos en todas las funciones seleccionadas",
+                    ]
+                }
             ]
         },
         {
@@ -165,6 +183,7 @@ export default function HelpGuide() {
             icon: <Users className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "asistentes-invitar",
                     title: "Invitar Asistentes",
                     steps: [
                         "Ve a la pestaña 'Asistentes' de tu evento",
@@ -175,6 +194,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "asistentes-compradores",
                     title: "Gestionar Compradores",
                     steps: [
                         "Los compradores aparecen automáticamente cuando adquieren entradas. Puedes:",
@@ -191,6 +211,7 @@ export default function HelpGuide() {
             icon: <UserPlus className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "usuarios-agregar",
                     title: "Agregar Colaboradores",
                     steps: [
                         "Ve a 'Usuarios' en el menú lateral",
@@ -201,6 +222,7 @@ export default function HelpGuide() {
                     ]
                 },
                 {
+                    id: "usuarios-importante",
                     title: "Importante",
                     steps: [
                         "Los usuarios que crees tendrán acceso a todos los eventos de tu organización."
@@ -215,6 +237,7 @@ export default function HelpGuide() {
             icon: <BarChart3 className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "reportes-dashboard",
                     title: "Dashboard de Evento",
                     steps: [
                         "Desde el dashboard de cada evento puedes ver:",
@@ -232,6 +255,7 @@ export default function HelpGuide() {
             icon: <Mail className="w-5 h-5" />,
             subsections: [
                 {
+                    id: "comunicacion-reenvio",
                     title: "Reenvío de Invitaciones",
                     steps: [
                         "Puedes reenviar invitaciones y entradas desde la lista de asistentes:",
@@ -288,40 +312,60 @@ export default function HelpGuide() {
 
                                     {/* Section Content */}
                                     {isExpanded && (
-                                        <div className="p-6 space-y-6">
-                                            {section.subsections.map((subsection, idx) => (
-                                                <div key={idx} className="border-l-4 border-teal-500 pl-4">
-                                                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                                                        {subsection.title}
-                                                    </h3>
-                                                    
-                                                    {subsection.isAdvice ? (
-                                                        <div className="bg-blue-50 p-4 rounded-lg">
-                                                            <div className="flex items-start gap-2">
-                                                                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                                                                <div>
-                                                                    <p className="text-blue-800 text-sm">
-                                                                        {subsection.steps[0]}
-                                                                    </p>
-                                                                </div>
+                                        <div className="px-6 pb-6 space-y-2">
+                                            {section.subsections.map((subsection, idx) => {
+                                                const isSubExpanded = expandedSubsections.includes(subsection.id);
+                                                
+                                                return (
+                                                    <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden">
+                                                        {/* Subsection Header */}
+                                                        <button
+                                                            onClick={() => toggleSubsection(subsection.id)}
+                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors border-l-4 border-teal-500"
+                                                        >
+                                                            <h3 className="text-lg font-semibold text-gray-800">
+                                                                {subsection.title}
+                                                            </h3>
+                                                            {isSubExpanded ? (
+                                                                <ChevronUp className="w-4 h-4 text-gray-500" />
+                                                            ) : (
+                                                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                                                            )}
+                                                        </button>
+
+                                                        {/* Subsection Content */}
+                                                        {isSubExpanded && (
+                                                            <div className="p-4">
+                                                                {subsection.isAdvice ? (
+                                                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                                                        <div className="flex items-start gap-2">
+                                                                            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                                                                            <div>
+                                                                                <p className="text-blue-800 text-sm">
+                                                                                    {subsection.steps[0]}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : subsection.isWarning ? (
+                                                                    <div className="bg-amber-50 p-4 rounded-lg">
+                                                                        <div className="flex items-start gap-2">
+                                                                            <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                                                                            <div>
+                                                                                <p className="text-amber-800 text-sm">
+                                                                                    {subsection.steps[0]}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <StepList steps={subsection.steps} />
+                                                                )}
                                                             </div>
-                                                        </div>
-                                                    ) : subsection.isWarning ? (
-                                                        <div className="bg-amber-50 p-4 rounded-lg">
-                                                            <div className="flex items-start gap-2">
-                                                                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                                                                <div>
-                                                                    <p className="text-amber-800 text-sm">
-                                                                        {subsection.steps[0]}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <StepList steps={subsection.steps} />
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
