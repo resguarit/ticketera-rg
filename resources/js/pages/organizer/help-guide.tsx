@@ -84,15 +84,24 @@ export default function HelpGuide() {
             icon: <Ticket className="w-5 h-5" />,
             subsections: [
                 {
-                    title: "Configurar Tipos de Entradas Básicas",
+                    title: "Vista General de Entradas",
                     steps: [
                         "Accede a tu evento y ve a la pestaña 'Entradas'",
-                        "Crea diferentes tipos de entradas (General, VIP, Estudiante, etc.) con el botón '+ Crear Entrada'",
+                        "Verás pestañas por cada función de tu evento con fecha y nombre",
+                        "Cada función muestra estadísticas: entradas totales, vendidas, ingresos y entradas visibles",
+                        "Si no hay funciones, deberás crearlas"
+                    ]
+                },
+                {
+                    title: "Crear Tipos de Entradas Básicas",
+                    steps: [
+                        "Accede a tu evento y ve a la pestaña 'Entradas'",
+                        "Dentro de una función, haz clic en '+ Crear Entrada' y crea diferentes tipos de entradas (General, VIP, Estudiante, etc.)",
                         "Completa el nombre y selecciona el sector correspondiente",
                         "Define el precio y la cantidad disponible",
                         "Configura fechas de venta (inicio y fin)",
                         "Establece la cantidad máxima por compra",
-                        "Guarda la entrada con el botón 'Crear Tipo de Entrada'"
+                        "Guarda la entrada con el botón 'Crear Entrada'"
                     ]
                 },
                 {
@@ -102,6 +111,7 @@ export default function HelpGuide() {
                         "Define cuántas entradas incluye cada lote (ej: 4 para pack x4)",
                         "El precio que definas será por todo el lote completo",
                         "El sistema calculará automáticamente el precio por entrada individual",
+                        "El sistema mostrará tanto lotes vendidos como entradas emitidas totales",
                     ]
                 },
                 {
@@ -109,7 +119,7 @@ export default function HelpGuide() {
                     steps: [
                         "Marca la opción 'Crear entrada por tandas'",
                         "Define el número de tandas (máximo 10)",
-                        "Establece el porcentaje de incremento entre tandas",
+                        "Establece el porcentaje de incremento del precio entre tandas",
                         "El sistema creará automáticamente múltiples entradas con precios escalonados",
                         "Solo la primera tanda estará visible; las siguientes se activarán cuando se agote la anterior",
                         "Vista previa te mostrará cómo quedarán los precios de cada tanda"
@@ -125,6 +135,28 @@ export default function HelpGuide() {
                         "Para lotes: el sistema calcula automáticamente las entradas reales que se generarán"
                     ]
                 },
+                        {
+            title: "Acciones sobre Entradas",
+            steps: [
+                "Dentro de la tarjeta de cada tipo de entrada, encontrarás varias acciones:",
+                "Cambiar visibilidad: Botón principal para mostrar/ocultar la entrada de la venta",
+                "Editar: Desde el menú de tres puntos, puedes seleccionar la opción 'Editar' que te permitirá modificar todos los campos menos el precio",
+                "Duplicar: Desde el menú de tres puntos, puedes seleccionar la opción 'Duplicar en funciones' que copiará la entrada a otras funciones seleccionadas",
+                "Eliminar: Botón rojo elimina la entrada (requiere confirmación). No se puede eliminar entradas ya vendidas.",
+                "Las entradas ocultas aparecen con botón rojo 'Oculta', las visibles con 'A la venta'"
+            ]
+            
+        },
+        {
+            title: "Duplicar Entradas entre Funciones",
+            steps: [
+                "Desde el menú de tres puntos, selecciona 'Duplicar en funciones'",
+                "Aparecerá un modal mostrando todas las funciones disponibles",
+                "Las funciones que ya tienen esta entrada estarán marcadas y deshabilitadas",
+                "Selecciona las funciones donde quieres duplicar la entrada",
+                "Confirma y la entrada se creará con los mismos datos en todas las funciones seleccionadas",
+            ]
+        },
             ]
         },
         {
