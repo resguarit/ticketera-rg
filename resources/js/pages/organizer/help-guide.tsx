@@ -27,23 +27,29 @@ const StepList = ({ steps }: { steps: string[] }) => (
 );
 
 export default function HelpGuide() {
-    const [expandedSections, setExpandedSections] = useState<string[]>(["eventos"]);
-    const [expandedSubsections, setExpandedSubsections] = useState<string[]>([]);
+    const [expandedSection, setExpandedSection] = useState<string | null>("eventos");
+    const [expandedSubsection, setExpandedSubsection] = useState<string | null>(null);
 
     const toggleSection = (sectionId: string) => {
-        setExpandedSections((prev) =>
-            prev.includes(sectionId) 
-                ? prev.filter((id) => id !== sectionId) 
-                : [...prev, sectionId]
-        );
+        if (expandedSection === sectionId) {
+            // Si es la misma sección, la cerramos
+            setExpandedSection(null);
+            setExpandedSubsection(null);
+        } else {
+            // Si es una sección diferente, cerramos todo y abrimos esta
+            setExpandedSection(sectionId);
+            setExpandedSubsection(null);
+        }
     };
 
     const toggleSubsection = (subsectionId: string) => {
-        setExpandedSubsections((prev) =>
-            prev.includes(subsectionId) 
-                ? prev.filter((id) => id !== subsectionId) 
-                : [...prev, subsectionId]
-        );
+        if (expandedSubsection === subsectionId) {
+            // Si es la misma subsección, la cerramos
+            setExpandedSubsection(null);
+        } else {
+            // Si es una subsección diferente, cerramos la anterior y abrimos esta
+            setExpandedSubsection(subsectionId);
+        }
     };
 
     const guideSections = [
@@ -396,7 +402,7 @@ export default function HelpGuide() {
                     {/* Guide Sections */}
                     <div className="space-y-4">
                         {guideSections.map((section) => {
-                            const isExpanded = expandedSections.includes(section.id);
+                            const isExpanded = expandedSection === section.id;
 
                             return (
                                 <div
@@ -423,7 +429,7 @@ export default function HelpGuide() {
                                     {isExpanded && (
                                         <div className="px-6 pb-6 space-y-2">
                                             {section.subsections.map((subsection, idx) => {
-                                                const isSubExpanded = expandedSubsections.includes(subsection.id);
+                                                const isSubExpanded = expandedSubsection === subsection.id;
                                                 
                                                 return (
                                                     <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden">
