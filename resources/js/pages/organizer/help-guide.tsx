@@ -294,24 +294,36 @@ export default function HelpGuide() {
             icon: <UserPlus className="w-5 h-5" />,
             subsections: [
                 {
-                    id: "usuarios-agregar",
-                    title: "Agregar Colaboradores",
+                    id: "usuarios-vista",
+                    title: "Vista General de Usuarios",
                     steps: [
-                        "Ve a 'Usuarios' en el menú lateral",
-                        "Haz clic en 'Crear Usuario'",
-                        "Completa los datos del colaborador",
-                        "Define una contraseña temporal",
-                        "El usuario recibirá acceso a tu organización"
+                        "Ve a 'Usuarios' en el menú lateral para acceder a la gestión de usuarios",
+                        "Verás una tabla con todos los usuarios de tu organización",
+                        "Usa los filtros de búsqueda y estado para encontrar usuarios específicos",
+                        "Si no hay usuarios, aparecerá un mensaje invitándote a crear el primero"
                     ]
                 },
                 {
-                    id: "usuarios-importante",
-                    title: "Importante",
+                    id: "usuarios-crear",
+                    title: "Crear Nuevo Usuario",
                     steps: [
-                        "Los usuarios que crees tendrán acceso a todos los eventos de tu organización."
-                    ],
-                    isWarning: true
-                }
+                        "Haz clic en '+ Crear Usuario' desde la lista de usuarios",
+                        "Completa los datos personales (Los campos marcados con * son obligatorios)",
+                        "Define una contraseña segura (mínimo 8 caracteres)",
+                        "Confirma la contraseña en el campo correspondiente",
+                        "Haz clic en 'Crear Usuario' para completar el proceso"
+                    ]
+                },
+                {
+                    id: "usuarios-acciones",
+                    title: "Acciones sobre Usuarios",
+                    steps: [
+                        "Editar: Aunque aún no está implementado, podrás modificar la información de usuarios existentes",
+                        "Eliminar: Botón rojo con ícono de papelera para eliminar permanentemente el usuario",
+                        "Una vez eliminado, el usuario y sus datos se borran permanentemente",
+                        "No se pueden eliminar usuarios que tengan actividad en eventos activos"
+                    ]
+                },
             ]
         },
         {
