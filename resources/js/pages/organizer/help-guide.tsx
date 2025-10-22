@@ -216,26 +216,76 @@ export default function HelpGuide() {
             icon: <Users className="w-5 h-5" />,
             subsections: [
                 {
-                    id: "asistentes-invitar",
-                    title: "Invitar Asistentes",
+                    id: "asistentes-vista",
+                    title: "Vista General de Asistentes",
                     steps: [
-                        "Ve a la pestaña 'Asistentes' de tu evento",
-                        "Haz clic en 'Invitar asistente'",
-                        "Selecciona la función y tipos de entrada",
-                        "Ingresa los datos del asistente",
-                        "El sistema enviará automáticamente la invitación por email"
+                        "Accede a tu evento y ve a la pestaña 'Asistentes'",
+                        "Verás una tabla con todos los asistentes del evento (invitados y compradores)",
+                        "Usa el filtro 'Filtrar por función' para ver asistentes de una función específica",
+                        "Haz clic en 'Actualizar' para refrescar la información en tiempo real",
+                        "Si no hay asistentes, aparecerá un mensaje invitándote a invitar al primero"
                     ]
                 },
                 {
-                    id: "asistentes-compradores",
-                    title: "Gestionar Compradores",
+                    id: "asistentes-tipos",
+                    title: "Tipos de Asistentes",
                     steps: [
-                        "Los compradores aparecen automáticamente cuando adquieren entradas. Puedes:",
-                        "Ver sus tickets y detalles de compra",
-                        "Reenviar emails con sus entradas",
-                        "Monitorear el estado de uso de sus tickets"
+                        "Invitados: Personas que invitaste directamente (badge azul 'Invitado')",
+                        "Compradores: Personas que compraron entradas por su cuenta (badge verde 'Comprador')",
+                        "Cada tipo tiene diferentes opciones de gestión disponibles",
+                        "Los invitados pueden ser eliminados, los compradores no",
+                        "Ambos tipos pueden recibir reenvíos de sus entradas"
                     ]
-                }
+                },
+                {
+                    id: "asistentes-invitar",
+                    title: "Invitar Nuevos Asistentes",
+                    steps: [
+                        "Haz clic en '+ Invitar asistente' desde la lista de asistentes",
+                        "Completa los datos personales (Los campos marcados con * son obligatorios)",
+                        "En la sección 'Entradas', haz clic en 'Agregar Entrada'",
+                        "Selecciona la función deseada del menú desplegable",
+                        "Elige el tipo de entrada (solo aparecen los que tienen disponibilidad)",
+                        "Define la cantidad con los botones + y - o escribiendo directamente",
+                        "Puedes agregar múltiples entradas para diferentes funciones",
+                        "El sistema calculará automáticamente el total (valor de cortesía)",
+                        "Haz clic en 'Invitar Asistente' para enviar la invitación por email"
+                    ]
+                },
+                {
+                    id: "asistentes-acciones",
+                    title: "Acciones sobre Asistentes",
+                    steps: [
+                        "Todas las acciones están en el menú de tres puntos de cada fila",
+                        "Ver tickets: Abre modal detallado con toda la información del asistente",
+                        "Reenviar invitación: Para invitados, reenvía email con sus tickets gratuitos",
+                        "Reenviar tickets: Para compradores, reenvía email con entradas compradas",
+                        "Eliminar: Solo disponible para invitados (requiere confirmación)",
+                    ]
+                },
+                {
+                    id: "asistentes-detalles",
+                    title: "Detalles de Tickets",
+                    steps: [
+                        "Selecciona en el menú de tres puntos 'Ver tickets' y se abrirá un modal",
+                        "Muestra información personal completa del asistente",
+                        "Tabla detallada con todos los tipos de tickets asignados",
+                        "Para invitados: muestra valor de cortesía y badges 'GRATIS'",
+                        "Para compradores: muestra precios, descuentos y total pagado",
+                        "Estado de cada ticket: disponible o usado",
+                        "Información de la función y fechas relevantes",
+                    ]
+                },
+                {
+                    id: "asistentes-reenvios",
+                    title: "Sistema de Reenvíos",
+                    steps: [
+                        "Para invitados: reenvía invitación con todos los tickets gratuitos disponibles",
+                        "Para compradores: reenvía email original con tickets comprados",
+                        "Aparece modal de confirmación antes del reenvío",
+                        "El sistema valida automáticamente que existan tickets para reenviar",
+                    ]
+                },
             ]
         },
         {
@@ -334,7 +384,7 @@ export default function HelpGuide() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="text-gray-700">{section.icon}</div>
-                                            <h2 className="text-xl font-semibold text-gray-900">{section.title}</h2>
+                                            <h2 className="text-xl font-medium text-gray-900">{section.title}</h2>
                                         </div>
                                         {isExpanded ? (
                                             <ChevronUp className="w-5 h-5 text-gray-500" />
@@ -356,7 +406,7 @@ export default function HelpGuide() {
                                                             onClick={() => toggleSubsection(subsection.id)}
                                                             className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors border-l-4 border-teal-500"
                                                         >
-                                                            <h3 className="text-lg font-semibold text-gray-800">
+                                                            <h3 className="text-lg font-medium text-gray-800">
                                                                 {subsection.title}
                                                             </h3>
                                                             {isSubExpanded ? (
