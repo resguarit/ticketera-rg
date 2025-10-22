@@ -34,18 +34,18 @@ export default function CreateTicketType() {
     const { data, setData, processing, errors } = useForm<TicketTypeFormData>({
         name: '',
         description: '',
-        price: 0,
-        quantity: sectorsWithAvailability?.[0]?.available_capacity ?? 0,
-        max_purchase_quantity: 10,
-        sector_id: sectorsWithAvailability?.[0]?.id ?? undefined,
+        price: '',
+        quantity: 0, // Inicializar en 0 para que se establezca automáticamente
+        max_purchase_quantity: '',
+        sector_id: '',
         sales_start_date: '',
         sales_end_date: '',
         is_hidden: false,
-        is_bundle: false,           
-        bundle_quantity: undefined, 
+        is_bundle: false,
+        bundle_quantity: null,
         create_stages: false,
         stages_count: 2,
-        price_increment: 0,
+        price_increment: 10,
     });
 
     // Manejar mensajes flash de Laravel

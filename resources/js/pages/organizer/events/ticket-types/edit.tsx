@@ -46,14 +46,13 @@ const formatDateTimeForInput = (dateString: string | null | undefined): string =
 export default function EditTicketType() {
     const { event, function: eventFunction, ticketType, sectors, sectorsWithAvailability, flash } = usePage<EditTicketTypeProps>().props;
 
-    // Verificar si hay ventas para bloquear la edición del precio
     const hasSales = ticketType.quantity_sold > 0;
 
     const { data, setData, processing, errors } = useForm<TicketTypeFormData>({
         name: ticketType.name,
         description: ticketType.description ?? '',
         price: ticketType.price,
-        quantity: ticketType.quantity,
+        quantity: ticketType.quantity, // Mantener la cantidad actual en edición
         max_purchase_quantity: ticketType.max_purchase_quantity,
         sector_id: ticketType.sector_id,
         sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),

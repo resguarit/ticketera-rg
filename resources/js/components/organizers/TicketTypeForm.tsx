@@ -1,4 +1,4 @@
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,7 +59,7 @@ export function TicketTypeForm({
     cancelUrl, 
     maxQuantity,
     hasSales = false,
-    isEditing = false // Nueva prop
+    isEditing = false
 }: TicketTypeFormProps) {
     const selectedSector = sectors.find(s => s.id.toString() === data.sector_id?.toString());
     const selectedSectorAvailability = sectorsWithAvailability?.find(s => s.id.toString() === data.sector_id?.toString());
@@ -76,6 +76,45 @@ export function TicketTypeForm({
     const availableCapacity = selectedSectorAvailability?.available_capacity || 0;
     const originalAvailableCapacity = selectedSectorAvailability?.original_available_capacity || availableCapacity;
     const willExceedCapacity = realQuantity > availableCapacity && availableCapacity >= 0;
+
+    // Función para calcular la cantidad por defecto según disponibilidad
+    const getDefaultQuantity = () => {
+        if (!selectedSectorAvailability) return 1;
+        
+        if (isEditing) {
+            // En modo edición, usar disponibilidad actual
+            return Math.max(1, availableCapacity);
+        } else {
+            // En modo creación, usar disponibilidad total
+            return Math.max(1, selectedSectorAvailability.available_capacity);
+        }
+    };
+
+    // Efecto para actualizar cantidad cuando cambia el sector
+    useEffect(() => {
+        if (data.sector_id && selectedSectorAvailability) {
+            const defaultQuantity = getDefaultQuantity();
+            
+            // Solo actualizar si no hay cantidad establecida o si cambió el sector
+            if (!data.quantity || data.quantity === 0) {
+                setData('quantity', defaultQuantity);
+            }
+        }
+    }, [data.sector_id, selectedSectorAvailability, isEditing]);
+
+    // Efecto para ajustar cantidad cuando cambia el tipo de bundle
+    useEffect(() => {
+        if (isBundle && bundleQuantity > 1 && selectedSectorAvailability) {
+            const maxPossibleLots = Math.floor(selectedSectorAvailability.available_capacity / bundleQuantity);
+            
+            // Si la cantidad actual como lotes excede lo posible, ajustar
+            if (data.quantity && data.quantity > maxPossibleLots) {
+                setData('quantity', Math.max(1, maxPossibleLots));
+            } else if (!data.quantity || data.quantity === 0) {
+                setData('quantity', Math.max(1, maxPossibleLots));
+            }
+        }
+    }, [isBundle, bundleQuantity, selectedSectorAvailability]);
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -198,10 +237,22 @@ export function TicketTypeForm({
                     <Input
                         id="quantity"
                         type="number"
-                        value={data.quantity}
-                        onChange={e => setData('quantity', e.target.value)}
-                        min={hasSales ? (data.quantity_sold || 0) : "1"} // Mínimo basado en ventas
+                        value={data.quantity || ''}
+                        onChange={e => {
+                            const value = parseInt(e.target.value) || 0;
+                            setData('quantity', value);
+                        }}
+                        min={hasSales ? (data.quantity_sold || 0) : "1"}
+                        placeholder={selectedSectorAvailability ? `Disponible: ${availableCapacity}` : "1"}
                     />
+                    
+                    {/* Mostrar sugerencia de cantidad recomendada */}
+                    {selectedSectorAvailability && !data.quantity && (
+                        <div className="text-sm text-blue-600">
+                            💡 Sugerencia: {getDefaultQuantity()} {isBundle ? 'lotes' : 'entradas'} 
+                            {isBundle && ` (${getDefaultQuantity() * bundleQuantity} entradas reales)`}
+                        </div>
+                    )}
                     
                     {selectedSector && selectedSectorAvailability && (
                         <div className="text-sm space-y-2 p-3 bg-gray-50 rounded-lg">
@@ -267,6 +318,11 @@ export function TicketTypeForm({
                                     <p className={realQuantity > availableCapacity ? 'text-red-600 font-medium' : 'text-blue-600'}>
                                         Entradas reales que se generarán: {realQuantity}
                                     </p>
+                                    {bundleQuantity > 1 && (
+                                        <p className="text-sm text-muted-foreground">
+                                            Lotes máximos posibles: {Math.floor(availableCapacity / bundleQuantity)}
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>
