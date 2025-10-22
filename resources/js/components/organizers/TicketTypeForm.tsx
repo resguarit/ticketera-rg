@@ -61,12 +61,12 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
         <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Nombre de la Entrada</Label>
+                    <Label htmlFor="name">Nombre de la Entrada <span className="text-red-500">*</span></Label>
                     <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)}  />
                     <InputError message={errors.name} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="sector_id">Sector</Label>
+                    <Label htmlFor="sector_id">Sector <span className="text-red-500">*</span></Label>
                     <Select value={data.sector_id !== undefined ? data.sector_id.toString() : ''} onValueChange={value => setData('sector_id', value)} >
                         <SelectTrigger>
                             <SelectValue placeholder="Selecciona un sector" />
@@ -114,7 +114,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 
                 {isBundle && (
                     <div className="space-y-2">
-                        <Label htmlFor="bundle_quantity">Cantidad de entradas por lote</Label>
+                        <Label htmlFor="bundle_quantity">Cantidad de entradas por lote <span className="text-red-500">*</span></Label>
                         <Input
                             id="bundle_quantity"
                             type="number"
@@ -146,7 +146,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="price">Precio {isBundle ? 'del Lote' : ''} (ARS)</Label>
+                    <Label htmlFor="price">Precio {isBundle ? 'del Lote' : ''} (ARS) <span className="text-red-500">*</span></Label>
                     <Input id="price" type="number" value={data.price} onChange={e => setData('price', e.target.value)} min="0" step="0.01" />
                     {isBundle && data.price && bundleQuantity > 1 && (
                         <p className="text-sm text-green-600">
@@ -157,7 +157,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="quantity">
-                        Cantidad de {isBundle ? 'Lotes' : 'Entradas'} Disponibles
+                        Cantidad de {isBundle ? 'Lotes' : 'Entradas'} Disponibles <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="quantity"
@@ -204,7 +204,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="max_purchase_quantity">
-                        Máximo {isBundle ? 'Lotes' : 'Entradas'} por Compra
+                        Máximo {isBundle ? 'Lotes' : 'Entradas'} por Compra <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="max_purchase_quantity"
@@ -232,7 +232,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="sales_start_date">Inicio de Venta</Label>
+                    <Label htmlFor="sales_start_date">Inicio de Venta <span className="text-red-500">*</span></Label>
                     <Input id="sales_start_date" type="datetime-local" value={data.sales_start_date} onChange={e => setData('sales_start_date', e.target.value)}  />
                     <InputError message={errors.sales_start_date} />
                 </div>
@@ -266,7 +266,7 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label>Número de tandas</Label>
+                                <Label>Número de tandas <span className="text-red-500">*</span></Label>
                                 <Input
                                     type="number"
                                     min="2"
