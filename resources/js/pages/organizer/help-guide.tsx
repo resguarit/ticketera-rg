@@ -19,18 +19,16 @@ import {
     AlertCircle
 } from 'lucide-react';
 
-const GuideSection = ({ icon: Icon, title, children, badge }: { 
+const GuideSection = ({ icon: Icon, title, children }: { 
     icon: any, 
     title: string, 
     children: React.ReactNode,
-    badge?: string 
 }) => (
     <Card className="mb-6">
-        <CardHeader>
+        <CardHeader className='pb-0'>
             <div className="flex items-center gap-2">
                 <Icon className="h-5 w-5 text-primary" />
                 <CardTitle className="text-lg">{title}</CardTitle>
-                {badge && <Badge variant="secondary">{badge}</Badge>}
             </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -62,7 +60,7 @@ export default function HelpGuide() {
                     </p>
                 </div>
 
-                <GuideSection icon={Calendar} title="Gestión de Eventos" badge="Básico">
+                <GuideSection icon={Calendar} title="Gestión de Eventos">
                     <div>
                         <h4 className="font-semibold mb-2">Crear un Evento</h4>
                         <StepList steps={[
@@ -83,7 +81,7 @@ export default function HelpGuide() {
                     </div>
                 </GuideSection>
 
-                <GuideSection icon={Ticket} title="Funciones" badge="Intermedio">
+                <GuideSection icon={Ticket} title="Funciones">
                     <div>
                         <h4 className="font-semibold mb-2">Gestionar Funciones</h4>
                         <StepList steps={[
@@ -95,7 +93,7 @@ export default function HelpGuide() {
                     </div>
                 </GuideSection>
 
-                <GuideSection icon={Ticket} title="Tipos de Entradas" badge="Intermedio">
+                <GuideSection icon={Ticket} title="Tipos de Entradas">
                     <div>
                         <h4 className="font-semibold mb-2">Configurar Tipos de Entradas</h4>
                         <StepList steps={[
@@ -120,7 +118,7 @@ export default function HelpGuide() {
                     </div>
                 </GuideSection>
 
-                <GuideSection icon={Users} title="Gestión de Asistentes" badge="Avanzado">
+                <GuideSection icon={Users} title="Gestión de Asistentes">
                     <div>
                         <h4 className="font-semibold mb-2">Invitar Asistentes</h4>
                         <StepList steps={[
