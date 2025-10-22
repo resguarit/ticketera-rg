@@ -33,6 +33,9 @@ const formatDateTimeForInput = (dateString: string | null | undefined): string =
 export default function EditTicketType() {
     const { event, function: eventFunction, ticketType, sectors, flash } = usePage<EditTicketTypeProps>().props;
 
+    // Verificar si hay ventas para bloquear la edición del precio
+    const hasSales = ticketType.quantity_sold > 0;
+
     const { data, setData, processing, errors } = useForm<TicketTypeFormData>({
         name: ticketType.name,
         description: ticketType.description ?? '',
@@ -198,6 +201,11 @@ export default function EditTicketType() {
                     <CardTitle>Editar Tipo de Entrada</CardTitle>
                     <CardDescription>
                         Modifica los datos de la entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
+                        {hasSales && (
+                            <div className="mt-2 text-amber-600 text-sm">
+                                Esta entrada ya tiene ventas, por lo que el precio no se puede modificar.
+                            </div>
+                        )}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -211,6 +219,7 @@ export default function EditTicketType() {
                         submitText="Guardar Cambios"
                         cancelUrl={route('organizer.events.tickets', event.id)}
                         maxQuantity={maxQuantity}
+                        hasSales={hasSales} // Nueva prop
                     />
                 </CardContent>
             </Card>

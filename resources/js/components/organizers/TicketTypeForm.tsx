@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, AlertCircle } from 'lucide-react';
 import InputError from '@/components/input-error';
 import type { TicketType } from '@/types/models/ticketType';
 import type { Sector } from '@/types/models/sector';
@@ -39,9 +39,22 @@ interface TicketTypeFormProps {
     submitText: string;
     cancelUrl: string;
     maxQuantity?: number;
+    hasSales?: boolean; // Nueva prop
 }
 
-export function TicketTypeForm({ data, setData, errors, processing, onSubmit, sectors, sectorsWithAvailability, submitText, cancelUrl, maxQuantity }: TicketTypeFormProps) {
+export function TicketTypeForm({ 
+    data, 
+    setData, 
+    errors, 
+    processing, 
+    onSubmit, 
+    sectors, 
+    sectorsWithAvailability, 
+    submitText, 
+    cancelUrl, 
+    maxQuantity,
+    hasSales = false // Nueva prop con valor por defecto
+}: TicketTypeFormProps) {
     const selectedSector = sectors.find(s => s.id.toString() === data.sector_id?.toString());
     const selectedSectorAvailability = sectorsWithAvailability?.find(s => s.id.toString() === data.sector_id?.toString());
     const isBundle = data.is_bundle || false;
@@ -147,7 +160,23 @@ export function TicketTypeForm({ data, setData, errors, processing, onSubmit, se
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="price">Precio {isBundle ? 'del Lote' : ''} (ARS) <span className="text-red-500">*</span></Label>
-                    <Input id="price" type="number" value={data.price} onChange={e => setData('price', e.target.value)} min="0" step="0.01" />
+                    <Input 
+                        id="price" 
+                        type="number" 
+                        value={data.price} 
+                        onChange={e => setData('price', e.target.value)} 
+                        min="0" 
+                        step="0.01"
+                        disabled={hasSales} // Deshabilitar si hay ventas
+                        className={hasSales ? 'bg-gray-100 cursor-not-allowed' : ''}
+
+                    />
+                    {hasSales && (
+                        <div className="flex items-center gap-2 text-amber-600 text-sm">
+                            <AlertCircle className="h-4 w-4" />
+                            <span>No se puede modificar el precio cuando ya hay ventas realizadas</span>
+                        </div>
+                    )}
                     {isBundle && data.price && bundleQuantity > 1 && (
                         <p className="text-sm text-green-600">
                             Precio por entrada individual: ${((data.price || 0) / bundleQuantity).toFixed(2)}
