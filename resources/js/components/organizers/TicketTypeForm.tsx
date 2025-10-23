@@ -406,15 +406,104 @@ export function TicketTypeForm({
                 </div>
             </div>
 
+            {/* FECHAS DE VENTA CON SELECTORES SEPARADOS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                    <Label htmlFor="sales_start_date">Inicio de Venta <span className="text-red-500">*</span></Label>
-                    <Input id="sales_start_date" type="datetime-local" value={data.sales_start_date} onChange={e => setData('sales_start_date', e.target.value)}  />
+                <div className="space-y-4">
+                    <Label className="text-base font-medium">Inicio de Venta <span className="text-red-500">*</span></Label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <Label htmlFor="sales_start_date">Fecha</Label>
+                            <Input 
+                                id="sales_start_date"
+                                type="date"
+                                value={data.sales_start_date ? data.sales_start_date.split('T')[0] : ''} 
+                                onChange={(e) => {
+                                    const currentTime = data.sales_start_date ? data.sales_start_date.split('T')[1] || '09:00' : '09:00';
+                                    setData('sales_start_date', e.target.value ? `${e.target.value}T${currentTime}` : '');
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="sales_start_time">Hora</Label>
+                            <Select 
+                                value={data.sales_start_date ? data.sales_start_date.split('T')[1] || '' : ''} 
+                                onValueChange={(value) => {
+                                    const currentDate = data.sales_start_date ? data.sales_start_date.split('T')[0] : '';
+                                    if (currentDate && value) {
+                                        setData('sales_start_date', `${currentDate}T${value}`);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar hora" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Array.from({ length: 48 }, (_, i) => {
+                                        const hour = Math.floor(i / 2);
+                                        const minute = i % 2 === 0 ? '00' : '30';
+                                        const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                        return (
+                                            <SelectItem key={time} value={time}>
+                                                {time}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <InputError message={errors.sales_start_date} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="sales_end_date">Fin de Venta (Opcional)</Label>
-                    <Input id="sales_end_date" type="datetime-local" value={data.sales_end_date || ''} onChange={e => setData('sales_end_date', e.target.value || null)} />
+                
+                <div className="space-y-4">
+                    <Label className="text-base font-medium">Fin de Venta (Opcional)</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <Label htmlFor="sales_end_date">Fecha</Label>
+                            <Input 
+                                id="sales_end_date"
+                                type="date"
+                                value={data.sales_end_date ? data.sales_end_date.split('T')[0] : ''} 
+                                onChange={(e) => {
+                                    if (!e.target.value) {
+                                        setData('sales_end_date', '');
+                                        return;
+                                    }
+                                    const currentTime = data.sales_end_date ? data.sales_end_date.split('T')[1] || '21:00' : '21:00';
+                                    setData('sales_end_date', `${e.target.value}T${currentTime}`);
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="sales_end_time">Hora</Label>
+                            <Select 
+                                value={data.sales_end_date ? data.sales_end_date.split('T')[1] || '' : ''} 
+                                onValueChange={(value) => {
+                                    const currentDate = data.sales_end_date ? data.sales_end_date.split('T')[0] : '';
+                                    if (currentDate && value) {
+                                        setData('sales_end_date', `${currentDate}T${value}`);
+                                    }
+                                }}
+                                disabled={!data.sales_end_date || !data.sales_end_date.includes('T')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar hora" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Array.from({ length: 48 }, (_, i) => {
+                                        const hour = Math.floor(i / 2);
+                                        const minute = i % 2 === 0 ? '00' : '30';
+                                        const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                        return (
+                                            <SelectItem key={time} value={time}>
+                                                {time}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <InputError message={errors.sales_end_date} />
                 </div>
             </div>

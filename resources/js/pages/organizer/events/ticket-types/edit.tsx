@@ -24,7 +24,7 @@ interface EditTicketTypeProps {
     function: EventFunction;
     ticketType: TicketType;
     sectors: Sector[];
-    sectorsWithAvailability: SectorWithAvailability[]; // Agregar esta prop
+    sectorsWithAvailability: SectorWithAvailability[];
     flash?: {
         success?: string;
         warning?: string;
@@ -39,8 +39,24 @@ interface EditTicketTypeProps {
  */
 const formatDateTimeForInput = (dateString: string | null | undefined): string => {
     if (!dateString) return '';
-    // Crea un objeto Date y extrae los primeros 16 caracteres del formato ISO (YYYY-MM-DDTHH:mm)
-    return new Date(dateString).toISOString().slice(0, 16);
+    
+    try {
+        // Si ya está en formato ISO, lo usamos directamente
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        
+        // Obtener componentes de fecha y hora
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return '';
+    }
 };
 
 export default function EditTicketType() {
@@ -52,7 +68,7 @@ export default function EditTicketType() {
         name: ticketType.name,
         description: ticketType.description ?? '',
         price: ticketType.price,
-        quantity: ticketType.quantity, // Mantener la cantidad actual en edición
+        quantity: ticketType.quantity,
         max_purchase_quantity: ticketType.max_purchase_quantity,
         sector_id: ticketType.sector_id,
         sales_start_date: formatDateTimeForInput(ticketType.sales_start_date),
@@ -238,12 +254,12 @@ export default function EditTicketType() {
                         processing={processing}
                         onSubmit={submit}
                         sectors={sectors}
-                        sectorsWithAvailability={sectorsWithAvailability} // Pasar la prop
+                        sectorsWithAvailability={sectorsWithAvailability}
                         submitText="Guardar Cambios"
                         cancelUrl={route('organizer.events.tickets', event.id)}
                         maxQuantity={maxQuantity}
                         hasSales={hasSales}
-                        isEditing={true} // Nueva prop para indicar modo edición
+                        isEditing={true}
                     />
                 </CardContent>
             </Card>
