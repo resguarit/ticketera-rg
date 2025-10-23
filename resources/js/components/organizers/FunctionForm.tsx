@@ -1,4 +1,4 @@
-import { useForm, router } from '@inertiajs/react';
+import { useForm, router, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Event, EventFunction } from '@/types';
 import { toast } from 'sonner';
+import { Save } from 'lucide-react';
 import BackButton from '../Backbutton';
 
 interface FunctionFormProps {
@@ -165,15 +166,15 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
             <Card>
                 <CardHeader>
                     <div className='flex gap-2'>
-                <BackButton
-                    href={route('organizer.events.functions', event.id)}
-                />
-                <div>
-                    <CardTitle>{isEditing ? 'Editar Función' : 'Crear Nueva Función'}</CardTitle>
-                    <CardDescription>
-                        {isEditing ? 'Modifica los detalles de la función.' : 'Completa los detalles para una nueva función en tu evento.'}
-                    </CardDescription>
-                    </div>
+                        <BackButton
+                            href={route('organizer.events.functions', event.id)}
+                        />
+                        <div>
+                            <CardTitle>{isEditing ? 'Editar Función' : 'Crear Nueva Función'}</CardTitle>
+                            <CardDescription>
+                                {isEditing ? 'Modifica los detalles de la función.' : 'Completa los detalles para una nueva función en tu evento.'}
+                            </CardDescription>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -319,9 +320,30 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                         </Label>
                     </div>
 
-                    <div className="flex justify-end gap-2">
-                        <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover">
-                            {processing ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Función')}
+                    <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                        <Link 
+                            href={route('organizer.events.functions', event.id)}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Cancelar
+                        </Link>
+                        
+                        <Button 
+                            type="submit" 
+                            disabled={processing}
+                            className="min-w-[120px] bg-primary hover:bg-primary-hover"
+                        >
+                            {processing ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    {isEditing ? 'Actualizando...' : 'Guardando...'}
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    {isEditing ? 'Guardar Cambios' : 'Crear Función'}
+                                </>
+                            )}
                         </Button>
                     </div>
                 </CardContent>
