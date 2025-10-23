@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 interface UserFormData {
     firstName: string;
@@ -25,6 +27,7 @@ interface UserFormProps {
     processing: boolean;
     onSubmit: FormEventHandler;
     submitText: string;
+    isEditing?: boolean;
 }
 
 export default function UserForm({ 
@@ -33,7 +36,8 @@ export default function UserForm({
     errors, 
     processing, 
     onSubmit, 
-    submitText = 'Guardar'
+    submitText = 'Guardar',
+    isEditing = false
 }: UserFormProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
@@ -124,7 +128,7 @@ export default function UserForm({
                         id="dni"
                         name="dni"
                         type="text"
-                        value={data.dni}
+                        value={data.dni || ''}
                         className="mt-1 block w-full"
                         onChange={(e) => setData('dni', e.target.value)}
                         placeholder="12345678"
@@ -133,11 +137,21 @@ export default function UserForm({
                 </div>
             </div>
 
+            {isEditing && (
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                        <strong>Cambio de contraseña:</strong> Deja estos campos vacíos si no deseas cambiar la contraseña actual.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="password">
                         <Lock className="w-4 h-4 inline mr-2" />
-                        Contraseña <span className="text-red-500">*</span>
+                        Contraseña {!isEditing && <span className="text-red-500">*</span>}
+                        {isEditing && <span className="text-gray-500">(dejar vacío para mantener actual)</span>}
                     </Label>
                     <div className="relative">
                         <Input
@@ -146,7 +160,7 @@ export default function UserForm({
                             type={showPassword ? "text" : "password"}
                             value={data.password}
                             className="mt-1 block w-full pr-10"
-                            autoComplete="new-password"
+                            autoComplete={isEditing ? "new-password" : "new-password"}
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="********"
                         />
@@ -163,15 +177,17 @@ export default function UserForm({
                         </button>
                     </div>
                     <InputError message={errors.password} />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Mínimo 8 caracteres. Se recomienda incluir mayúsculas, números y símbolos.
-                    </p>
+                    {!isEditing && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Mínimo 8 caracteres. Se recomienda incluir mayúsculas, números y símbolos.
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="password_confirmation">
                         <Lock className="w-4 h-4 inline mr-2" />
-                        Confirmar Contraseña <span className="text-red-500">*</span>
+                        Confirmar Contraseña {!isEditing && <span className="text-red-500">*</span>}
                     </Label>
                     <div className="relative">
                         <Input
@@ -183,11 +199,13 @@ export default function UserForm({
                             autoComplete="new-password"
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             placeholder="********"
+                            disabled={isEditing && !data.password}
                         />
                         <button
                             type="button"
                             className="absolute inset-y-0 right-0 pr-3 flex items-center"
                             onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                            disabled={isEditing && !data.password}
                         >
                             {showPasswordConfirmation ? (
                                 <EyeOff className="h-4 w-4 text-gray-400" />
@@ -216,7 +234,7 @@ export default function UserForm({
                     {processing ? (
                         <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Guardando...
+                            {isEditing ? 'Actualizando...' : 'Guardando...'}
                         </>
                     ) : (
                         <>

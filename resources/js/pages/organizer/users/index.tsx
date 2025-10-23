@@ -237,6 +237,17 @@ export default function UsersIndex() {
                                             <td className="py-3 px-4 text-sm">{user.created_at}</td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center space-x-2">
+                                                    <Link 
+                                                        href={route('organizer.users.edit', user.id)}
+                                                        className="inline-flex"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
