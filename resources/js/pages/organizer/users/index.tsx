@@ -339,7 +339,7 @@ export default function UsersIndex() {
                 onClose={() => setIsConfirmModalOpen(false)}
                 onConfirm={confirmDelete}
                 accionTitulo="Eliminar Usuario"
-                accion="eliminar"
+                accion="Eliminar"
                 pronombre="al"
                 entidad="usuario"
                 accionando="Eliminando"

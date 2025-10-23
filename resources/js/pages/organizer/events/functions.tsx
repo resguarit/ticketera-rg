@@ -210,7 +210,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                 onClose={() => setFunctionToDelete(null)}
                 onConfirm={handleDeleteFunction}
                 accionTitulo="Eliminación"
-                accion="eliminar"
+                accion="Eliminar"
                 pronombre="la"
                 entidad="función"
                 accionando="Eliminando"
