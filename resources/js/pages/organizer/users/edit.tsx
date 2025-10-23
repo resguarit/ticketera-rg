@@ -233,12 +233,11 @@ export default function EditUser() {
                             href={route('organizer.users.index')}
                             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
                         >
-                            <Button variant="outline" size="icon" className="mr-4">
+                            <Button variant="outline" size="icon" className="mr-2">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                         </Link>
                     </div>
-                    <UserPen className="h-8 w-8 text-primary" />
                     <div className="flex-1">
                         <h1 className="text-2xl font-bold">Editar Usuario</h1>
                         <p className="text-muted-foreground mt-1">
