@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Event, EventFunction } from '@/types';
 import { toast } from 'sonner';
 
@@ -14,12 +15,35 @@ interface FunctionFormProps {
     isEditing?: boolean;
 }
 
+// Función para convertir fecha del servidor al formato datetime-local
+const formatDateTimeForInput = (dateString: string | undefined): string => {
+    if (!dateString) return '';
+    
+    try {
+        // Si ya está en formato ISO, lo usamos directamente
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        
+        // Obtener componentes de fecha y hora
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return '';
+    }
+};
+
 export default function FunctionForm({ event, functionData, isEditing = false }: FunctionFormProps) {
     const { data, setData, processing, errors } = useForm({
         name: functionData?.name || '',
         description: functionData?.description || '',
-        start_time: functionData?.start_time ? functionData.start_time.slice(0, 16) : '',
-        end_time: functionData?.end_time ? functionData.end_time.slice(0, 16) : '',
+        start_time: formatDateTimeForInput(functionData?.start_time),
+        end_time: formatDateTimeForInput(functionData?.end_time),
         is_active: functionData?.is_active ?? true,
     });
 
@@ -48,7 +72,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
             return false;
         }
 
-        // Validar que la fecha de inicio no sea en el pasado
+        // Validar que la fecha de inicio no sea en el pasado (solo para nuevas funciones)
         const startDate = new Date(data.start_time);
         const now = new Date();
         if (startDate < now && !isEditing) {
@@ -129,18 +153,10 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
     // Función para validar en tiempo real mientras el usuario escribe
     const handleNameChange = (value: string) => {
         setData('name', value);
-        // Si había un error y ahora tiene contenido, limpiar visualmente
-        if (value.trim() && errors.name) {
-            // El error se limpiará automáticamente con la próxima validación
-        }
     };
 
     const handleStartTimeChange = (value: string) => {
         setData('start_time', value);
-        // Si había un error y ahora tiene contenido, limpiar visualmente
-        if (value && errors.start_time) {
-            // El error se limpiará automáticamente con la próxima validación
-        }
     };
 
     return (
@@ -181,29 +197,105 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid gap-3">
-                            <Label htmlFor="start_time">
-                                Fecha y Hora de Inicio <span className="text-red-500">*</span>
+                            <Label htmlFor="start_date">
+                                Fecha de Inicio <span className="text-red-500">*</span>
                             </Label>
                             <Input
-                                id="start_time"
-                                type="datetime-local"
-                                value={data.start_time}
-                                onChange={(e) => handleStartTimeChange(e.target.value)}
+                                id="start_date"
+                                type="date"
+                                value={data.start_time ? data.start_time.split('T')[0] : ''}
+                                onChange={(e) => {
+                                    const currentTime = data.start_time ? data.start_time.split('T')[1] || '09:00' : '09:00';
+                                    const newDateTime = e.target.value ? `${e.target.value}T${currentTime}` : '';
+                                    setData('start_time', newDateTime);
+                                    handleStartTimeChange(newDateTime);
+                                }}
                                 className={errors.start_time ? 'border-red-500' : ''}
                             />
                             {errors.start_time && <p className="text-sm text-red-600">{errors.start_time}</p>}
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="end_time">Fecha y Hora de Fin (Opcional)</Label>
+                            <Label htmlFor="start_time">
+                                Hora de Inicio <span className="text-red-500">*</span>
+                            </Label>
+                            <Select 
+                                value={data.start_time ? data.start_time.split('T')[1] || '' : ''} 
+                                onValueChange={(value) => {
+                                    const currentDate = data.start_time ? data.start_time.split('T')[0] : '';
+                                    if (currentDate && value) {
+                                        const newDateTime = `${currentDate}T${value}`;
+                                        setData('start_time', newDateTime);
+                                        handleStartTimeChange(newDateTime);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className={errors.start_time ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Seleccionar hora" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Array.from({ length: 48 }, (_, i) => {
+                                        const hour = Math.floor(i / 2);
+                                        const minute = i % 2 === 0 ? '00' : '30';
+                                        const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                        return (
+                                            <SelectItem key={time} value={time}>
+                                                {time}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid gap-3">
+                            <Label htmlFor="end_date">Fecha de Fin (Opcional)</Label>
                             <Input
-                                id="end_time"
-                                type="datetime-local"
-                                value={data.end_time}
-                                onChange={(e) => setData('end_time', e.target.value)}
+                                id="end_date"
+                                type="date"
+                                value={data.end_time ? data.end_time.split('T')[0] : ''}
+                                onChange={(e) => {
+                                    if (!e.target.value) {
+                                        setData('end_time', '');
+                                        return;
+                                    }
+                                    const currentTime = data.end_time ? data.end_time.split('T')[1] || '21:00' : '21:00';
+                                    setData('end_time', `${e.target.value}T${currentTime}`);
+                                }}
                                 className={errors.end_time ? 'border-red-500' : ''}
-                                min={data.start_time} // Restricción HTML5
+                                min={data.start_time ? data.start_time.split('T')[0] : ''}
                             />
                             {errors.end_time && <p className="text-sm text-red-600">{errors.end_time}</p>}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="end_time">Hora de Fin (Opcional)</Label>
+                            <Select 
+                                value={data.end_time ? data.end_time.split('T')[1] || '' : ''} 
+                                onValueChange={(value) => {
+                                    const currentDate = data.end_time ? data.end_time.split('T')[0] : '';
+                                    if (currentDate && value) {
+                                        setData('end_time', `${currentDate}T${value}`);
+                                    }
+                                }}
+                                disabled={!data.end_time || !data.end_time.includes('T')}
+                            >
+                                <SelectTrigger className={errors.end_time ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Seleccionar hora" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Array.from({ length: 48 }, (_, i) => {
+                                        const hour = Math.floor(i / 2);
+                                        const minute = i % 2 === 0 ? '00' : '30';
+                                        const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                        return (
+                                            <SelectItem key={time} value={time}>
+                                                {time}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
