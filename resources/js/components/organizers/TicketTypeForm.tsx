@@ -30,6 +30,7 @@ export interface TicketTypeFormData extends Partial<TicketType> {
     create_stages?: boolean;
     stages_count?: number;
     price_increment?: number;
+    stage_names?: string[]; // Nuevo campo para nombres personalizados
 }
 
 interface TicketTypeFormProps {
@@ -90,6 +91,19 @@ export function TicketTypeForm({
         }
     };
 
+    // Función para generar nombres por defecto de las tandas
+    const generateDefaultStageNames = (baseName: string, count: number): string[] => {
+        return Array.from({length: count}, (_, i) => `${baseName || 'Entrada'} ${i + 1}`);
+    };
+
+    // Función para actualizar nombres de tandas
+    const updateStageNames = (index: number, newName: string) => {
+        const currentNames = data.stage_names || generateDefaultStageNames(data.name || 'Entrada', stagesCount);
+        const updatedNames = [...currentNames];
+        updatedNames[index] = newName;
+        setData('stage_names', updatedNames);
+    };
+
     // Efecto para actualizar cantidad cuando cambia el sector
     useEffect(() => {
         if (data.sector_id && selectedSectorAvailability) {
@@ -115,6 +129,14 @@ export function TicketTypeForm({
             }
         }
     }, [isBundle, bundleQuantity, selectedSectorAvailability]);
+
+    // Efecto para generar nombres por defecto cuando cambia el nombre base o el número de tandas
+    useEffect(() => {
+        if (createStages && (!data.stage_names || data.stage_names.length !== stagesCount)) {
+            const defaultNames = generateDefaultStageNames(data.name || 'Entrada', stagesCount);
+            setData('stage_names', defaultNames);
+        }
+    }, [createStages, stagesCount, data.name]);
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -404,12 +426,21 @@ export function TicketTypeForm({
             </div>
 
             {/* SECCIÓN NUEVA: Configuración de Tandas */}
-            <div className=" rounded-lg py-4 space-y-4">
+            <div className="rounded-lg py-4 space-y-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox 
                         id="create_stages" 
                         checked={createStages} 
-                        onCheckedChange={checked => setData('create_stages', Boolean(checked))} 
+                        onCheckedChange={checked => {
+                            setData('create_stages', Boolean(checked));
+                            if (checked) {
+                                // Generar nombres por defecto al activar tandas
+                                const defaultNames = generateDefaultStageNames(data.name || 'Entrada', stagesCount);
+                                setData('stage_names', defaultNames);
+                            } else {
+                                setData('stage_names', undefined);
+                            }
+                        }} 
                     />
                     <Label htmlFor="create_stages" className="font-medium">
                         Crear entrada por tandas
@@ -426,7 +457,13 @@ export function TicketTypeForm({
                                     min="2"
                                     max="10"
                                     value={stagesCount}
-                                    onChange={(e) => setData('stages_count', parseInt(e.target.value) || 2)}
+                                    onChange={(e) => {
+                                        const newCount = parseInt(e.target.value) || 2;
+                                        setData('stages_count', newCount);
+                                        // Regenerar nombres para el nuevo número de tandas
+                                        const defaultNames = generateDefaultStageNames(data.name || 'Entrada', newCount);
+                                        setData('stage_names', defaultNames);
+                                    }}
                                 />
                                 <InputError message={errors.stages_count} />
                             </div>
@@ -444,27 +481,54 @@ export function TicketTypeForm({
                             </div>
                         </div>
                         
-                        {/* Preview de las tandas */}
-                        <div className="border rounded p-3 space-y-2">
+                        {/* Vista previa de las tandas con nombres editables */}
+                        <div className="border rounded p-4 space-y-3">
                             <Label className="text-sm font-medium">Vista previa de tandas:</Label>
-                            {Array.from({length: stagesCount}, (_, i) => {
-                                const stagePrice = (data.price || 0) * (1 + (priceIncrement / 100 * i));
-                                return (
-                                    <div key={i} className="flex justify-between text-sm">
-                                        <span>{data.name || 'Entrada'} {i + 1}</span>
-                                        <span>${stagePrice.toFixed(2)}</span>
-                                        <span className={i === 0 ? 'text-green-600' : 'text-gray-500'}>
-                                            {i === 0 ? 'Activa' : 'Oculta'}
-                                        </span>
-                                    </div>
-                                );
-                            })}
+                            <p className="text-xs text-muted-foreground mb-3">
+                                Puedes personalizar los nombres de cada tanda (ej: "Early Bird", "General", "Last Chance")
+                            </p>
+                            
+                            <div className="space-y-3">
+                                {Array.from({length: stagesCount}, (_, i) => {
+                                    const stagePrice = (data.price || 0) * (1 + (priceIncrement / 100 * i));
+                                    const currentNames = data.stage_names || generateDefaultStageNames(data.name || 'Entrada', stagesCount);
+                                    const stageName = currentNames[i] || `${data.name || 'Entrada'} ${i + 1}`;
+                                    
+                                    return (
+                                        <div key={i} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                            <div className="flex-1">
+                                                <Label htmlFor={`stage_name_${i}`} className="text-xs text-muted-foreground">
+                                                    Tanda {i + 1}:
+                                                </Label>
+                                                <Input
+                                                    id={`stage_name_${i}`}
+                                                    value={stageName}
+                                                    onChange={(e) => updateStageNames(i, e.target.value)}
+                                                    className="text-sm"
+                                                    placeholder={`${data.name || 'Entrada'} ${i + 1}`}
+                                                />
+                                            </div>
+                                            
+                                            <div className="text-right">
+                                                <p className="text-sm font-medium">${stagePrice.toFixed(2)}</p>
+                                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                                    i === 0 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {i === 0 ? 'Activa' : 'Oculta'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                         
                         <Alert>
                             <Info className="h-4 w-4" />
                             <AlertDescription>
-                                <strong>Sistema de tandas:</strong> Se crearán {stagesCount} entradas diferentes.
+                                <strong>Sistema de tandas:</strong> Se crearán {stagesCount} entradas diferentes con los nombres personalizados.
                                 Solo la primera estará visible inicialmente. Cuando se agote, se activará automáticamente la siguiente.
                             </AlertDescription>
                         </Alert>

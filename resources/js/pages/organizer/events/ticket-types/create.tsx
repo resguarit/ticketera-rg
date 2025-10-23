@@ -35,7 +35,7 @@ export default function CreateTicketType() {
         name: '',
         description: '',
         price: '',
-        quantity: 0, // Inicializar en 0 para que se establezca automáticamente
+        quantity: 0,
         max_purchase_quantity: '',
         sector_id: '',
         sales_start_date: '',
@@ -46,6 +46,7 @@ export default function CreateTicketType() {
         create_stages: false,
         stages_count: 2,
         price_increment: 10,
+        stage_names: undefined, // Nuevo campo
     });
 
     // Manejar mensajes flash de Laravel
@@ -135,6 +136,23 @@ export default function CreateTicketType() {
             if (!data.stages_count || data.stages_count < 2) {
                 toast.error('Número de tandas inválido', {
                     description: 'Debe crear al menos 2 tandas'
+                });
+                return false;
+            }
+
+            // Validar nombres de tandas
+            if (!data.stage_names || data.stage_names.length !== data.stages_count) {
+                toast.error('Nombres de tandas incompletos', {
+                    description: 'Debe completar los nombres de todas las tandas'
+                });
+                return false;
+            }
+
+            // Validar que ningún nombre esté vacío
+            const emptyNames = data.stage_names.some(name => !name.trim());
+            if (emptyNames) {
+                toast.error('Nombres de tandas vacíos', {
+                    description: 'Todos los nombres de tandas deben estar completos'
                 });
                 return false;
             }

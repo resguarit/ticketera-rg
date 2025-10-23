@@ -94,6 +94,8 @@ class TicketTypeController extends Controller
             'create_stages' => 'sometimes|boolean',
             'stages_count' => 'nullable|integer|min:2|max:10|required_if:create_stages,true',
             'price_increment' => 'nullable|numeric|min:0|max:100|required_if:create_stages,true',
+            'stage_names' => 'nullable|array|required_if:create_stages,true',
+            'stage_names.*' => 'required|string|max:255',
         ], [
             'name.required' => 'El nombre de la entrada es obligatorio.',
             'name.max' => 'El nombre no puede tener más de 255 caracteres.',
@@ -105,6 +107,9 @@ class TicketTypeController extends Controller
             'quantity.min' => 'La cantidad debe ser mayor a 0.',
             'max_purchase_quantity.required' => 'El máximo por compra es obligatorio.',
             'sales_start_date.required' => 'La fecha de inicio de venta es obligatoria.',
+            'stage_names.required_if' => 'Los nombres de las tandas son obligatorios.',
+            'stage_names.*.required' => 'Todos los nombres de tandas deben estar completos.',
+            'stage_names.*.max' => 'Los nombres de tandas no pueden tener más de 255 caracteres.',
         ]);
 
         try {
@@ -147,7 +152,12 @@ class TicketTypeController extends Controller
         $stagesCount = $validated['stages_count'];
         $priceIncrement = $validated['price_increment'] / 100; // Convertir porcentaje a decimal
         $basePrice = $validated['price'];
-        $baseName = $validated['name'];
+        $stageNames = $validated['stage_names'] ?? [];
+        
+        // Verificar que tengamos nombres para todas las tandas
+        if (count($stageNames) !== $stagesCount) {
+            throw new \Exception('El número de nombres de tandas no coincide con el número de tandas especificado.');
+        }
         
         // Verificar capacidad total para todas las tandas
         $sector = Sector::find($validated['sector_id']);
@@ -169,23 +179,23 @@ class TicketTypeController extends Controller
         $totalAfterCreation = $usedCapacity + $totalRealQuantity;
         $createdStages = [];
         
-        // Crear cada tanda
-        for ($i = 1; $i <= $stagesCount; $i++) {
-            $stagePrice = $basePrice * (1 + ($priceIncrement * ($i - 1)));
+        // Crear cada tanda con su nombre personalizado
+        for ($i = 0; $i < $stagesCount; $i++) {
+            $stagePrice = $basePrice * (1 + ($priceIncrement * $i));
             
             $stageData = $validated;
-            $stageData['name'] = $baseName . ' ' . $i;
+            $stageData['name'] = $stageNames[$i]; // Usar nombre personalizado
             $stageData['price'] = $stagePrice;
-            $stageData['is_hidden'] = $i > 1; // Solo la primera tanda visible
+            $stageData['is_hidden'] = $i > 0; // Solo la primera tanda visible
             
             // Remover campos específicos de tandas antes de crear
-            unset($stageData['create_stages'], $stageData['stages_count'], $stageData['price_increment']);
+            unset($stageData['create_stages'], $stageData['stages_count'], $stageData['price_increment'], $stageData['stage_names']);
             
             $ticketType = TicketType::create($stageData);
             $createdStages[] = $ticketType;
         }
         
-        // Preparar mensaje
+        // Preparar mensaje con nombres personalizados
         $message = "Se crearon {$stagesCount} tandas exitosamente:";
         foreach ($createdStages as $stage) {
             $status = $stage->is_hidden ? '(Oculta)' : '(Activa)';
