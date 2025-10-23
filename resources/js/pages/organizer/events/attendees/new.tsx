@@ -29,6 +29,7 @@ import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
 import { TicketType } from '@/types/models/ticketType';
 import { formatCurrency } from '@/lib/currencyHelpers';
+import BackButton from '@/components/Backbutton';
 
 interface TicketTypeWithAvailability extends TicketType {
     available: number;
@@ -299,17 +300,14 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
             
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                                        <BackButton
+                        href={route('organizer.events.attendees', event.id)}
+                    />
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Invitar Asistente</h1>
-                        <p className="text-gray-600">Agrega nuevos asistentes al evento {event.name}</p>
+                        <h1 className=" font-bold text-gray-900">Invitar Asistente</h1>
+                        <p className="text-gray-600 text-sm">Agrega nuevos asistentes al evento {event.name}</p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit(route('organizer.events.attendees', event.id))}
-                    >
-                        Volver
-                    </Button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

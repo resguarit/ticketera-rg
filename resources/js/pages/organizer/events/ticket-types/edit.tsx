@@ -7,6 +7,7 @@ import { Event, EventFunction, Sector } from '@/types';
 import type { TicketType } from '@/types/models/ticketType';
 import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
+import BackButton from '@/components/Backbutton';
 
 interface SectorWithAvailability {
     id: number;
@@ -226,6 +227,11 @@ export default function EditTicketType() {
             <Head title={`Editar Entrada: ${ticketType.name}`} />
             <Card>
                 <CardHeader>
+                    <div className='flex gap-2'>
+                        <BackButton
+                            href={route('organizer.events.tickets', event.id)}
+                        />
+                        <div>
                     <CardTitle>Editar Tipo de Entrada</CardTitle>
                     <CardDescription>
                         Modifica los datos de la entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
@@ -245,6 +251,8 @@ export default function EditTicketType() {
                             </div>
                         )}
                     </CardDescription>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <TicketTypeForm

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { TicketTypeForm, TicketTypeFormData } from '@/components/organizers/TicketTypeForm';
 import { Event, EventFunction, Sector } from '@/types';
 import { toast } from 'sonner';
+import BackButton from '@/components/Backbutton';
 
 interface SectorWithAvailability {
     id: number;
@@ -219,10 +220,17 @@ export default function CreateTicketType() {
             <Head title={`Crear Entrada para ${event.name}`} />
             <Card>
                 <CardHeader>
+                    <div className='flex gap-2'>
+                        <BackButton
+                            href={route('organizer.events.tickets', event.id)}
+                        />
+                        <div>
                     <CardTitle>Crear Nuevo Tipo de Entrada</CardTitle>
                     <CardDescription>
                         Configura una nueva entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
                     </CardDescription>
+                    </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <TicketTypeForm

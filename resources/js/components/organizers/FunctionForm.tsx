@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Event, EventFunction } from '@/types';
 import { toast } from 'sonner';
+import BackButton from '../Backbutton';
 
 interface FunctionFormProps {
     event: Event;
@@ -163,10 +164,17 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
         <form onSubmit={handleSubmit}>
             <Card>
                 <CardHeader>
+                    <div className='flex gap-2'>
+                <BackButton
+                    href={route('organizer.events.functions', event.id)}
+                />
+                <div>
                     <CardTitle>{isEditing ? 'Editar Función' : 'Crear Nueva Función'}</CardTitle>
                     <CardDescription>
                         {isEditing ? 'Modifica los detalles de la función.' : 'Completa los detalles para una nueva función en tu evento.'}
                     </CardDescription>
+                    </div>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid gap-3">
