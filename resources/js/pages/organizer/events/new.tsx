@@ -698,25 +698,110 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 />
                                             </div>
 
-                                            <div>
-                                                <Label className="text-card-foreground">Fecha y Hora de Inicio *</Label>
-                                                <Input 
-                                                    type="datetime-local"
-                                                    value={functionForm.start_time} 
-                                                    onChange={(e) => setFunctionForm(prev => ({ ...prev, start_time: e.target.value }))}
-                                                    className="bg-background border-border text-foreground"
-                                                    required
-                                                />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label className="text-card-foreground">Fecha de Inicio *</Label>
+                                                    <Input 
+                                                        type="date"
+                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[0] : ''} 
+                                                        onChange={(e) => {
+                                                            const currentTime = functionForm.start_time ? functionForm.start_time.split('T')[1] || '09:00' : '09:00';
+                                                            setFunctionForm(prev => ({ 
+                                                                ...prev, 
+                                                                start_time: e.target.value ? `${e.target.value}T${currentTime}` : ''
+                                                            }));
+                                                        }}
+                                                        className="bg-background border-border text-foreground"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label className="text-card-foreground">Hora de Inicio *</Label>
+                                                    <Select 
+                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[1] || '' : ''} 
+                                                        onValueChange={(value) => {
+                                                            const currentDate = functionForm.start_time ? functionForm.start_time.split('T')[0] : '';
+                                                            if (currentDate && value) {
+                                                                setFunctionForm(prev => ({ 
+                                                                    ...prev, 
+                                                                    start_time: `${currentDate}T${value}`
+                                                                }));
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="bg-background border-border text-foreground">
+                                                            <SelectValue placeholder="Seleccionar hora" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {Array.from({ length: 48 }, (_, i) => {
+                                                                const hour = Math.floor(i / 2);
+                                                                const minute = i % 2 === 0 ? '00' : '30';
+                                                                const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                                const displayTime = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                                return (
+                                                                    <SelectItem key={time} value={time}>
+                                                                        {displayTime}
+                                                                    </SelectItem>
+                                                                );
+                                                            })}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
                                             </div>
 
-                                            <div>
-                                                <Label className="text-card-foreground">Fecha y Hora de Fin (Opcional)</Label>
-                                                <Input 
-                                                    type="datetime-local"
-                                                    value={functionForm.end_time} 
-                                                    onChange={(e) => setFunctionForm(prev => ({ ...prev, end_time: e.target.value }))}
-                                                    className="bg-background border-border text-foreground"
-                                                />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label className="text-card-foreground">Fecha de Fin (Opcional)</Label>
+                                                    <Input 
+                                                        type="date"
+                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[0] : ''} 
+                                                        onChange={(e) => {
+                                                            if (!e.target.value) {
+                                                                setFunctionForm(prev => ({ ...prev, end_time: '' }));
+                                                                return;
+                                                            }
+                                                            const currentTime = functionForm.end_time ? functionForm.end_time.split('T')[1] || '21:00' : '21:00';
+                                                            setFunctionForm(prev => ({ 
+                                                                ...prev, 
+                                                                end_time: `${e.target.value}T${currentTime}`
+                                                            }));
+                                                        }}
+                                                        className="bg-background border-border text-foreground"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label className="text-card-foreground">Hora de Fin (Opcional)</Label>
+                                                    <Select 
+                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[1] || '' : ''} 
+                                                        onValueChange={(value) => {
+                                                            const currentDate = functionForm.end_time ? functionForm.end_time.split('T')[0] : '';
+                                                            if (currentDate && value) {
+                                                                setFunctionForm(prev => ({ 
+                                                                    ...prev, 
+                                                                    end_time: `${currentDate}T${value}`
+                                                                }));
+                                                            }
+                                                        }}
+                                                        disabled={!functionForm.end_time || !functionForm.end_time.includes('T')}
+                                                    >
+                                                        <SelectTrigger className="bg-background border-border text-foreground">
+                                                            <SelectValue placeholder="Seleccionar hora" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {Array.from({ length: 48 }, (_, i) => {
+                                                                const hour = Math.floor(i / 2);
+                                                                const minute = i % 2 === 0 ? '00' : '30';
+                                                                const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                                const displayTime = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                                return (
+                                                                    <SelectItem key={time} value={time}>
+                                                                        {displayTime}
+                                                                    </SelectItem>
+                                                                );
+                                                            })}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
                                             </div>
 
                                             <Button 
