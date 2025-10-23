@@ -3,7 +3,7 @@ import { router, Head, Link } from '@inertiajs/react';
 import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -310,89 +310,17 @@ export default function EventAttendees({
             <Head title={`Asistentes - ${event.name}`} />
             
             <div className="space-y-6">
-                {/* Estadísticas */}
-
-                {/*
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <Users className="h-4 w-4 text-blue-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Total Asistentes</p>
-                                    <p className="text-2xl font-bold">{stats.total_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <UserCheck className="h-4 w-4 text-blue-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Invitados</p>
-                                    <p className="text-2xl font-bold">{stats.invited_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <ShoppingCart className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Compradores</p>
-                                    <p className="text-2xl font-bold">{stats.buyer_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <Ticket className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Total Tickets</p>
-                                    <p className="text-2xl font-bold">{stats.total_tickets}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Tickets Usados</p>
-                                    <p className="text-2xl font-bold">{stats.tickets_used}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <DollarSign className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(stats.total_revenue)}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                */}
 
                 {/* Tabla de asistentes */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle>Asistentes</CardTitle>
+                            <div className='flex flex-col'>
+                                <CardTitle>Gestión de Asistentes</CardTitle>
+                                <CardDescription>
+                                    Administra y controla los asistentes de tu evento, tanto invitados como compradores
+                                </CardDescription>
+                            </div>
                             <div className="flex items-center gap-4">
                                 {/* Botón de actualización */}
                                 <Button 
