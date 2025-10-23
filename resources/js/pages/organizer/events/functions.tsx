@@ -103,7 +103,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
         });
     };
     
-    const formatDateTime = (dateTime: string) => {
+    const formatDateTime = (dateTime?: string | null) => {
         if (!dateTime) return { date: '-', time: '-' };
         const date = new Date(dateTime);
         return {
@@ -154,7 +154,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         </div>
                                                         <div className="flex items-center gap-1.5">
                                                             <Clock className="w-4 h-4" />
-                                                            <span>{formatDateTime(func.start_time).time} hs</span>
+                                                            <span>{formatDateTime(func.start_time).time} hs  {func.end_time ? '- ' + formatDateTime(func.end_time).time + ' hs' : ''}</span>
                                                         </div>
                                                     </div>
                                                 </div>
