@@ -49,6 +49,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
+import BackButton from '@/components/Backbutton';
 
 // Interfaces
 interface EventFunction {
@@ -174,12 +175,9 @@ export default function Show({ auth }: any) {
                     {/* Header con navegación */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center space-x-4">
-                            <Link href={route('admin.events.index')}>
-                                <Button variant="outline" size="sm" className="border-gray-300">
-                                    <ArrowLeft className="w-4 h-4 mr-2" />
-                                    Volver
-                                </Button>
-                            </Link>
+                            <BackButton 
+                                href={route('admin.events.index')}
+                            />
                             <div>
                                 <h1 className="text-3xl font-bold text-black">{event.name}</h1>
                                 <p className="text-gray-600">
