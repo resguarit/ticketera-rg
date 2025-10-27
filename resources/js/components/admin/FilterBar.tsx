@@ -51,9 +51,8 @@ export function FilterBar({
   const statusOptions = config.statusOptions || defaultStatusOptions;
 
   return (
-    <Card className="bg-white border-gray-200 shadow-lg mb-8">
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+
+        <div className="w-full grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
           {/* Búsqueda */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
@@ -137,8 +136,6 @@ export function FilterBar({
             </Select>
           ))}
 
-          {/* Botones de Acción */}
-          <div className="flex gap-2">
             {/* Botón Aplicar Filtros */}
             <Button 
               onClick={onApplyFilters}
@@ -161,9 +158,7 @@ export function FilterBar({
               <Filter className="w-4 h-4 mr-2" />
               Limpiar
             </Button>
-          </div>
         </div>
-      </CardContent>
-    </Card>
+
   );
 }
