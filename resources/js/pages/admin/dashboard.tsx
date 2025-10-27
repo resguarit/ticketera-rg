@@ -406,63 +406,6 @@ export default function AdminDashboard({
                         {/* Right Column - Alerts & Quick Actions */}
                         <div className="space-y-8">
                             {/* System Status */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
-                                <CardHeader className="border-b border-gray-200">
-                                    <CardTitle className="text-primary flex items-center space-x-3">
-                                        <Activity className="w-6 h-6 text-primary" />
-                                        <span>Estado del Sistema</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6 space-y-4">
-                                    {systemStatus.map((system, index) => (
-                                        <div key={index} className={`flex items-center justify-between p-3 rounded-lg border ${getSystemStatusColor(system.status)}`}>
-                                            <div className="flex items-center space-x-2 flex-1">
-                                                {getSystemStatusIcon(system.status)}
-                                                <div className="flex-1">
-                                                    <span className="text-gray-700 font-medium block">{system.name}</span>
-                                                    {system.details && (
-                                                        <span className="text-gray-500 text-xs block mt-1">{system.details}</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <Badge className={`${getSystemStatusBadge(system.status)} text-white border-0 ml-2`}>
-                                                {system.label}
-                                            </Badge>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                            {/* System Alerts */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
-                                <CardHeader className="border-b border-gray-200">
-                                    <CardTitle className="text-primary flex items-center space-x-3">
-                                        <AlertTriangle className="w-6 h-6 text-primary" />
-                                        <span>Alertas del Sistema</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="space-y-3">
-                                        {systemAlerts.length > 0 ? systemAlerts.map((alert) => (
-                                            <div key={alert.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-orange-500">
-                                                <div className="flex items-start space-x-3">
-                                                    {getAlertIcon(alert.type)}
-                                                    <div className="flex-1">
-                                                        <h4 className="text-black font-medium text-sm">{alert.title}</h4>
-                                                        <p className="text-gray-600 text-xs mt-1">{alert.message}</p>
-                                                        <p className="text-gray-500 text-xs mt-2">{alert.time}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )) : (
-                                            <div className="text-center py-8">
-                                                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                                                <p className="text-gray-500">No hay alertas activas</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
 
                             {/* Quick Actions */}
                             <Card className="bg-white border-gray-200 shadow-lg gap-4 py-3">
