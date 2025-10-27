@@ -317,7 +317,7 @@ export default function Show({ auth }: any) {
                                 {/* Información del evento */}
                                 <div className="lg:col-span-2 space-y-6">
                                     <Card className="bg-white border-gray-200">
-                                        <CardHeader>
+                                        <CardHeader className='pb-0'>
                                             <CardTitle className="text-black">Información del Evento</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
@@ -331,29 +331,72 @@ export default function Show({ auth }: any) {
                                                     />
                                                 </div>
                                             )}
-                                            
-                                            <div>
-                                                <h3 className="font-semibold text-black mb-2">Descripción</h3>
-                                                <p className="text-gray-700 leading-relaxed">
-                                                    {event.description || 'Sin descripción disponible'}
-                                                </p>
-                                            </div>
-
                                             <div className="grid grid-cols-2 gap-4 pt-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <MapPin className="w-4 h-4 text-primary" />
+                                                <div>
+                                                    <h3 className="font-medium text-sm text-gray-600 mb-1">Descripción</h3>
+                                                    <p className="text-black leading-relaxed">
+                                                        {event.description || 'Sin descripción disponible'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-start space-x-2">
                                                     <div>
-                                                        <p className="text-sm text-gray-600">Venue</p>
-                                                        <p className="font-medium text-black">{event.venue.name}</p>
-                                                        <p className="text-sm text-gray-500">{getVenueCompleteAddress(event.venue)}</p>
+                                                        <p className="text-sm text-gray-600 mb-1">Próxima función</p>
+                                                        {event.functions.length > 0 ? (
+                                                            (() => {
+                                                                const now = new Date();
+                                                                const upcomingFunctions = event.functions.filter(func => 
+                                                                    new Date(func.start_time) > now
+                                                                ).sort((a, b) => 
+                                                                    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+                                                                );
+
+                                                                if (upcomingFunctions.length > 0) {
+                                                                    const nextFunction = upcomingFunctions[0];
+                                                                    return (
+                                                                        <>
+                                                                            <p className="font-medium text-black">
+                                                                                {formatDate(nextFunction.start_date)}
+                                                                            </p>
+                                                                            <p className="text-sm text-black">
+                                                                                {nextFunction.start_time_only} • {nextFunction.name}
+                                                                            </p>
+                                                                        </>
+                                                                    );
+                                                                } else {
+                                                                    const lastFunction = event.functions
+                                                                        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())[0];
+                                                                    
+                                                                    return (
+                                                                        <>
+                                                                            <p className="font-medium text-black">
+                                                                                No hay próximas funciones
+                                                                            </p>
+                                                                            <p className="text-sm text-black">
+                                                                                Última: {formatDate(lastFunction.start_date)}
+                                                                            </p>
+                                                                        </>
+                                                                    );
+                                                                }
+                                                            })()
+                                                        ) : (
+                                                            <p className="font-medium text-red-500">Sin funciones programadas</p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <Calendar className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 pt-4">
+                                                <div className="flex items-start space-x-2">
                                                     <div>
-                                                        <p className="text-sm text-gray-600">Creado</p>
+                                                        <p className="font-medium text-sm text-gray-600 mb-1">Recinto</p>
+                                                        <p className="font-medium text-black">{event.venue.name}</p>
+                                                        <p className="text-sm tex-black">{getVenueCompleteAddress(event.venue)}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start space-x-2">
+                                                    <div>
+                                                        <p className="text-sm text-gray-600 mb-1">Creado</p>
                                                         <p className="font-medium text-black">{formatDate(event.created_at)}</p>
-                                                        <p className="text-sm text-gray-500">Última actualización: {formatRelativeTime(event.updated_at)}</p>
+                                                        <p className="text-sm tex-black">Última actualización: {formatRelativeTime(event.updated_at)}</p>
                                                     </div>
                                                 </div>
                                             </div>
