@@ -82,7 +82,7 @@ interface EventData {
     id: number;
     name: string;
     description: string;
-    image_url: string;
+    image_url: string; // CAMBIAR: de banner_url a image_url para consistencia
     featured: boolean;
     total_revenue: number;
     organizer: {
@@ -215,6 +215,21 @@ export default function Show({ auth }: any) {
                             </DropdownMenu>
                         </div>
                     </div>
+
+                    {/* Banner del evento */}
+                    {event.image_url && (
+                        <div className="w-full h-64 rounded-xl overflow-hidden border border-gray-200 mb-8 shadow-lg">
+                            <img 
+                                src={event.image_url}
+                                alt={event.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    console.error('Error loading image:', event.image_url);
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* Estado y estadísticas rápidas */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">

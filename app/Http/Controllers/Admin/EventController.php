@@ -208,7 +208,7 @@ class EventController extends Controller
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
-            'banner_url' => $event->image_url,
+            'image_url' => $event->image_url, // CORREGIDO: usar image_url en lugar de banner_url
             'featured' => $event->featured,
             'total_revenue' => $event->getRevenue(),
             'organizer' => [
@@ -224,11 +224,10 @@ class EventController extends Controller
                 'id' => $event->venue->id,
                 'name' => $event->venue->name,
                 'address' => $event->venue->address,
-                // ACTUALIZADO: usar la nueva estructura
                 'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                 'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                     $event->venue->ciudad->provincia->name : null,
-                'full_address' => $event->venue->getFullAddressAttribute(), // Usar el helper del modelo
+                'full_address' => $event->venue->getFullAddressAttribute(),
             ],
             'functions' => $event->functions->map(function($function) {
                 return [
