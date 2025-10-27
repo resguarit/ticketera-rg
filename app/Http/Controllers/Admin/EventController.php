@@ -209,6 +209,7 @@ class EventController extends Controller
             'name' => $event->name,
             'description' => $event->description,
             'image_url' => $event->image_url, // CORREGIDO: usar image_url en lugar de banner_url
+            'hero_image_url' => $event->hero_image_url,
             'featured' => $event->featured,
             'total_revenue' => $event->getRevenue(),
             'organizer' => [

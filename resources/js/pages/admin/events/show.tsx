@@ -82,7 +82,8 @@ interface EventData {
     id: number;
     name: string;
     description: string;
-    image_url: string; // CAMBIAR: de banner_url a image_url para consistencia
+    image_url: string; 
+    hero_image_url: string;
     featured: boolean;
     total_revenue: number;
     organizer: {
@@ -215,22 +216,45 @@ export default function Show({ auth }: any) {
                             </DropdownMenu>
                         </div>
                     </div>
-
-                    {/* Banner del evento */}
-                    {event.image_url && (
-                        <div className="w-full h-64 rounded-xl overflow-hidden border border-gray-200 mb-8 shadow-lg">
+                    <div className='grid grid-cols-4 gap-2 mb-8'>
+                    {/* Hero Banner del evento (panorámico) - 3/4 del ancho */}
+                    {event.hero_image_url && (
+                        <div className='col-span-3'>
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">Hero Banner</h3>
+                        <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
                             <img 
-                                src={event.image_url}
-                                alt={event.name}
+                                src={event.hero_image_url}
+                                alt={`${event.name} - Hero Banner`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                    console.error('Error loading image:', event.image_url);
+                                    console.error('Error loading hero image:', event.hero_image_url);
                                     e.currentTarget.style.display = 'none';
                                 }}
                             />
                         </div>
+                        </div>
                     )}
+                    
+                    {/* Banner Principal (cuadrado) - 1/4 del ancho */}
+                    {event.image_url && (
+                        <div className='col-span-1'>
+                            <h3 className="text-sm font-medium text-gray-600 mb-2">Banner Principal</h3>
+                            <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                                <img 
+                                    src={event.image_url}
+                                    alt={`${event.name} - Banner`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        console.error('Error loading image:', event.image_url);
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    </div>
 
+                    
                     {/* Estado y estadísticas rápidas */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                         {/* Estado */}
