@@ -216,6 +216,7 @@ class EventController extends Controller
                 'id' => $event->organizer->id,
                 'name' => $event->organizer->name,
                 'email' => $event->organizer->email,
+                'image_url' => $event->organizer->image_url,
             ],
             'category' => [
                 'id' => $event->category->id,

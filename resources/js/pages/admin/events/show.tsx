@@ -90,6 +90,7 @@ interface EventData {
         id: number;
         name: string;
         email: string;
+        image_url: string;
     };
     category: {
         id: number;
@@ -475,7 +476,7 @@ export default function Show({ auth }: any) {
                                         <CardContent className="space-y-4">
                                             <div className="text-center">
                                                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <Users className="w-8 h-8 text-white" />
+                                                    <img src={event.organizer.image_url} alt={event.organizer.name} className="w-full h-full object-cover rounded-full" />
                                                 </div>
                                                 <h3 className="font-semibold text-black">{event.organizer.name}</h3>
                                                 <p className="text-gray-600 text-sm">{event.organizer.email}</p>
