@@ -316,21 +316,11 @@ export default function Show({ auth }: any) {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Información del evento */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <Card className="bg-white border-gray-200">
+                                    <Card className="bg-white border-gray-200 gap-2">
                                         <CardHeader className='pb-0'>
                                             <CardTitle className="text-black">Información del Evento</CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            {/* Banner del evento */}
-                                            {event.image_url && (
-                                                <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200">
-                                                    <img 
-                                                        src={event.image_url}
-                                                        alt={event.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            )}
+                                        <CardContent className="space-y-2">
                                             <div className="grid grid-cols-2 gap-4 pt-4">
                                                 <div>
                                                     <h3 className="font-medium text-sm text-gray-600 mb-1">Descripción</h3>
