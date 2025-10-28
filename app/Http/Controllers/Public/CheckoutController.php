@@ -8,10 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Order;
+use App\Models\User;
 use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
 use App\Services\CheckoutService;
 use App\Services\TicketLockService; // NUEVO
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -132,7 +134,7 @@ class CheckoutController extends Controller
             'tax' => $event->tax, // <-- AÑADIR ESTO
         ];
 
-        return Inertia::render('public/checkoutconfirm', [
+        return Inertia::render('public/newcheckoutconfirm', [
             'eventData' => $eventData,
             'eventId' => $event->id,
             'sessionId' => $sessionId, // NUEVO: Pasar session ID al frontend
@@ -188,7 +190,7 @@ class CheckoutController extends Controller
                 'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
                 'billing_info.documentNumber' => 'required|string|max:20',
                 'payment_info' => 'required|array',
-                'payment_info.method' => 'required|string|in:credit,debit,mercadopago',
+                'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
                 'token' => 'required|string',
                 'bin' => 'nullable|string',
                 'selected_tickets' => 'required|array|min:1',
@@ -464,5 +466,17 @@ class CheckoutController extends Controller
             return redirect()->route('home')
                 ->with('error', 'Error al mostrar la página de éxito');
         }
+    }
+
+    public function checkEmail(string $email): JsonResponse
+    {
+        $email = urldecode($email);
+        
+        $exists = User::where('email', $email)->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'email' => $email
+        ]);
     }
 }
