@@ -94,6 +94,19 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     const [verificationCode, setVerificationCode] = useState('');
     // --- FIN NUEVO ---
 
+    // CORREGIDO: Usar useRef para mantener una única instancia del SDK
+    const decidirSandboxRef = useRef<any>(null);
+
+    // Inicializar el SDK solo una vez cuando el componente se monta
+    useEffect(() => {
+        if (!decidirSandboxRef.current) {
+            const urlSandbox = "https://developers-ventasonline.payway.com.ar/api/v2";
+            decidirSandboxRef.current = new (window as any).Decidir(urlSandbox);
+            decidirSandboxRef.current.setPublishableKey('2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y');
+            console.log('Decidir Sandbox inicializado:', decidirSandboxRef.current);
+        }
+    }, []); // Array vacío = solo se ejecuta una vez al montar
+
     const [billingInfo, setBillingInfo] = useState({
         firstName: auth.user?.person?.name ?? "",
         lastName: auth.user?.person?.last_name ?? "",
@@ -216,24 +229,96 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
             return;
         }
 
+        // Validar que todos los campos de pago estén completos
+        if (!paymentInfo.cardNumber || !paymentInfo.cvv || !paymentInfo.expiryDate || !paymentInfo.cardName) {
+            alert("Por favor completa todos los campos de la tarjeta");
+            return;
+        }
+
+        if (!billingInfo.documentNumber || !billingInfo.documentType) {
+            alert("Por favor completa el tipo y número de documento");
+            return;
+        }
+
         setIsLoading(true);
 
-        // Enviar datos al backend incluyendo información de la función
-        const formData = {
-            event_id: eventId,
-            function_id: eventData.function?.id,
-            billing_info: billingInfo,
-            payment_info: paymentInfo,
-            selected_tickets: eventData.selectedTickets,
-            agreements: agreements,
+        // PASO 1: Crear formulario fantasma para el SDK de Payway
+        const phantomForm = document.createElement('form');
+        phantomForm.style.display = 'none';
+        
+        // Poblar el formulario con los datos de la tarjeta desde el estado
+        const cardNumberClean = paymentInfo.cardNumber.replace(/\s+/g, ''); // Remover espacios
+        const [expiryMonth, expiryYear] = paymentInfo.expiryDate.split('/').map(s => s.trim());
+        
+        const formFields = [
+            { name: 'card_number', value: cardNumberClean },
+            { name: 'security_code', value: paymentInfo.cvv },
+            { name: 'card_expiration_month', value: expiryMonth },
+            { name: 'card_expiration_year', value: expiryYear },
+            { name: 'card_holder_name', value: paymentInfo.cardName },
+            { name: 'card_holder_doc_type', value: billingInfo.documentType.toLowerCase() },
+            { name: 'card_holder_doc_number', value: billingInfo.documentNumber },
+        ];
+
+        formFields.forEach(field => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.setAttribute('data-decidir', field.name);
+            input.value = field.value;
+            phantomForm.appendChild(input);
+        });
+
+        // Agregar el formulario al DOM temporalmente
+        document.body.appendChild(phantomForm);
+
+        // PASO 2: Callback para manejar la respuesta del SDK
+        const handleTokenResponse = (status: number, response: any) => {
+            // Remover el formulario fantasma
+            document.body.removeChild(phantomForm);
+
+            if (status !== 200 && status !== 201) {
+                // Error en la tokenización
+                console.error('Error en tokenización:', response);
+                setIsLoading(false);
+                alert('Error al validar los datos de la tarjeta. Por favor, revisa la información e intenta nuevamente.');
+                return;
+            }
+
+            // PASO 3: Tokenización exitosa, enviar al backend
+            console.log('Token creado exitosamente:', response);
+            
+            const formData = {
+                event_id: eventId,
+                function_id: eventData.function?.id,
+                billing_info: billingInfo,
+                payment_info: {
+                    method: paymentInfo.method,
+                    installments: paymentInfo.installments,
+                    // NO enviar datos sensibles de la tarjeta
+                },
+                token: response.id,
+                bin: response.bin,
+                selected_tickets: eventData.selectedTickets,
+                agreements: agreements,
+            };
+
+            try {
+                router.post(route('checkout.process'), formData as any);
+            } catch (error) {
+                console.error('Error procesando el pago:', error);
+                setIsLoading(false);
+                alert('Error procesando el pago. Por favor intenta de nuevo.');
+            }
         };
 
+        // PASO 4: Llamar al SDK de Payway para crear el token
         try {
-            router.post(route('checkout.process'), formData as any);
+            decidirSandboxRef.current.createToken(phantomForm, handleTokenResponse);
         } catch (error) {
-            console.error('Error procesando el pago:', error);
+            console.error('Error al llamar al SDK de Payway:', error);
+            document.body.removeChild(phantomForm);
             setIsLoading(false);
-            alert('Error procesando el pago. Por favor intenta de nuevo.');
+            alert('Error al procesar la tarjeta. Por favor intenta de nuevo.');
         }
     };
 
