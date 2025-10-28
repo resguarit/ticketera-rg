@@ -257,7 +257,7 @@
                         <div class="ticket-info-left">
                             <div class="detail-row">
                                 <div class="detail-label">Orden N°:</div>
-                                <div class="detail-value">{{ str_pad($ticket->order->id, 5, '0', STR_PAD_LEFT) }}</div>
+                                <div class="detail-value">{{ $ticket->order->transaction_id }}</div>
                             </div>
                             
                             <div class="detail-row">
