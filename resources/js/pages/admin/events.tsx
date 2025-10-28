@@ -212,7 +212,7 @@ export default function Events({ auth }: any) {
 
     return (
         <>
-            <Head title="Gestión de Eventos - Panel Admin" />
+            <Head title="Gestión de Eventos" />
             
             <AdminDashboardLayout
                 title="Gestión de Eventos"

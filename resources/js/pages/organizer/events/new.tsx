@@ -313,7 +313,7 @@ export default function EventsNew({ categories, venues }: Props) {
                 <div className='container mx-auto px-4 py-6'>
                     <div className='flex items-center justify-between mb-6'>
                         <div>
-                            <h2 className="section text-foreground">Crear Evento</h2>
+                            <h2 className="section text-2xl text-foreground">Crear Evento</h2>
                             <p className='text-muted-foreground'>Complete el formulario para crear un nuevo evento.</p>
                         </div>
                         <div className="flex items-center space-x-2">

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House} from 'lucide-react';
+import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle} from 'lucide-react';
 import logoResguarit from '../../../public/favicon.ico'
 
 interface FooterProps {
@@ -32,13 +32,13 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <MapPin className="w-4 h-4 text-secondary flex-shrink-0" />
                                 <span className="text-sm">La Plata, Buenos Aires</span>
                             </div>
-                            <div className="flex items-center space-x-2 text-gray-300">
+                            <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
                                 <Phone className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <span className="text-sm">+54 2966 123456</span>
+                                <a href="tel:+542216914649"><span className="text-sm">+54 2966 123456</span></a>
                             </div>
-                            <div className="flex items-center space-x-2 text-gray-300">
+                            <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
                                 <Mail className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <span className="text-sm">info@ticketera-rg.com</span>
+                                <a href="mailto:info@rg-entradas.com"><span className="text-sm">info@rg-entradas.com</span></a>
                             </div>
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export default function Footer({ className = '' }: FooterProps) {
                         {/* Social Links */}
                         <div className="flex space-x-3">
                             <a 
-                                href="https://facebook.com/ticketera-rg" 
+                                href="https://www.facebook.com/share/17N6jjxJvY/?mibextid=wwXIfr" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -115,16 +115,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Facebook className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://twitter.com/ticketera-rg" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
-                                aria-label="Twitter"
-                            >
-                                <Twitter className="w-4 h-4" />
-                            </a>
-                            <a 
-                                href="https://instagram.com/ticketera-rg" 
+                                href="https://www.instagram.com/rgentradas.com.ar/" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -133,7 +124,16 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Instagram className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://youtube.com/ticketera-rg" 
+                                href="https://wa.me/5492216914649" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
+                                aria-label="WhatsApp"
+                            >
+                                <MessageCircle  className="w-4 h-4" />
+                            </a>
+                            <a 
+                                href="https://www.youtube.com/@RGEntradas" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"

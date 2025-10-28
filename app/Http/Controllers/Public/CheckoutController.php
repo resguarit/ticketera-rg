@@ -41,6 +41,21 @@ class CheckoutController extends Controller
     {
         // NUEVO: Generar ID de sesión único para esta compra
         $sessionId = $request->session()->getId() . '_' . time();
+        
+        // MODIFICADO: Liberar todos los locks anteriores de esta sesión antes de crear nuevos
+        try {
+            $this->ticketLockService->releaseAllSessionLocks($request->session()->getId());
+            Log::info('Locks anteriores liberados para nueva sesión de checkout', [
+                'session_base_id' => substr($request->session()->getId(), -8)
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Error liberando locks anteriores', [
+                'session_id' => substr($request->session()->getId(), -8),
+                'error' => $e->getMessage()
+            ]);
+            // No bloquear el proceso, solo registrar el warning
+        }
+    
         $request->session()->put('checkout_session_id', $sessionId);
 
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
