@@ -10,7 +10,7 @@ class CheckoutData
         public readonly string $paymentToken,
         public readonly ?string $bin,
         public readonly array $selected_tickets,
-        public readonly string $paymentMethod = '',
+        public readonly string $paymentMethod,
         public readonly ?array $billingInfo = null,
     ) {}
 }
