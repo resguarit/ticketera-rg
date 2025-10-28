@@ -9,6 +9,7 @@ use App\DTO\CheckoutResult;
 use App\DTO\PaymentContext;
 use App\DTO\PaymentResult;
 use App\Models\Event;
+use Illuminate\Support\Facades\DB;
 
 class CheckoutService
 {
@@ -23,12 +24,15 @@ class CheckoutService
         try {
             $event = Event::findOrFail($checkoutData->eventId);
             $eventTax = $event->tax ? ($event->tax / 100) : 0;
+            $paymentMethodId = DB::table('payment_method')
+                ->where('name', $checkoutData->paymentMethod)
+                ->value('payway_id');
 
             $orderData = [
                     'event_id' => $checkoutData->eventId,
                     'function_id' => $checkoutData->functionId,
                     'selected_tickets' => $checkoutData->selected_tickets,
-                    'payment_method' => $checkoutData->paymentMethod,
+                    'payment_method' => $paymentMethodId,
                     'billing_info' => $checkoutData->billingInfo,
                     'tax' => $eventTax,
                 ];
@@ -43,6 +47,7 @@ class CheckoutService
                 paymentToken: $checkoutData->paymentToken,
                 bin: $checkoutData->bin,
                 siteTransactionId: $order->transaction_id,
+                paymentMethodId: $paymentMethodId,
                 installments: 1,
                 customerEmail: $order->client->email,
                 customerId: $order->client->id,

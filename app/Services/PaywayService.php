@@ -31,7 +31,7 @@ class PaywayService implements PaymentGatewayInterface
             "amount" => (int) ($context->amount * 100),
             "currency" => $context->currency,
             "installments" => $context->installments,
-            "payment_method_id" => 1,
+            "payment_method_id" => $context->paymentMethodId,
             "payment_type" => "single",
             "sub_payments" => [],
             "fraud_detection" => [ 
