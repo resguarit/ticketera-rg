@@ -10,6 +10,7 @@ use App\Http\Controllers\Public\HelpController;
 use App\Http\Controllers\Public\LegalController;
 
 use App\Http\Controllers\User\TicketController as UserTicketController;
+use Illuminate\Support\Facades\Cache;
 
 /*-------Rutas protegidas para administradores----------*/ 
 require __DIR__.'/admin.php';
@@ -51,6 +52,8 @@ Route::get('/refunds', [LegalController::class, 'refunds'])->name('refunds');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+Route::get('/checkout/check-email/{email}', [CheckoutController::class, 'checkEmail'])->name('checkout.check-email');
 
 // SOLO PARA DESARROLLO - Eliminar después
 if (app()->environment('local')) {

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Services\StageTicketService;
 
 class OrderService
 {
@@ -70,20 +71,50 @@ class OrderService
 
             $order = Order::create($orderCreateData);
     
+            // MODIFICACIÓN: Almacenar referencias a ticket types para verificar tandas después
+            $processedTicketTypes = [];
+            
             foreach ($orderData['selected_tickets'] as $index => $ticketData) {
-
                 $ticketType = TicketType::findOrFail($ticketData['id']);
 
                 $this->createTicketsForType($order, $ticketType, $ticketData['quantity'], $userId);
     
                 $ticketType->increment('quantity_sold', $ticketData['quantity']);
+                
+                // Agregar a la lista para verificar tandas después
+                $processedTicketTypes[] = $ticketType->fresh(); // Recargar con quantity_sold actualizada
             }
+            
+            // NUEVO: Verificar y activar tandas después de procesar todas las compras
+            $this->checkStagesAfterPurchase($processedTicketTypes);
     
             return [
                 'order' => $order,
                 'account_created' => $accountCreated
             ];
         });
+    }
+    
+    /**
+     * NUEVO MÉTODO: Verifica y activa tandas después de una compra
+     */
+    private function checkStagesAfterPurchase(array $ticketTypes): void
+    {
+        $stageService = app(StageTicketService::class);
+        
+        foreach ($ticketTypes as $ticketType) {
+            // Solo verificar si es parte de un sistema de tandas y está visible
+            if ($ticketType->stage_group && !$ticketType->is_hidden) {
+                $activated = $stageService->checkAndActivateNextStage($ticketType);
+                
+                if ($activated) {
+                    Log::info("Tanda activada automáticamente después de compra", [
+                        'agotada' => $ticketType->name,
+                        'function_id' => $ticketType->event_function_id
+                    ]);
+                }
+            }
+        }
     }
 
     private function generateOrderTransactionId(int $eventId): string
