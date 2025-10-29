@@ -200,7 +200,7 @@ export default function NewOrganizer() {
 
                     </div>
                     
-                    <form onSubmit={submit} className="space-y-6">
+                    <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
                         <Card className='bg-white shadow-lg border-gray-200'>
                             <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-black'>Información del Organizador</CardTitle>
