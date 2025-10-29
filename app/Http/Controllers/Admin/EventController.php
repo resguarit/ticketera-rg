@@ -377,7 +377,7 @@ class EventController extends Controller
         }
 
         if (empty($prices)) {
-            return 'Sin precios';
+            return '-';
         }
 
         $minPrice = min($prices);
