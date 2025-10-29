@@ -8,7 +8,7 @@ use Inertia\Inertia;
 
 Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::post('/process-payment', [CheckoutController::class, 'processPayment'])->name('process');
-    Route::get('/success', [CheckoutController::class, 'success'])->name('success');
+    Route::get('/success', [CheckoutController::class, 'success'])->name('success')->middleware('signed');
     Route::get('/error', [CheckoutController::class, 'error'])->name('error'); // Nueva ruta
     Route::get('/{event}', [CheckoutController::class, 'confirm'])->name('confirm');
     
