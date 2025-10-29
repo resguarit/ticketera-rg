@@ -197,16 +197,7 @@ export default function NewOrganizer() {
                                 <p className='text-gray-600 mt-1'>Complete el formulario para crear un nuevo organizador.</p>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            <Button 
-                                onClick={submit} 
-                                disabled={processing} 
-                                className="bg-black text-white hover:bg-gray-800"
-                            >
-                                <Save className="w-4 h-4 mr-2" />
-                                {processing ? 'Guardando...' : 'Guardar Organizador'}
-                            </Button>
-                        </div>
+
                     </div>
                     
                     <form onSubmit={submit} className="space-y-6">
@@ -444,6 +435,26 @@ export default function NewOrganizer() {
                                 </div>
                             </CardContent>
                         </Card>
+                            <div className="flex w-full justify-end space-x-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    asChild
+                                    className="w-fit"
+                                >
+                                    <Link href={route('admin.organizers.index')}>
+                                        Cancelar
+                                    </Link>
+                                </Button>
+                            <Button 
+                                onClick={submit} 
+                                disabled={processing} 
+                                className="bg-primary text-white hover:bg-primary-hover"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                {processing ? 'Guardando...' : 'Guardar Organizador'}
+                            </Button>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -223,10 +223,6 @@ export default function EditOrganizer() {
             </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button onClick={submit} disabled={processing} className="bg-primary text-primary-foreground hover:bg-primary-hover">
-                <Save className="w-4 h-4 mr-2" />
-                {processing ? 'Guardando...' : 'Guardar Cambios'}
-              </Button>
               <Button type="button" variant="outline" onClick={resetForm} disabled={processing}>
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 Restablecer
@@ -361,6 +357,20 @@ export default function EditOrganizer() {
                 </div>
               </CardContent>
             </Card>
+            <div className="flex w-full justify-end space-x-2">
+              <Button
+                  type="button" variant="outline" asChild
+                  className="w-fit"
+              >
+                  <Link href={route('admin.organizers.index')}>
+                      Cancelar
+                  </Link>
+              </Button>             
+              <Button onClick={submit} disabled={processing} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                <Save className="w-4 h-4 mr-2" />
+                {processing ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            </div>
           </form>
         </div>
       </div>
