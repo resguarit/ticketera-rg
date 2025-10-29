@@ -18,6 +18,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('password.update');
 
+    Route::put('settings/password-modal', [PasswordController::class, 'updateFromModal'])
+        ->middleware('throttle:6,1')
+        ->name('password.updateFromModal');
+
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');

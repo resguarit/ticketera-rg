@@ -67,7 +67,7 @@ class TicketPDFController extends Controller
 
         $pdf = Pdf::loadView('pdfs.order-tickets', $data);
         
-        $orderNumber = 'TM-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT);
+        $orderNumber = $order->transaction_id ?? $order->id;
         
         return $pdf->download("tickets-orden-{$orderNumber}.pdf");
     }
