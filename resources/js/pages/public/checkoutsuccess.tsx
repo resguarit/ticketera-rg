@@ -10,7 +10,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 
 interface PurchaseData {
-    orderId: string;
+    transaction_id: string;
     event: {
         name: string;
         image_url: string;
@@ -153,7 +153,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                         Confirmado
                                     </Badge>
                                 </CardTitle>
-                                <p className="text-foreground/60">Orden #{purchaseData.orderId}</p>
+                                <p className="text-foreground/60">Orden #{purchaseData.transaction_id}</p>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {/* Event Info */}
@@ -241,20 +241,13 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                         </Card>
 
                         {/* Action Buttons */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <a href={route('user.orders.download-tickets', { order: purchaseData.orderId.split('-')[2] })} target="_blank">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <a href={route('user.orders.download-tickets', { transaction_id: purchaseData.transaction_id })} target="_blank">
                                 <Button className="w-full bg-primary hover:bg-primary-hover text-white">
                                     <Download className="w-4 h-4 mr-2" />
                                     Descargar Tickets
                                 </Button>
                             </a>
-                            <Button
-                                variant="outline"
-                                className="border-gray-300 text-foreground hover:bg-gray-50"
-                            >
-                                <Share2 className="w-4 h-4 mr-2" />
-                                Compartir
-                            </Button>
                             {/* --- MODIFICADO: Botón condicional a "Mis Tickets" o "Inicio" --- */}
                             <Link href={auth.user ? route('my-tickets') : route('home')}>
                                 <Button
