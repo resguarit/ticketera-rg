@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
+import BackButton from '@/components/Backbutton';
 
 interface Organizer {
   id: number;
@@ -88,17 +89,14 @@ export default function EditOrganizer() {
       <div className='min-h-screen bg-background'>
         <div className='container mx-auto px-4 py-6'>
           <div className='flex items-center justify-between mb-6'>
-            <div>
-              <h2 className="section text-foreground">Editar Organizador</h2>
-              <p className='text-muted-foreground'>Actualice los datos del organizador.</p>
+            <div className='flex items-center gap-2'>
+              <BackButton href={route('admin.organizers.index')} />
+              <div>
+              <h2 className="text-3xl font-bold text-gray-900">Editar Organizador</h2>
+              <p className='text-gray-600 mt-1'>Actualice los datos del organizador.</p>
+            </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Link href={route('admin.organizers.index')}>
-                <Button variant="ghost" className="text-foreground hover:bg-accent">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver
-                </Button>
-              </Link>
               <Button onClick={submit} disabled={processing} className="bg-primary text-primary-foreground hover:bg-primary-hover">
                 <Save className="w-4 h-4 mr-2" />
                 Guardar Cambios
