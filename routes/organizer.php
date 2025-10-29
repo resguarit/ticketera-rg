@@ -73,7 +73,13 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::post('/', [OrganizerUserController::class, 'store'])->name('store');
         Route::patch('/{user}/toggle-status', [OrganizerUserController::class, 'toggleStatus'])->name('toggleStatus');
         Route::delete('/{user}', [OrganizerUserController::class, 'destroy'])->name('destroy');
+        Route::put('/{user}', [OrganizerUserController::class, 'update'])->name('update');
+        Route::get('/{user}/edit', [OrganizerUserController::class, 'edit'])->name('edit');
+
     });
+
+    //Ruta de guia de ayuda para organizadores
+    Route::get('/help-guide', [OrganizerDashboardController::class, 'helpGuide'])->name('helpGuide');
     
 
 });

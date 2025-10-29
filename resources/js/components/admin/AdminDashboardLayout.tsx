@@ -21,10 +21,9 @@ export function AdminDashboardLayout({
   onCityChange,
   customFilterValues,
   onCustomFilterChange,
-  onApplyFilters,
   onClearFilters,
   onKeyPress,
-  hasPendingFilters,
+  searchDebounceMs, // Nuevo prop
 }: AdminDashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-white">
@@ -93,10 +92,9 @@ export function AdminDashboardLayout({
           onCityChange={onCityChange}
           customFilterValues={customFilterValues}
           onCustomFilterChange={onCustomFilterChange}
-          onApplyFilters={onApplyFilters}
           onClearFilters={onClearFilters}
           onKeyPress={onKeyPress}
-          hasPendingFilters={hasPendingFilters}
+          searchDebounceMs={searchDebounceMs}
         />
 
         {/* Main Content */}

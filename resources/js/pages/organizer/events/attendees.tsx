@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { router, Head, Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,8 @@ import { EventFunction } from '@/types/models/eventFunction';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModal';
 import { PaginatedResponse } from '@/types/ui/ui';
+import ConfirmationModal from '@/components/ConfirmationModal';
+import ConfirmDeleteModal from '@/components/ConfirmationModal';
 
 interface EventAttendeeFunction {
     id: number;
@@ -59,6 +62,11 @@ export default function EventAttendees({
         loading: false,
         data: null as TicketDetails | null,
     });
+
+    const [confirmResendModal, setConfirmResendModal] = useState(false);
+    const [selectedAttendee, setSelectedAttendee] = useState<AttendeeForTable | null>(null);
+    const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
+    const [eliminatedAttendee, setEliminatedAttendee] = useState<AttendeeForTable | null>(null);
 
     const handleFunctionFilter = (value: string) => {
         setFilterFunction(value);
@@ -226,12 +234,26 @@ export default function EventAttendees({
         }
     };
 
+    const confirmResendInvitation = (attendee: AttendeeForTable) => {
+        setConfirmResendModal(true);
+        setSelectedAttendee(attendee);
+    };
+
+    const handleConfirmDeleteAttendee = (attendee: AttendeeForTable) => {
+        setConfirmDeleteModal(true);
+        setEliminatedAttendee(attendee);
+    }
+
     const handleDeleteAttendee = (attendeeId: number, attendeeType: 'invited' | 'buyer') => {
         if (attendeeType === 'buyer') {
+            toast.error('No se puede eliminar', {
+                description: 'Los compradores no pueden ser eliminados desde esta sección. Las compras deben ser gestionadas desde el sistema de órdenes.',
+                duration: 5000
+            });
             return;
         }
         
-        if (confirm('¿Estás seguro de que quieres eliminar este asistente?')) {
+        if (attendeeType === 'invited') {
             router.delete(
                 route('organizer.events.assistants.destroy', {
                     event: event.id,
@@ -239,8 +261,21 @@ export default function EventAttendees({
                 }),
                 {
                     preserveScroll: true,
+                    onStart: () => {
+                        toast.loading('Eliminando asistente...', { id: 'delete-attendee' });
+                    },
                     onSuccess: () => {
-                        // TODO: mostrar toast de éxito
+                        toast.success('Asistente eliminado exitosamente', {
+                            id: 'delete-attendee',
+                            description: 'El asistente invitado ha sido eliminado del evento'
+                        });
+                    },
+                    onError: (errors) => {
+                        const errorMessage = Object.values(errors)[0] as string;
+                        toast.error('Error al eliminar el asistente', {
+                            id: 'delete-attendee',
+                            description: errorMessage || 'No se pudo eliminar el asistente'
+                        });
                     }
                 }
             );
@@ -275,89 +310,17 @@ export default function EventAttendees({
             <Head title={`Asistentes - ${event.name}`} />
             
             <div className="space-y-6">
-                {/* Estadísticas */}
-
-                {/*
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <Users className="h-4 w-4 text-blue-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Total Asistentes</p>
-                                    <p className="text-2xl font-bold">{stats.total_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <UserCheck className="h-4 w-4 text-blue-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Invitados</p>
-                                    <p className="text-2xl font-bold">{stats.invited_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <ShoppingCart className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Compradores</p>
-                                    <p className="text-2xl font-bold">{stats.buyer_attendees}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <Ticket className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Total Tickets</p>
-                                    <p className="text-2xl font-bold">{stats.total_tickets}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Tickets Usados</p>
-                                    <p className="text-2xl font-bold">{stats.tickets_used}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <DollarSign className="h-4 w-4 text-green-600" />
-                                <div className="ml-2">
-                                    <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(stats.total_revenue)}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                */}
 
                 {/* Tabla de asistentes */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle>Asistentes</CardTitle>
+                            <div className='flex flex-col'>
+                                <CardTitle>Gestión de Asistentes</CardTitle>
+                                <CardDescription>
+                                    Administra y controla los asistentes de tu evento, tanto invitados como compradores
+                                </CardDescription>
+                            </div>
                             <div className="flex items-center gap-4">
                                 {/* Botón de actualización */}
                                 <Button 
@@ -488,12 +451,12 @@ export default function EventAttendees({
                                                         </DropdownMenuItem>
                                                         {attendee.type === 'invited' && (
                                                             <>
-                                                                <DropdownMenuItem onClick={() => handleResendInvitation(attendee.assistant_id, attendee.type)}>
+                                                                <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
                                                                     <Mail className="mr-2 h-4 w-4" />
                                                                     Reenviar invitación
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem 
-                                                                    onClick={() => handleDeleteAttendee(attendee.assistant_id, attendee.type)}
+                                                                    onClick={() => handleConfirmDeleteAttendee(attendee)}
                                                                     className="text-red-600"
                                                                 >
                                                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -548,6 +511,43 @@ export default function EventAttendees({
                 onClose={closeTicketDetailsModal}
                 loading={ticketDetailsModal.loading}
                 data={ticketDetailsModal.data}
+            />
+
+            <ConfirmationModal
+                isOpen={confirmResendModal}
+                onClose={() => setConfirmResendModal(false)}
+                onConfirm={() => {
+                    if (selectedAttendee) {
+                        const id = selectedAttendee.type === 'invited' ? (selectedAttendee.assistant_id as number) : (selectedAttendee.order_id as number);
+                        handleResendInvitation(id, selectedAttendee.type);
+                    }
+                    setConfirmResendModal(false);
+                }}
+                accionTitulo="Reenvío de invitación"
+                accion="Reenviar"
+                pronombre="esta"
+                entidad="invitación"
+                accionando="reenviando"
+                confirmVariant='destructive'
+            />
+
+            <ConfirmDeleteModal
+                isOpen={confirmDeleteModal}
+                onClose={() => setConfirmDeleteModal(false)}
+                onConfirm={() => {
+                    if (eliminatedAttendee) {
+                        handleDeleteAttendee(eliminatedAttendee.assistant_id as number, eliminatedAttendee.type);
+                    }
+                    setConfirmDeleteModal(false);
+                }}
+                accionTitulo="Eliminación de asistente"
+                accion="Eliminar"
+                pronombre="este"
+                entidad="asistente"
+                accionando="eliminando"
+                nombreElemento={eliminatedAttendee?.full_name}
+                advertencia="Todos los datos asociados a este asistente también serán eliminados."
+                confirmVariant='destructive'
             />
         </EventManagementLayout>
     );

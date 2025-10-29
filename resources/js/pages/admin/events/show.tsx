@@ -49,6 +49,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
+import BackButton from '@/components/Backbutton';
 
 // Interfaces
 interface EventFunction {
@@ -81,13 +82,15 @@ interface EventData {
     id: number;
     name: string;
     description: string;
-    image_url: string;
+    image_url: string; 
+    hero_image_url: string;
     featured: boolean;
     total_revenue: number;
     organizer: {
         id: number;
         name: string;
         email: string;
+        image_url: string;
     };
     category: {
         id: number;
@@ -174,12 +177,9 @@ export default function Show({ auth }: any) {
                     {/* Header con navegación */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center space-x-4">
-                            <Link href={route('admin.events.index')}>
-                                <Button variant="outline" size="sm" className="border-gray-300">
-                                    <ArrowLeft className="w-4 h-4 mr-2" />
-                                    Volver
-                                </Button>
-                            </Link>
+                            <BackButton 
+                                href={route('admin.events.index')}
+                            />
                             <div>
                                 <h1 className="text-3xl font-bold text-black">{event.name}</h1>
                                 <p className="text-gray-600">
@@ -217,7 +217,45 @@ export default function Show({ auth }: any) {
                             </DropdownMenu>
                         </div>
                     </div>
+                    <div className='grid grid-cols-4 gap-2 mb-8'>
+                    {/* Hero Banner del evento (panorámico) - 3/4 del ancho */}
+                    {event.hero_image_url && (
+                        <div className='col-span-3'>
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">Hero Banner</h3>
+                        <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                            <img 
+                                src={event.hero_image_url}
+                                alt={`${event.name} - Hero Banner`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    console.error('Error loading hero image:', event.hero_image_url);
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                        </div>
+                    )}
+                    
+                    {/* Banner Principal (cuadrado) - 1/4 del ancho */}
+                    {event.image_url && (
+                        <div className='col-span-1'>
+                            <h3 className="text-sm font-medium text-gray-600 mb-2">Banner Principal</h3>
+                            <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                                <img 
+                                    src={event.image_url}
+                                    alt={`${event.name} - Banner`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        console.error('Error loading image:', event.image_url);
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    </div>
 
+                    
                     {/* Estado y estadísticas rápidas */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                         {/* Estado */}
@@ -318,44 +356,77 @@ export default function Show({ auth }: any) {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Información del evento */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <Card className="bg-white border-gray-200">
-                                        <CardHeader>
+                                    <Card className="bg-white border-gray-200 gap-2">
+                                        <CardHeader className='pb-0'>
                                             <CardTitle className="text-black">Información del Evento</CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            {/* Banner del evento */}
-                                            {event.image_url && (
-                                                <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200">
-                                                    <img 
-                                                        src={event.image_url}
-                                                        alt={event.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            )}
-                                            
-                                            <div>
-                                                <h3 className="font-semibold text-black mb-2">Descripción</h3>
-                                                <p className="text-gray-700 leading-relaxed">
-                                                    {event.description || 'Sin descripción disponible'}
-                                                </p>
-                                            </div>
-
+                                        <CardContent className="space-y-2">
                                             <div className="grid grid-cols-2 gap-4 pt-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <MapPin className="w-4 h-4 text-primary" />
+                                                <div>
+                                                    <h3 className="font-medium text-sm text-gray-600 mb-1">Descripción</h3>
+                                                    <p className="text-black leading-relaxed">
+                                                        {event.description || 'Sin descripción disponible'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-start space-x-2">
                                                     <div>
-                                                        <p className="text-sm text-gray-600">Venue</p>
-                                                        <p className="font-medium text-black">{event.venue.name}</p>
-                                                        <p className="text-sm text-gray-500">{getVenueCompleteAddress(event.venue)}</p>
+                                                        <p className="text-sm text-gray-600 mb-1">Próxima función</p>
+                                                        {event.functions.length > 0 ? (
+                                                            (() => {
+                                                                const now = new Date();
+                                                                const upcomingFunctions = event.functions.filter(func => 
+                                                                    new Date(func.start_time) > now
+                                                                ).sort((a, b) => 
+                                                                    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+                                                                );
+
+                                                                if (upcomingFunctions.length > 0) {
+                                                                    const nextFunction = upcomingFunctions[0];
+                                                                    return (
+                                                                        <>
+                                                                            <p className="font-medium text-black">
+                                                                                {formatDate(nextFunction.start_date)}
+                                                                            </p>
+                                                                            <p className="text-sm text-black">
+                                                                                {nextFunction.start_time_only} • {nextFunction.name}
+                                                                            </p>
+                                                                        </>
+                                                                    );
+                                                                } else {
+                                                                    const lastFunction = event.functions
+                                                                        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())[0];
+                                                                    
+                                                                    return (
+                                                                        <>
+                                                                            <p className="font-medium text-black">
+                                                                                No hay próximas funciones
+                                                                            </p>
+                                                                            <p className="text-sm text-black">
+                                                                                Última: {formatDate(lastFunction.start_date)}
+                                                                            </p>
+                                                                        </>
+                                                                    );
+                                                                }
+                                                            })()
+                                                        ) : (
+                                                            <p className="font-medium text-red-500">Sin funciones programadas</p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <Calendar className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 pt-4">
+                                                <div className="flex items-start space-x-2">
                                                     <div>
-                                                        <p className="text-sm text-gray-600">Creado</p>
+                                                        <p className="font-medium text-sm text-gray-600 mb-1">Recinto</p>
+                                                        <p className="font-medium text-black">{event.venue.name}</p>
+                                                        <p className="text-sm tex-black">{getVenueCompleteAddress(event.venue)}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start space-x-2">
+                                                    <div>
+                                                        <p className="text-sm text-gray-600 mb-1">Creado</p>
                                                         <p className="font-medium text-black">{formatDate(event.created_at)}</p>
-                                                        <p className="text-sm text-gray-500">Última actualización: {formatRelativeTime(event.updated_at)}</p>
+                                                        <p className="text-sm tex-black">Última actualización: {formatRelativeTime(event.updated_at)}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -405,7 +476,7 @@ export default function Show({ auth }: any) {
                                         <CardContent className="space-y-4">
                                             <div className="text-center">
                                                 <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <Users className="w-8 h-8 text-white" />
+                                                    <img src={event.organizer.image_url} alt={event.organizer.name} className="w-full h-full object-cover rounded-full" />
                                                 </div>
                                                 <h3 className="font-semibold text-black">{event.organizer.name}</h3>
                                                 <p className="text-gray-600 text-sm">{event.organizer.email}</p>

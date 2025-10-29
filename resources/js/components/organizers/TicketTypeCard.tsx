@@ -77,7 +77,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
       <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
               <CardTitle className="text-lg">{ticket.name}</CardTitle>
               {isBundle && (
                 <Badge variant="secondary" className="text-xs">

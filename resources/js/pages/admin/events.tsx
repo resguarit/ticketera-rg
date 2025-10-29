@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { 
@@ -78,24 +78,98 @@ export default function Events({ auth }: any) {
     const [selectedCategory, setSelectedCategory] = useState(filters.category || "all");
     const [selectedCity, setSelectedCity] = useState(filters.city || "all");
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
+    
+    // Ref para controlar si es la primera carga
+    const isInitialLoad = useRef(true);
+    
+    // Ref para controlar timeouts de debounce
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Estado para detectar si hay filtros pendientes de aplicar
-    const [hasPendingFilters, setHasPendingFilters] = useState(false);
+    // Función para aplicar filtros automáticamente
+    const applyFilters = useCallback((resetPage = true) => {
+        const params: Record<string, any> = {
+            search: searchTerm || undefined,
+            status: selectedStatus !== "all" ? selectedStatus : undefined,
+            category: selectedCategory !== "all" ? selectedCategory : undefined,
+            city: selectedCity !== "all" ? selectedCity : undefined,
+            sort_by: sortBy !== "created_at" ? sortBy : undefined,
+        };
 
-    // Detectar cambios en los filtros para mostrar indicador
-    const checkPendingFilters = () => {
-        const hasChanges = 
-            searchTerm !== (filters.search || "") ||
-            selectedStatus !== (filters.status || "all") ||
-            selectedCategory !== (filters.category || "all") ||
-            selectedCity !== (filters.city || "all");
-        setHasPendingFilters(hasChanges);
-    };
+        // Solo resetear página si resetPage es true
+        if (!resetPage) {
+            params.page = filters.page || 1;
+        }
 
-    // Llamar checkPendingFilters cuando cambien los filtros locales
+        // Filtrar parámetros undefined
+        const filteredParams = Object.fromEntries(
+            Object.entries(params).filter(([_, value]) => value !== undefined)
+        );
+
+        router.get(route('admin.events.index'), filteredParams, {
+            preserveState: true,
+            replace: true,
+            only: ['events', 'stats']
+        });
+    }, [searchTerm, selectedStatus, selectedCategory, selectedCity, sortBy, filters.page]);
+
+    // Aplicar filtros automáticamente cuando cambien los selectores (excepto en la primera carga)
     useEffect(() => {
-        checkPendingFilters();
-    }, [searchTerm, selectedStatus, selectedCategory, selectedCity]);
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
+        }
+        
+        applyFilters(true); // Resetear página cuando cambian los filtros
+    }, [selectedStatus, selectedCategory, selectedCity, sortBy]);
+
+    // Para la búsqueda, aplicar con debounce
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            return;
+        }
+
+        // Limpiar timeout anterior
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Si la búsqueda está vacía, aplicar inmediatamente
+        if (searchTerm.trim() === '') {
+            applyFilters(true);
+            return;
+        }
+
+        // Aplicar búsqueda con debounce
+        searchTimeoutRef.current = setTimeout(() => {
+            applyFilters(true); // Resetear página cuando se busca
+        }, 500);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchTerm]);
+
+    // Limpiar timeout al desmontar
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Función para manejar la paginación
+    const handlePagination = (url: string) => {
+        if (!url) return;
+        
+        router.get(url, {}, {
+            preserveState: true,
+            replace: true,
+            only: ['events']
+        });
+    };
 
     // Configuración de estadísticas para el dashboard
     const eventStats: StatCardProps[] = [
@@ -142,20 +216,6 @@ export default function Events({ auth }: any) {
         categoryOptions: categories.map(category => ({ value: category, label: category })),
         cityOptions: cities.map(city => ({ value: city, label: city })),
     };
-    // Función para aplicar filtros (solo cuando se presione el botón o Enter)
-    const handleFilters = () => {
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
-        router.get(route('admin.events.index'), {
-            search: searchTerm,
-            status: selectedStatus,
-            category: selectedCategory,
-            city: selectedCity,
-            sort_by: sortBy,
-        }, {
-            preserveState: true,
-            replace: true
-        });
-    };
 
     // Función para limpiar filtros
     const handleClearFilters = () => {
@@ -164,23 +224,30 @@ export default function Events({ auth }: any) {
         setSelectedCategory("all");
         setSelectedCity("all");
         setSortBy("created_at");
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
+        
+        // Redirigir sin parámetros
         router.get(route('admin.events.index'), {}, {
             preserveState: true,
-            replace: true
+            replace: true,
+            only: ['events', 'stats']
         });
     };
 
-    // Manejar Enter en búsqueda para aplicar filtros
+    // Manejar Enter en búsqueda para aplicar inmediatamente
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleFilters();
+            // Limpiar timeout y aplicar inmediatamente
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+            applyFilters(true);
         }
     };
 
     const handleToggleFeatured = (eventId: number) => {
         router.patch(route('admin.events.toggle-featured', eventId), {}, {
             preserveScroll: true,
+            only: ['events']
         });
     };
 
@@ -235,10 +302,9 @@ export default function Events({ auth }: any) {
                 onCategoryChange={setSelectedCategory}
                 selectedCity={selectedCity}
                 onCityChange={setSelectedCity}
-                onApplyFilters={handleFilters}
                 onClearFilters={handleClearFilters}
                 onKeyPress={handleKeyPress}
-                hasPendingFilters={hasPendingFilters}
+                searchDebounceMs={500}
             >
                 {/* Events Table */}
                 <Card className="bg-white border-gray-200 shadow-lg">
@@ -373,15 +439,16 @@ export default function Events({ auth }: any) {
                             )}
                         </div>
 
-                        {/* Pagination */}
+                        {/* Pagination - Actualizada para usar la función handlePagination */}
                         {events.data.length > 0 && (
                             <div className="mt-6 flex justify-center">
                                 <div className="flex items-center space-x-2">
                                     {events.links.map((link, index) => (
-                                        <Link
+                                        <button
                                             key={index}
-                                            href={link.url || '#'}
-                                            className={`px-3 py-2 text-sm rounded-md ${
+                                            onClick={() => handlePagination(link.url)}
+                                            disabled={!link.url}
+                                            className={`px-3 py-2 text-sm rounded-md transition-colors ${
                                                 link.active
                                                     ? 'bg-black text-white'
                                                     : link.url

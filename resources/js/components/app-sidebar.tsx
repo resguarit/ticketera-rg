@@ -131,13 +131,28 @@ const getDashboardUrl = (userRole: string): string => {
     }
 };
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Ayuda',
-        href: '/help',
-        icon: BookOpen,
-    },
-];
+// Función para obtener los elementos de navegación del footer según el rol
+const getFooterNavItemsByRole = (userRole: string): NavItem[] => {
+    switch (userRole) {
+        case 'organizer':
+            return [
+                {
+                    title: 'Guía de Ayuda',
+                    href: '/organizer/help-guide',
+                    icon: BookOpen,
+                },
+            ];
+        
+        default: // admin, client o usuario normal
+            return [
+                {
+                    title: 'Ayuda',
+                    href: '/help',
+                    icon: BookOpen,
+                },
+            ];
+    }
+};
 
 export function AppSidebar() {
     // Obtener los datos del usuario autenticado
@@ -149,6 +164,9 @@ export function AppSidebar() {
     
     // Obtener elementos de navegación según el rol
     const mainNavItems = getNavItemsByRole(userRole);
+    
+    // Obtener elementos de navegación del footer según el rol
+    const footerNavItems = getFooterNavItemsByRole(userRole);
     
     // Obtener URL del dashboard según el rol
     const dashboardUrl = getDashboardUrl(userRole);

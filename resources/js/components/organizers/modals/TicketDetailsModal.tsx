@@ -292,8 +292,8 @@ export default function TicketDetailsModal({
                     <h2 className="text-lg font-semibold">
                         {loading ? 'Cargando detalles...' : (
                             data?.type === 'buyer' ? 
-                                `📊 Detalle de Compra - Orden #${(data as OrderDetails).order.id}` :
-                                `🎫 Tickets Asignados - ${(data as AssistantDetails).person.full_name}`
+                                `Detalle de Compra - Orden #${(data as OrderDetails).order.id}` :
+                                `Tickets Asignados - ${(data as AssistantDetails).person.full_name}`
                         )}
                     </h2>
                     <button
