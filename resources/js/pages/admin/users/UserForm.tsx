@@ -78,7 +78,6 @@ export default function UserForm({
                                         value={data.firstName}
                                         onChange={(e) => setData('firstName', e.target.value)}
                                         placeholder="Ingresa el nombre"
-                                        required
                                     />
                                     <InputError message={errors.firstName} />
                                 </div>
@@ -89,7 +88,6 @@ export default function UserForm({
                                         value={data.lastName}
                                         onChange={(e) => setData('lastName', e.target.value)}
                                         placeholder="Ingresa el apellido"
-                                        required
                                     />
                                     <InputError message={errors.lastName} />
                                 </div>
@@ -104,7 +102,6 @@ export default function UserForm({
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     placeholder="correo@ejemplo.com"
-                                    required
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -118,7 +115,6 @@ export default function UserForm({
                                         value={data.dni}
                                         onChange={(e) => setData('dni', e.target.value)}
                                         placeholder="12345678"
-                                        required
                                     />
                                     <InputError message={errors.dni} />
                                 </div>
@@ -179,7 +175,6 @@ export default function UserForm({
                                             onChange={(e) => setData('password', e.target.value)}
                                             placeholder={isEditing ? "Nueva contraseña (opcional)" : "Mínimo 8 caracteres"}
                                             className="pr-10"
-                                            required={!isEditing}
                                         />
                                         <Button
                                             type="button"
@@ -209,7 +204,6 @@ export default function UserForm({
                                             onChange={(e) => setData('password_confirmation', e.target.value)}
                                             placeholder={isEditing ? "Confirma la nueva contraseña" : "Confirma la contraseña"}
                                             className="pr-10"
-                                            required={!isEditing}
                                         />
                                         <Button
                                             type="button"
