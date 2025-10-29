@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronLeft, Settings, Users, BarChart3, Calendar, Ticket } from 'lucide-react';
+import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
 import { Event, EventRelations } from '@/types/models/event';
+import { Toaster } from 'sonner';
+
 
 interface EventFunctionDetail extends EventFunction {
     date: string;       
@@ -60,37 +62,89 @@ export default function EventManagementLayout({
     return (
         <>
             <Head title={`Gestión - ${event.name}`} />
-            
+            <Toaster 
+                position="top-right"
+                richColors
+                expand={true}
+                duration={4000}
+                toastOptions={{
+                    style: {
+                        background: 'white',
+                        border: '1px solid #e5e7eb',
+                        color: '#374151',
+                    },
+                }}
+            />
             <div className="min-h-screen bg-gray-50">
-                {/* Header */}
-                <div className="bg-white border-b border-gray-200">
+                {/* Header mejorado */}
+                <div className="bg-white border-b border-gray-200 shadow-sm">
                     <div className="px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16">
-                            <div className="flex items-center">
+                        <div className="flex items-center justify-between h-20">
+                            {/* Sección izquierda: Back button + Info del evento */}
+                            <div className="flex items-center space-x-6">
                                 <Link 
                                     href={route('organizer.events.index')}
-                                    className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
+                                    className="group"
                                 >
-                                    <ChevronLeft className="w-5 h-5 mr-1" />
-                                    Volver a eventos
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+                                    >
+                                        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 transition-transform" />
+                                        Volver a eventos
+                                    </Button>
                                 </Link>
-                                <div>
-                                    <h1 className="text-xl font-semibold text-gray-900">
-                                        Gestión del evento
-                                    </h1>
-                                    <p className="text-sm text-gray-600">
-                                        {event.name}
-                                    </p>
+                                
+                                <div className="border-l border-gray-300 h-8"></div>
+                                
+                                <div className="flex items-center space-x-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                                            <Calendar className="w-6 h-6 text-white" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center space-x-2">
+                                            <h1 className="text-xl font-bold text-gray-900 truncate max-w-md">
+                                                {event.name}
+                                            </h1>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Activo
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-0.5">
+                                            Gestión del evento
+                                            {event.venue && (
+                                                <span className="ml-2 text-gray-400">
+                                                    • {event.venue.name}
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div className="flex items-center space-x-4">
+                            {/* Sección derecha: Acciones */}
+                            <div className="flex items-center space-x-3">
                                 <Button 
                                     variant="outline" 
                                     size="sm"
+                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                                     onClick={() => window.open(route('event.detail', event.id), '_blank')}
                                 >
-                                    Ver como público
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Vista previa
+                                    <ExternalLink className="w-3 h-3 ml-2 opacity-60" />
+                                </Button>
+                                
+                                <Button 
+                                    variant="default" 
+                                    size="sm"
+                                    className="bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+                                >
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Configurar
                                 </Button>
                             </div>
                         </div>

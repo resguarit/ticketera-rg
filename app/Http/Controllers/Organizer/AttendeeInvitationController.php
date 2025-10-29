@@ -18,10 +18,10 @@ use Inertia\Inertia;
 use Illuminate\Support\Str;
 use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
+use Carbon\Carbon;
 
 class AttendeeInvitationController extends Controller
 {
-
     protected $emailService;
     protected $orderService;
 
@@ -49,6 +49,9 @@ class AttendeeInvitationController extends Controller
             ->where('is_active', true)
             ->get()
             ->map(function($function) {
+                // Formatear las fechas
+                $startTime = Carbon::parse($function->start_time);
+                
                 $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
                     // Contar todos los tickets emitidos (incluyendo invitaciones)
                     $totalIssued = $ticketType->issuedTickets()
@@ -62,6 +65,13 @@ class AttendeeInvitationController extends Controller
                     
                     return $ticketType;
                 });
+
+                // Agregar propiedades de fecha formateadas
+                $function->date = $startTime->format('d/m/Y');
+                $function->time = $startTime->format('H:i');
+                $function->formatted_date = $startTime->format('d \d\e F \d\e Y');
+                $function->day_name = $startTime->locale('es')->dayName;
+                
                 return $function;
             });
 
@@ -92,6 +102,13 @@ class AttendeeInvitationController extends Controller
             'tickets.*.event_function_id' => 'required|exists:event_functions,id',
             'tickets.*.ticket_type_id' => 'required|exists:ticket_types,id',
             'tickets.*.quantity' => 'required|integer|min:1|max:100',
+        ], [
+            'person.name.required' => 'El nombre es obligatorio.',
+            'person.last_name.required' => 'El apellido es obligatorio.',
+            'person.email.required' => 'El email es obligatorio.',
+            'person.email.email' => 'El email debe tener un formato válido.',
+            'tickets.required' => 'Debe seleccionar al menos una entrada.',
+            'tickets.min' => 'Debe seleccionar al menos una entrada.',
         ]);
 
         if ($validator->fails()) {
@@ -109,7 +126,7 @@ class AttendeeInvitationController extends Controller
                 throw new \Exception('Una o más funciones no pertenecen a este evento.');
             }
 
-            // Verificar que los tipos de tickets pertenezcan a las funciones correspondientes
+            // Verificar disponibilidad de tickets antes de crear nada
             foreach ($request->tickets as $ticketRequest) {
                 $ticketType = TicketType::where('id', $ticketRequest['ticket_type_id'])
                     ->where('event_function_id', $ticketRequest['event_function_id'])
@@ -117,6 +134,16 @@ class AttendeeInvitationController extends Controller
 
                 if (!$ticketType) {
                     throw new \Exception('Tipo de ticket inválido para la función seleccionada.');
+                }
+
+                // Verificar disponibilidad
+                $totalIssued = $ticketType->issuedTickets()
+                    ->where('status', '!=', IssuedTicketStatus::CANCELLED)
+                    ->count();
+                $available = $ticketType->quantity - $totalIssued;
+
+                if ($available < $ticketRequest['quantity']) {
+                    throw new \Exception("No hay suficientes entradas disponibles para '{$ticketType->name}'. Disponibles: {$available}, solicitadas: {$ticketRequest['quantity']}.");
                 }
             }
 

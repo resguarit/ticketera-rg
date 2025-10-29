@@ -204,7 +204,6 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                         {/* Category Filter */}
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium">Categoría</Label>
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Todas las categorías" />
@@ -222,7 +221,6 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
 
                         {/* Venue Filter */}
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium">Venue</Label>
                             <Select value={selectedVenue} onValueChange={setSelectedVenue}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Todos los venues" />
@@ -241,7 +239,6 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
 
                         {/* Sort Filter */}
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium">Ordenar por</Label>
                             <Select value={`${sortBy}-${sortDirection}`} onValueChange={handleSortChange}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Ordenar por..." />
