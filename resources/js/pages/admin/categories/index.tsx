@@ -1,23 +1,10 @@
-import { useState, FormEventHandler } from 'react';
+import { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import {
-    Plus, Edit, Trash2, MoreVertical, Tag, Palette, Smile, AlertCircle,
-    LucideIcon, Music, Theater, Trophy, Presentation, Utensils, Laugh, Users,
-    Palette as PaletteIcon, // Alias para el icono de la categoría
-} from 'lucide-react';
+import { Plus, Edit, Trash2, MoreVertical, Tag } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-    DialogDescription,
-} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,41 +12,12 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
 import { Category } from '@/types';
 import { PageProps } from '@/types/ui/ui';
 import ConfirmationModal from '@/components/ConfirmationModal';
-
-// Helper para mapear nombres de iconos a componentes de Lucide
-const iconMap: { [key: string]: LucideIcon } = {
-    music: Music,
-    theater: Theater,
-    trophy: Trophy,
-    presentation: Presentation,
-    utensils: Utensils,
-    palette: PaletteIcon,
-    laugh: Laugh,
-    users: Users,
-};
-
-const DynamicIcon = ({ name, ...props }: { name: string } & React.ComponentProps<LucideIcon>) => {
-    // Usar el icono 'Tag' como fallback si el nombre no se encuentra
-    const IconComponent = iconMap[name] || Tag;
-    return <IconComponent {...props} />;
-};
+import CreateCategoryModal from '@/components/admin/modals/CreateCategoryModal';
+import EditCategoryModal from '@/components/admin/modals/EditCategoryModal';
+import { DynamicIcon } from '@/components/admin/CategoryIcons';
 
 interface CategoryWithCount extends Category {
     events_count: number;
@@ -70,51 +28,26 @@ interface CategoriesPageProps extends PageProps {
 }
 
 export default function CategoriesIndex() {
-    const { categories, errors } = usePage<CategoriesPageProps>().props;
+    const { categories } = usePage<CategoriesPageProps>().props;
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<CategoryWithCount | null>(null);
-    const [editingCategory, setEditingCategory] = useState<CategoryWithCount | null>(null);
+    const [categoryToEdit, setCategoryToEdit] = useState<CategoryWithCount | null>(null);
 
-    const { data, setData, post, put, delete: deleteCategory, reset, processing } = useForm({
-        name: '',
-        icon: '',
-        color: '#3b82f6',
-    });
-
-    const openCreateModal = () => {
-        setEditingCategory(null);
-        reset();
-        setIsModalOpen(true);
-    };
+    const { delete: deleteCategory } = useForm();
 
     const openEditModal = (category: CategoryWithCount) => {
-        setEditingCategory(category);
-        setData({
-            name: category.name,
-            icon: category.icon || '',
-            color: category.color || '#3b82f6',
-        });
-        setIsModalOpen(true);
-    };
-
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-        const routeName = editingCategory
-            ? route('admin.categories.update', editingCategory.id)
-            : route('admin.categories.store');
-        const method = editingCategory ? 'put' : 'post';
-
-        (method === 'post' ? post : put)(routeName, {
-            onSuccess: () => setIsModalOpen(false),
-        });
+        setCategoryToEdit(category);
+        setIsEditModalOpen(true);
     };
 
     const handleDeleteCategory = (categoryId: number) => {
         deleteCategory(route('admin.categories.destroy', categoryId), {
             onSuccess: () => {
                 setCategoryToDelete(null);
+                setIsConfirmModalOpen(false);
             }
         });
     };
@@ -131,86 +64,14 @@ export default function CategoriesIndex() {
                             Crea y administra las categorías para tus eventos.
                         </p>
                     </div>
-                    <Button onClick={openCreateModal} className="bg-primary hover:bg-primary-hover text-white">
+                    <Button 
+                        onClick={() => setIsCreateModalOpen(true)} 
+                        className="bg-primary hover:bg-primary-hover text-white"
+                    >
                         <Plus className="w-4 h-4 mr-2" />
                         Crear Categoría
                     </Button>
                 </div>
-
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[425px] bg-white">
-                        <DialogHeader>
-                            <DialogTitle className="text-black">
-                                {editingCategory ? 'Editar Categoría' : 'Crear Nueva Categoría'}
-                            </DialogTitle>
-                            <DialogDescription>
-                                {editingCategory
-                                    ? 'Actualiza los detalles de la categoría.'
-                                    : 'Completa el formulario para añadir una nueva categoría.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={submit}>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name" className="text-black">Nombre</Label>
-                                    <Input
-                                        id="name"
-                                        value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                        className="bg-white border-gray-300 text-black"
-                                        required
-                                    />
-                                    <InputError message={errors.name} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-black">Icono (Opcional)</Label>
-                                    <div className="grid grid-cols-6 gap-2 p-2 border rounded-md bg-gray-50">
-                                        {Object.keys(iconMap).map((iconName) => (
-                                            <button
-                                                type="button"
-                                                key={iconName}
-                                                onClick={() => setData('icon', data.icon === iconName ? '' : iconName)}
-                                                className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                                                    data.icon === iconName
-                                                        ? 'bg-secondary text-white'
-                                                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                                                }`}
-                                                title={iconName.charAt(0).toUpperCase() + iconName.slice(1)}
-                                            >
-                                                <DynamicIcon name={iconName} className="w-5 h-5" />
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <InputError message={errors.icon} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="color" className="text-black">Color</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="color"
-                                            type="color"
-                                            value={data.color}
-                                            onChange={(e) => setData('color', e.target.value)}
-                                            className="p-1 h-10 w-14 block bg-white border border-gray-300 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
-                                        />
-                                        <Input
-                                            type="text"
-                                            value={data.color}
-                                            onChange={(e) => setData('color', e.target.value)}
-                                            className="bg-white border-gray-300 text-black"
-                                        />
-                                    </div>
-                                    <InputError message={errors.color} />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover text-white">
-                                    {processing ? 'Guardando...' : 'Guardar Cambios'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
 
                 <Card className="bg-white shadow-lg border-gray-200">
                     <CardHeader className="pb-0">
@@ -235,32 +96,34 @@ export default function CategoriesIndex() {
                                                 </p>
                                             </div>
                                         </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm">
-                                                        <MoreVertical className="w-4 h-4 text-gray-600" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent className="bg-white border-gray-300">
-                                                    <DropdownMenuItem onClick={() => openEditModal(category)} className="text-gray-700 hover:bg-gray-50">
-                                                        <Edit className="w-4 h-4 mr-2" />
-                                                        Editar
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-gray-200" />
-                                                        <DropdownMenuItem
-                                                            className="text-red-600 focus:text-red-600 hover:bg-red-50"
-                                                            onSelect={() => {
-                                                                setCategoryToDelete(category);
-                                                                setIsConfirmModalOpen(true);
-                                                            }}
-                                                            disabled={category.events_count > 0}
-                                                        >
-                                                            <Trash2 className="w-4 h-4 mr-2" />
-                                                            Eliminar
-                                                        </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                                    
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm">
+                                                    <MoreVertical className="w-4 h-4 text-gray-600" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="bg-white border-gray-300">
+                                                <DropdownMenuItem 
+                                                    onClick={() => openEditModal(category)} 
+                                                    className="text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    <Edit className="w-4 h-4 mr-2" />
+                                                    Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator className="bg-gray-200" />
+                                                <DropdownMenuItem
+                                                    className="text-red-600 focus:text-red-600 hover:bg-red-50"
+                                                    onSelect={() => {
+                                                        setCategoryToDelete(category);
+                                                        setIsConfirmModalOpen(true);
+                                                    }}
+                                                    disabled={category.events_count > 0}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 ))}
                             </div>
@@ -274,7 +137,10 @@ export default function CategoriesIndex() {
                                     <p className="text-gray-600 mb-4">
                                         Comienza creando tu primera categoría para organizar tus eventos.
                                     </p>
-                                    <Button onClick={openCreateModal} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    <Button 
+                                        onClick={() => setIsCreateModalOpen(true)} 
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    >
                                         <Plus className="w-4 h-4 mr-2" />
                                         Crear tu primera categoría
                                     </Button>
@@ -285,9 +151,27 @@ export default function CategoriesIndex() {
                 </Card>
             </div>
 
+            {/* Modales */}
+            <CreateCategoryModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
+
+            <EditCategoryModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setCategoryToEdit(null);
+                }}
+                category={categoryToEdit}
+            />
+
             <ConfirmationModal
                 isOpen={isConfirmModalOpen}
-                onClose={() => setIsConfirmModalOpen(false)}
+                onClose={() => {
+                    setIsConfirmModalOpen(false);
+                    setCategoryToDelete(null);
+                }}
                 onConfirm={() => {
                     if (categoryToDelete) {
                         handleDeleteCategory(categoryToDelete.id);
