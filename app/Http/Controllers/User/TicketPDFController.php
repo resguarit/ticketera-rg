@@ -33,27 +33,29 @@ class TicketPDFController extends Controller
     /**
      * Descargar todos los tickets de una orden
      */
-    public function downloadOrder($orderId)
+    public function downloadOrder($transaction_id)
     {
         $user = Auth::user();
         
-        // Verificar que la orden pertenece al usuario
         $order = \App\Models\Order::with([
             'items.ticketType.eventFunction.event.venue.ciudad.provincia',
             'items.ticketType.eventFunction.event.organizer',
             'client.person'
         ])
         ->where('client_id', $user->id)
-        ->findOrFail($orderId);
+        ->where('transaction_id', $transaction_id)
+        ->firstOrFail();
 
-        // Generar QR codes para cada ticket usando PdfService
+        if ($order === null || $order->items->isEmpty()) {
+            abort(404, 'No se encontraron tickets para esta orden');
+        }
+
         $ticketsWithQR = $order->items->map(function($ticket) {
             $ticketData = $this->pdfService->generateTicketData($ticket, 120);
             $ticket->qrCode = $ticketData['qrCode'];
             return $ticket;
         });
 
-        // Agrupar tickets por evento/función
         $ticketsByEvent = $ticketsWithQR->groupBy(function($ticket) {
             return $ticket->ticketType->eventFunction->event->id;
         });

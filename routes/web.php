@@ -25,7 +25,7 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::post('/tickets/{ticket}/transfer', [UserTicketController::class, 'transfer'])->name('tickets.transfer');
     
     // Nuevas rutas para PDF
-    Route::get('/orders/{order}/download-tickets', [\App\Http\Controllers\User\TicketPDFController::class, 'downloadOrder'])->name('orders.download-tickets');
+    Route::get('/orders/{transaction_id}/download-tickets', [\App\Http\Controllers\User\TicketPDFController::class, 'downloadOrder'])->name('orders.download-tickets');
 });
 
 Route::middleware('auth')->get('/my-tickets', [UserTicketController::class, 'index'])->name('my-tickets');

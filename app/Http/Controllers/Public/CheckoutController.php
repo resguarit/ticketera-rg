@@ -21,6 +21,7 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\URL;
 
 class CheckoutController extends Controller
 {
@@ -246,9 +247,11 @@ class CheckoutController extends Controller
 
                 $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
-                $redirectParams = ['order' => $checkoutResult->order->id];
+                $redirectParams = ['order' => $checkoutResult->order->transaction_id ?? $checkoutResult->order->id];
 
-                return redirect()->route('checkout.success', $redirectParams)
+                $signedUrl = URL::temporarySignedRoute('checkout.success', now()->addMinutes(60), $redirectParams);
+
+                return redirect()->to($signedUrl)
                     ->with('success', '¡Compra realizada exitosamente!');
 
             } else {
@@ -298,13 +301,15 @@ class CheckoutController extends Controller
 
                 $this->emailDispatcher->sendTicketPurchaseConfirmation($orderResult['order']);
 
-                $redirectParams = ['order' => $orderResult['order']->id];
+                $redirectParams = ['order' => $orderResult['order']->transaction_id ?? $orderResult['order']->id];
 
                 if ($orderResult['account_created'] ?? false) {
                     $redirectParams['account_created'] = '1';
                 }
-                
-                return redirect()->route('checkout.success', $redirectParams)
+
+                $signedUrl = URL::temporarySignedRoute('checkout.success', now()->addMinutes(60), $redirectParams);
+
+                return redirect()->to($signedUrl)
                     ->with('success', '¡Compra realizada exitosamente!');
 
             } else {
@@ -398,10 +403,10 @@ class CheckoutController extends Controller
     public function success(Request $request): Response | RedirectResponse
     {
 
-        $orderId = $request->query('order');
+        $orderKey = $request->query('order');
         $accountCreated = $request->query('account_created', false);
         
-        if (!$orderId) {
+        if (!$orderKey) {
             Log::error('Order ID no encontrado en success page');
             return redirect()->route('home')
                 ->with('error', 'Orden no encontrada');
@@ -413,7 +418,17 @@ class CheckoutController extends Controller
             $order = Order::with([
                 'items.ticketType.eventFunction.event.venue.ciudad.provincia',
                 'client.person'
-            ])->findOrFail($orderId);
+            ])
+            ->where(function($q) use ($orderKey) {
+                $q->where('transaction_id', $orderKey)
+                  ->orWhere('id', $orderKey);
+            })
+            ->firstOrFail();
+
+            // Si hay usuario logueado, asegurar que sea el dueño de la orden
+            if (Auth::check() && $order->client_id !== Auth::id()) {
+                abort(403, 'No tienes permiso para ver esta orden');
+            }
 
             // Obtener resumen de la orden usando el servicio
             $orderSummary = $this->orderService->getOrderSummary($order);
@@ -426,7 +441,7 @@ class CheckoutController extends Controller
 
             // Preparar datos para la vista
             $purchaseData = [
-                'orderId' => $orderSummary['order_number'],
+                'transaction_id' => $orderSummary['order_number'],
                 'event' => [
                     'name' => $event->name,
                     'image_url' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
@@ -471,7 +486,7 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error en success page', [
-                'order_id' => $orderId,
+                'order_id' => $orderKey,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
