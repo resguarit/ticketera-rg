@@ -150,8 +150,10 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
         <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Nombre del Recinto</Label>
-                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
+                    <Label htmlFor="name">
+                        Nombre del Recinto <span className="text-red-500">*</span>
+                    </Label>
+                    <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)}  />
                     <InputError message={errors.name} />
                 </div>
                 <div className="space-y-2">
@@ -165,7 +167,9 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
             <div className="space-y-4 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-medium">Sectores del Recinto</h3>
+                        <h3 className="text-lg font-medium">
+                            Sectores del Recinto <span className="text-red-500">*</span>
+                        </h3>
                         <p className="text-sm text-muted-foreground">Define las áreas y sus capacidades.</p>
                     </div>
                     <Button type="button" variant="outline" onClick={() => openSectorModal(null)}>
@@ -208,7 +212,9 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="provincia">Provincia</Label>
+                    <Label htmlFor="provincia">
+                        Provincia <span className="text-red-500">*</span>
+                    </Label>
                     <Popover open={provinciaPopover} onOpenChange={setProvinciaPopover}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" className="w-full justify-between">
@@ -256,7 +262,9 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="ciudad">Ciudad</Label>
+                    <Label htmlFor="ciudad">
+                        Ciudad <span className="text-red-500">*</span>
+                    </Label>
                     <Popover open={ciudadPopover} onOpenChange={setCiudadPopover}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" className="w-full justify-between" disabled={!data.provincia_id_or_name}>
@@ -303,8 +311,10 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="address">Dirección</Label>
-                <Textarea id="address" value={data.address} onChange={e => setData('address', e.target.value)} required />
+                <Label htmlFor="address">
+                    Dirección <span className="text-red-500">*</span>
+                </Label>
+                <Textarea id="address" value={data.address} onChange={e => setData('address', e.target.value)}  />
                 <InputError message={errors.address} />
             </div>
 
