@@ -89,7 +89,12 @@ class OrganizerController extends Controller
 
     public function show(int $organizerId): Response
     {
-        $organizer = Organizer::with(['events.category', 'events.venue', 'users.person'])->findOrFail($organizerId);
+        $organizer = Organizer::with([
+            'events.category', 
+            'events.venue.ciudad.provincia', // Cargar venue con city y province
+            'users.person'
+        ])->findOrFail($organizerId);
+        
         return Inertia::render('admin/organizers/show', [
             'organizer' => $organizer,
         ]);
