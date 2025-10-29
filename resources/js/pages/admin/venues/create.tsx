@@ -2,10 +2,11 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageProps } from '@/types/ui/ui';
 import { Ciudad, Provincia } from '@/types';
 import VenueForm from './VenueForm';
+import BackButton from '@/components/Backbutton';
 
 interface CreateVenueProps extends PageProps {
     provincias: Provincia[];
@@ -34,11 +35,17 @@ export default function CreateVenue() {
         <>
             <Head title="Crear Recinto" />
             <div className="container mx-auto p-6">
+                <div className="flex items-center mb-6 gap-4">
+                    <BackButton href={route('admin.venues.index')} />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Crear Recinto</h1>
+                        <p className="text-gray-600 mt-1">
+                            Completa los datos para registrar un nuevo lugar para tus eventos.
+                        </p>
+                    </div>
+                </div>
+
                 <Card className="max-w-4xl mx-auto bg-white">
-                    <CardHeader>
-                        <CardTitle>Crear Nuevo Recinto</CardTitle>
-                        <CardDescription>Completa los datos para registrar un nuevo lugar para tus eventos.</CardDescription>
-                    </CardHeader>
                     <CardContent>
                         <VenueForm
                             data={data}
