@@ -202,7 +202,7 @@ export default function NewOrganizer() {
                     
                     <form onSubmit={submit} className="space-y-6">
                         <Card className='bg-white shadow-lg border-gray-200'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-black'>Información del Organizador</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -261,7 +261,7 @@ export default function NewOrganizer() {
                                         <InputError message={errors.phone} className="mt-1" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="tax" className="text-black">Cargo por servicio (%)</Label>
+                                        <Label htmlFor="tax" className="text-black">Cargo por servicio (%)<span className="text-red-500">*</span></Label>
                                         <Input 
                                             id="tax" 
                                             type="number"
@@ -282,7 +282,7 @@ export default function NewOrganizer() {
 
                         {/* Redes Sociales */}
                         <Card className='bg-white shadow-lg border-gray-200'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-black'>Redes Sociales</CardTitle>
                                 <p className="text-sm text-gray-600">Solo ingrese el nombre de usuario, sin la URL completa</p>
                             </CardHeader>
@@ -342,7 +342,7 @@ export default function NewOrganizer() {
 
                         {/* Logo */}
                         <Card className='bg-white shadow-lg border-gray-200'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-black'>Logo</CardTitle>
                                 <p className="text-sm text-gray-600">Sube el logo de tu organización (máximo 5MB)</p>
                             </CardHeader>
@@ -380,7 +380,7 @@ export default function NewOrganizer() {
 
                         {/* Sección de claves de Decidir (opcional) */}
                         <Card className='bg-white shadow-lg border-gray-200'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-black'>Configuración de Decidir (Opcional)</CardTitle>
                                 <p className="text-sm text-gray-600">Configuración para el procesamiento de pagos</p>
                             </CardHeader>
