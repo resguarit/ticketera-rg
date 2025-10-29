@@ -43,7 +43,13 @@ class OrganizerController extends Controller
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
             })
-            ->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'))
+            // Manejar el caso de ordenamiento
+            ->when($request->input('sort_by') && $request->input('sort_by') !== 'all', function (Builder $query) use ($request) {
+                $query->orderBy($request->input('sort_by'), $request->input('sort_direction', 'desc'));
+            }, function (Builder $query) use ($request) {
+                // Orden por defecto cuando sort_by es 'all' o no está definido
+                $query->orderBy('created_at', $request->input('sort_direction', 'desc'));
+            })
             ->paginate(10)
             ->withQueryString();
 
