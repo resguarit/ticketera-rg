@@ -1,6 +1,7 @@
 import { FormEventHandler, useState, useEffect } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -73,9 +74,134 @@ export default function EditOrganizer() {
     }
   };
 
+  // Función para validar campos requeridos antes del envío
+  const validateRequiredFields = () => {
+    const requiredFields = [
+      { field: 'name', label: 'Nombre del organizador', value: data.name },
+      { field: 'referring', label: 'Referente', value: data.referring },
+      { field: 'email', label: 'Email', value: data.email },
+      { field: 'phone', label: 'Teléfono', value: data.phone },
+      { field: 'tax', label: 'Cargo por servicio', value: data.tax }
+    ];
+
+    for (const { field, label, value } of requiredFields) {
+      if (!value || value.toString().trim() === '') {
+        toast.error(`El campo ${label} es obligatorio`, { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      toast.error('El formato del email no es válido', { id: 'validation-error' });
+      return false;
+    }
+
+    // Validar teléfono (formato básico)
+    if (data.phone && data.phone.trim() !== '') {
+      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{8,}$/;
+      if (!phoneRegex.test(data.phone)) {
+        toast.error('El formato del teléfono no es válido', { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    // Validar porcentaje de tax
+    if (data.tax && data.tax.trim() !== '') {
+      const taxValue = parseFloat(data.tax);
+      if (isNaN(taxValue) || taxValue < 0 || taxValue > 100) {
+        toast.error('El cargo por servicio debe ser un número entre 0 y 100', { id: 'validation-error' });
+        return false;
+      }
+    } else {
+      toast.error('El cargo por servicio es obligatorio', { id: 'validation-error' });
+      return false;
+    }
+
+    // Validar URLs de redes sociales si se proporcionan
+    if (data.facebook_url && data.facebook_url.trim() !== '') {
+      if (data.facebook_url.includes('facebook.com/') || data.facebook_url.includes('fb.com/')) {
+        toast.error('Solo ingrese el nombre de usuario de Facebook, sin la URL completa', { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    if (data.instagram_url && data.instagram_url.trim() !== '') {
+      if (data.instagram_url.includes('instagram.com/') || data.instagram_url.includes('@')) {
+        toast.error('Solo ingrese el nombre de usuario de Instagram, sin la URL completa ni @', { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    if (data.twitter_url && data.twitter_url.trim() !== '') {
+      if (data.twitter_url.includes('x.com/') || data.twitter_url.includes('twitter.com/') || data.twitter_url.includes('@')) {
+        toast.error('Solo ingrese el nombre de usuario de Twitter/X, sin la URL completa ni @', { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    // Validar archivo de logo si se seleccionó
+    if (data.logo_url) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(data.logo_url.type)) {
+        toast.error('El logo debe ser una imagen válida (JPG, PNG, GIF o WebP)', { id: 'validation-error' });
+        return false;
+      }
+
+      // Validar tamaño del archivo (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+      if (data.logo_url.size > maxSize) {
+        toast.error('El logo no puede ser mayor a 5MB', { id: 'validation-error' });
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const submit: FormEventHandler = (e) => {
     e.preventDefault();
-    post(route('admin.organizers.update', organizer.id));
+    
+    // Validar antes de enviar
+    if (!validateRequiredFields()) {
+      return;
+    }
+
+    post(route('admin.organizers.update', organizer.id), {
+      onStart: () => {
+        toast.loading('Actualizando organizador...', { id: 'update-organizer' });
+      },
+      onSuccess: () => {
+        toast.success('Organizador actualizado exitosamente', { id: 'update-organizer' });
+      },
+      onError: (errors) => {
+        console.log('Form errors:', errors);
+        
+        // Mostrar errores específicos del servidor
+        if (errors.name) {
+          toast.error(`Nombre: ${errors.name}`, { id: 'update-organizer' });
+        } else if (errors.referring) {
+          toast.error(`Referente: ${errors.referring}`, { id: 'update-organizer' });
+        } else if (errors.email) {
+          toast.error(`Email: ${errors.email}`, { id: 'update-organizer' });
+        } else if (errors.phone) {
+          toast.error(`Teléfono: ${errors.phone}`, { id: 'update-organizer' });
+        } else if (errors.tax) {
+          toast.error(`Cargo por servicio: ${errors.tax}`, { id: 'update-organizer' });
+        } else if (errors.logo_url) {
+          toast.error(`Logo: ${errors.logo_url}`, { id: 'update-organizer' });
+        } else if (errors.facebook_url) {
+          toast.error(`Facebook: ${errors.facebook_url}`, { id: 'update-organizer' });
+        } else if (errors.instagram_url) {
+          toast.error(`Instagram: ${errors.instagram_url}`, { id: 'update-organizer' });
+        } else if (errors.twitter_url) {
+          toast.error(`Twitter: ${errors.twitter_url}`, { id: 'update-organizer' });
+        } else {
+          toast.error('Error al actualizar el organizador. Verifique todos los campos', { id: 'update-organizer' });
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -99,7 +225,7 @@ export default function EditOrganizer() {
             <div className="flex items-center space-x-2">
               <Button onClick={submit} disabled={processing} className="bg-primary text-primary-foreground hover:bg-primary-hover">
                 <Save className="w-4 h-4 mr-2" />
-                Guardar Cambios
+                {processing ? 'Guardando...' : 'Guardar Cambios'}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm} disabled={processing}>
                 <RefreshCcw className="w-4 h-4 mr-2" />
@@ -116,29 +242,49 @@ export default function EditOrganizer() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name" className="text-card-foreground">Nombre del Organizador</Label>
+                    <Label htmlFor="name" className="text-card-foreground">
+                      Nombre del Organizador <span className="text-red-500">*</span>
+                    </Label>
                     <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
                     <InputError message={errors.name} className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="referring" className="text-card-foreground">Referente</Label>
+                    <Label htmlFor="referring" className="text-card-foreground">
+                      Referente <span className="text-red-500">*</span>
+                    </Label>
                     <Input id="referring" value={data.referring} onChange={e => setData('referring', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
                     <InputError message={errors.referring} className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-card-foreground">Email</Label>
+                    <Label htmlFor="email" className="text-card-foreground">
+                      Email <span className="text-red-500">*</span>
+                    </Label>
                     <Input id="email" type="email" value={data.email} onChange={e => setData('email', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
                     <InputError message={errors.email} className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="text-card-foreground">Teléfono</Label>
+                    <Label htmlFor="phone" className="text-card-foreground">
+                      Teléfono <span className="text-red-500">*</span>
+                    </Label>
                     <Input id="phone" value={data.phone} onChange={e => setData('phone', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
                     <InputError message={errors.phone} className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="tax" className="text-card-foreground">Cargo por servicio (%)</Label>
-                    <Input id="tax" value={data.tax} onChange={e => setData('tax', e.target.value)} className="bg-background border-border text-foreground placeholder:text-muted-foreground" />
+                    <Label htmlFor="tax" className="text-card-foreground">
+                      Cargo por servicio (%) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      id="tax" 
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={data.tax} 
+                      onChange={e => setData('tax', e.target.value)} 
+                      className="bg-background border-border text-foreground placeholder:text-muted-foreground" 
+                    />
                     <InputError message={errors.tax} className="mt-1" />
+                    <p className="text-xs text-muted-foreground mt-1">Porcentaje de comisión por venta (0-100)</p>
                   </div>
                 </div>
               </CardContent>
@@ -147,6 +293,7 @@ export default function EditOrganizer() {
             <Card className='bg-card shadow-lg border-border'>
               <CardHeader>
                 <CardTitle className='text-lg font-semibold text-card-foreground'>Redes Sociales</CardTitle>
+                <p className="text-sm text-muted-foreground">Solo ingrese el nombre de usuario, sin la URL completa</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,20 +328,34 @@ export default function EditOrganizer() {
             <Card className='bg-card shadow-lg border-border'>
               <CardHeader>
                 <CardTitle className='text-lg font-semibold text-card-foreground'>Logo</CardTitle>
+                <p className="text-sm text-muted-foreground">Cambie el logo de su organización (máximo 5MB)</p>
               </CardHeader>
               <CardContent>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
                   <div className='space-y-2'>
                     <Label htmlFor="logo" className="text-card-foreground">Cambiar Logo</Label>
                     <div className='flex items-center py-4'>
-                      <Input className='w-fit bg-background border-border text-foreground' id="logo" type="file" onChange={handleLogoChange} />
-                      <InputError message={errors.logo_url} className="mt-1" />
+                      <Input 
+                        className='w-full bg-background border-border text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-muted file:text-muted-foreground hover:file:bg-muted/80' 
+                        id="logo" 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleLogoChange} 
+                      />
                     </div>
+                    <p className="text-xs text-muted-foreground">Formatos soportados: JPG, PNG, GIF, WebP</p>
+                    <InputError message={errors.logo_url} className="mt-1" />
                   </div>
                   {logoPreview && (
                     <div className="space-y-2">
                       <Label className="text-card-foreground">Vista Previa del Logo</Label>
-                      <img src={logoPreview} alt="Vista previa" className="h-32 w-32 object-contain rounded-md border p-2 bg-muted border-border" />
+                      <div className="border border-border rounded-lg p-4 bg-muted">
+                        <img 
+                          src={logoPreview} 
+                          alt="Vista previa" 
+                          className="h-32 w-32 object-contain mx-auto rounded-md" 
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
