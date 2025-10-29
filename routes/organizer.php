@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
 
-Route::middleware(['auth', 'organizer'])->prefix('organizer')->name('organizer.')->group(function () {
+Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
 
     Route::prefix('events')->name('events.')->group(function () { 

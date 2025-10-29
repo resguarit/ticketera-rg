@@ -19,6 +19,8 @@
             })();
         </script>
 
+        <script src="https://live.decidir.com/static/v2.6.4/decidir.js"></script>
+
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {

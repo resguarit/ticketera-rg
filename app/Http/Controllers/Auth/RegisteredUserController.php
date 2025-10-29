@@ -54,6 +54,7 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'person_id' => $person->id,
+                'password_changed_at' => now(),
             ]);
 
             event(new Registered($user));
@@ -68,6 +69,88 @@ class RegisteredUserController extends Controller
             // Log registration failure
             Log::error('Registration failed: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Registration failed.']);
+        }
+    }
+
+    /**
+     * Handle registration from checkout without redirect
+     */
+    public function checkoutRegister(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'firstName' => 'required|string|max:255',
+                'lastName' => 'required|string|max:255',
+                'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+                'password' => ['required', 'confirmed', Rules\Password::defaults()],
+                'phone' => 'required|string|max:20',
+                'documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
+                'documentNumber' => 'required|string|max:20',
+            ]);
+
+            DB::beginTransaction();
+
+            // Verificar si ya existe una persona con ese DNI
+            $existingPerson = Person::where('dni', $validated['documentNumber'])->first();
+            
+            if ($existingPerson) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe una persona registrada con ese número de documento.',
+                    'errors' => [
+                        'documentNumber' => ['El número de documento ya está registrado.']
+                    ]
+                ], 422);
+            }
+
+            // Crear persona
+            $person = Person::create([
+                'name' => $validated['firstName'],
+                'last_name' => $validated['lastName'],
+                'dni' => $validated['documentNumber'],
+                'phone' => $validated['phone'],
+            ]);
+
+            // Crear usuario
+            $user = User::create([
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'person_id' => $person->id,
+            ]);
+
+            DB::commit();
+
+            // Autenticar automáticamente
+            Auth::login($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cuenta creada exitosamente',
+                'user' => $user
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error en registro desde checkout', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la cuenta. Por favor intenta nuevamente.'
+            ], 500);
         }
     }
 }

@@ -27,7 +27,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
     const [bannerPreview, setBannerPreview] = useState<string | null>(event.image_url || null);
     const [heroBannerPreview, setHeroBannerPreview] = useState<string | null>(event.hero_image_url || null);
 
-    const { data, setData, put, processing, errors, wasSuccessful } = useForm({
+    const { data, setData, post, processing, errors, wasSuccessful } = useForm({
         _method: 'PUT',
         name: event.name || '',
         description: event.description || '',
