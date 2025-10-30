@@ -189,11 +189,10 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                             placeholder="Ej: Función Tarde, 2da Fecha"
                             className={errors.name ? 'border-red-500' : ''}
                         />
-                        {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
                     </div>
 
                     <div className="grid gap-3">
-                        <Label htmlFor="description">Descripción (Opcional)</Label>
+                        <Label htmlFor="description">Descripción</Label>
                         <Textarea
                             id="description"
                             value={data.description}
@@ -201,7 +200,6 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                             placeholder="Añade una breve descripción para esta función."
                             className={errors.description ? 'border-red-500' : ''}
                         />
-                        {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -221,7 +219,6 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                                 }}
                                 className={errors.start_time ? 'border-red-500' : ''}
                             />
-                            {errors.start_time && <p className="text-sm text-red-600">{errors.start_time}</p>}
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="start_time">
@@ -259,7 +256,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid gap-3">
-                            <Label htmlFor="end_date">Fecha de Fin (Opcional)</Label>
+                            <Label htmlFor="end_date">Fecha de Fin</Label>
                             <Input
                                 id="end_date"
                                 type="date"
@@ -275,10 +272,9 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                                 className={errors.end_time ? 'border-red-500' : ''}
                                 min={data.start_time ? data.start_time.split('T')[0] : ''}
                             />
-                            {errors.end_time && <p className="text-sm text-red-600">{errors.end_time}</p>}
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="end_time">Hora de Fin (Opcional)</Label>
+                            <Label htmlFor="end_time">Hora de Fin</Label>
                             <Select 
                                 value={data.end_time ? data.end_time.split('T')[1] || '' : ''} 
                                 onValueChange={(value) => {

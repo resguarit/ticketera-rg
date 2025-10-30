@@ -331,9 +331,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             onChange={(e) => setPersonData({...personData, name: e.target.value})}
                                             className={errors['person.name'] ? 'border-red-500' : ''}
                                         />
-                                        {errors['person.name'] && (
-                                            <p className="text-sm text-red-600 mt-1">{errors['person.name']}</p>
-                                        )}
                                     </div>
                                     <div>
                                         <Label htmlFor="last_name">Apellido <span className="text-red-500">*</span></Label>
@@ -344,9 +341,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             onChange={(e) => setPersonData({...personData, last_name: e.target.value})}
                                             className={errors['person.last_name'] ? 'border-red-500' : ''}
                                         />
-                                        {errors['person.last_name'] && (
-                                            <p className="text-sm text-red-600 mt-1">{errors['person.last_name']}</p>
-                                        )}
                                     </div>
                                 </div>
 
@@ -362,15 +356,12 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         onChange={(e) => setPersonData({...personData, email: e.target.value})}
                                         className={errors['person.email'] ? 'border-red-500' : ''}
                                     />
-                                    {errors['person.email'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.email']}</p>
-                                    )}
                                 </div>
 
                                 <div>
                                     <Label htmlFor="dni" className="flex items-center gap-1">
                                         <IdCard className="w-4 h-4" />
-                                        DNI (opcional)</Label>
+                                        DNI</Label>
                                     <Input
                                         id="dni"
                                         type="text"
@@ -379,15 +370,12 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         className={errors['person.dni'] ? 'border-red-500' : ''}
                                         placeholder="Sin espacios ni puntos"
                                     />
-                                    {errors['person.dni'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.dni']}</p>
-                                    )}
                                 </div>
 
                                 <div>
                                     <Label htmlFor="phone" className="flex items-center gap-1">
                                         <Phone className="w-4 h-4" />
-                                        Teléfono (opcional)
+                                        Teléfono
                                     </Label>
                                     <Input
                                         id="phone"
@@ -396,15 +384,12 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         onChange={(e) => setPersonData({...personData, phone: e.target.value})}
                                         className={errors['person.phone'] ? 'border-red-500' : ''}
                                     />
-                                    {errors['person.phone'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.phone']}</p>
-                                    )}
                                 </div>
 
                                 <div>
                                     <Label htmlFor="address" className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4" />
-                                        Dirección (opcional)
+                                        Dirección
                                     </Label>
                                     <Textarea
                                         id="address"
@@ -413,9 +398,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         className={errors['person.address'] ? 'border-red-500' : ''}
                                         rows={2}
                                     />
-                                    {errors['person.address'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.address']}</p>
-                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -577,10 +559,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     </div>
                                 ))}
 
-                                {errors.tickets && (
-                                    <p className="text-sm text-red-600">{errors.tickets}</p>
-                                )}
-
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -606,13 +584,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                             </CardContent>
                         </Card>
                     </div>
-
-                    {/* Errores generales */}
-                    {(errors as any).general && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-sm text-red-700">{(errors as any).general}</p>
-                        </div>
-                    )}
 
                     {/* Botones de acción */}
                     <div className="flex items-center justify-end gap-4">
