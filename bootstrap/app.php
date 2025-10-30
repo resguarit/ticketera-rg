@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => App\Http\Middleware\IsAdmin::class,
             'organizer' => App\Http\Middleware\IsOrganizer::class,
+            'password.changed' => App\Http\Middleware\EnsurePasswordIsChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
