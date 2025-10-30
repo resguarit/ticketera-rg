@@ -138,14 +138,6 @@ export default function EventManagementLayout({
                                     <ExternalLink className="w-3 h-3 ml-2 opacity-60" />
                                 </Button>
                                 
-                                <Button 
-                                    variant="default" 
-                                    size="sm"
-                                    className="bg-indigo-600 hover:bg-indigo-700 shadow-sm"
-                                >
-                                    <Settings className="w-4 h-4 mr-2" />
-                                    Configurar
-                                </Button>
                             </div>
                         </div>
                     </div>

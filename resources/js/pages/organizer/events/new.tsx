@@ -394,7 +394,7 @@ export default function EventsNew({ categories, venues }: Props) {
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="name" className="text-card-foreground">Nombre del Evento *</Label>
+                                        <Label htmlFor="name" className="text-card-foreground">Nombre del Evento <span className="text-red-500">*</span></Label>
                                         <Input 
                                             id="name" 
                                             value={data.name} 
@@ -402,11 +402,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                                             required
                                         />
-                                        <InputError message={errors.name} className="mt-1" />
                                     </div>
                                     
                                     <div>
-                                        <Label htmlFor="category_id" className="text-card-foreground">Categoría *</Label>
+                                        <Label htmlFor="category_id" className="text-card-foreground">Categoría <span className="text-red-500">*</span></Label>
                                         <div className="flex gap-2">
                                             <Select value={data.category_id} onValueChange={(value) => setData('category_id', value)}>
                                                 <SelectTrigger className="bg-background border-border text-foreground">
@@ -421,11 +420,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <InputError message={errors.category_id} className="mt-1" />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="venue_id" className="text-card-foreground">Recinto *</Label>
+                                        <Label htmlFor="venue_id" className="text-card-foreground">Recinto <span className="text-red-500">*</span></Label>
                                         <div className="flex gap-2">
                                             <Select value={data.venue_id} onValueChange={handleVenueChange}>
                                                 <SelectTrigger className="bg-background border-border text-foreground">
@@ -443,11 +441,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 <Plus className="w-4 h-4" />
                                             </Button>
                                         </div>
-                                        <InputError message={errors.venue_id} className="mt-1" />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="description" className="text-card-foreground">Descripción *</Label>
+                                        <Label htmlFor="description" className="text-card-foreground">Descripción <span className="text-red-500">*</span></Label>
                                         <Textarea 
                                             id="description" 
                                             value={data.description} 
@@ -456,7 +453,6 @@ export default function EventsNew({ categories, venues }: Props) {
                                             rows={4}
                                             required
                                         />
-                                        <InputError message={errors.description} className="mt-1" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -483,7 +479,6 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 onChange={handleBannerChange}
                                                 accept="image/*"
                                             />
-                                            <InputError message={errors.banner_url} className="mt-1" />
                                         </div>
                                         {bannerPreview && (
                                             <div className='space-y-2'>
@@ -601,7 +596,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
                                             <Label htmlFor="hero_banner" className="text-card-foreground">
-                                                Hero Banner (Opcional)
+                                                Hero Banner 
                                             </Label>
                                             <p className="text-sm text-muted-foreground">
                                                 Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
@@ -614,7 +609,6 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 onChange={handleHeroBannerChange}
                                                 accept="image/*"
                                             />
-                                            <InputError message={errors.hero_banner_url} className="mt-1" />
                                         </div>
                                         {heroBannerPreview && (
                                             <div className='space-y-2'>
@@ -677,7 +671,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
                                         <div className="space-y-4 border border-border rounded-lg p-4">
                                             <div>
-                                                <Label className="text-card-foreground">Nombre de la Función *</Label>
+                                                <Label className="text-card-foreground">Nombre de la Función <span className="text-red-500">*</span></Label>
                                                 <Input 
                                                     value={functionForm.name} 
                                                     onChange={(e) => setFunctionForm(prev => ({ ...prev, name: e.target.value }))}
@@ -700,7 +694,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <Label className="text-card-foreground">Fecha de Inicio *</Label>
+                                                    <Label className="text-card-foreground">Fecha de Inicio <span className="text-red-500">*</span></Label>
                                                     <Input 
                                                         type="date"
                                                         value={functionForm.start_time ? functionForm.start_time.split('T')[0] : ''} 
@@ -716,7 +710,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <Label className="text-card-foreground">Hora de Inicio *</Label>
+                                                    <Label className="text-card-foreground">Hora de Inicio <span className="text-red-500">*</span></Label>
                                                     <Select 
                                                         value={functionForm.start_time ? functionForm.start_time.split('T')[1] || '' : ''} 
                                                         onValueChange={(value) => {
@@ -751,7 +745,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <Label className="text-card-foreground">Fecha de Fin (Opcional)</Label>
+                                                    <Label className="text-card-foreground">Fecha de Fin </Label>
                                                     <Input 
                                                         type="date"
                                                         value={functionForm.end_time ? functionForm.end_time.split('T')[0] : ''} 
@@ -770,7 +764,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <Label className="text-card-foreground">Hora de Fin (Opcional)</Label>
+                                                    <Label className="text-card-foreground">Hora de Fin </Label>
                                                     <Select 
                                                         value={functionForm.end_time ? functionForm.end_time.split('T')[1] || '' : ''} 
                                                         onValueChange={(value) => {
