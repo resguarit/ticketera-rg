@@ -493,29 +493,46 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                         <SelectValue placeholder="Selecciona un tipo de entrada" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {getTicketTypesForFunction(ticket.event_function_id).map((ticketType) => (
-                                                            <SelectItem 
-                                                                key={ticketType.id} 
-                                                                value={ticketType.id.toString()}
-                                                                // No deshabilitar la opción aunque available === 0.
-                                                                // Mostramos disponibilidad en el Badge pero permitimos invitar igual.
-                                                            >
-                                                                <div className="flex items-center gap-6 justify-between w-full">
-                                                                    <div>
-                                                                        <p className="font-medium">{ticketType.name}</p>
-                                                                        <p className="text-sm text-gray-600">
-                                                                            {formatCurrency(ticketType.price)}
-                                                                        </p>
+                                                        {getTicketTypesForFunction(ticket.event_function_id).map((ticketType) => {
+                                                            // Normalizar nombres: el backend puede enviar `quantity_sold`/`quantity_available`
+                                                            // o `sold`/`available`. Aquí calculamos igualdad con la lógica usada en TicketTypeCard.
+                                                            const isBundle = ticketType.is_bundle || false;
+                                                            const bundleQuantity = ticketType.bundle_quantity || 1;
+
+                                                            const lotsTotal = ticketType.quantity || 0; // número de lotes (si es bundle) o entradas base
+                                                            const lotsSold = (ticketType.quantity_sold ?? ticketType.sold) || 0; // vendidos en lotes
+                                                            const lotsAvailable = Math.max(0, lotsTotal - lotsSold);
+
+                                                            const entradasEmitidas = isBundle ? lotsSold * bundleQuantity : lotsSold;
+                                                            const totalEntradas = isBundle ? lotsTotal * bundleQuantity : lotsTotal;
+
+                                                            return (
+                                                                <SelectItem 
+                                                                    key={ticketType.id} 
+                                                                    value={ticketType.id.toString()}
+                                                                >
+                                                                    <div className="flex items-center gap-6 justify-between w-full">
+                                                                        <div>
+                                                                            <p className="font-medium">{ticketType.name}</p>
+                                                                            <p className="text-sm text-gray-600">
+                                                                                {formatCurrency(ticketType.price)}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="">
+                                                                            <Badge variant={lotsAvailable > 0 ? "secondary" : "destructive"}>
+                                                                                {lotsAvailable > 0 ? `${lotsAvailable} disponibles` : 'Agotado'}
+                                                                            </Badge>
+                                                                            {/* Si es bundle, mostrar también el resumen similar al TicketTypeCard */}
+                                                                            {isBundle && (
+                                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                                    {entradasEmitidas}/{totalEntradas} entradas emitidas (x{bundleQuantity} por lote)
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                    <Badge variant={ticketType.available > 0 ? "secondary" : "destructive"}>
-                                                                        {ticketType.available > 0 ? 
-                                                                            `${ticketType.available} disponibles` : 
-                                                                            'Agotado'
-                                                                        }
-                                                                    </Badge>
-                                                                </div>
-                                                            </SelectItem>
-                                                        ))}
+                                                                </SelectItem>
+                                                            );
+                                                        })}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
