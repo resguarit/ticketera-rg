@@ -202,6 +202,9 @@ class AttendeeInvitationController extends Controller
                 $bundleMultiplier = ($ticketType->is_bundle ?? false) ? ($ticketType->bundle_quantity ?? 1) : 1;
                 $ticketsToCreate = $ticketRequest['quantity'] * $bundleMultiplier;
 
+                // Si es un bundle, generar una referencia única para agrupar los tickets del mismo lote
+                $bundleReference = $ticketType->is_bundle ? (string) Str::uuid() : null;
+                
                 // Crear tickets físicamente emitidos
                 for ($i = 0; $i < $ticketsToCreate; $i++) {
                     $issuedTickets[] = IssuedTicket::create([
@@ -210,6 +213,7 @@ class AttendeeInvitationController extends Controller
                         'assistant_id' => $assistant->id,
                         'client_id' => null, // No hay cliente para invitaciones
                         'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'INV'),
+                        'bundle_reference' => $bundleReference,
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
                     ]);
