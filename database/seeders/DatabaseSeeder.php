@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
                 CategorySeeder::class,
                 VenueSeeder::class,
                 SectorSeeder::class,
+                PaymentMethodSeeder::class,
                 //OrganizerSeeder::class,
                 //EventSeeder::class,
                 //EventFunctionSeeder::class,
