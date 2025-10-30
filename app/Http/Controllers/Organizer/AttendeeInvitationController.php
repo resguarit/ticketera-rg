@@ -136,15 +136,11 @@ class AttendeeInvitationController extends Controller
                     throw new \Exception('Tipo de ticket inválido para la función seleccionada.');
                 }
 
-                // Verificar disponibilidad
-                $totalIssued = $ticketType->issuedTickets()
-                    ->where('status', '!=', IssuedTicketStatus::CANCELLED)
-                    ->count();
-                $available = $ticketType->quantity - $totalIssued;
+                // Calcular cuántos tickets físicos se requieren para esta solicitud.
+                // Si es un lote (bundle), cada "cantidad" representa un lote que contiene bundle_quantity entradas.
+                $bundleMultiplier = ($ticketType->is_bundle ?? false) ? ($ticketType->bundle_quantity ?? 1) : 1;
+                $requestedPhysical = $ticketRequest['quantity'] * $bundleMultiplier;
 
-                if ($available < $ticketRequest['quantity']) {
-                    throw new \Exception("No hay suficientes entradas disponibles para '{$ticketType->name}'. Disponibles: {$available}, solicitadas: {$ticketRequest['quantity']}.");
-                }
             }
 
             // Crear o encontrar la persona
@@ -198,12 +194,16 @@ class AttendeeInvitationController extends Controller
                         'sended_at' => now(),
                     ]);
                 } else {
-                    // Si ya existe, incrementar la cantidad
+                    // Si ya existe, incrementar la cantidad (la cantidad se guarda en unidades de "lotes" si aplica)
                     $assistant->increment('quantity', $ticketRequest['quantity']);
                 }
 
-                // Crear tickets directamente
-                for ($i = 0; $i < $ticketRequest['quantity']; $i++) {
+                // Determinar cuántos tickets físicos crear (tener en cuenta bundles)
+                $bundleMultiplier = ($ticketType->is_bundle ?? false) ? ($ticketType->bundle_quantity ?? 1) : 1;
+                $ticketsToCreate = $ticketRequest['quantity'] * $bundleMultiplier;
+
+                // Crear tickets físicamente emitidos
+                for ($i = 0; $i < $ticketsToCreate; $i++) {
                     $issuedTickets[] = IssuedTicket::create([
                         'ticket_type_id' => $ticketType->id,
                         'order_id' => null, // No hay orden para invitaciones
