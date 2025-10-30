@@ -5,7 +5,6 @@ import { User, Mail, Phone, CreditCard, Lock, Eye, EyeOff, Save } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 
@@ -60,7 +59,6 @@ export default function UserForm({
                         onChange={(e) => setData('firstName', e.target.value)}
                         placeholder="Ingresa el nombre"
                     />
-                    <InputError message={errors.firstName} />
                 </div>
 
                 <div className="space-y-2">
@@ -78,7 +76,6 @@ export default function UserForm({
                         onChange={(e) => setData('lastName', e.target.value)}
                         placeholder="Ingresa el apellido"
                     />
-                    <InputError message={errors.lastName} />
                 </div>
             </div>
 
@@ -97,7 +94,6 @@ export default function UserForm({
                     onChange={(e) => setData('email', e.target.value)}
                     placeholder="correo@ejemplo.com"
                 />
-                <InputError message={errors.email} />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -116,7 +112,6 @@ export default function UserForm({
                         onChange={(e) => setData('phone', e.target.value)}
                         placeholder="+54 9 11 1234-5678"
                     />
-                    <InputError message={errors.phone} />
                 </div>
 
                 <div className="space-y-2">
@@ -133,7 +128,6 @@ export default function UserForm({
                         onChange={(e) => setData('dni', e.target.value)}
                         placeholder="12345678"
                     />
-                    <InputError message={errors.dni} />
                 </div>
             </div>
 
@@ -176,7 +170,6 @@ export default function UserForm({
                             )}
                         </button>
                     </div>
-                    <InputError message={errors.password} />
                     {!isEditing && (
                         <p className="text-xs text-gray-500 mt-1">
                             Mínimo 8 caracteres. Se recomienda incluir mayúsculas, números y símbolos.
@@ -214,7 +207,6 @@ export default function UserForm({
                             )}
                         </button>
                     </div>
-                    <InputError message={errors.password_confirmation} />
                 </div>
             </div>
 

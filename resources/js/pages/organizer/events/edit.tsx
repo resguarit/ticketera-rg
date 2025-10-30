@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 import { Event, Category, Venue, EventFunction } from '@/types';
-import InputError from '@/components/input-error';
 import { useEffect, useState } from 'react';
 import { toast, Toaster } from 'sonner';
 
@@ -180,19 +179,17 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="name" className="text-card-foreground">Nombre del Evento *</Label>
+                                        <Label htmlFor="name" className="text-card-foreground">Nombre del Evento <span className="text-red-500">*</span></Label>
                                         <Input 
                                             id="name" 
                                             value={data.name} 
                                             onChange={(e) => setData('name', e.target.value)} 
                                             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
-                                            required
                                         />
-                                        <InputError message={errors.name} className="mt-1" />
                                     </div>
                                     
                                     <div>
-                                        <Label htmlFor="category_id" className="text-card-foreground">Categoría *</Label>
+                                        <Label htmlFor="category_id" className="text-card-foreground">Categoría <span className="text-red-500">*</span></Label>
                                         <Select value={String(data.category_id)} onValueChange={(value) => setData('category_id', Number(value))}>
                                             <SelectTrigger className="bg-background border-border text-foreground">
                                                 <SelectValue placeholder="Seleccionar categoría" />
@@ -205,11 +202,10 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.category_id} className="mt-1" />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="venue_id" className="text-card-foreground">Recinto *</Label>
+                                        <Label htmlFor="venue_id" className="text-card-foreground">Recinto <span className="text-red-500">*</span></Label>
                                         <Select value={String(data.venue_id)} onValueChange={(value) => setData('venue_id', Number(value))}>
                                             <SelectTrigger className="bg-background border-border text-foreground">
                                                 <SelectValue placeholder="Seleccionar recinto" />
@@ -222,20 +218,17 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.venue_id} className="mt-1" />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="description" className="text-card-foreground">Descripción *</Label>
+                                        <Label htmlFor="description" className="text-card-foreground">Descripción <span className="text-red-500">*</span></Label>
                                         <Textarea 
                                             id="description" 
                                             value={data.description} 
                                             onChange={(e) => setData('description', e.target.value)} 
                                             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                                             rows={4}
-                                            required
                                         />
-                                        <InputError message={errors.description} className="mt-1" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -261,7 +254,6 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 type="file" 
                                                 onChange={handleBannerChange}
                                             />
-                                            <InputError message={errors.banner_url} className="mt-1" />
                                         </div>
                                         {bannerPreview && (
                                             <div className='space-y-2'>
@@ -380,7 +372,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
                                         <div className='space-y-2'>
                                             <Label htmlFor="hero_banner" className="text-card-foreground">
-                                                Hero Banner (Opcional)
+                                                Hero Banner
                                             </Label>
                                             <p className="text-sm text-muted-foreground">
                                                 Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
@@ -392,7 +384,6 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 type="file" 
                                                 onChange={handleHeroBannerChange}
                                             />
-                                            <InputError message={errors.hero_banner_url} className="mt-1" />
                                         </div>
                                         {heroBannerPreview && (
                                             <div className='space-y-2'>
