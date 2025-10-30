@@ -53,8 +53,11 @@ class AttendeeInvitationController extends Controller
                 $startTime = Carbon::parse($function->start_time);
                 
                 $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
-                    // Contar todos los tickets emitidos (incluyendo invitaciones)
+                    // Contar todos los tickets emitidos (solo los vinculados a una orden).
+                    // No contamos invitaciones: las invitaciones se crean con order_id = null,
+                    // por eso solo consideramos issued tickets que tienen una orden asociada.
                     $totalIssued = $ticketType->issuedTickets()
+                        ->whereNotNull('order_id')
                         ->where('status', '!=', IssuedTicketStatus::CANCELLED)
                         ->count();
                     $available = $ticketType->quantity - $totalIssued;

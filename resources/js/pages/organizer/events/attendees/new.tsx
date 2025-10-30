@@ -497,7 +497,8 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                             <SelectItem 
                                                                 key={ticketType.id} 
                                                                 value={ticketType.id.toString()}
-                                                                disabled={ticketType.available === 0}
+                                                                // No deshabilitar la opción aunque available === 0.
+                                                                // Mostramos disponibilidad en el Badge pero permitimos invitar igual.
                                                             >
                                                                 <div className="flex items-center gap-6 justify-between w-full">
                                                                     <div>
@@ -536,7 +537,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                     <Input
                                                         type="number"
                                                         min="1"
-                                                        max={getSelectedTicketType(ticket.event_function_id, ticket.ticket_type_id)?.available || 1}
                                                         value={ticket.quantity}
                                                         onChange={(e) => updateTicket(index, 'quantity', parseInt(e.target.value) || 1)}
                                                         className="w-20 text-center"
@@ -546,10 +546,11 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => {
-                                                            const available = getSelectedTicketType(ticket.event_function_id, ticket.ticket_type_id)?.available || 1;
-                                                            updateTicket(index, 'quantity', Math.min(available, ticket.quantity + 1));
+                                                            // Permitir incrementar sin tope desde el frontend (el backend decidirá si hay límite/validación)
+                                                            updateTicket(index, 'quantity', ticket.quantity + 1);
                                                         }}
-                                                        disabled={ticket.quantity >= (getSelectedTicketType(ticket.event_function_id, ticket.ticket_type_id)?.available || 1)}
+                                                        // No deshabilitamos el botón aunque available === 0
+                                                        disabled={false}
                                                     >
                                                         <Plus className="w-4 h-4" />
                                                     </Button>
