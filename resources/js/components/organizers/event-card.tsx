@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { 
     Calendar, 
     MapPin, 
@@ -44,9 +45,28 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
             router.visit(route('event.detail', event.id));
     };
 
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<'archive' | 'unarchive'>('archive');
+
+    const openConfirm = (action: 'archive' | 'unarchive') => {
+        setConfirmAction(action);
+        setIsConfirmOpen(true);
+    };
+
     const handleArchive = () => {
+        // Ejecuta la acción real (alternar archivado)
         router.patch(route('organizer.events.toggleArchive', event.id), {}, {
             preserveScroll: true,
+            onStart: () => setIsConfirmLoading(true),
+            onSuccess: () => {
+                setIsConfirmOpen(false);
+                setIsConfirmLoading(false);
+            },
+            onError: () => {
+                setIsConfirmLoading(false);
+            },
+            onFinish: () => setIsConfirmLoading(false),
         });
     };
 
@@ -178,6 +198,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                     <div className="relative">
                         <Button
                             variant="outline"
+                            className={`${event.is_archived ? 'bg-red-600/30' : ''}`}
                             size="sm"
                             onClick={(e) => {
                                 preventCardClick(e);
@@ -195,11 +216,11 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                                     </button>
                                     <hr className="my-1" />
                                     {event.is_archived ? (
-                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={handleArchive}>
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={() => openConfirm('unarchive')}>
                                             Desarchivar evento
                                         </button>
                                     ) : (
-                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={() => openConfirm('archive')}>
                                             Archivar evento
                                         </button>
                                     )}
@@ -209,6 +230,23 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de confirmación para archivar/desarchivar */}
+            <ConfirmationModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleArchive}
+                accionTitulo={confirmAction === 'archive' ? 'Archivamiento' : 'Desarchivado'}
+                accion={confirmAction === 'archive' ? 'archivar' : 'desarchivar'}
+                pronombre="este"
+                entidad="evento"
+                accionando={confirmAction === 'archive' ? 'archivando' : 'desarchivando'}
+                nombreElemento={event.name}
+                advertencia={confirmAction === 'archive' ? 'El evento quedará archivado y no estará visible para los asistentes.' : undefined}
+                confirmVariant={confirmAction === 'archive' ? 'destructive' : 'default'}
+                isLoading={isConfirmLoading}
+            />
+
         </Card>
     );
 }
