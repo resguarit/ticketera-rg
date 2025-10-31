@@ -67,8 +67,6 @@ class AuthenticatedSessionController extends Controller
             ], 401);
         }
 
-        $request->session()->regenerate();
-
         return response()->json([
             'success' => true,
             'message' => 'Inicio de sesión exitoso',
