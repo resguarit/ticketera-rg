@@ -286,8 +286,11 @@ export default function EventAttendees({
         if (attendee.tickets_used > 0) {
             return <Badge variant="default" className="bg-green-100 text-green-800">Usado</Badge>;
         }
-        if (attendee.tickets_count > 0) {
+        if (attendee.tickets_count > 0 && attendee.order_status !== 'cancelled') {
             return <Badge variant="default">Con tickets</Badge>;
+        }
+        if (attendee.tickets_count > 0 && attendee.order_status === 'cancelled') {
+            return <Badge variant="default">Tickets no disponibles</Badge>;
         }
         if (attendee.type === 'invited' && attendee.sended_at) {
             return <Badge variant="outline">Invitado</Badge>;
@@ -298,6 +301,9 @@ export default function EventAttendees({
     const getTypeBadge = (attendee: AttendeeForTable) => {
         if (attendee.type === 'invited') {
             return <Badge variant="outline" className="bg-blue-50 text-blue-700"><UserCheck className="w-3 h-3 mr-1" />Invitado</Badge>;
+        }
+        if (attendee.order_status === 'cancelled') {
+            return <Badge variant="outline" className="bg-red-50 text-red-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;  
         }
         return <Badge variant="outline" className="bg-green-50 text-green-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;
     };
@@ -415,7 +421,12 @@ export default function EventAttendees({
                                                         {attendee.tickets_used} usados
                                                     </div>
                                                     {attendee.type === 'buyer' && (
-                                                        <div className="text-green-600 font-semibold">
+                                                        <div 
+                                                        className={`font-semibold ${
+                                                            attendee.order_status === 'cancelled' 
+                                                            ? 'text-red-600 line-through' 
+                                                            : 'text-green-600'
+                                                        }`}>
                                                             {formatCurrency(attendee.total_amount)}
                                                         </div>
                                                     )}
@@ -535,7 +546,7 @@ export default function EventAttendees({
                 isOpen={confirmDeleteModal}
                 onClose={() => setConfirmDeleteModal(false)}
                 onConfirm={() => {
-                    if (eliminatedAttendee) {
+                    if (eliminatedAttendee?.type === 'invited') {
                         handleDeleteAttendee(eliminatedAttendee.assistant_id as number, eliminatedAttendee.type);
                     }
                     setConfirmDeleteModal(false);
