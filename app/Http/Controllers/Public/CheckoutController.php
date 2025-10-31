@@ -22,6 +22,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -40,24 +41,19 @@ class CheckoutController extends Controller
 
     public function confirm(Request $request, Event $event): RedirectResponse | Response
     {
-        // NUEVO: Generar ID de sesión único para esta compra
-        $sessionId = $request->session()->getId() . '_' . time();
-        
-        // MODIFICADO: Liberar todos los locks anteriores de esta sesión antes de crear nuevos
+        $sessionId = $this->getPersistentLockId();
+
         try {
-            $this->ticketLockService->releaseAllSessionLocks($request->session()->getId());
+            $this->ticketLockService->releaseAllSessionLocks($sessionId);
             Log::info('Locks anteriores liberados para nueva sesión de checkout', [
-                'session_base_id' => substr($request->session()->getId(), -8)
+                'session_base_id' => substr($sessionId, -8)
             ]);
         } catch (\Exception $e) {
             Log::warning('Error liberando locks anteriores', [
-                'session_id' => substr($request->session()->getId(), -8),
+                'session_id' => substr($sessionId, -8),
                 'error' => $e->getMessage()
             ]);
-            // No bloquear el proceso, solo registrar el warning
         }
-    
-        $request->session()->put('checkout_session_id', $sessionId);
 
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
@@ -156,6 +152,16 @@ class CheckoutController extends Controller
             'sessionId' => $sessionId, // NUEVO: Pasar session ID al frontend
             'lockExpiration' => now()->addMinutes(TicketLockService::LOCK_DURATION)->toISOString() // NUEVO
         ]);
+    }
+
+    private function getPersistentLockId(): string
+    {
+        if (!session()->has('checkout_session_id')){
+            $newLockId = (string) Str::uuid();
+            session(['checkout_session_id' => $newLockId]);
+            Log::info('Generado nuevo checkout_session_id', ['lock_id' => $newLockId]);
+        }
+        return session('checkout_session_id');
     }
 
     public function processPayment(Request $request): RedirectResponse
