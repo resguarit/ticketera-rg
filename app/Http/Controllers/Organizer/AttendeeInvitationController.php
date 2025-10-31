@@ -53,18 +53,36 @@ class AttendeeInvitationController extends Controller
                 $startTime = Carbon::parse($function->start_time);
                 
                 $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
-                    // Contar todos los tickets emitidos (solo los vinculados a una orden).
-                    // No contamos invitaciones: las invitaciones se crean con order_id = null,
-                    // por eso solo consideramos issued tickets que tienen una orden asociada.
-                    $totalIssued = $ticketType->issuedTickets()
-                        ->whereNotNull('order_id')
-                        ->where('status', '!=', IssuedTicketStatus::CANCELLED)
-                        ->count();
-                    $available = $ticketType->quantity - $totalIssued;
+                    // Determinar si es bundle
+                    $isBundle = $ticketType->is_bundle ?? false;
+                    $bundleQuantity = $ticketType->bundle_quantity ?? 1;
+                    
+                    if ($isBundle) {
+                        // Para bundles: contar tickets emitidos físicamente y dividir por bundle_quantity
+                        // Solo contamos tickets vinculados a órdenes (no invitaciones)
+                        $totalPhysicalIssued = $ticketType->issuedTickets()
+                            ->whereNotNull('order_id')
+                            ->where('status', '!=', IssuedTicketStatus::CANCELLED)
+                            ->count();
+                        
+                        // Convertir tickets físicos a lotes vendidos
+                        $totalIssued = (int) floor($totalPhysicalIssued / $bundleQuantity);
+                        
+                        // Disponibilidad en lotes
+                        $available = $ticketType->quantity - $totalIssued;
+                    } else {
+                        // Para tickets individuales: contar directamente
+                        $totalIssued = $ticketType->issuedTickets()
+                            ->whereNotNull('order_id')
+                            ->where('status', '!=', IssuedTicketStatus::CANCELLED)
+                            ->count();
+                        
+                        $available = $ticketType->quantity - $totalIssued;
+                    }
                     
                     // Agregar propiedades calculadas al modelo existente
                     $ticketType->sold = $totalIssued;
-                    $ticketType->available = $available;
+                    $ticketType->available = max(0, $available);
                     
                     return $ticketType;
                 });
