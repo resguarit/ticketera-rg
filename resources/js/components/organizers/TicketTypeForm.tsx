@@ -234,7 +234,7 @@ export function TicketTypeForm({
 
                     />
                     {hasSales && (
-                        <div className="flex items-center gap-2 text-amber-600 text-sm">
+                        <div className="flex items-center gap-2 text-red-600 text-sm">
                             <AlertCircle className="h-4 w-4" />
                             <span>No se puede modificar el precio cuando ya hay ventas realizadas</span>
                         </div>
@@ -357,10 +357,10 @@ export function TicketTypeForm({
                     
                     {/* Mensaje informativo sobre las limitaciones */}
                     {hasSales && (
-                        <Alert className="border-blue-500 bg-blue-50">
+                        <Alert className="border-blue-500 bg-blue-50 text-blue-600">
                             <Info className="h-4 w-4 text-blue-600" />
                             <AlertDescription className="text-blue-800 text-sm">
-                                Ya hay {selectedSectorAvailability?.current_ticket_sold} {isBundle ? 'lotes' : 'entradas'} vendidas.
+                                <strong>Advertencia de disponibilidad:</strong> Ya hay {selectedSectorAvailability?.current_ticket_sold} {isBundle ? 'lotes' : 'entradas'} vendidas.
                                 No puedes reducir la cantidad por debajo de este número.
                             </AlertDescription>
                         </Alert>

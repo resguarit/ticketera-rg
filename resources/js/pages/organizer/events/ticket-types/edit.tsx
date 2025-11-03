@@ -225,34 +225,33 @@ export default function EditTicketType() {
     return (
         <EventManagementLayout event={event} activeTab="tickets">
             <Head title={`Editar Entrada: ${ticketType.name}`} />
-            <Card>
-                <CardHeader>
-                    <div className='flex gap-2'>
-                        <BackButton
-                            href={route('organizer.events.tickets', event.id)}
-                        />
-                        <div>
-                    <CardTitle>Editar Tipo de Entrada</CardTitle>
-                    <CardDescription>
+                <div className="flex items-center mb-4 gap-2">
+                    <BackButton href={route('organizer.events.tickets', event.id)} />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Editar Tipo de Entrada</h1>
+                        <p className="text-gray-600 mt-1">
                         Modifica los datos de la entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
-                        {hasSales && (
-                            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <div className="flex items-start gap-2">
-                                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                                    <div className="text-amber-800 text-sm">
-                                        <p className="font-medium">Limitaciones por ventas existentes:</p>
-                                        <ul className="mt-1 list-disc list-inside space-y-1">
-                                            <li>El precio no se puede modificar</li>
-                                            <li>La cantidad no se puede reducir por debajo de {ticketType.quantity_sold} {ticketType.is_bundle ? 'lotes' : 'entradas'} vendidas</li>
-                                            <li>El tipo (individual/lote) no se puede cambiar</li>
-                                        </ul>
-                                    </div>
-                                </div>
+                        </p>
+                    </div>
+                </div>
+                {hasSales && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="text-blue-800 text-sm">
+                                <p className="font-medium">Limitaciones si ya hay ventas existentes:</p>
+                                <ul className="mt-1 list-disc list-inside space-y-1">
+                                    <li>El precio no se puede modificar</li>
+                                    <li>La cantidad no se puede reducir por debajo de {ticketType.quantity_sold} {ticketType.is_bundle ? 'lotes' : 'entradas'} vendidas</li>
+                                    <li>El tipo (individual/lote) no se puede cambiar</li>
+                                </ul>
                             </div>
-                        )}
-                    </CardDescription>
                         </div>
                     </div>
+                )}
+            <Card>
+                <CardHeader className='pb-0'>
+                    <CardTitle>Información del Tipo de Entrada</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <TicketTypeForm
