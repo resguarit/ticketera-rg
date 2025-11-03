@@ -220,6 +220,7 @@ class AssistantController extends Controller
             $attendees->push([
                 'type' => 'buyer',
                 'order_id' => $order->id,
+                'order_status' => $order->status,
                 'full_name' => trim($person->name . ' ' . $person->last_name),
                 'dni' => $person->dni,
                 'email' => $order->client->email,
@@ -405,7 +406,6 @@ class AssistantController extends Controller
         $person = $order->client->person;
         
         $ticketsByType = $order->issuedTickets
-            ->where('status', '!=', 'cancelled')
             ->groupBy('ticket_type_id');
 
         $perType = $ticketsByType->map(function ($tickets) {

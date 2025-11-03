@@ -42,7 +42,7 @@ export default function EditUser() {
 
     return (
         <>
-            <Head title={`Editar Usuario: ${user.firstName} ${user.lastName} - Panel Admin`} />
+            <Head title={`Editar Usuario: ${user.firstName} ${user.lastName}`} />
             
             <div className="min-h-screen bg-gray-50">
                 <div className="container mx-auto px-4 py-8">

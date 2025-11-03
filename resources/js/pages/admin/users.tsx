@@ -204,7 +204,7 @@ export default function Users({ auth }: any) {
 
     return (
         <>
-            <Head title="Gestión de Usuarios - Panel Admin" />
+            <Head title="Gestión de Usuarios" />
             
             <AdminDashboardLayout
                 title="Gestión de Usuarios"

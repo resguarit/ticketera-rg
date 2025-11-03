@@ -28,7 +28,7 @@ export default function Show() {
 
   return (
     <>
-      <Head title={`${organizer.name} - Organizador`} />
+      <Head title={`Organizador: ${organizer.name}`} />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <Card className="bg-card border-border shadow-lg mb-8">

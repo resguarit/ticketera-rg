@@ -58,7 +58,7 @@ class TicketController extends Controller
                 'eventEndTime' => $eventFunction->end_time,
                 'order' => [
                     'id' => $ticket->order->id,
-                    'order_number' => $this->generateOrderNumber($ticket->order),
+                    'order_number' => $ticket->order->transaction_id,
                 ]
             ];
         });
@@ -203,11 +203,4 @@ class TicketController extends Controller
         };
     }
 
-    /**
-     * Generar número de orden
-     */
-    private function generateOrderNumber(Order $order): string
-    {
-        return 'TM-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT);
-    }
 }

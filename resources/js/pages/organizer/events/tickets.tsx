@@ -153,7 +153,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                     <div className="bg-white rounded-lg border border-gray-200 p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-base font-medium text-gray-800 flex items-center">
+                                <h2 className="text-base font-semibold text-gray-800 flex items-center">
                                     Gestión de Entradas
                                 </h2>
                                 <p className="text-gray-600 text-sm">

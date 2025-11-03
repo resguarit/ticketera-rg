@@ -35,4 +35,24 @@ return [
         ],
     ],
 
+    'payway' => [
+        'public_key' => env('PAYWAY_PUBLIC_KEY'),
+        'private_key' => env('PAYWAY_PRIVATE_KEY'),
+        'ambient' => env('PAYWAY_ENV', 'test'),
+        'keys' => [
+            'test' => [
+                'public_key' => env('PAYWAY_PUBLIC_KEY'),
+                'private_key' => env('PAYWAY_PRIVATE_KEY'),
+            ],
+            'prod' => [
+                'public_key' => env('PAYWAY_PUBLIC_KEY_PROD'),
+                'private_key' => env('PAYWAY_PRIVATE_KEY_PROD'),
+            ]
+        ],
+        'env' => env('PAYWAY_ENV', 'test'),
+        'url' => env('PAYWAY_ENV', 'test') === 'production' 
+            ? 'https://live.decidir.com/api/v2'
+            : 'https://developers-ventasonline.payway.com.ar/api/v2',
+    ],
+
 ];

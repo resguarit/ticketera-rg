@@ -32,13 +32,13 @@ class PdfService
             $ticket->load(['order.client.person']);
             $user = $ticket->order->client;
             $person = $ticket->order->client->person;
-            $orderNumber = str_pad($ticket->order->id, 5, '0', STR_PAD_LEFT);
+            $orderNumber = $ticket->order->transaction_id ?? $ticket->order->id;
         } else {
             // Ticket de invitación - cargar relaciones de assistant
             $ticket->load(['assistant.person']);
             $user = null; // No hay usuario para invitaciones
             $person = $ticket->assistant->person ?? null;
-            $orderNumber = 'INV-' . substr($ticket->unique_code, 0, 8); // Usar parte del código único
+            $orderNumber = $ticket->unique_code; // Usar parte del código único
         }
 
         $qrCode = base64_encode(

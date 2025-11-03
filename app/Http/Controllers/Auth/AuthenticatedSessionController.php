@@ -39,4 +39,28 @@ class AuthenticatedSessionController extends Controller
 
         return redirect('/');
     }
+
+    /**
+     * Handle login from checkout without redirect
+     */
+    public function checkoutLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Las credenciales proporcionadas son incorrectas.'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inicio de sesión exitoso',
+            'user' => Auth::user()
+        ]);
+    }
 }

@@ -142,4 +142,9 @@ class DashboardController extends Controller
             'revenueChartData' => $revenueChartData,
         ]);
     }
+    
+    public function helpGuide(): Response
+    {
+        return Inertia::render('organizer/help-guide');
+    }
 }

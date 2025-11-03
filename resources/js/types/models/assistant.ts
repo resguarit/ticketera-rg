@@ -43,6 +43,7 @@ export interface InvitedAttendee {
 export interface BuyerAttendee {
     type: 'buyer';
     order_id: number;
+    order_status: string;
     full_name: string;
     dni: string | null;
     email: string | null;

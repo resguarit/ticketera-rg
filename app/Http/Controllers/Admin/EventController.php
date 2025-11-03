@@ -190,13 +190,15 @@ class EventController extends Controller
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
-            'banner_url' => $event->image_url,
+            'image_url' => $event->image_url, // CORREGIDO: usar image_url en lugar de banner_url
+            'hero_image_url' => $event->hero_image_url,
             'featured' => $event->featured,
             'total_revenue' => $event->getRevenue(),
             'organizer' => [
                 'id' => $event->organizer->id,
                 'name' => $event->organizer->name,
                 'email' => $event->organizer->email,
+                'image_url' => $event->organizer->image_url,
             ],
             'category' => [
                 'id' => $event->category->id,
@@ -355,7 +357,7 @@ class EventController extends Controller
         }
 
         if (empty($prices)) {
-            return 'Sin precios';
+            return '-';
         }
 
         $minPrice = min($prices);

@@ -160,7 +160,7 @@ export default function Index({ auth }: any) {
 
     return (
         <>
-            <Head title="Gestión de Organizadores - Panel Admin" />
+            <Head title="Gestión de Organizadores" />
             
             <AdminDashboardLayout
                 title="Gestión de Organizadores"

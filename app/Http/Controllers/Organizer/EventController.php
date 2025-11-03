@@ -277,10 +277,11 @@ class EventController extends Controller
         try {
             DB::beginTransaction();
             
+            // Preservar las rutas existentes por defecto
             $bannerPath = $event->banner_url;
             $heroBannerPath = $event->hero_banner_url;
 
-            // Handle normal banner
+            // Handle normal banner - solo actualizar si se sube un nuevo archivo
             if ($request->hasFile('banner_url')) {
                 // Delete old banner if it exists
                 if ($bannerPath) {
@@ -289,7 +290,7 @@ class EventController extends Controller
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
-            // Handle hero banner
+            // Handle hero banner - solo actualizar si se sube un nuevo archivo
             if ($request->hasFile('hero_banner_url')) {
                 // Delete old hero banner if it exists
                 if ($heroBannerPath) {
@@ -298,7 +299,7 @@ class EventController extends Controller
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
-            // Update event (no tocar el campo featured)
+            // Update event preservando todas las rutas
             $event->update([
                 'category_id' => $validated['category_id'],
                 'venue_id' => $validated['venue_id'],
@@ -306,7 +307,6 @@ class EventController extends Controller
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
                 'hero_banner_url' => $heroBannerPath,
-                // NO actualizar featured aquí
             ]);
 
             DB::commit();
@@ -317,7 +317,11 @@ class EventController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
-            return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()]);
+            // Log del error para debugging
+            \Log::error('Error updating event: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()])
+                        ->withInput();
         }
     }
 

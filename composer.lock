@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7fd70bfa6b919bff0073681816383767",
+    "content-hash": "6f21e85003799367a31bf1404c00b98b",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -315,6 +315,37 @@
                 "source": "https://github.com/DASPRiD/Enum/tree/1.0.7"
             },
             "time": "2025-09-16T12:23:56+00:00"
+        },
+        {
+            "name": "decidir2/php-sdk",
+            "version": "V2.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/payway-ar/sdk-php-ventaonline.git",
+                "reference": "d40c782c5c38310cebb34de13dfe368a59488373"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/payway-ar/sdk-php-ventaonline/zipball/d40c782c5c38310cebb34de13dfe368a59488373",
+                "reference": "d40c782c5c38310cebb34de13dfe368a59488373",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Decidir\\": "Decidir/lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "description": "SDK para Payway ventas online",
+            "support": {
+                "issues": "https://github.com/payway-ar/sdk-php-ventaonline/issues",
+                "source": "https://github.com/payway-ar/sdk-php-ventaonline/tree/V2.0.3"
+            },
+            "time": "2025-02-05T19:21:35+00:00"
         },
         {
             "name": "dflydev/dot-access-data",

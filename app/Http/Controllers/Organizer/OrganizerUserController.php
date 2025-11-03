@@ -179,4 +179,72 @@ class OrganizerUserController extends Controller
         return redirect()->route('organizer.users.index')
             ->with('success', 'Usuario eliminado correctamente');
     }
+
+    public function edit(int $userId): Response
+    {
+        $organizer = Auth::user()->organizer;
+        
+        $user = User::with(['person'])
+            ->where('organizer_id', $organizer->id)
+            ->where('role', UserRole::ORGANIZER)
+            ->findOrFail($userId);
+
+        return Inertia::render('organizer/users/edit', [
+            'user' => [
+                'id' => $user->id,
+                'firstName' => $user->person->name ?? '',
+                'lastName' => $user->person->last_name ?? '',
+                'email' => $user->email,
+                'phone' => $user->person->phone ?? '',
+                'dni' => $user->person->dni ?? '',
+                'status' => $user->email_verified_at ? 'active' : 'pending',
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at->format('Y-m-d H:i:s'),
+            ]
+        ]);
+    }
+
+    public function update(Request $request, int $userId): RedirectResponse
+    {
+        $organizer = Auth::user()->organizer;
+        
+        $user = User::with(['person'])
+            ->where('organizer_id', $organizer->id)
+            ->where('role', UserRole::ORGANIZER)
+            ->findOrFail($userId);
+
+        $validated = $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'dni' => 'nullable|string|max:20|unique:person,dni,' . $user->person_id,
+            'password' => ['nullable', 'confirmed', Password::defaults()],
+        ]);
+
+        DB::transaction(function() use ($validated, $user) {
+            // Actualizar datos de la persona
+            $user->person->update([
+                'name' => $validated['firstName'],
+                'last_name' => $validated['lastName'],
+                'dni' => $validated['dni'],
+                'phone' => $validated['phone'],
+            ]);
+
+            // Preparar datos del usuario
+            $userData = [
+                'email' => $validated['email'],
+            ];
+
+            // Solo actualizar contraseña si se proporciona
+            if (!empty($validated['password'])) {
+                $userData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($userData);
+        });
+
+        return redirect()->route('organizer.users.index')
+            ->with('success', 'Usuario actualizado correctamente');
+    }
 }

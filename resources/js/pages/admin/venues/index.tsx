@@ -92,7 +92,7 @@ export default function VenuesIndex() {
 
     return (
         <>
-            <Head title="Gestionar Recintos" />
+            <Head title="Gestión de Recintos" />
 
             <div className="container mx-auto p-6">
                 <div className="flex justify-between items-center mb-6">

@@ -178,8 +178,16 @@ export default function TicketDetailsModal({
                             </div>
                         )}
                         
-                        <div className="border-t pt-2 flex justify-between text-base font-bold text-green-600">
-                            <span>TOTAL PAGADO:</span>
+                        <div
+                            className={`border-t pt-2 flex justify-between text-base font-bold ${
+                                data.order.status === 'cancelled'
+                                ? 'text-red-600 line-through'
+                                : 'text-green-600'
+                            }`}
+                            >
+                            <span>
+                                {data.order.status === 'cancelled' ? 'TOTAL CANCELADO:' : 'TOTAL PAGADO:'}
+                            </span>
                             <span>{formatCurrency(data.totals.total_paid)}</span>
                         </div>
                     </div>
@@ -195,14 +203,27 @@ export default function TicketDetailsModal({
                             </div>
                         )}
 
-                        <div className="bg-gray-50 border border-gray-200 rounded p-2">
+                        <div
+                            className={`rounded p-2 border ${
+                                data.order.status === 'cancelled'
+                                ? 'border-red-400 bg-red-50'
+                                : 'border-gray-200 bg-gray-50'
+                            }`}
+                            >
                             <p className="text-xs">
-                                <strong>Estado:</strong> {data.order.status}
+                                <strong>Estado:</strong>{' '}
+                                <span
+                                className={
+                                    data.order.status === 'cancelled' ? 'text-red-600 font-semibold' : ''
+                                }
+                                >
+                                {data.order.status}
+                                </span>
                                 {data.order.transaction_id && (
-                                    <>
-                                        <br />
-                                        <strong>ID:</strong> {data.order.transaction_id}
-                                    </>
+                                <>
+                                    <br />
+                                    <strong>ID:</strong> {data.order.transaction_id}
+                                </>
                                 )}
                             </p>
                         </div>
@@ -292,8 +313,8 @@ export default function TicketDetailsModal({
                     <h2 className="text-lg font-semibold">
                         {loading ? 'Cargando detalles...' : (
                             data?.type === 'buyer' ? 
-                                `📊 Detalle de Compra - Orden #${(data as OrderDetails).order.id}` :
-                                `🎫 Tickets Asignados - ${(data as AssistantDetails).person.full_name}`
+                                `Detalle de Compra - Orden #${(data as OrderDetails).order.id}` :
+                                `Tickets Asignados - ${(data as AssistantDetails).person.full_name}`
                         )}
                     </h2>
                     <button

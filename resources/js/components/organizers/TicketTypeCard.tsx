@@ -70,16 +70,28 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
   const entradasEmitidas = isBundle ? lotesVendidos * bundleQuantity : lotesVendidos;
   const totalEntradas = isBundle ? ticket.quantity * bundleQuantity : ticket.quantity;
 
+  const isStaged = ticket.stage_group && ticket.stage_number;
+
   return (
     <Card className="w-80 hover:shadow-md transition-shadow relative">
       <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
               <CardTitle className="text-lg">{ticket.name}</CardTitle>
               {isBundle && (
                 <Badge variant="secondary" className="text-xs">
                   Lote x{bundleQuantity}
+                </Badge>
+              )}
+              {isStaged && (
+                <Badge variant="outline" className="text-xs">
+                  Tanda {ticket.stage_number}
+                </Badge>
+              )}
+              {ticket.is_hidden && isStaged && (
+                <Badge variant="secondary" className="text-xs">
+                  En espera
                 </Badge>
               )}
             </div>
@@ -146,11 +158,11 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
           {isBundle && (
             <>
               <div className="flex justify-between col-span-2 pt-2 border-t border-gray-200">
-                <span className="text-muted-foreground text-sm font-medium">📋 Entradas Emitidas</span>
+                <span className="text-muted-foreground text-sm font-medium">Entradas Emitidas</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-xs">Total emisiones:</span>
-                <span className="font-medium text-xs text-purple-700">
+                <span className="font-medium text-xs text-blue-600">
                   {entradasEmitidas}/{totalEntradas}
                 </span>
               </div>

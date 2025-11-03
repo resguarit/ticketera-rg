@@ -12,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Services\Interface\PaymentGatewayInterface::class,
+            \App\Services\PaywayService::class
+        );
     }
 
     /**

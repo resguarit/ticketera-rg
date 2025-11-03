@@ -56,6 +56,8 @@ const contactOptions = [
         color: "primary",
         available: "24/7",
         action: "Iniciar Chat",
+        href: "https://wa.me/5492216914649?text=Hola,%20necesito%20ayuda",
+        type: "whatsapp"
     },
     {
         title: "Teléfono",
@@ -63,7 +65,9 @@ const contactOptions = [
         icon: Phone,
         color: "green-500",
         available: "Lun-Vie 9:00-18:00",
-        action: "+54 11 1234-5678",
+        action: "+54 2216 914649",
+        href: "tel:+542216914649",
+        type: "phone"
     },
     {
         title: "Email",
@@ -71,7 +75,9 @@ const contactOptions = [
         icon: Mail,
         color: "red-500",
         available: "Respuesta en 24hs",
-        action: "soporte@ticketmax.com",
+        action: "soporte@rgentradas.com",
+        href: "mailto:soporte@rgentradas.com?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...",
+        type: "email"
     },
 ];
 
@@ -147,9 +153,16 @@ export default function Help() {
                                     <p className="text-foreground/80 mb-2 sm:mb-3 text-sm sm:text-base">{option.description}</p>
                                     <Badge className="mb-3 sm:mb-4 bg-gray-100 text-foreground border-0 text-xs sm:text-sm">{option.available}</Badge>
                                     <div>
-                                        <Button className={`bg-${option.color} text-white w-full text-sm sm:text-base h-9 sm:h-10`}>
-                                            {option.action}
-                                        </Button>
+                                        <a
+                                            href={option.href}
+                                            target={option.type === 'whatsapp' ? "_blank" : undefined}
+                                            rel={option.type === 'whatsapp' ? "noopener noreferrer" : undefined}
+                                            className="block w-full"
+                                        >
+                                            <Button className={`bg-${option.color} hover:bg-${option.color}/90 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors`}>
+                                                {option.action}
+                                            </Button>
+                                        </a>
                                     </div>
                                 </CardContent>
                             </Card>

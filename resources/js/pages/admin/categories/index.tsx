@@ -121,7 +121,7 @@ export default function CategoriesIndex() {
 
     return (
         <>
-            <Head title="Gestionar Categorías" />
+            <Head title="Gestión de Categorías" />
 
             <div className="container mx-auto p-6">
                 <div className="flex justify-between items-center mb-6">

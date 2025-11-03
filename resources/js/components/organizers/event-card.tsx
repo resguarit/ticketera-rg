@@ -63,7 +63,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
 
         <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0 cursor-pointer" onClick={handleCardClick}>
             {/* Header con fecha y título (altura fija) */}
-            <div className="bg-gradient-to-r from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
+            <div className="bg-gradient-to-br from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {nextFunction && (
@@ -78,7 +78,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                         </div>
                     </div>
                     {event.featured && (
-                        <div className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium">
+                        <div className="bg-secondary text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium">
                             <Star className="w-3 h-3 fill-current" />
                             Destacado
                         </div>

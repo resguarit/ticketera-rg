@@ -98,7 +98,7 @@ export default function CreateEvent({ auth }: any) {
 
     return (
         <>
-            <Head title="Crear Evento - Panel Admin" />
+            <Head title="Crear Evento" />
             
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-6">

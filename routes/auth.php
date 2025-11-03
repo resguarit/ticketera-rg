@@ -55,3 +55,12 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
+
+// Rutas especiales para checkout (no redirigen, devuelven JSON)
+Route::post('checkout/login', [AuthenticatedSessionController::class, 'checkoutLogin'])
+    ->middleware('guest')
+    ->name('checkout.login');
+
+Route::post('checkout/register', [RegisteredUserController::class, 'checkoutRegister'])
+    ->middleware('guest')
+    ->name('checkout.register');
