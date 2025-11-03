@@ -322,7 +322,7 @@ export default function EventAttendees({
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div className='flex flex-col'>
-                                <CardTitle>Gestión de Asistentes</CardTitle>
+                                <CardTitle className='text-xl'>Gestión de Asistentes</CardTitle>
                                 <CardDescription>
                                     Administra y controla los asistentes de tu evento, tanto invitados como compradores
                                 </CardDescription>
