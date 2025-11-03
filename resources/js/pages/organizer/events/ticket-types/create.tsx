@@ -117,6 +117,14 @@ export default function CreateTicketType() {
             return false;
         }
 
+        // NUEVA VALIDACIÓN: Máximo por compra
+        if (!data.max_purchase_quantity || data.max_purchase_quantity <= 0) {
+            toast.error('Máximo por compra requerido', {
+                description: 'Debe indicar el máximo de entradas por compra'
+            });
+            return false;
+        }
+
         // Validar fecha de inicio de venta
         if (!data.sales_start_date) {
             toast.error('Fecha de inicio requerida', {
