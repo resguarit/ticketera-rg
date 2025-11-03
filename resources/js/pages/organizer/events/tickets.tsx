@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Ticket, DollarSign, Users, Eye, Calendar } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Users, Eye, Calendar, Link } from 'lucide-react';
 import { TicketTypeCard } from '@/components/organizers/TicketTypeCard';
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction, EventFunctionRelations } from '@/types/models/eventFunction';
@@ -150,20 +150,26 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
             <EventManagementLayout event={event} activeTab="tickets">
                 <div className="space-y-6">
                     {/* Header */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <div className="flex items-center justify-between">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-0">
                             <div>
-                                <h2 className="text-xl font-semibold flex items-center">
-                                    Gestión de Entradas
-                                </h2>
-                                <p className="text-muted-foreground text-sm">
+                                <CardTitle className='text-xl'>Gestión de Entradas</CardTitle>
+                                <CardDescription>
                                     Configura y administra los tipos de entradas para cada función de tu evento
-                                </p>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Contenido con tabs por función */}
+                                </CardDescription>
+                            </div>
+                                <Button 
+                                    onClick={() => handleCreateTicket(Number(selectedFunction))}
+                                    className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
+                                    size="lg"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Crear Entrada
+                                </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {/* Contenido con tabs por función */}
                     {event.functions && event.functions.length > 0 ? (
                         <Tabs value={selectedFunction} onValueChange={setSelectedFunction} className="w-full">
                             <div className="mb-6">
@@ -251,14 +257,6 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                     Gestiona los tipos de entradas para {func.name}
                                                 </p>
                                             </div>
-                                            <Button 
-                                                onClick={() => handleCreateTicket(func.id)}
-                                                className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
-                                                size="lg"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Crear Entrada
-                                            </Button>
                                         </div>
 
                                         {/* Lista de tipos de entradas */}
@@ -329,6 +327,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                             </div>
                         </div>
                     )}
+                        </CardContent>
+                    </Card>
                 </div>
             </EventManagementLayout>
 
