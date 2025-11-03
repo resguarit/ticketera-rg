@@ -6,6 +6,7 @@ import { TicketTypeForm, TicketTypeFormData } from '@/components/organizers/Tick
 import { Event, EventFunction, Sector } from '@/types';
 import { toast } from 'sonner';
 import BackButton from '@/components/Backbutton';
+import { Link } from 'lucide-react';
 
 interface SectorWithAvailability {
     id: number;
@@ -218,19 +219,20 @@ export default function CreateTicketType() {
     return (
         <EventManagementLayout event={event} activeTab="tickets">
             <Head title={`Crear Entrada para ${event.name}`} />
+                            <div className="flex items-center mb-6 gap-2">
+                                <BackButton
+                                    href={route('organizer.events.tickets', event.id)}
+                                />
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">Crear Tipo de Entrada</h1>
+                                    <p className="text-gray-600 mt-1">
+                                         Configura una nueva entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
+                                    </p>
+                                </div>
+                            </div>
             <Card>
-                <CardHeader>
-                    <div className='flex gap-2'>
-                        <BackButton
-                            href={route('organizer.events.tickets', event.id)}
-                        />
-                        <div>
-                    <CardTitle>Crear Nuevo Tipo de Entrada</CardTitle>
-                    <CardDescription>
-                        Configura una nueva entrada para la función "{eventFunction.name}" de tu evento "{event.name}".
-                    </CardDescription>
-                    </div>
-                    </div>
+                <CardHeader className='pb-0'>
+                    <CardTitle className='text-lg'>Información de la Entrada</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <TicketTypeForm

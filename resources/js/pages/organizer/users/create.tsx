@@ -222,9 +222,9 @@ export default function CreateUser() {
                 </div>
 
                 <div className="w-full flex justify-center">
-                    <Card className="w-full max-w-2xl">
-                        <CardHeader>
-                            <CardTitle>Información del Usuario</CardTitle>
+                    <Card className="w-full ">
+                        <CardHeader className='pb-0'>
+                            <CardTitle className='text-lg'>Información del Usuario</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <UserForm
