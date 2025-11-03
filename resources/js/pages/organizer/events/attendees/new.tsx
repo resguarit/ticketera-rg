@@ -117,7 +117,8 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
     // Obtener tipos de tickets para una función específica
     const getTicketTypesForFunction = (functionId: number): TicketTypeWithAvailability[] => {
         const selectedFunction = eventFunctions?.find(f => f.id === functionId);
-        return selectedFunction?.ticketTypes || [];
+        // Filtrar solo tickets que NO sean bundles
+        return selectedFunction?.ticketTypes?.filter(t => !t.is_bundle) || [];
     };
 
     const addTicket = () => {
@@ -474,8 +475,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                             <SelectItem 
                                                                 key={ticketType.id} 
                                                                 value={ticketType.id.toString()}
-                                                                // No deshabilitar la opción aunque available === 0.
-                                                                // Mostramos disponibilidad en el Badge pero permitimos invitar igual.
                                                             >
                                                                 <div className="flex items-center gap-6 justify-between w-full">
                                                                     <div>

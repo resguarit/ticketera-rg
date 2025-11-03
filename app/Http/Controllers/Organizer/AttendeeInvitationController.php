@@ -41,10 +41,11 @@ class AttendeeInvitationController extends Controller
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
-        // Obtener las funciones del evento con sus tipos de tickets
+        // Obtener las funciones del evento con sus tipos de tickets (solo individuales, no bundles)
         $eventFunctions = $event->functions()
             ->with(['ticketTypes' => function($query) {
-                $query->with('issuedTickets');
+                $query->where('is_bundle', false) // Solo tickets individuales
+                    ->with('issuedTickets');
             }])
             ->where('is_active', true)
             ->get()
@@ -53,32 +54,13 @@ class AttendeeInvitationController extends Controller
                 $startTime = Carbon::parse($function->start_time);
                 
                 $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
-                    // Determinar si es bundle
-                    $isBundle = $ticketType->is_bundle ?? false;
-                    $bundleQuantity = $ticketType->bundle_quantity ?? 1;
+                    // Contar solo tickets vinculados a órdenes (no invitaciones)
+                    $totalIssued = $ticketType->issuedTickets()
+                        ->whereNotNull('order_id')
+                        ->where('status', '!=', IssuedTicketStatus::CANCELLED)
+                        ->count();
                     
-                    if ($isBundle) {
-                        // Para bundles: contar tickets emitidos físicamente y dividir por bundle_quantity
-                        // Solo contamos tickets vinculados a órdenes (no invitaciones)
-                        $totalPhysicalIssued = $ticketType->issuedTickets()
-                            ->whereNotNull('order_id')
-                            ->where('status', '!=', IssuedTicketStatus::CANCELLED)
-                            ->count();
-                        
-                        // Convertir tickets físicos a lotes vendidos
-                        $totalIssued = (int) floor($totalPhysicalIssued / $bundleQuantity);
-                        
-                        // Disponibilidad en lotes
-                        $available = $ticketType->quantity - $totalIssued;
-                    } else {
-                        // Para tickets individuales: contar directamente
-                        $totalIssued = $ticketType->issuedTickets()
-                            ->whereNotNull('order_id')
-                            ->where('status', '!=', IssuedTicketStatus::CANCELLED)
-                            ->count();
-                        
-                        $available = $ticketType->quantity - $totalIssued;
-                    }
+                    $available = $ticketType->quantity - $totalIssued;
                     
                     // Agregar propiedades calculadas al modelo existente
                     $ticketType->sold = $totalIssued;
@@ -147,7 +129,7 @@ class AttendeeInvitationController extends Controller
                 throw new \Exception('Una o más funciones no pertenecen a este evento.');
             }
 
-            // Verificar disponibilidad de tickets antes de crear nada
+            // Verificar que los tickets no sean bundles
             foreach ($request->tickets as $ticketRequest) {
                 $ticketType = TicketType::where('id', $ticketRequest['ticket_type_id'])
                     ->where('event_function_id', $ticketRequest['event_function_id'])
@@ -157,11 +139,10 @@ class AttendeeInvitationController extends Controller
                     throw new \Exception('Tipo de ticket inválido para la función seleccionada.');
                 }
 
-                // Calcular cuántos tickets físicos se requieren para esta solicitud.
-                // Si es un lote (bundle), cada "cantidad" representa un lote que contiene bundle_quantity entradas.
-                $bundleMultiplier = ($ticketType->is_bundle ?? false) ? ($ticketType->bundle_quantity ?? 1) : 1;
-                $requestedPhysical = $ticketRequest['quantity'] * $bundleMultiplier;
-
+                // Verificar que no sea un bundle
+                if ($ticketType->is_bundle) {
+                    throw new \Exception('No se pueden invitar entradas tipo lote. Por favor, selecciona entradas individuales.');
+                }
             }
 
             // Crear o encontrar la persona
@@ -183,7 +164,7 @@ class AttendeeInvitationController extends Controller
                     'address' => $personData['address'],
                 ]);
             } else {
-                // Solo actualizar datos básicos de la persona (NO el email, eso va en Assistant)
+                // Solo actualizar datos básicos de la persona
                 $person->update([
                     'name' => $personData['name'],
                     'last_name' => $personData['last_name'],
@@ -215,26 +196,19 @@ class AttendeeInvitationController extends Controller
                         'sended_at' => now(),
                     ]);
                 } else {
-                    // Si ya existe, incrementar la cantidad (la cantidad se guarda en unidades de "lotes" si aplica)
+                    // Si ya existe, incrementar la cantidad
                     $assistant->increment('quantity', $ticketRequest['quantity']);
                 }
 
-                // Determinar cuántos tickets físicos crear (tener en cuenta bundles)
-                $bundleMultiplier = ($ticketType->is_bundle ?? false) ? ($ticketType->bundle_quantity ?? 1) : 1;
-                $ticketsToCreate = $ticketRequest['quantity'] * $bundleMultiplier;
-
-                // Si es un bundle, generar una referencia única para agrupar los tickets del mismo lote
-                $bundleReference = $ticketType->is_bundle ? (string) Str::uuid() : null;
-                
-                // Crear tickets físicamente emitidos
-                for ($i = 0; $i < $ticketsToCreate; $i++) {
+                // Crear tickets individuales (sin bundle_reference)
+                for ($i = 0; $i < $ticketRequest['quantity']; $i++) {
                     $issuedTickets[] = IssuedTicket::create([
                         'ticket_type_id' => $ticketType->id,
                         'order_id' => null, // No hay orden para invitaciones
                         'assistant_id' => $assistant->id,
                         'client_id' => null, // No hay cliente para invitaciones
                         'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'INV'),
-                        'bundle_reference' => $bundleReference,
+                        'bundle_reference' => null, // Siempre null para invitaciones
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
                     ]);
