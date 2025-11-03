@@ -243,7 +243,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
                         {/* Banners del Evento */}
                         <Card className='bg-card shadow-lg border-border'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-card-foreground'>Imágenes del Evento</CardTitle>
                             </CardHeader>
                             <CardContent>

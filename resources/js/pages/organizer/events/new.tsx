@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Category } from '@/types';
 import { toast, Toaster } from 'sonner';
+import BackButton from '@/components/Backbutton';
 
 interface EventFunction {
     id: string;
@@ -352,12 +353,8 @@ export default function EventsNew({ categories, venues }: Props) {
             <Head title='Crear Evento' />
             <div className='min-h-screen bg-background'>
                 <div className='container mx-auto px-4 py-6'>
-                <div className="flex items-center mb-6">
-                    <Link href={route('organizer.events.index')}>
-                        <Button variant="outline" size="icon" className="mr-4">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                <div className="flex items-center mb-6 gap-2">
+                    <BackButton href={route('organizer.events.index')} />
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Crear Evento</h1>
                         <p className="text-gray-600 mt-1">
@@ -464,7 +461,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
                         {/* Banners del Evento */}
                         <Card className='bg-card shadow-lg border-border'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-card-foreground'>Imágenes del Evento</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -652,7 +649,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
                         {/* Funciones del Evento */}
                         <Card className='bg-card shadow-lg border-border'>
-                            <CardHeader>
+                            <CardHeader className='pb-0'>
                                 <CardTitle className='text-lg font-semibold text-card-foreground'>Funciones del Evento</CardTitle>
                             </CardHeader>
                             <CardContent>

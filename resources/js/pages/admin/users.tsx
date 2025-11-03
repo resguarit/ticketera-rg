@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, UsersIcon, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,30 +60,102 @@ export default function Users({ auth }: any) {
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all");
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
-
-    // Estado para detectar si hay filtros pendientes de aplicar
-    const [hasPendingFilters, setHasPendingFilters] = useState(false);
+    
+    // Ref para controlar si es la primera carga
+    const isInitialLoad = useRef(true);
+    
+    // Ref para controlar timeouts de debounce
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Estados para el modal
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-
-    // Agregar estado para el usuario a eliminar
     const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
 
-    // Detectar cambios en los filtros para mostrar indicador
-    const checkPendingFilters = () => {
-        const hasChanges = 
-            searchTerm !== (filters.search || "") ||
-            selectedStatus !== (filters.status || "all");
-        setHasPendingFilters(hasChanges);
-    };
+    // Función para aplicar filtros automáticamente
+    const applyFilters = useCallback((resetPage = true) => {
+        const params: Record<string, any> = {
+            search: searchTerm || undefined,
+            status: selectedStatus !== "all" ? selectedStatus : undefined,
+            sort_by: sortBy !== "created_at" ? sortBy : undefined,
+        };
 
-    // Llamar checkPendingFilters cuando cambien los filtros locales
+        // Solo resetear página si resetPage es true
+        if (!resetPage) {
+            params.page = filters.page || 1;
+        }
+
+        // Filtrar parámetros undefined
+        const filteredParams = Object.fromEntries(
+            Object.entries(params).filter(([_, value]) => value !== undefined)
+        );
+
+        router.get(route('admin.users.index'), filteredParams, {
+            preserveState: true,
+            replace: true,
+            only: ['users', 'stats']
+        });
+    }, [searchTerm, selectedStatus, sortBy, filters.page]);
+
+    // Aplicar filtros automáticamente cuando cambien los selectores (excepto en la primera carga)
     useEffect(() => {
-        checkPendingFilters();
-    }, [searchTerm, selectedStatus]);
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
+        }
+        
+        applyFilters(true); // Resetear página cuando cambian los filtros
+    }, [selectedStatus, sortBy]);
+
+    // Para la búsqueda, aplicar con debounce
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            return;
+        }
+
+        // Limpiar timeout anterior
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Si la búsqueda está vacía, aplicar inmediatamente
+        if (searchTerm.trim() === '') {
+            applyFilters(true);
+            return;
+        }
+
+        // Aplicar búsqueda con debounce
+        searchTimeoutRef.current = setTimeout(() => {
+            applyFilters(true); // Resetear página cuando se busca
+        }, 500);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchTerm]);
+
+    // Limpiar timeout al desmontar
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Función para manejar la paginación
+    const handlePagination = (url: string) => {
+        if (!url) return;
+        
+        router.get(url, {}, {
+            preserveState: true,
+            replace: true,
+            only: ['users']
+        });
+    };
 
     // Funciones para el modal
     const handleViewUser = (user: UserData) => {
@@ -136,35 +208,28 @@ export default function Users({ auth }: any) {
         ],
     };
 
-    // Aplicar filtros (solo cuando se presione el botón o Enter)
-    const handleFilters = () => {
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
-        router.get(route('admin.users.index'), {
-            search: searchTerm,
-            status: selectedStatus,
-            sort_by: sortBy,
-        }, {
-            preserveState: true,
-            replace: true
-        });
-    };
-
-    // Limpiar filtros
+    // Función para limpiar filtros
     const handleClearFilters = () => {
         setSearchTerm("");
         setSelectedStatus("all");
         setSortBy("created_at");
-        setHasPendingFilters(false); // Limpiar indicador de filtros pendientes
+        
+        // Redirigir sin parámetros
         router.get(route('admin.users.index'), {}, {
             preserveState: true,
-            replace: true
+            replace: true,
+            only: ['users', 'stats']
         });
     };
 
-    // Manejar Enter en búsqueda para aplicar filtros
+    // Manejar Enter en búsqueda para aplicar inmediatamente
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleFilters();
+            // Limpiar timeout y aplicar inmediatamente
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+            applyFilters(true);
         }
     };
 
@@ -220,10 +285,9 @@ export default function Users({ auth }: any) {
                 onSearchChange={setSearchTerm}
                 selectedStatus={selectedStatus}
                 onStatusChange={setSelectedStatus}
-                onApplyFilters={handleFilters}
                 onClearFilters={handleClearFilters}
                 onKeyPress={handleKeyPress}
-                hasPendingFilters={hasPendingFilters}
+                searchDebounceMs={500}
             >
                 {/* Users Table */}
                 <Card className="bg-white border-gray-200 shadow-lg">
@@ -287,7 +351,7 @@ export default function Users({ auth }: any) {
                                             </Button>
                                             <Button 
                                                 onClick={() => {
-                                                    setUserToDelete(user); // Establecer el usuario antes de abrir el modal
+                                                    setUserToDelete(user);
                                                     setIsConfirmModalOpen(true);
                                                 }}
                                                 variant="outline" 
@@ -314,15 +378,16 @@ export default function Users({ auth }: any) {
                             )}
                         </div>
 
-                        {/* Pagination */}
+                        {/* Pagination - Actualizada para usar la función handlePagination */}
                         {users.data.length > 0 && (
                             <div className="mt-6 flex justify-center">
                                 <div className="flex items-center space-x-2">
                                     {users.links.map((link, index) => (
-                                        <Link
+                                        <button
                                             key={index}
-                                            href={link.url || '#'}
-                                            className={`px-3 py-2 text-sm rounded-md ${
+                                            onClick={() => handlePagination(link.url)}
+                                            disabled={!link.url}
+                                            className={`px-3 py-2 text-sm rounded-md transition-colors ${
                                                 link.active
                                                     ? 'bg-black text-white'
                                                     : link.url
@@ -360,7 +425,7 @@ export default function Users({ auth }: any) {
                 isOpen={isConfirmModalOpen}
                 onClose={() => {
                     setIsConfirmModalOpen(false);
-                    setUserToDelete(null); // Limpiar el usuario al cerrar
+                    setUserToDelete(null);
                 }}
                 onConfirm={() => {
                     if (userToDelete) {
@@ -374,7 +439,7 @@ export default function Users({ auth }: any) {
                 pronombre="este"
                 entidad="usuario"
                 accionando="eliminando"
-                nombreElemento={userToDelete?.name} // Usar userToDelete en lugar de selectedUser
+                nombreElemento={userToDelete?.name}
                 advertencia="Todos los datos asociados al usuario también serán eliminados."
                 confirmVariant='destructive'
                 isLoading={false}

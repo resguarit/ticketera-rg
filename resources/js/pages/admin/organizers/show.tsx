@@ -9,6 +9,7 @@ import { CredentialsFlash, Organizer, Event, User, Category, Venue } from '@/typ
 import OrganizerUsersTab from '@/components/organizers/OrganizerUsersTab';
 import { formatDate } from '@/utils/userFormat';
 import { getVenueLocation } from '@/lib/venueHelpers';
+import BackButton from '@/components/Backbutton';
 
 interface EventItem extends Event {
   category: Category;
@@ -32,9 +33,10 @@ export default function Show() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <Card className="bg-card border-border shadow-lg mb-8">
-            <CardContent className="p-8">
-              <div className="flex items-start space-x-6">
-                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-6">
+                <BackButton href={route('admin.organizers.index')} />
+                <div className="w-40 h-40 rounded-xl overflow-hidden flex-shrink-0 border border-border">
                   {organizer.image_url ? (
                     <img
                       src={organizer.image_url}
@@ -68,9 +70,6 @@ export default function Show() {
                   <Link href={route('admin.organizers.edit', organizer.id)}>
                     <Button className="bg-primary text-primary-foreground hover:bg-primary-hover"><Edit className="w-4 h-4 mr-2" />Editar</Button>
                   </Link>
-                  <Link href={route('admin.organizers.index')}>
-                    <Button variant="outline" className="border-border text-foreground hover:bg-accent">Volver</Button>
-                  </Link>
                 </div>
               </div>
             </CardContent>
@@ -87,12 +86,12 @@ export default function Show() {
             </TabsContent>
 
             <TabsContent value="events">
-              <Card className="bg-card border-border shadow-lg">
+              <Card className="bg-card border-border shadow-lg py-2">
                 <CardContent className="p-6">
                   {organizer.events.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {organizer.events.map((event: EventItem) => (
-                        <Card key={event.id} className="bg-muted border-border hover:shadow-md transition-shadow">
+                        <Card key={event.id} className="bg-muted border-border hover:shadow-md transition-shadow py-2">
                           <CardContent className="p-4">
                             <div className="flex items-start space-x-4">
                               <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-border">
