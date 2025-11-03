@@ -310,9 +310,32 @@ class AssistantController extends Controller
             abort(404);
         }
 
-        $assistant->delete();
+        try {
+            DB::beginTransaction();
 
-        return redirect()->back()->with('success', 'Asistente eliminado correctamente.');
+            // Cancelar solo los tickets de esta invitación específica (assistant_id + event_function)
+            // No cancelar tickets de otras invitaciones del mismo asistente en otras funciones
+            IssuedTicket::where('assistant_id', $assistant->id)
+                ->whereHas('ticketType', function($query) use ($assistant) {
+                    $query->where('event_function_id', $assistant->event_function_id);
+                })
+                ->where('status', '!=', \App\Enums\IssuedTicketStatus::CANCELLED)
+                ->update([
+                    'status' => \App\Enums\IssuedTicketStatus::CANCELLED
+                ]);
+
+            // Eliminar el asistente (soft delete)
+            $assistant->delete();
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Asistente eliminado correctamente y sus tickets han sido cancelados.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()->withErrors(['error' => 'Error al eliminar el asistente: ' . $e->getMessage()]);
+        }
     }
 
     public function resendInvitation(Event $event, Assistant $assistant, Request $request)
