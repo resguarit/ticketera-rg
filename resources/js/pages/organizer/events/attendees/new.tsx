@@ -300,13 +300,13 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
             
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center gap-2">
-                                        <BackButton
-                        href={route('organizer.events.attendees', event.id)}
-                    />
+                <div className="flex items-center mb-6 gap-2">
+                    <BackButton href={route('organizer.events.attendees', event.id)} />
                     <div>
-                        <h1 className=" font-bold text-gray-900">Invitar Asistente</h1>
-                        <p className="text-gray-600 text-sm">Agrega nuevos asistentes al evento {event.name}</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Invitar Asistente</h1>
+                        <p className="text-gray-600 mt-1">
+                            Complete el formulario para invitar a un nuevo asistente al evento {event.name}
+                        </p>
                     </div>
                 </div>
 
@@ -314,9 +314,8 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Datos Personales */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <User className="w-5 h-5" />
+                            <CardHeader className='pb-0'>
+                                <CardTitle className="text-lg">
                                     Datos Personales
                                 </CardTitle>
                             </CardHeader>
@@ -331,9 +330,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             onChange={(e) => setPersonData({...personData, name: e.target.value})}
                                             className={errors['person.name'] ? 'border-red-500' : ''}
                                         />
-                                        {errors['person.name'] && (
-                                            <p className="text-sm text-red-600 mt-1">{errors['person.name']}</p>
-                                        )}
                                     </div>
                                     <div>
                                         <Label htmlFor="last_name">Apellido <span className="text-red-500">*</span></Label>
@@ -344,15 +340,11 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                             onChange={(e) => setPersonData({...personData, last_name: e.target.value})}
                                             className={errors['person.last_name'] ? 'border-red-500' : ''}
                                         />
-                                        {errors['person.last_name'] && (
-                                            <p className="text-sm text-red-600 mt-1">{errors['person.last_name']}</p>
-                                        )}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="email" className="flex items-center gap-1">
-                                        <Mail className="w-4 h-4" />
+                                    <Label htmlFor="email">
                                         Email <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
@@ -362,15 +354,12 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         onChange={(e) => setPersonData({...personData, email: e.target.value})}
                                         className={errors['person.email'] ? 'border-red-500' : ''}
                                     />
-                                    {errors['person.email'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.email']}</p>
-                                    )}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="dni" className="flex items-center gap-1">
-                                        <IdCard className="w-4 h-4" />
-                                        DNI (opcional)</Label>
+                                    <Label htmlFor="dni">
+                                        DNI
+                                    </Label>
                                     <Input
                                         id="dni"
                                         type="text"
@@ -379,15 +368,11 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         className={errors['person.dni'] ? 'border-red-500' : ''}
                                         placeholder="Sin espacios ni puntos"
                                     />
-                                    {errors['person.dni'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.dni']}</p>
-                                    )}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="phone" className="flex items-center gap-1">
-                                        <Phone className="w-4 h-4" />
-                                        Teléfono (opcional)
+                                    <Label htmlFor="phone">
+                                        Teléfono
                                     </Label>
                                     <Input
                                         id="phone"
@@ -396,15 +381,11 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         onChange={(e) => setPersonData({...personData, phone: e.target.value})}
                                         className={errors['person.phone'] ? 'border-red-500' : ''}
                                     />
-                                    {errors['person.phone'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.phone']}</p>
-                                    )}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="address" className="flex items-center gap-1">
-                                        <MapPin className="w-4 h-4" />
-                                        Dirección (opcional)
+                                    <Label htmlFor="address">
+                                        Dirección
                                     </Label>
                                     <Textarea
                                         id="address"
@@ -413,9 +394,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                         className={errors['person.address'] ? 'border-red-500' : ''}
                                         rows={2}
                                     />
-                                    {errors['person.address'] && (
-                                        <p className="text-sm text-red-600 mt-1">{errors['person.address']}</p>
-                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -423,8 +401,7 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                         {/* Selección de Tickets */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Ticket className="w-5 h-5" />
+                                <CardTitle className="text-lg">
                                     Entradas
                                 </CardTitle>
                             </CardHeader>
@@ -466,11 +443,11 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                                                     <p className="font-medium">{func.name}</p>
                                                                     <div className="flex items-center gap-3 text-xs text-gray-500">
                                                                         <span className="flex items-center gap-1">
-                                                                            <Calendar className="w-3 h-3" />
+                                                                            <Calendar className="w-2 h-2" />
                                                                             {func.date}
                                                                         </span>
                                                                         <span className="flex items-center gap-1">
-                                                                            <Clock className="w-3 h-3" />
+                                                                            <Clock className="w-2 h-2" />
                                                                             {func.time}
                                                                         </span>
                                                                     </div>
@@ -560,10 +537,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     </div>
                                 ))}
 
-                                {errors.tickets && (
-                                    <p className="text-sm text-red-600">{errors.tickets}</p>
-                                )}
-
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -578,9 +551,8 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                                     <>
                                         <Separator />
                                         <div className="flex items-center justify-between font-semibold text-lg">
-                                            <span className="flex items-center gap-2">
-                                                <CreditCard className="w-5 h-5" />
-                                                Total
+                                            <span>
+                                                Total:
                                             </span>
                                             <span>{formatCurrency(totalAmount)}</span>
                                         </div>
@@ -589,13 +561,6 @@ export default function InviteAttendee({ auth, event, eventFunctions }: InviteAt
                             </CardContent>
                         </Card>
                     </div>
-
-                    {/* Errores generales */}
-                    {(errors as any).general && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-sm text-red-700">{(errors as any).general}</p>
-                        </div>
-                    )}
 
                     {/* Botones de acción */}
                     <div className="flex items-center justify-end gap-4">
