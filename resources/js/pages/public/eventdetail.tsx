@@ -262,9 +262,16 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             tickets: JSON.stringify(selectedTicketsData)
         });
 
+        const payload = {
+            function_id: selectedFunction.id.toString(),
+            tickets: selectedTicketsData
+        }
+
+        const encoded = btoa(JSON.stringify(payload));
+
         setTimeout(() => {
             setIsLoading(false);
-            router.visit(`${route('checkout.confirm', eventData.id)}?${queryParams.toString()}`);
+            router.visit(`${route('checkout.confirm', eventData.id)}?data=${encoded}`);
         }, 1000);
     };
 
