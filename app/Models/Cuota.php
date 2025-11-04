@@ -10,6 +10,13 @@ class Cuota extends Model
         'event_id',
         'bin',
         'cantidad_cuotas',
+        'habilitada',
+        'banco',
+    ];
+
+    protected $casts = [
+        'habilitada' => 'boolean',
+        'cantidad_cuotas' => 'integer',
     ];
 
     public function event()
