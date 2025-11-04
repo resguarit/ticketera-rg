@@ -17,3 +17,4 @@ export * from './user';
 export * from './venue';
 export * from './faq';
 export * from './faqCategory';
+export * from './cuota';
