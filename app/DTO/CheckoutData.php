@@ -11,6 +11,7 @@ class CheckoutData
         public readonly ?string $bin,
         public readonly array $selected_tickets,
         public readonly string $paymentMethod,
+        public readonly int $installments = 1,
         public readonly ?array $billingInfo = null,
     ) {}
 }
