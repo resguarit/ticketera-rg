@@ -77,6 +77,11 @@ class Event extends Model
     /**
      * Relations
      */
+    public function cuotas(): HasMany
+    {
+        return $this->hasMany(Cuota::class);
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
