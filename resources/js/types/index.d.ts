@@ -21,6 +21,7 @@ export * from './models/sector';
 export * from './models/ticketType';
 export * from './models/user';
 export * from './models/venue';
+export * from './models/cuota';
 
 // export de las vistas
 export * from './ui/event.views'; 

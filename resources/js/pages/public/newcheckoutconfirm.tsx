@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Header from "@/components/header"
 import { Head, Link, router, usePage } from "@inertiajs/react"
-import type { SharedData } from "@/types"
+import type { Cuota, SharedData } from "@/types"
 import type { Event, EventFunction, Organizer } from "@/types"
 import BillingInfoStep from "@/components/checkout/billing-info-step"
 import PaymentInfoStep from "@/components/checkout/payment-info-step"
@@ -36,6 +36,8 @@ interface EventData extends Event {
   function?: EventFunction
   organizer?: Organizer
   tax?: number
+  cuotas?: Cuota[]
+  cuotas_map?: Record<string, number[]>
 }
 
 interface CheckoutConfirmProps {
@@ -64,7 +66,7 @@ export interface PaymentInfo {
   expiryDate: string
   cvv: string
   cardName: string
-  installments: string
+  installments: number
   token?: string
   bin?: string
 }
@@ -111,7 +113,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     expiryDate: "",
     cvv: "",
     cardName: "",
-    installments: "1",
+    installments: 1,
   })
 
   const [agreements, setAgreements] = useState<Agreements>({
@@ -317,6 +319,8 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
                   billingInfo={billingInfo}
                   decidirSandbox={decidirSandboxRef.current}
                   onComplete={handlePaymentStepComplete}
+                  cuotas={eventData.cuotas || []}
+                  cuotas_map={eventData.cuotas_map}
                   disabled={expired}
                 />
               )}

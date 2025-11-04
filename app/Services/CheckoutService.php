@@ -8,6 +8,7 @@ use App\DTO\CheckoutData;
 use App\DTO\CheckoutResult;
 use App\DTO\PaymentContext;
 use App\DTO\PaymentResult;
+use App\Models\Cuota;
 use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 
@@ -28,11 +29,39 @@ class CheckoutService
                 ->where('name', $checkoutData->paymentMethod)
                 ->value('payway_id');
 
+            $requestedInstallments = $checkoutData->installments;
+            $validInstallments = null;
+
+            if ($requestedInstallments > 1) {
+                $validInstallments = Cuota::where('event_id', $checkoutData->eventId)
+                    ->where('bin', $checkoutData->bin)
+                    ->where('cantidad_cuotas', $requestedInstallments)
+                    ->where('habilitada', true)
+                    ->first();
+
+                if (!$validInstallments) {
+                    Log::warning('Cuotas no válidas o no habilitadas', [
+                        'event_id' => $checkoutData->eventId,
+                        'bin' => $checkoutData->bin,
+                        'requested_installments' => $requestedInstallments,
+                    ]);
+
+                    return new CheckoutResult(
+                        success: false,
+                        order: null,
+                        paymentResult: PaymentResult::failure('Cuotas no válidas o no habilitadas.'),
+                        message: 'Cuotas no válidas o no habilitadas.'
+                    );
+                }
+            }
+
             $orderData = [
                     'event_id' => $checkoutData->eventId,
                     'function_id' => $checkoutData->functionId,
                     'selected_tickets' => $checkoutData->selected_tickets,
                     'payment_method' => $paymentMethodId,
+                    'cuotas' => $requestedInstallments,
+                    'cuota_id' => $validInstallments ? $validInstallments->id : null,
                     'billing_info' => $checkoutData->billingInfo,
                     'tax' => $eventTax,
                 ];
@@ -48,7 +77,7 @@ class CheckoutService
                 bin: $checkoutData->bin,
                 siteTransactionId: $order->transaction_id,
                 paymentMethodId: $paymentMethodId,
-                installments: 1,
+                installments: $requestedInstallments,
                 customerEmail: $order->client->email,
                 customerId: $order->client->id,
                 customerName: $checkoutData->billingInfo['firstName'] . ' ' . $checkoutData->billingInfo['lastName'],

@@ -1,12 +1,13 @@
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CreditCard, Eye, EyeOff } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { PaymentInfo, BillingInfo } from "@/pages/public/newcheckoutconfirm"
 import { formatCreditCardExpiry } from "@/lib/creditCardHelpers"
 import { toast } from "sonner"
@@ -18,6 +19,8 @@ interface PaymentInfoStepProps {
   decidirSandbox: any
   onComplete: (tokenizedPaymentInfo: PaymentInfo) => void
   disabled?: boolean
+  cuotas?: any[]
+  cuotas_map?: Record<string, number[]>
 }
 
 const paymentMethods = [
@@ -71,11 +74,31 @@ export default function PaymentInfoStep({
   billingInfo,
   decidirSandbox,
   onComplete,
+  cuotas,
+  cuotas_map,
   disabled,
 }: PaymentInfoStepProps) {
   const [showCVV, setShowCVV] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof PaymentInfo, string>>>({})
   const [isTokenizing, setIsTokenizing] = useState(false)
+  const [availableCuotas, setAvailableCuotas] = useState<number[]>([])
+
+  useEffect(() => {
+    const currentBin = paymentInfo.cardNumber.replace(/\s+/g, "").slice(0, 6)
+    let options: number[] = [1];
+
+    if (currentBin.length === 6 && cuotas_map && cuotas_map[currentBin]) {
+      const binOptions = cuotas_map[currentBin];
+      const allOptions = Array.from(new Set([1, ...binOptions])).sort((a, b) => a - b);
+      options = allOptions;
+    }
+
+    setAvailableCuotas(options);
+
+    if (!options.includes(paymentInfo.installments)) {
+      setPaymentInfo((prev) => ({ ...prev, installments: 1 }));
+    }
+  }, [paymentInfo.cardNumber, cuotas_map])
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "")
@@ -340,6 +363,38 @@ export default function PaymentInfoStep({
                   </button>
                 </div>
                 {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cuotas" className="text-foreground">
+                  Cuotas
+                </Label>
+                {availableCuotas.length > 1 ? (
+                  <Select
+                    name="installments"
+                    value={paymentInfo.installments.toString()}
+                    onValueChange={(value) =>
+                      setPaymentInfo((prev) => ({
+                        ...prev,
+                        installments: parseInt(value, 10),
+                      }))
+                    }
+                    disabled={disabled || isTokenizing}
+                  >
+                    <SelectTrigger id="cuotas">
+                      <SelectValue placeholder="Selecciona las cuotas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCuotas.map((count) => (
+                        <SelectItem key={count} value={count.toString()}>
+                          {count} cuota{count > 1 ? "s" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-foreground/70">1 cuota</p>
+                )}
               </div>
             </div>
 

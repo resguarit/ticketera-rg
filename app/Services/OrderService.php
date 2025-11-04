@@ -59,6 +59,8 @@ class OrderService
                 'client_id' => $userId,
                 'order_date' => now(),
                 'status' => OrderStatus::PENDING,
+                'cuotas' => $orderData['cuotas'],
+                'cuota_id' => $orderData['cuota_id'],
                 'payment_method' => $orderData['payment_method'],
                 'transaction_id' => $this->generateOrderTransactionId($orderData['event_id']),
                 'subtotal' => $totals['subtotal'],
