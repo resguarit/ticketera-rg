@@ -58,8 +58,17 @@ class CheckoutController extends Controller
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
-        // Obtener la función específica
-        $functionId = $request->input('function_id');
+        $dataEncoded = $request->input('data');
+        if (!$dataEncoded) {
+            return redirect()->route('event.detail', $event->id)
+                ->with('error', 'Datos de selección no proporcionados');
+        }
+
+        $decoded = json_decode(base64_decode($dataEncoded), true);
+
+        $functionId = $decoded['function_id'];
+        $selectedTicketIds = $decoded['tickets'];
+
         $selectedFunction = null;
         
         if ($functionId) {
@@ -73,14 +82,7 @@ class CheckoutController extends Controller
             return redirect()->route('event.detail', $event->id)
                 ->with('error', 'Función no encontrada');
         }
-
-        // Obtener los tickets seleccionados
-        $selectedTicketIds = $request->input('tickets', []);
-        if (is_string($selectedTicketIds)) {
-            $selectedTicketIds = json_decode($selectedTicketIds, true) ?? [];
-        }
-
-        // MODIFICADO: Preparar tickets con información de bloqueo
+        
         $selectedTickets = [];
         $ticketRequests = [];
 
