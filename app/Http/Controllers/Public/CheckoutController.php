@@ -56,7 +56,7 @@ class CheckoutController extends Controller
         }
 
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
-        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes', 'cuotas']);
 
         // Obtener la función específica
         $functionId = $request->input('function_id');
@@ -128,6 +128,13 @@ class CheckoutController extends Controller
             $request->session()->put('locked_tickets', $lockResult['locked_tickets']);
         }
 
+        $cuotas_map = $event->cuotas
+                ->where('habilitada', true)
+                ->groupBy('bin')
+                ->map(function ($items) {
+                    return $items->pluck('cantidad_cuotas')->unique()->sort()->values();
+                });
+
         // Preparar datos del evento para el checkout
         $eventData = [
             'id' => $event->id,
@@ -144,6 +151,8 @@ class CheckoutController extends Controller
             'function' => $selectedFunction,
             'organizer' => $event->organizer,
             'tax' => $event->tax, // <-- AÑADIR ESTO
+            'cuotas' => $event->cuotas->where('habilitada', true)->values(),
+            'cuotas_map' => $cuotas_map,
         ];
 
         return Inertia::render('public/newcheckoutconfirm', [
@@ -213,6 +222,7 @@ class CheckoutController extends Controller
                 'billing_info.documentNumber' => 'required|string|max:20',
                 'payment_info' => 'required|array',
                 'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
+                'payment_info.installments' => 'required|integer|min:1',
                 'token' => 'required|string',
                 'bin' => 'nullable|string',
                 'selected_tickets' => 'required|array|min:1',
@@ -242,6 +252,7 @@ class CheckoutController extends Controller
                 functionId: $validated['function_id'],
                 selected_tickets: $validated['selected_tickets'],
                 paymentMethod: $validated['payment_info']['method'],
+                installments: $validated['payment_info']['installments'],
                 billingInfo: $validated['billing_info'] ?? null,
                 paymentToken: $validated['token'],
                 bin: $validated['bin'],
@@ -273,69 +284,8 @@ class CheckoutController extends Controller
                     'timestamp' => now()->format('d/m/Y H:i')
                 ]);
             }
-            /*
-            Pasos:
-            - Encontrar el evento y el tax
-            - Calcular totales segun los tickets seleccionados, el tax y el descuento (si aplica)
-            - Crear la orden con la orderData
-            - Liberar tickets bloqueados
-            - Crear orden 
-            - Procesar el pago
-            */
-            
-            /*
-            $event = Event::findOrFail($validated['event_id']);
-            $eventTax = $event->tax ? ($event->tax / 100) : 0;
-
-            $orderData = [
-                'event_id' => $validated['event_id'],
-                'function_id' => $validated['function_id'],
-                'selected_tickets' => $validated['selected_tickets'],
-                'payment_method' => $validated['payment_info']['method'],
-                'billing_info' => $validated['billing_info'],
-                'tax' => $eventTax,
-            ];
-
-            $orderResult = $this->orderService->createOrder($orderData);
-
-            $paymentSuccessful = $this->orderService->processPayment($orderResult['order'], $validated['payment_info']);
-            
-
-            if ($paymentSuccessful) {
-
-                $request->session()->forget(['checkout_session_id', 'locked_tickets']);
-
-                $this->emailDispatcher->sendTicketPurchaseConfirmation($orderResult['order']);
-
-                $redirectParams = ['order' => $orderResult['order']->transaction_id ?? $orderResult['order']->id];
-
-                if ($orderResult['account_created'] ?? false) {
-                    $redirectParams['account_created'] = '1';
-                }
-
-                $signedUrl = URL::temporarySignedRoute('checkout.success', now()->addMinutes(60), $redirectParams);
-
-                return redirect()->to($signedUrl)
-                    ->with('success', '¡Compra realizada exitosamente!');
-
-            } else {
-                
-                return $this->redirectToError([
-                    'title' => 'Error en el Pago',
-                    'message' => 'No pudimos procesar tu pago. La orden ha sido cancelada.',
-                    'errorCode' => 'PAYMENT_FAILED',
-                    'canRetry' => true,
-                    'retryUrl' => route('event.detail', $validated['event_id']),
-                    'eventId' => $validated['event_id'],
-                    'eventName' => Event::find($validated['event_id'])->name ?? null,
-                    'timestamp' => now()->format('d/m/Y H:i')
-                ]);
-            }
-            */
 
         } catch (\Exception $e) {
-            // En caso de error, liberar locks si aún no se han liberado
-            // (esto manejará el caso donde el error ocurre antes de liberar los locks)
             try {
                 $this->ticketLockService->releaseTickets($sessionId);
             } catch (\Exception $releaseError) {
