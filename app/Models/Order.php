@@ -19,6 +19,8 @@ class Order extends Model
         'client_id',
         'order_date',
         'status',
+        'cuotas',
+        'cuota_id',
         'payment_method',
         'transaction_id',
         'subtotal',
@@ -44,6 +46,11 @@ class Order extends Model
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');
+    }
+
+    public function cuota()
+    {
+        return $this->belongsTo(Cuota::class);
     }
 
     public function items()
