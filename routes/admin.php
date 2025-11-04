@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CuotaController;
 use App\Http\Controllers\Admin\VenueController;
 use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
@@ -66,6 +67,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', function () {
             return Inertia::render('admin/settings');
         })->name('index');
+    });
+
+    //
+    Route::prefix('cuotas')->name('cuotas.')->group(function () {
+        Route::get('/', [CuotaController::class, 'index'])->name('index');
+        Route::get('/new', [CuotaController::class, 'create'])->name('new');
+        Route::post('/', [CuotaController::class, 'store'])->name('store');
+        Route::get('/{cuota}/edit', [CuotaController::class, 'edit'])->name('edit');
+        Route::put('/{cuota}', [CuotaController::class, 'update'])->name('update');
+        Route::delete('/{cuota}', [CuotaController::class, 'destroy'])->name('destroy');
+        Route::patch('/{cuota}/enable', [CuotaController::class, 'enable'])->name('enable');
     });
 
     // Gestión de categorías
