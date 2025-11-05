@@ -480,13 +480,15 @@ export default function EventAttendees({
                                                                     <Mail className="mr-2 h-4 w-4" />
                                                                     Reenviar invitación
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem 
-                                                                    onClick={() => handleConfirmDeleteAttendee(attendee)}
-                                                                    className="text-red-600"
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Eliminar
-                                                                </DropdownMenuItem>
+                                                                {!attendee.is_cancelled && (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleConfirmDeleteAttendee(attendee)}
+                                                                        className="text-red-600"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Eliminar
+                                                                    </DropdownMenuItem>
+                                                                )}
                                                             </>
                                                         )}
                                                         {attendee.type === 'buyer' && (
