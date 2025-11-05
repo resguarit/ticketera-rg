@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Services\RevenueService;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class EventController extends Controller
             ->when(!$filters['include_archived'], function ($query) {
                 $query->where('is_archived', false);
             })
-            ->with(['category', 'venue', 'organizer', 'functions']);
+            ->with(['category', 'venue', 'organizer', 'functions.ticketTypes']);
 
         // Aplicar filtro de búsqueda
         if (!empty($filters['search'])) {
@@ -58,9 +59,11 @@ class EventController extends Controller
             $query->where('venue_id', $filters['venue_id']);
         }
 
-        // Aplicar filtro por estado (si tienes campo status en events)
+        // Aplicar filtro por estado usando el enum
         if ($filters['status'] !== 'all') {
-            $query->where('status', $filters['status']);
+            $query->whereHas('functions', function($q) use ($filters) {
+                $q->where('status', $filters['status']);
+            });
         }
 
         // Aplicar ordenamiento
@@ -74,7 +77,7 @@ class EventController extends Controller
 
         $events = $query->get()
             ->map(function($event) {
-                // Calcular precios mínimo y máximo si tienes ticketTypes
+                // Calcular precios mínimo y máximo
                 $functions = $event->functions->load('ticketTypes');
                 $allPrices = $functions->flatMap(function($function) {
                     return $function->ticketTypes->pluck('price');
@@ -83,8 +86,15 @@ class EventController extends Controller
                 $minPrice = $allPrices->min() ?? 0;
                 $maxPrice = $allPrices->max() ?? 0;
                 
-                // Próxima función
-                $nextFunction = $event->functions->where('start_time', '>=', now())->sortBy('start_time')->first();
+                // Próxima función activa
+                $nextFunction = $event->functions
+                    ->where('is_active', true)
+                    ->where('start_time', '>=', now())
+                    ->sortBy('start_time')
+                    ->first();
+
+                // Determinar estado del evento
+                $statusInfo = $this->determineEventStatus($event);
 
                 return [
                     'id' => $event->id,
@@ -102,6 +112,10 @@ class EventController extends Controller
                     'max_price' => $maxPrice,
                     'next_function_date' => $nextFunction ? $nextFunction->start_time : null,
                     'functions_count' => $event->functions->count(),
+                    'status' => $statusInfo['value'],
+                    'status_label' => $statusInfo['label'],
+                    'status_color' => $statusInfo['color'],
+                    'is_active' => $statusInfo['is_active'],
                     'functions' => $event->functions->map(function($function) {
                         return [
                             'id' => $function->id,
@@ -114,6 +128,9 @@ class EventController extends Controller
                             'formatted_date' => $function->start_time?->format('Y-m-d'),
                             'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                             'is_active' => $function->is_active,
+                            'status' => $function->status->value,
+                            'status_label' => $function->status->label(),
+                            'status_color' => $function->status->color(),
                         ];
                     }),
                 ];
@@ -128,10 +145,17 @@ class EventController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Estados disponibles del enum
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+        ]);
+
         return Inertia::render('organizer/events/index', [
             'events' => $events,
             'categories' => $categories,
             'venues' => $venues,
+            'statuses' => $statuses,
             'filters' => $filters,
         ]);
     }
@@ -150,9 +174,17 @@ class EventController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Estados disponibles del enum
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+            'color' => $status->color(),
+        ]);
+
         return Inertia::render('organizer/events/new', [
             'categories' => $categories,
             'venues' => $venues,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -165,12 +197,12 @@ class EventController extends Controller
             'hero_banner_url' => 'nullable|image|max:5120',
             'category_id' => 'required|exists:categories,id',
             'venue_id' => 'required|exists:venues,id',
-            // Remover 'featured' => 'boolean',
             'functions' => 'required|array|min:1',
             'functions.*.name' => 'required|string|max:255',
             'functions.*.description' => 'nullable|string',
             'functions.*.start_time' => 'required|date',
             'functions.*.end_time' => 'nullable|date|after:functions.*.start_time',
+            'functions.*.status' => 'nullable|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
@@ -190,7 +222,7 @@ class EventController extends Controller
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
-            // Create event (featured será false por defecto)
+            // Create event
             $event = Event::create([
                 'organizer_id' => $organizer->id,
                 'category_id' => $validated['category_id'],
@@ -199,11 +231,11 @@ class EventController extends Controller
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
                 'hero_banner_url' => $heroBannerPath,
-                'featured' => false, // Siempre false para organizadores
+                'featured' => false,
                 'tax' => $organizer->tax,
             ]);
 
-            // Create functions only (without ticket types for now)
+            // Create functions with status
             foreach ($validated['functions'] as $functionData) {
                 EventFunction::create([
                     'event_id' => $event->id,
@@ -212,6 +244,7 @@ class EventController extends Controller
                     'start_time' => $functionData['start_time'],
                     'end_time' => $functionData['end_time'],
                     'is_active' => true,
+                    'status' => $functionData['status'] ?? EventFunctionStatus::UPCOMING->value,
                 ]);
             }
 
@@ -224,10 +257,10 @@ class EventController extends Controller
             DB::rollback();
             
             // Delete uploaded files if they exist
-            if ($bannerPath) {
+            if (isset($bannerPath)) {
                 Storage::disk('public')->delete($bannerPath);
             }
-            if ($heroBannerPath) {
+            if (isset($heroBannerPath)) {
                 Storage::disk('public')->delete($heroBannerPath);
             }
             
@@ -287,25 +320,23 @@ class EventController extends Controller
             $bannerPath = $event->banner_url;
             $heroBannerPath = $event->hero_banner_url;
 
-            // Handle normal banner - solo actualizar si se sube un nuevo archivo
+            // Handle normal banner
             if ($request->hasFile('banner_url')) {
-                // Delete old banner if it exists
                 if ($bannerPath) {
                     Storage::disk('public')->delete($bannerPath);
                 }
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
-            // Handle hero banner - solo actualizar si se sube un nuevo archivo
+            // Handle hero banner
             if ($request->hasFile('hero_banner_url')) {
-                // Delete old hero banner if it exists
                 if ($heroBannerPath) {
                     Storage::disk('public')->delete($heroBannerPath);
                 }
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
-            // Update event preservando todas las rutas
+            // Update event
             $event->update([
                 'category_id' => $validated['category_id'],
                 'venue_id' => $validated['venue_id'],
@@ -323,7 +354,6 @@ class EventController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
-            // Log del error para debugging
             \Log::error('Error updating event: ' . $e->getMessage());
             
             return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()])
@@ -356,17 +386,15 @@ class EventController extends Controller
         $event->load(['category', 'venue', 'organizer', 'functions.ticketTypes']);
 
         // Calcular estadísticas del evento
-        $totalEntradasVendidas = 0; // CAMBIADO: suma de lotes + entradas individuales (sin multiplicar)
-        $totalTicketsEmitidos = 0;   // CAMBIADO: tickets físicos reales emitidos
+        $totalEntradasVendidas = 0;
+        $totalTicketsEmitidos = 0;
         
         foreach ($event->functions as $function) {
             foreach ($function->ticketTypes as $ticketType) {
                 $vendidos = (int) $ticketType->quantity_sold;
                 
-                // Entradas vendidas: contar lotes y entradas individuales por igual
                 $totalEntradasVendidas += $vendidos;
                 
-                // Tickets emitidos: multiplicar por bundle_quantity si es bundle
                 if ($ticketType->is_bundle) {
                     $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
                 } else {
@@ -388,20 +416,17 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'total_revenue' => $event->getRevenue(),
-            'entradas_vendidas' => $totalEntradasVendidas, // CAMBIADO: entradas vendidas
-            'tickets_emitidos' => $totalTicketsEmitidos,   // CAMBIADO: tickets emitidos
+            'entradas_vendidas' => $totalEntradasVendidas,
+            'tickets_emitidos' => $totalTicketsEmitidos,
             'functions' => $event->functions->map(function($function) {
-                // Calcular estadísticas por función
                 $entradasVendidasFunc = 0;
                 $ticketsEmitidosFunc = 0;
                 
                 foreach ($function->ticketTypes as $ticketType) {
                     $vendidos = (int) $ticketType->quantity_sold;
                     
-                    // Entradas vendidas: contar lotes y entradas individuales por igual
                     $entradasVendidasFunc += $vendidos;
                     
-                    // Tickets emitidos: multiplicar por bundle_quantity si es bundle
                     if ($ticketType->is_bundle) {
                         $ticketsEmitidosFunc += $vendidos * ($ticketType->bundle_quantity ?? 1);
                     } else {
@@ -420,8 +445,11 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
-                    'entradas_vendidas' => $entradasVendidasFunc, // CAMBIADO: entradas vendidas
-                    'tickets_emitidos' => $ticketsEmitidosFunc,   // CAMBIADO: tickets emitidos
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
+                    'entradas_vendidas' => $entradasVendidasFunc,
+                    'tickets_emitidos' => $ticketsEmitidosFunc,
                 ];
             }),
         ];
@@ -462,12 +490,10 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'functions' => $event->functions->map(function($function) {
-                // Calcular estadísticas de la función usando los métodos del modelo y service
                 $ticketTypes = $function->ticketTypes;
-                $totalLotes = (int) $ticketTypes->sum('quantity'); // Total de lotes/entradas disponibles
-                $lotesVendidos = (int) $ticketTypes->sum('quantity_sold'); // CORREGIDO: usar quantity_sold directamente
+                $totalLotes = (int) $ticketTypes->sum('quantity');
+                $lotesVendidos = (int) $ticketTypes->sum('quantity_sold');
                 $entradasEmitidas = (int) $ticketTypes->sum(function($ticketType) {
-                    // CORREGIDO: usar quantity_sold directamente, no el accessor
                     $sold = (int) $ticketType->quantity_sold;
                     return $ticketType->is_bundle ? $sold * ($ticketType->bundle_quantity ?? 1) : $sold;
                 });
@@ -490,28 +516,28 @@ class EventController extends Controller
                     'formatted_date' => $function->start_time?->format('Y-m-d'),
                     'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
                     'is_active' => $function->is_active,
-                    // Estadísticas calculadas en el backend
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
                     'total_lotes' => $totalLotes,
                     'lotes_vendidos' => $lotesVendidos,
                     'entradas_emitidas' => $entradasEmitidas,
                     'available_lotes' => $availableLotes,
                     'stats' => [
-                        'totalTickets' => $totalLotes, // CORREGIDO: usar $totalLotes
-                        'soldTickets' => $lotesVendidos, // CORREGIDO: usar $lotesVendidos
-                        'availableTickets' => $availableLotes, // CORREGIDO: usar $availableLotes
-                        'entradasEmitidas' => $entradasEmitidas, // NUEVO: agregar entradas emitidas
+                        'totalTickets' => $totalLotes,
+                        'soldTickets' => $lotesVendidos,
+                        'availableTickets' => $availableLotes,
+                        'entradasEmitidas' => $entradasEmitidas,
                         'totalRevenue' => (float) $totalRevenue,
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],
                     'ticketTypes' => $function->ticketTypes->map(function($ticketType) {
-                        // USAR UNA SOLA FUENTE: quantity_sold del modelo (que ya debería estar actualizada)
-                        $actualSoldTickets = (int) $ticketType->quantity_sold; // Usar directamente del modelo
+                        $actualSoldTickets = (int) $ticketType->quantity_sold;
                         $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
                         $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
                         $totalIncome = $ticketType->getRevenue();
                         
-                        // Debug: verificar que los valores no sean null
                         if ($totalIncome === null) {
                             $totalIncome = 0.0;
                         }
@@ -524,7 +550,7 @@ class EventController extends Controller
                             'sales_start_date' => $ticketType->sales_start_date,
                             'sales_end_date' => $ticketType->sales_end_date,
                             'quantity' => (int) ($ticketType->quantity ?? 0),
-                            'quantity_sold' => $actualSoldTickets, // CORREGIDO: usar $actualSoldTickets consistentemente
+                            'quantity_sold' => $actualSoldTickets,
                             'quantity_available' => (int) $availableTickets,
                             'sold_percentage' => round($soldPercentage, 1),
                             'total_income' => (float) $totalIncome,
@@ -582,6 +608,9 @@ class EventController extends Controller
                     'start_time' => $function->start_time,
                     'end_time' => $function->end_time,
                     'is_active' => $function->is_active,
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
                 ];
             }),
         ];
@@ -589,5 +618,55 @@ class EventController extends Controller
         return Inertia::render('organizer/events/functions', [
             'event' => $eventData,
         ]);
+    }
+
+    /**
+     * Determina el estado de un evento basado en sus funciones
+     */
+    private function determineEventStatus(Event $event): array
+    {
+        if ($event->functions->isEmpty()) {
+            return [
+                'value' => 'draft',
+                'label' => 'Borrador',
+                'color' => 'gray',
+                'is_active' => false,
+            ];
+        }
+
+        // Ordenar funciones por prioridad de estado
+        $priorityOrder = [
+            EventFunctionStatus::ON_SALE->value => 1,
+            EventFunctionStatus::UPCOMING->value => 2,
+            EventFunctionStatus::REPROGRAMMED->value => 3,
+            EventFunctionStatus::SOLD_OUT->value => 4,
+            EventFunctionStatus::INACTIVE->value => 5,
+            EventFunctionStatus::CANCELLED->value => 6,
+            EventFunctionStatus::FINISHED->value => 7,
+        ];
+
+        $primaryFunction = $event->functions
+            ->filter(fn($f) => $f->is_active)
+            ->sortBy(function($function) use ($priorityOrder) {
+                return $priorityOrder[$function->status->value] ?? 999;
+            })
+            ->first();
+
+        if (!$primaryFunction) {
+            $primaryFunction = $event->functions
+                ->sortBy(function($function) use ($priorityOrder) {
+                    return $priorityOrder[$function->status->value] ?? 999;
+                })
+                ->first();
+        }
+
+        $hasAnyActiveFunction = $event->functions->where('is_active', true)->isNotEmpty();
+
+        return [
+            'value' => $primaryFunction->status->value,
+            'label' => $primaryFunction->status->label(),
+            'color' => $primaryFunction->status->color(),
+            'is_active' => $hasAnyActiveFunction,
+        ];
     }
 }
