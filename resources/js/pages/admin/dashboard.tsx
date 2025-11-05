@@ -29,6 +29,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { Category, Event, Venue } from '@/types';
 import { formatCurrency } from '@/lib/currencyHelpers';
@@ -284,16 +290,16 @@ export default function AdminDashboard({
                         {/* Left Column - Events & Users */}
                         <div className="lg:col-span-2 space-y-8">
                             {/* Recent Events */}
-                            <Card className="bg-white border-gray-200 shadow-lg">
+                            <Card className="bg-white border-gray-200 shadow-lg gap-0">
                                 <CardHeader className="border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-primary flex items-center space-x-3">
-                                            <Calendar className="w-6 h-6 text-primary" />
+                                        <CardTitle className="text-foreground flex items-center space-x-3">
+                                            <Calendar className="w-6 h-6 " />
                                             <span>Eventos Recientes</span>
                                         </CardTitle>
                                         <div className="flex items-center space-x-2">
                                             <Link href="/admin/events">
-                                                <Button variant="ghost" size="sm" className="text-primary hover:text-secondary hover:bg-secondary/10">
+                                                <Button variant="ghost" size="sm" className="text-black hover:text-secondary hover:bg-secondary/10">
                                                     Ver todos
                                                 </Button>
                                             </Link>
@@ -325,9 +331,11 @@ export default function AdminDashboard({
                                                         className="mt-2 h-2"
                                                     />
                                                 </div>
-                                                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
+                                                            <Link href={`/admin/events/${event.id}`} className="cursor-pointer">
+                                                            <Button variant="outline" className="flex items-center">
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        </Link>
                                             </div>
                                         )) : (
                                             <div className="text-center py-8">
@@ -340,15 +348,15 @@ export default function AdminDashboard({
                             </Card>
 
                             {/* Recent Users */}
-                            <Card className="bg-white border-gray-200 shadow-lg gap-2">
+                            <Card className="bg-white border-gray-200 shadow-lg gap-0">
                                 <CardHeader className="border-b border-gray-200 ">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-primary flex items-center space-x-3">
-                                            <Users className="w-6 h-6 text-primary" />
+                                        <CardTitle className="text-foreground flex items-center space-x-3">
+                                            <Users className="w-6 h-6" />
                                             <span>Usuarios Recientes</span>
                                         </CardTitle>
                                         <Link href="/admin/users">
-                                            <Button variant="ghost" size="sm" className="text-primary hover:text-secondary hover:bg-secondary/10">
+                                            <Button variant="ghost" size="sm" className="text-black hover:text-secondary hover:bg-secondary/10">
                                                 Ver todos
                                             </Button>
                                         </Link>
@@ -408,35 +416,32 @@ export default function AdminDashboard({
                             {/* System Status */}
 
                             {/* Quick Actions */}
-                            <Card className="bg-white border-gray-200 shadow-lg gap-4 py-3">
-                                <CardHeader className="border-b border-gray-200 pb-3">
-                                    <CardTitle className="text-primary flex items-center space-x-3">
-                                        <Settings className="w-6 h-6 text-primary" />
+                            <Card className="bg-white border-gray-200 shadow-lg gap-0 pb-0">
+                                <CardHeader className="border-b border-gray-200 ">
+                                    <CardTitle className="text-foreground flex items-center space-x-3">
+                                        <Settings className="w-6 h-6" />
                                         <span>Acciones Rápidas</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-3 gap-4">
+                                    <Link href="/admin/events">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
+                                            <Calendar className="w-4 h-4 mr-2" />
+                                            Gestionar Eventos
+                                        </Button>
+                                    </Link>
                                     <Link href="/admin/users">
                                         <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <UserCheck className="w-4 h-4 mr-2" />
                                             Gestionar Usuarios
                                         </Button>
                                     </Link>
-                                    
                                     <Link href="/admin/organizers">
                                         <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <Building className="w-4 h-4 mr-2" />
                                             Gestionar Organizadores
                                         </Button>
                                     </Link>
-                                    
-                                    <Link href="/admin/events">
-                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
-                                            <Calendar className="w-4 h-4 mr-2" />
-                                            Revisar Eventos
-                                        </Button>
-                                    </Link>
-                                    
                                     <Link href="/admin/reports">
                                         <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <BarChart3 className="w-4 h-4 mr-2" />
