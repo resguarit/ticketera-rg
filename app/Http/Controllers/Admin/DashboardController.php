@@ -456,9 +456,9 @@ class DashboardController extends Controller
             EventFunctionStatus::ON_SALE->value => 1,
             EventFunctionStatus::UPCOMING->value => 2,
             EventFunctionStatus::REPROGRAMMED->value => 3,
-            EventFunctionStatus::SOLD_OUT->value => 4,
-            EventFunctionStatus::INACTIVE->value => 5,
-            EventFunctionStatus::CANCELLED->value => 6,
+            EventFunctionStatus::CANCELLED->value => 4,
+            EventFunctionStatus::SOLD_OUT->value => 5,
+            EventFunctionStatus::INACTIVE->value => 6,
             EventFunctionStatus::FINISHED->value => 7,
         ];
 
