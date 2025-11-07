@@ -193,7 +193,7 @@ export default function VenuesIndex() {
                                     <div className="absolute top-4 right-4">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="secondary" size="sm" className="h-8 w-8 p-0">
+                                                    <Button size="sm" className="h-8 w-8 p-0 bg-white text-gray-800 hover:bg-gray-200">
                                                         <MoreVertical className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>

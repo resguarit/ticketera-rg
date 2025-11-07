@@ -41,10 +41,11 @@ class AttendeeInvitationController extends Controller
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
-        // Obtener las funciones del evento con sus tipos de tickets
+        // Obtener las funciones del evento con sus tipos de tickets (solo individuales, no bundles)
         $eventFunctions = $event->functions()
             ->with(['ticketTypes' => function($query) {
-                $query->with('issuedTickets');
+                $query->where('is_bundle', false) // Solo tickets individuales
+                    ->with('issuedTickets');
             }])
             ->where('is_active', true)
             ->get()
@@ -53,15 +54,17 @@ class AttendeeInvitationController extends Controller
                 $startTime = Carbon::parse($function->start_time);
                 
                 $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
-                    // Contar todos los tickets emitidos (incluyendo invitaciones)
+                    // Contar solo tickets vinculados a órdenes (no invitaciones)
                     $totalIssued = $ticketType->issuedTickets()
+                        ->whereNotNull('order_id')
                         ->where('status', '!=', IssuedTicketStatus::CANCELLED)
                         ->count();
+                    
                     $available = $ticketType->quantity - $totalIssued;
                     
                     // Agregar propiedades calculadas al modelo existente
                     $ticketType->sold = $totalIssued;
-                    $ticketType->available = $available;
+                    $ticketType->available = max(0, $available);
                     
                     return $ticketType;
                 });
@@ -126,7 +129,7 @@ class AttendeeInvitationController extends Controller
                 throw new \Exception('Una o más funciones no pertenecen a este evento.');
             }
 
-            // Verificar disponibilidad de tickets antes de crear nada
+            // Verificar que los tickets no sean bundles
             foreach ($request->tickets as $ticketRequest) {
                 $ticketType = TicketType::where('id', $ticketRequest['ticket_type_id'])
                     ->where('event_function_id', $ticketRequest['event_function_id'])
@@ -136,14 +139,9 @@ class AttendeeInvitationController extends Controller
                     throw new \Exception('Tipo de ticket inválido para la función seleccionada.');
                 }
 
-                // Verificar disponibilidad
-                $totalIssued = $ticketType->issuedTickets()
-                    ->where('status', '!=', IssuedTicketStatus::CANCELLED)
-                    ->count();
-                $available = $ticketType->quantity - $totalIssued;
-
-                if ($available < $ticketRequest['quantity']) {
-                    throw new \Exception("No hay suficientes entradas disponibles para '{$ticketType->name}'. Disponibles: {$available}, solicitadas: {$ticketRequest['quantity']}.");
+                // Verificar que no sea un bundle
+                if ($ticketType->is_bundle) {
+                    throw new \Exception('No se pueden invitar entradas tipo lote. Por favor, selecciona entradas individuales.');
                 }
             }
 
@@ -166,7 +164,7 @@ class AttendeeInvitationController extends Controller
                     'address' => $personData['address'],
                 ]);
             } else {
-                // Solo actualizar datos básicos de la persona (NO el email, eso va en Assistant)
+                // Solo actualizar datos básicos de la persona
                 $person->update([
                     'name' => $personData['name'],
                     'last_name' => $personData['last_name'],
@@ -202,7 +200,7 @@ class AttendeeInvitationController extends Controller
                     $assistant->increment('quantity', $ticketRequest['quantity']);
                 }
 
-                // Crear tickets directamente
+                // Crear tickets individuales (sin bundle_reference)
                 for ($i = 0; $i < $ticketRequest['quantity']; $i++) {
                     $issuedTickets[] = IssuedTicket::create([
                         'ticket_type_id' => $ticketType->id,
@@ -210,6 +208,7 @@ class AttendeeInvitationController extends Controller
                         'assistant_id' => $assistant->id,
                         'client_id' => null, // No hay cliente para invitaciones
                         'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'INV'),
+                        'bundle_reference' => null, // Siempre null para invitaciones
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
                     ]);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { formatDate } from '@/lib/dateHelpers';
 import { 
@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useDebounce } from 'use-debounce';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 
 // Components
@@ -57,20 +56,108 @@ interface PageProps {
 }
 
 export default function Index({ auth }: any) {
-    // 2. Usar los props reales que vienen de Inertia
     const { organizers, stats, filters } = usePage<PageProps>().props;
-    console.log(organizers)
 
-    // Estados para manejar los filtros
+    // Estados para manejar los filtros - CORREGIDO
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
-    const [selectedStatus, setSelectedStatus] = useState("all");
-    const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
-    const [hasPendingFilters, setHasPendingFilters] = useState(false);
-    const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+    const [selectedStatus, setSelectedStatus] = useState("all"); // Este está bien
+    const [sortBy, setSortBy] = useState(filters.sort_by || "created_at"); // Este está bien
+    
+    // Ref para controlar si es la primera carga
+    const isInitialLoad = useRef(true);
+    
+    // Ref para controlar timeouts de debounce
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Estado para el modal de confirmación
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [organizerToDelete, setOrganizerToDelete] = useState<OrganizerIndex | null>(null);
+
+    // Función para aplicar filtros automáticamente - CORREGIDO
+    const applyFilters = useCallback((resetPage = true) => {
+        const params: Record<string, any> = {
+            search: searchTerm || undefined,
+            // REMOVIDO: No enviar status ya que no lo estás usando en el backend
+            // status: selectedStatus !== "all" ? selectedStatus : undefined,
+            sort_by: sortBy !== "created_at" ? sortBy : undefined,
+        };
+
+        // Solo resetear página si resetPage es true
+        if (!resetPage) {
+            params.page = filters.page || 1;
+        }
+
+        // Filtrar parámetros undefined
+        const filteredParams = Object.fromEntries(
+            Object.entries(params).filter(([_, value]) => value !== undefined)
+        );
+
+        router.get(route('admin.organizers.index'), filteredParams, {
+            preserveState: true,
+            replace: true,
+            only: ['organizers', 'stats']
+        });
+    }, [searchTerm, sortBy, filters.page]); // REMOVIDO selectedStatus de las dependencias
+
+    // Aplicar filtros automáticamente cuando cambien los selectores (excepto en la primera carga)
+    // CORREGIDO: Solo escuchar cambios en sortBy
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
+        }
+        
+        applyFilters(true); // Resetear página cuando cambian los filtros
+    }, [sortBy]); // REMOVIDO selectedStatus
+
+    // Para la búsqueda, aplicar con debounce
+    useEffect(() => {
+        if (isInitialLoad.current) {
+            return;
+        }
+
+        // Limpiar timeout anterior
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Si la búsqueda está vacía, aplicar inmediatamente
+        if (searchTerm.trim() === '') {
+            applyFilters(true);
+            return;
+        }
+
+        // Aplicar búsqueda con debounce
+        searchTimeoutRef.current = setTimeout(() => {
+            applyFilters(true); // Resetear página cuando se busca
+        }, 500);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchTerm]);
+
+    // Limpiar timeout al desmontar
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Función para manejar la paginación
+    const handlePagination = (url: string) => {
+        if (!url) return;
+        
+        router.get(url, {}, {
+            preserveState: true,
+            replace: true,
+            only: ['organizers']
+        });
+    };
 
     // Configuración de estadísticas para el dashboard
     const organizerStats: StatCardProps[] = [
@@ -104,46 +191,31 @@ export default function Index({ auth }: any) {
         }
     ];
 
-    // Detectar cambios pendientes en filtros
-    useEffect(() => {
-        const hasChanges = 
-            searchTerm !== (filters.search || "") ||
-            selectedStatus !== "all" ||
-            sortBy !== (filters.sort_by || "created_at");
-        
-        setHasPendingFilters(hasChanges);
-    }, [searchTerm, selectedStatus, sortBy, filters]);
-
-    // Función para aplicar filtros
-    const handleFilters = () => {
-        router.get(route('admin.organizers.index'), {
-            search: searchTerm,
-            status: selectedStatus !== "all" ? selectedStatus : undefined,
-            sort_by: sortBy,
-        }, {
-            preserveState: true,
-            replace: true,
-            onFinish: () => {
-                setHasPendingFilters(false);
-            }
-        });
-    };
-
     // Función para limpiar filtros
     const handleClearFilters = () => {
         setSearchTerm("");
         setSelectedStatus("all");
         setSortBy("created_at");
-        setHasPendingFilters(false);
         
         router.get(route('admin.organizers.index'), {}, {
             preserveState: true,
-            replace: true
+            replace: true,
+            only: ['organizers', 'stats']
         });
     };
 
+    // Manejar Enter en búsqueda para aplicar inmediatamente
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            // Limpiar timeout y aplicar inmediatamente
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+            applyFilters(true);
+        }
+    };
+
     const handleDeleteOrganizer = (organizerId: number) => {
-        // Lógica para eliminar (ej: usando Inertia)
         router.delete(route('admin.organizers.destroy', organizerId), {
         });
     };
@@ -169,6 +241,8 @@ export default function Index({ auth }: any) {
                 filterConfig={{
                     searchPlaceholder: "Buscar organizadores...",
                     customFilters: [
+                        // CORREGIDO: Comentar o remover el filtro de status si no lo usas en el backend
+                        /*
                         {
                             key: "status",
                             placeholder: "Estado",
@@ -177,6 +251,7 @@ export default function Index({ auth }: any) {
                                 { value: "inactive", label: "Inactivos" }
                             ]
                         },
+                        */
                         {
                             key: "sort_by",
                             placeholder: "Ordenar por",
@@ -197,22 +272,20 @@ export default function Index({ auth }: any) {
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 customFilterValues={{
-                    status: selectedStatus,
+                    // REMOVIDO: status: selectedStatus, (ya que no lo usas)
                     sort_by: sortBy
                 }}
                 onCustomFilterChange={(key: string, value: string) => {
-                    if (key === 'status') setSelectedStatus(value);
+                    // REMOVIDO: if (key === 'status') setSelectedStatus(value);
                     if (key === 'sort_by') setSortBy(value);
                 }}
-                onApplyFilters={handleFilters}
                 onClearFilters={handleClearFilters}
-                hasPendingFilters={hasPendingFilters}
+                onKeyPress={handleKeyPress}
+                searchDebounceMs={500}
             >
                 {/* Organizers Content */}
                 <div className="space-y-4">
-
                     {organizers.data.map((organizer) => (
-                        
                         <div key={organizer.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                             <div className="flex items-center space-x-6">
                                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
@@ -222,7 +295,6 @@ export default function Index({ auth }: any) {
                                             alt={`Logo de ${organizer.name}`}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
-                                                // Fallback si no se encuentra la imagen
                                                 e.currentTarget.style.display = 'none';
                                                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
                                             }}
@@ -314,7 +386,7 @@ export default function Index({ auth }: any) {
                             <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-xl font-semibold text-black mb-2">No se encontraron organizadores</h3>
                             <p className="text-gray-600 mb-6">
-                                {searchTerm || selectedStatus !== "all"
+                                {searchTerm 
                                     ? "Prueba ajustando los filtros de búsqueda"
                                     : "Aún no hay organizadores registrados"}
                             </p>
@@ -328,15 +400,16 @@ export default function Index({ auth }: any) {
                     )}
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination - Actualizada para usar la función handlePagination */}
                 {organizers.data.length > 0 && (
                     <div className="mt-6 flex justify-center">
                         <div className="flex items-center space-x-2">
                             {organizers.links.map((link, index) => (
-                                <Link
+                                <button
                                     key={index}
-                                    href={link.url || '#'}
-                                    className={`px-3 py-2 text-sm rounded-md ${
+                                    onClick={() => handlePagination(link.url)}
+                                    disabled={!link.url}
+                                    className={`px-3 py-2 text-sm rounded-md transition-colors ${
                                         link.active
                                             ? 'bg-black text-white'
                                             : link.url

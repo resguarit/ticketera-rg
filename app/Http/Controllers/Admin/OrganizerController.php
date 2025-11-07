@@ -20,6 +20,7 @@ use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class OrganizerController extends Controller
 {
@@ -43,7 +44,13 @@ class OrganizerController extends Controller
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
             })
-            ->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'))
+            // Manejar el caso de ordenamiento
+            ->when($request->input('sort_by') && $request->input('sort_by') !== 'all', function (Builder $query) use ($request) {
+                $query->orderBy($request->input('sort_by'), $request->input('sort_direction', 'desc'));
+            }, function (Builder $query) use ($request) {
+                // Orden por defecto cuando sort_by es 'all' o no está definido
+                $query->orderBy('created_at', $request->input('sort_direction', 'desc'));
+            })
             ->paginate(10)
             ->withQueryString();
 
@@ -65,9 +72,12 @@ class OrganizerController extends Controller
 
         if ($request->hasFile('logo_url')) {
             $file = $request->file('logo_url');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $request->file('logo_url')->storeAs('logos', $filename, 'public');
-            // Guardar solo el nombre del archivo en la base de datos
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            
+            // Guardar en storage/app/public/organizers/
+            $path = $file->storeAs('organizers', $filename, 'public');
+            
+            // Guardar la ruta completa en la base de datos
             $validated['logo_url'] = $path;
         }
 
@@ -79,7 +89,12 @@ class OrganizerController extends Controller
 
     public function show(int $organizerId): Response
     {
-        $organizer = Organizer::with(['events.category', 'events.venue', 'users.person'])->findOrFail($organizerId);
+        $organizer = Organizer::with([
+            'events.category', 
+            'events.venue.ciudad.provincia', // Cargar venue con city y province
+            'users.person'
+        ])->findOrFail($organizerId);
+        
         return Inertia::render('admin/organizers/show', [
             'organizer' => $organizer,
         ]);
@@ -100,20 +115,17 @@ class OrganizerController extends Controller
 
         if ($request->hasFile('logo_url')) {
             // Eliminar el logo anterior si existe
-            if ($organizer->logo_url) {
-                $oldLogoPath = public_path('images/organizers/' . $organizer->logo_url);
-                if (file_exists($oldLogoPath)) {
-                    unlink($oldLogoPath);
-                }
+            if ($organizer->logo_url && Storage::disk('public')->exists($organizer->logo_url)) {
+                Storage::disk('public')->delete($organizer->logo_url);
             }
 
             $file = $request->file('logo_url');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             
-            // Mover el nuevo archivo
-            $file->move(public_path('images/organizers'), $filename);
+            // Guardar en storage/app/public/organizers/
+            $path = $file->storeAs('organizers', $filename, 'public');
             
-            $validated['logo_url'] = $filename;
+            $validated['logo_url'] = $path;
         }
 
         $organizer->update($validated);
@@ -127,11 +139,8 @@ class OrganizerController extends Controller
         $organizer = Organizer::findOrFail($organizerId);
         
         // Eliminar el logo si existe
-        if ($organizer->logo_url) {
-            $logoPath = public_path('images/organizers/' . $organizer->logo_url);
-            if (file_exists($logoPath)) {
-                unlink($logoPath);
-            }
+        if ($organizer->logo_url && Storage::disk('public')->exists($organizer->logo_url)) {
+            Storage::disk('public')->delete($organizer->logo_url);
         }
         
         $organizer->delete();

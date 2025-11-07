@@ -164,18 +164,8 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
     return (
         <form onSubmit={handleSubmit}>
             <Card>
-                <CardHeader>
-                    <div className='flex gap-2'>
-                        <BackButton
-                            href={route('organizer.events.functions', event.id)}
-                        />
-                        <div>
-                            <CardTitle>{isEditing ? 'Editar Función' : 'Crear Nueva Función'}</CardTitle>
-                            <CardDescription>
-                                {isEditing ? 'Modifica los detalles de la función.' : 'Completa los detalles para una nueva función en tu evento.'}
-                            </CardDescription>
-                        </div>
-                    </div>
+                <CardHeader className='pb-0'>
+                    <CardTitle className='text-lg'>Información de la Función</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid gap-3">
@@ -193,7 +183,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                     </div>
 
                     <div className="grid gap-3">
-                        <Label htmlFor="description">Descripción (Opcional)</Label>
+                        <Label htmlFor="description">Descripción</Label>
                         <Textarea
                             id="description"
                             value={data.description}
@@ -259,7 +249,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid gap-3">
-                            <Label htmlFor="end_date">Fecha de Fin (Opcional)</Label>
+                            <Label htmlFor="end_date">Fecha de Fin</Label>
                             <Input
                                 id="end_date"
                                 type="date"
@@ -278,7 +268,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                             {errors.end_time && <p className="text-sm text-red-600">{errors.end_time}</p>}
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="end_time">Hora de Fin (Opcional)</Label>
+                            <Label htmlFor="end_time">Hora de Fin</Label>
                             <Select 
                                 value={data.end_time ? data.end_time.split('T')[1] || '' : ''} 
                                 onValueChange={(value) => {

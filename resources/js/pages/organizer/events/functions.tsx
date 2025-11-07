@@ -118,9 +118,9 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                 <Head title={`Funciones de ${event.name}`} />
                 <div className="space-y-6">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-row items-center justify-between pb-0">
                             <div>
-                                <CardTitle>Gestión de Funciones</CardTitle>
+                                <CardTitle className='text-xl'>Gestión de Funciones</CardTitle>
                                 <CardDescription>
                                     Añade, edita o elimina las funciones de tu evento.
                                 </CardDescription>

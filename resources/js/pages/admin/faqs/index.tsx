@@ -140,7 +140,7 @@ export default function FaqsIndex() {
                                         </div>
                                     ))}
                                 </div>
-                                <Button variant="secondary" className="mt-4" onClick={() => openNewFaqModal(category.id)}>
+                                <Button variant="default" className="mt-4" onClick={() => openNewFaqModal(category.id)}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Añadir Pregunta
                                 </Button>

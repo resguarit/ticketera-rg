@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, AlertCircle } from 'lucide-react';
-import InputError from '@/components/input-error';
 import type { TicketType } from '@/types/models/ticketType';
 import type { Sector } from '@/types/models/sector';
 
@@ -144,7 +143,6 @@ export function TicketTypeForm({
                 <div className="space-y-2">
                     <Label htmlFor="name">Nombre de la Entrada <span className="text-red-500">*</span></Label>
                     <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)}  />
-                    <InputError message={errors.name} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="sector_id">Sector <span className="text-red-500">*</span></Label>
@@ -167,14 +165,12 @@ export function TicketTypeForm({
                             })}
                         </SelectContent>
                     </Select>
-                    <InputError message={errors.sector_id} />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="description">Descripción (Opcional)</Label>
+                <Label htmlFor="description">Descripción</Label>
                 <Textarea id="description" value={data.description ?? ''} onChange={e => setData('description', e.target.value)} />
-                <InputError message={errors.description} />
             </div>
 
             {/* NUEVA SECCIÓN: Configuración de Lote */}
@@ -208,7 +204,6 @@ export function TicketTypeForm({
                         <p className="text-sm text-muted-foreground">
                             Cuántas entradas individuales incluye cada lote que se venda
                         </p>
-                        <InputError message={errors.bundle_quantity} />
                     </div>
                 )}
                 
@@ -222,7 +217,6 @@ export function TicketTypeForm({
                     </Alert>
                 )}
                 
-                <InputError message={errors.is_bundle} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -240,7 +234,7 @@ export function TicketTypeForm({
 
                     />
                     {hasSales && (
-                        <div className="flex items-center gap-2 text-amber-600 text-sm">
+                        <div className="flex items-center gap-2 text-red-600 text-sm">
                             <AlertCircle className="h-4 w-4" />
                             <span>No se puede modificar el precio cuando ya hay ventas realizadas</span>
                         </div>
@@ -250,7 +244,6 @@ export function TicketTypeForm({
                             Precio por entrada individual: ${((data.price || 0) / bundleQuantity).toFixed(2)}
                         </p>
                     )}
-                    <InputError message={errors.price} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="quantity">
@@ -352,9 +345,9 @@ export function TicketTypeForm({
                     
                     {/* Mensaje de advertencia si se supera la capacidad */}
                     {willExceedCapacity && selectedSectorAvailability && (
-                        <Alert className="border-amber-500 bg-amber-50">
-                            <AlertCircle className="h-4 w-4 text-amber-600" />
-                            <AlertDescription className="text-amber-800">
+                        <Alert className="border-blue-500 bg-blue-50 text-blue-600">
+                            <AlertCircle className="h-4 w-4 text-blue-600" />
+                            <AlertDescription className="text-blue-800">
                                 <strong>Advertencia de sobreventa:</strong> Estás superando la capacidad disponible del sector por{' '}
                                 {realQuantity - availableCapacity} entradas.
                                 {isEditing ? ' Esto afectará la disponibilidad para otros tipos de entrada.' : ' Esto puede generar sobreventa.'}
@@ -364,16 +357,15 @@ export function TicketTypeForm({
                     
                     {/* Mensaje informativo sobre las limitaciones */}
                     {hasSales && (
-                        <Alert className="border-blue-500 bg-blue-50">
+                        <Alert className="border-blue-500 bg-blue-50 text-blue-600">
                             <Info className="h-4 w-4 text-blue-600" />
                             <AlertDescription className="text-blue-800 text-sm">
-                                Ya hay {selectedSectorAvailability?.current_ticket_sold} {isBundle ? 'lotes' : 'entradas'} vendidas.
+                                <strong>Advertencia de disponibilidad:</strong> Ya hay {selectedSectorAvailability?.current_ticket_sold} {isBundle ? 'lotes' : 'entradas'} vendidas.
                                 No puedes reducir la cantidad por debajo de este número.
                             </AlertDescription>
                         </Alert>
                     )}
                     
-                    <InputError message={errors.quantity} />
                 </div>
             </div>
 
@@ -399,7 +391,6 @@ export function TicketTypeForm({
                             </span></>
                         )}
                     </p>
-                    <InputError message={errors.max_purchase_quantity} />
                 </div>
                 <div className="space-y-2">
                     {/* Espacio para mantener el layout */}
@@ -452,11 +443,10 @@ export function TicketTypeForm({
                             </Select>
                         </div>
                     </div>
-                    <InputError message={errors.sales_start_date} />
                 </div>
                 
                 <div className="space-y-4">
-                    <Label className="text-base font-medium">Fin de Venta (Opcional)</Label>
+                    <Label className="text-base font-medium">Fin de Venta</Label>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <Label htmlFor="sales_end_date">Fecha</Label>
@@ -504,14 +494,12 @@ export function TicketTypeForm({
                             </Select>
                         </div>
                     </div>
-                    <InputError message={errors.sales_end_date} />
                 </div>
             </div>
 
             <div className="flex items-center space-x-2 py-4">
                 <Checkbox id="is_hidden" checked={data.is_hidden} onCheckedChange={checked => setData('is_hidden', Boolean(checked))} />
                 <Label htmlFor="is_hidden">Ocultar este tipo de entrada al público</Label>
-                <InputError message={errors.is_hidden} />
             </div>
 
             {/* SECCIÓN NUEVA: Configuración de Tandas */}
@@ -554,7 +542,6 @@ export function TicketTypeForm({
                                         setData('stage_names', defaultNames);
                                     }}
                                 />
-                                <InputError message={errors.stages_count} />
                             </div>
                             <div>
                                 <Label>Incremento de precio (%)</Label>
@@ -566,7 +553,6 @@ export function TicketTypeForm({
                                     value={priceIncrement}
                                     onChange={(e) => setData('price_increment', parseInt(e.target.value) || 0)}
                                 />
-                                <InputError message={errors.price_increment} />
                             </div>
                         </div>
                         

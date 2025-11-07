@@ -1,11 +1,13 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { toast } from 'sonner';
 
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageProps } from '@/types/ui/ui';
 import { Ciudad, Provincia } from '@/types';
 import VenueForm from './VenueForm';
+import BackButton from '@/components/Backbutton';
 
 interface CreateVenueProps extends PageProps {
     provincias: Provincia[];
@@ -25,20 +27,124 @@ export default function CreateVenue() {
         sectors: [], // <-- AÑADIR CAMPO
     });
 
+    // Función para validar campos requeridos antes del envío
+    const validateRequiredFields = () => {
+        const requiredFields = [
+            { field: 'name', label: 'Nombre del recinto', value: data.name },
+            { field: 'address', label: 'Dirección', value: data.address },
+            { field: 'provincia_id_or_name', label: 'Provincia', value: data.provincia_id_or_name },
+            { field: 'ciudad_name', label: 'Ciudad', value: data.ciudad_name },
+        ];
+
+        for (const { field, label, value } of requiredFields) {
+            if (!value || value.toString().trim() === '') {
+                toast.error(`El campo ${label} es obligatorio`, { id: 'validation-error' });
+                return false;
+            }
+        }
+
+        // Validar sectores
+        if (!data.sectors || data.sectors.length === 0) {
+            toast.error('Debe agregar al menos un sector', { id: 'validation-error' });
+            return false;
+        }
+
+        // Validar cada sector
+        for (let i = 0; i < data.sectors.length; i++) {
+            const sector = data.sectors[i];
+            if (!sector.name || sector.name.trim() === '') {
+                toast.error(`El nombre del sector ${i + 1} es obligatorio`, { id: 'validation-error' });
+                return false;
+            }
+            if (!sector.capacity || sector.capacity <= 0) {
+                toast.error(`La capacidad del sector "${sector.name}" debe ser mayor a 0`, { id: 'validation-error' });
+                return false;
+            }
+        }
+
+        // Validar coordenadas si se proporcionan
+        if (data.coordinates && data.coordinates.trim() !== '') {
+            const coords = data.coordinates.split(',').map(Number);
+            if (coords.length !== 2 || coords.some(isNaN)) {
+                toast.error('Las coordenadas deben tener el formato: latitud,longitud (ej: -34.6037,-58.3816)', { id: 'validation-error' });
+                return false;
+            }
+        }
+
+        // Validar archivo banner si se seleccionó
+        if (data.banner) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(data.banner.type)) {
+                toast.error('El banner debe ser una imagen válida (JPG, PNG, GIF o WebP)', { id: 'validation-error' });
+                return false;
+            }
+
+            // Validar tamaño del archivo (máximo 2MB)
+            const maxSize = 2 * 1024 * 1024; // 2MB en bytes
+            if (data.banner.size > maxSize) {
+                toast.error('El banner no puede ser mayor a 2MB', { id: 'validation-error' });
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.venues.store'));
+        
+        // Validar antes de enviar
+        if (!validateRequiredFields()) {
+            return;
+        }
+
+        post(route('admin.venues.store'), {
+            onStart: () => {
+                toast.loading('Creando recinto...', { id: 'create-venue' });
+            },
+            onSuccess: () => {
+                toast.success('Recinto creado exitosamente', { id: 'create-venue' });
+            },
+            onError: (errors) => {
+                console.log('Form errors:', errors);
+                
+                // Mostrar errores específicos del servidor
+                if (errors.name) {
+                    toast.error(`Nombre: ${errors.name}`, { id: 'create-venue' });
+                } else if (errors.address) {
+                    toast.error(`Dirección: ${errors.address}`, { id: 'create-venue' });
+                } else if (errors.provincia_id_or_name) {
+                    toast.error(`Provincia: ${errors.provincia_id_or_name}`, { id: 'create-venue' });
+                } else if (errors.ciudad_name) {
+                    toast.error(`Ciudad: ${errors.ciudad_name}`, { id: 'create-venue' });
+                } else if (errors.coordinates) {
+                    toast.error(`Coordenadas: ${errors.coordinates}`, { id: 'create-venue' });
+                } else if (errors.banner) {
+                    toast.error(`Banner: ${errors.banner}`, { id: 'create-venue' });
+                } else if (errors.sectors) {
+                    toast.error(`Sectores: ${errors.sectors}`, { id: 'create-venue' });
+                } else {
+                    toast.error('Error al crear el recinto. Verifique todos los campos', { id: 'create-venue' });
+                }
+            },
+        });
     };
 
     return (
         <>
             <Head title="Crear Recinto" />
             <div className="container mx-auto p-6">
+                <div className="flex items-center mb-6 gap-4">
+                    <BackButton href={route('admin.venues.index')} />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Crear Recinto</h1>
+                        <p className="text-gray-600 mt-1">
+                            Completa los datos para registrar un nuevo lugar para tus eventos.
+                        </p>
+                    </div>
+                </div>
+
                 <Card className="max-w-4xl mx-auto bg-white">
-                    <CardHeader>
-                        <CardTitle>Crear Nuevo Recinto</CardTitle>
-                        <CardDescription>Completa los datos para registrar un nuevo lugar para tus eventos.</CardDescription>
-                    </CardHeader>
                     <CardContent>
                         <VenueForm
                             data={data}
