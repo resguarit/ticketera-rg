@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Category;
 use App\Models\Ciudad;
 use App\Services\TicketLockService;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -87,50 +88,65 @@ class EventController extends Controller
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
         // Preparar funciones con sus tickets
-        $functions = $event->functions->map(function($function) {
-            return [
-                'id' => $function->id,
-                'name' => $function->name,
-                'description' => $function->description,
-                'start_time' => $function->start_time,
-                'end_time' => $function->end_time ? $function->end_time : null,
-                'date' => $function->start_time?->format('d M Y'),
-                'time' => $function->start_time?->format('H:i'),
-                'day_name' => $function->start_time?->format('l'),
-                'is_active' => $function->is_active,
-                'status' => $function->status->value,
-                'ticketTypes' => $function->ticketTypes->map(function($ticket) {
-                    // CORREGIDO: Usar el nuevo método getLockedQuantity
-                    $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
-                    $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-                    
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'description' => $ticket->description,
-                        'price' => $ticket->price,
-                        'available' => $realAvailable,
-                        'quantity' => $ticket->quantity,
-                        'quantity_sold' => $ticket->quantity_sold,
-                        'locked_quantity' => $lockedQuantity,
-                        'max_purchase_quantity' => $ticket->max_purchase_quantity,
-                        'sales_start_date' => $ticket->sales_start_date,
-                        'sales_end_date' => $ticket->sales_end_date,
-                        'is_hidden' => $ticket->is_hidden,
-                        'is_bundle' => $ticket->is_bundle,
-                        'bundle_quantity' => $ticket->bundle_quantity,
-                        'color' => 'from-blue-500 to-cyan-500',
-                    ];
-                }),
-            ];
-        });
+        $functions = $event->functions
+            ->filter(function($function) {
+                // Solo mostrar funciones activas al público
+                return $function->is_active;
+            })
+            ->map(function($function) {
+                return [
+                    'id' => $function->id,
+                    'name' => $function->name,
+                    'description' => $function->description,
+                    'start_time' => $function->start_time,
+                    'end_time' => $function->end_time ? $function->end_time : null,
+                    'date' => $function->start_time?->format('d M Y'),
+                    'time' => $function->start_time?->format('H:i'),
+                    'day_name' => $function->start_time?->locale('es')->format('l'),
+                    'is_active' => $function->is_active,
+                    // ACTUALIZADO: Usar el enum EventFunctionStatus
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
+                    'ticketTypes' => $function->ticketTypes
+                        ->filter(function($ticket) {
+                            // Solo mostrar tickets no ocultos
+                            return !$ticket->is_hidden;
+                        })
+                        ->map(function($ticket) {
+                            // CORREGIDO: Usar el nuevo método getLockedQuantity
+                            $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+                            $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+                            
+                            return [
+                                'id' => $ticket->id,
+                                'name' => $ticket->name,
+                                'description' => $ticket->description,
+                                'price' => $ticket->price,
+                                'available' => $realAvailable,
+                                'quantity' => $ticket->quantity,
+                                'quantity_sold' => $ticket->quantity_sold,
+                                'locked_quantity' => $lockedQuantity,
+                                'max_purchase_quantity' => $ticket->max_purchase_quantity,
+                                'sales_start_date' => $ticket->sales_start_date,
+                                'sales_end_date' => $ticket->sales_end_date,
+                                'is_hidden' => $ticket->is_hidden,
+                                'is_bundle' => $ticket->is_bundle,
+                                'bundle_quantity' => $ticket->bundle_quantity,
+                                'color' => 'from-blue-500 to-cyan-500',
+                            ];
+                        })
+                        ->values(), // Reiniciar índices del array después del filter
+                ];
+            })
+            ->values(); // Reiniciar índices del array después del filter
 
         $eventData = [
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
             'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
-            'hero_image_url' => $event->hero_image_url, // Agregar esta línea
+            'hero_image_url' => $event->hero_image_url,
             'location' => $event->venue->name,
             // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
@@ -169,20 +185,31 @@ class EventController extends Controller
             return response()->json(['error' => 'Function not found'], 404);
         }
 
-        $ticketTypes = $function->ticketTypes->map(function($ticket) {
-            // CORREGIDO: Usar el nuevo método getLockedQuantity
-            $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
-            $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-            
-            return [
-                'id' => $ticket->id,
-                'available' => $realAvailable,
-                'locked_quantity' => $lockedQuantity,
-            ];
-        });
+        $ticketTypes = $function->ticketTypes
+            ->filter(function($ticket) {
+                // Solo mostrar tickets no ocultos
+                return !$ticket->is_hidden;
+            })
+            ->map(function($ticket) {
+                // CORREGIDO: Usar el nuevo método getLockedQuantity
+                $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+                $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+                
+                return [
+                    'id' => $ticket->id,
+                    'available' => $realAvailable,
+                    'locked_quantity' => $lockedQuantity,
+                ];
+            })
+            ->values(); // Reiniciar índices del array después del filter
 
         return response()->json([
-            'ticket_types' => $ticketTypes
+            'ticket_types' => $ticketTypes,
+            'function_status' => [
+                'value' => $function->status->value,
+                'label' => $function->status->label(),
+                'color' => $function->status->color(),
+            ]
         ]);
     }
 }

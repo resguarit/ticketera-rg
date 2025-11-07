@@ -23,6 +23,11 @@ interface EventDetail extends Event {
     province?: string; 
     category: string;
     price?: number;
+    status?: {
+        value: string;
+        label: string;
+        color: string;
+    };
 }
 
 interface HomeProps {

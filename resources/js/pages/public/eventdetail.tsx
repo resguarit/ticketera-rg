@@ -36,7 +36,9 @@ interface EventFunctionData extends EventFunction {
     date: string;
     time: string;
     day_name: string;
-    status: string; // Agregar el campo status
+    status: string;
+    status_label: string;
+    status_color: string;
     ticketTypes: TicketTypeData[];
 }
 
@@ -268,6 +270,26 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         }, 1000);
     };
 
+    // Función para obtener badge de estado
+    const getStatusBadge = (status: string, status_label: string, status_color: string) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[status_color] || 'bg-gray-500 hover:bg-gray-600';
+
+        return (
+            <Badge className={`${badgeColor} text-white border-0 text-xs`}>
+                {status_label}
+            </Badge>
+        );
+    };
+
     return (
         <>
             <Head title={`${eventData.name}`} />
@@ -341,22 +363,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
-                                                        <Badge 
-                                                            variant="outline" 
-                                                            className={`text-xs ${
-                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
-                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
-                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
-                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
-                                                                'border-orange-300 text-orange-600'
-                                                            }`}
-                                                        >
-                                                            {func.status === 'on_sale' ? 'En venta' :
-                                                             func.status === 'sold_out' ? 'Agotado' :
-                                                             func.status === 'upcoming' ? 'Próximamente' :
-                                                             func.status === 'finished' ? 'Finalizada' :
-                                                             'Inactiva'}
-                                                        </Badge>
+                                                        {getStatusBadge(func.status, func.status_label, func.status_color)}
                                                     </div>
                                                 </div>
                                             ))}
@@ -463,22 +470,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
-                                                        <Badge 
-                                                            variant="outline" 
-                                                            className={`text-xs ${
-                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
-                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
-                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
-                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
-                                                                'border-orange-300 text-orange-600'
-                                                            }`}
-                                                        >
-                                                            {func.status === 'on_sale' ? 'En venta' :
-                                                             func.status === 'sold_out' ? 'Agotado' :
-                                                             func.status === 'upcoming' ? 'Próximamente' :
-                                                             func.status === 'finished' ? 'Finalizada' :
-                                                             'Inactiva'}
-                                                        </Badge>
+                                                        {getStatusBadge(func.status, func.status_label, func.status_color)}
                                                     </div>
                                                 </div>
                                             ))}
