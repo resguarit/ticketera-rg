@@ -170,7 +170,8 @@ class AssistantController extends Controller
         $invitedGroups = $invitedTickets->groupBy('assistant_id');
 
         foreach ($invitedGroups as $assistantId => $tickets) {
-            $assistant = Assistant::with(['person', 'eventFunction'])
+            $assistant = Assistant::withTrashed() // Incluir soft-deleted
+                ->with(['person', 'eventFunction'])
                 ->find($assistantId);
             
             if (!$assistant) continue;
@@ -178,9 +179,13 @@ class AssistantController extends Controller
             $person = $assistant->person;
             $function = $assistant->eventFunction;
             
+            // Verificar si tiene tickets cancelados
+            $isCancelled = $tickets->where('status', 'cancelled')->count() === $tickets->count();
+            
             $attendees->push([
                 'type' => 'invited',
                 'assistant_id' => $assistant->id,
+                'is_cancelled' => $isCancelled || $assistant->trashed(), // NUEVO
                 'full_name' => trim($person->name . ' ' . $person->last_name),
                 'dni' => $person->dni,
                 'email' => $assistant->email ?: $person->user?->email,
@@ -313,8 +318,7 @@ class AssistantController extends Controller
         try {
             DB::beginTransaction();
 
-            // Cancelar solo los tickets de esta invitación específica (assistant_id + event_function)
-            // No cancelar tickets de otras invitaciones del mismo asistente en otras funciones
+            // Cancelar solo los tickets de esta invitación específica
             IssuedTicket::where('assistant_id', $assistant->id)
                 ->whereHas('ticketType', function($query) use ($assistant) {
                     $query->where('event_function_id', $assistant->event_function_id);
@@ -329,12 +333,14 @@ class AssistantController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Asistente eliminado correctamente y sus tickets han sido cancelados.');
+            // CAMBIADO: No redirigir, sino recargar solo los datos necesarios
+            return redirect()->back()
+                ->with('success', 'Asistente cancelado correctamente y sus tickets han sido marcados como cancelados.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             
-            return redirect()->back()->withErrors(['error' => 'Error al eliminar el asistente: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Error al cancelar el asistente: ' . $e->getMessage()]);
         }
     }
 

@@ -261,20 +261,21 @@ export default function EventAttendees({
                 }),
                 {
                     preserveScroll: true,
+                    preserveState: true, // CAMBIADO: Mantener el estado
                     onStart: () => {
-                        toast.loading('Eliminando asistente...', { id: 'delete-attendee' });
+                        toast.loading('Cancelando asistente...', { id: 'delete-attendee' });
                     },
                     onSuccess: () => {
-                        toast.success('Asistente eliminado exitosamente', {
+                        toast.success('Asistente cancelado exitosamente', {
                             id: 'delete-attendee',
-                            description: 'El asistente invitado ha sido eliminado del evento'
+                            description: 'El asistente ha sido marcado como cancelado'
                         });
                     },
                     onError: (errors) => {
                         const errorMessage = Object.values(errors)[0] as string;
-                        toast.error('Error al eliminar el asistente', {
+                        toast.error('Error al cancelar el asistente', {
                             id: 'delete-attendee',
-                            description: errorMessage || 'No se pudo eliminar el asistente'
+                            description: errorMessage || 'No se pudo cancelar el asistente'
                         });
                     }
                 }
@@ -285,6 +286,9 @@ export default function EventAttendees({
     const getStatusBadge = (attendee: AttendeeForTable) => {
         if (attendee.tickets_used > 0) {
             return <Badge variant="default" className="bg-green-100 text-green-800">Usado</Badge>;
+        }
+        if (attendee.is_cancelled) {
+        return <Badge className='bg-red-100 text-red-600 border border-red-300'>Tickets no disponibles</Badge>;
         }
         if (attendee.tickets_count > 0 && attendee.order_status !== 'cancelled') {
             return <Badge variant="default">Con tickets</Badge>;
@@ -299,8 +303,18 @@ export default function EventAttendees({
     };
 
     const getTypeBadge = (attendee: AttendeeForTable) => {
+        const isCancelled = attendee.is_cancelled || attendee.order_status === 'cancelled';
+
         if (attendee.type === 'invited') {
-            return <Badge variant="outline" className="bg-blue-50 text-blue-700"><UserCheck className="w-3 h-3 mr-1" />Invitado</Badge>;
+            return (
+                <Badge
+                    variant="outline"
+                    className={isCancelled ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}
+                >
+                    <UserCheck className="w-3 h-3 mr-1" />
+                    Invitado
+                </Badge>
+            );
         }
         if (attendee.order_status === 'cancelled') {
             return <Badge variant="outline" className="bg-red-50 text-red-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;  
@@ -466,13 +480,15 @@ export default function EventAttendees({
                                                                     <Mail className="mr-2 h-4 w-4" />
                                                                     Reenviar invitación
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem 
-                                                                    onClick={() => handleConfirmDeleteAttendee(attendee)}
-                                                                    className="text-red-600"
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Eliminar
-                                                                </DropdownMenuItem>
+                                                                {!attendee.is_cancelled && (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleConfirmDeleteAttendee(attendee)}
+                                                                        className="text-red-600"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Eliminar
+                                                                    </DropdownMenuItem>
+                                                                )}
                                                             </>
                                                         )}
                                                         {attendee.type === 'buyer' && (
