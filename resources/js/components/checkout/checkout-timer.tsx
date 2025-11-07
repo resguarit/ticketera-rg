@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Clock, AlertCircle } from "lucide-react"
+import { router } from "@inertiajs/react"
 
 interface CheckoutTimerProps {
   lockExpiration: string
@@ -21,9 +22,7 @@ export default function CheckoutTimer({ lockExpiration, sessionId, onExpire }: C
     if (timeLeft <= 0) {
       setExpired(true)
       onExpire()
-      fetch(`/api/release-locks?session_id=${sessionId}`, { method: "POST" }).catch((err) =>
-        console.error("Error releasing locks:", err),
-      )
+      router.post(route("checkout.releaseLocks"))
       return
     }
 
