@@ -184,6 +184,11 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     setCurrentStep(3)
   }
 
+  const handleBack = () => {
+    router.post(route("checkout.releaseLocks"))
+    router.get(route("event.detail", eventId))
+  }
+
   const handleSubmitPayment = async () => {
     if (!agreements.terms || !agreements.privacy) {
       toast.error("Debes aceptar los términos y condiciones y la política de privacidad")
@@ -237,12 +242,10 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
           <CheckoutTimer lockExpiration={lockExpiration} sessionId={sessionId} onExpire={() => setExpired(true)} />
 
           <div className="mb-6">
-            <Link href={route("event.detail", eventId)}>
-              <Button variant="ghost" size="sm" className="text-foreground hover:text-primary">
+              <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver al Evento
               </Button>
-            </Link>
           </div>
 
           <div className="mb-8">

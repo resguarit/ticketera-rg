@@ -15,6 +15,7 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::prefix('payway')->name('payway.')->group(function () {
         Route::post('/process', [PaywayController::class, 'paywayProcess'])->name('process');
     });
+    Route::post('/release-locks', [CheckoutController::class, 'releaseLocks'])->name('releaseLocks');
 });
 
 Route::get('/payway-check-status', [PaywayController::class, 'CheckStatus'])->name('payway.check-status');
