@@ -467,4 +467,37 @@ class CheckoutController extends Controller
             'email' => $email
         ]);
     }
+
+    public function releaseLocks(Request $request): JsonResponse
+    {
+        $sessionId = $request->session()->get('checkout_session_id');
+
+        if (!$sessionId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'session_id es requerido'
+            ], 400);
+        }
+
+        try {
+            $this->ticketLockService->releaseTickets($sessionId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Locks liberados exitosamente',
+                'session_id' => $sessionId
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error liberando locks vía API', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error liberando locks: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
