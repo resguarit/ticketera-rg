@@ -106,6 +106,16 @@ class EventController extends Controller
                 return $function->is_active;
             })
             ->map(function($function) {
+                // Estados donde NO se deben mostrar tickets
+                $hideTicketsStates = [
+                    EventFunctionStatus::CANCELLED->value,
+                    EventFunctionStatus::FINISHED->value,
+                    EventFunctionStatus::UPCOMING->value,
+                    EventFunctionStatus::INACTIVE->value,
+                ];
+
+                $shouldShowTickets = !in_array($function->status->value, $hideTicketsStates);
+
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -119,33 +129,36 @@ class EventController extends Controller
                     'status' => $function->status->value,
                     'status_label' => $function->status->label(),
                     'status_color' => $function->status->color(),
-                    'ticketTypes' => $function->ticketTypes
-                        ->filter(function($ticket) {
-                            return !$ticket->is_hidden;
-                        })
-                        ->map(function($ticket) {
-                            $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
-                            $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-                            
-                            return [
-                                'id' => $ticket->id,
-                                'name' => $ticket->name,
-                                'description' => $ticket->description,
-                                'price' => $ticket->price,
-                                'available' => $realAvailable,
-                                'quantity' => $ticket->quantity,
-                                'quantity_sold' => $ticket->quantity_sold,
-                                'locked_quantity' => $lockedQuantity,
-                                'max_purchase_quantity' => $ticket->max_purchase_quantity,
-                                'sales_start_date' => $ticket->sales_start_date,
-                                'sales_end_date' => $ticket->sales_end_date,
-                                'is_hidden' => $ticket->is_hidden,
-                                'is_bundle' => $ticket->is_bundle,
-                                'bundle_quantity' => $ticket->bundle_quantity,
-                                'color' => 'from-blue-500 to-cyan-500',
-                            ];
-                        })
-                        ->values(),
+                    'should_show_tickets' => $shouldShowTickets, // NUEVO: Indicador
+                    'ticketTypes' => $shouldShowTickets 
+                        ? $function->ticketTypes
+                            ->filter(function($ticket) {
+                                return !$ticket->is_hidden;
+                            })
+                            ->map(function($ticket) {
+                                $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+                                $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+                                
+                                return [
+                                    'id' => $ticket->id,
+                                    'name' => $ticket->name,
+                                    'description' => $ticket->description,
+                                    'price' => $ticket->price,
+                                    'available' => $realAvailable,
+                                    'quantity' => $ticket->quantity,
+                                    'quantity_sold' => $ticket->quantity_sold,
+                                    'locked_quantity' => $lockedQuantity,
+                                    'max_purchase_quantity' => $ticket->max_purchase_quantity,
+                                    'sales_start_date' => $ticket->sales_start_date,
+                                    'sales_end_date' => $ticket->sales_end_date,
+                                    'is_hidden' => $ticket->is_hidden,
+                                    'is_bundle' => $ticket->is_bundle,
+                                    'bundle_quantity' => $ticket->bundle_quantity,
+                                    'color' => 'from-blue-500 to-cyan-500',
+                                ];
+                            })
+                            ->values()
+                        : [], // Array vacío si no se deben mostrar tickets
                 ];
             })
             ->values();
