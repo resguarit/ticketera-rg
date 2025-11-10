@@ -205,6 +205,13 @@ class EventController extends Controller
             'label' => $status->label(),
         ]);
 
+        // Actualizar estado de las funciones (nuevo código)
+        foreach ($events as $event) {
+            foreach ($event->functions as $function) {
+                $function->updateStatus();
+            }
+        }
+
         return Inertia::render('admin/events', [
             'events' => $events,
             'stats' => $stats,
@@ -292,6 +299,11 @@ class EventController extends Controller
             'created_at' => $event->created_at->format('Y-m-d'),
             'updated_at' => $event->updated_at->format('Y-m-d H:i:s'),
         ];
+
+        // Actualizar estado de las funciones (nuevo código)
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
 
         return Inertia::render('admin/events/show', [
             'event' => $eventData,

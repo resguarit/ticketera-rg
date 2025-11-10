@@ -77,6 +77,11 @@ class EventController extends Controller
 
         $events = $query->get()
             ->map(function($event) {
+                // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+                foreach ($event->functions as $function) {
+                    $function->updateStatus();
+                }
+                
                 // Calcular precios mínimo y máximo
                 $functions = $event->functions->load('ticketTypes');
                 $allPrices = $functions->flatMap(function($function) {
@@ -385,6 +390,11 @@ class EventController extends Controller
         // Cargar el evento con todas sus relaciones
         $event->load(['category', 'venue', 'organizer', 'functions.ticketTypes']);
 
+        // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
+
         // Calcular estadísticas del evento
         $totalEntradasVendidas = 0;
         $totalTicketsEmitidos = 0;
@@ -476,6 +486,11 @@ class EventController extends Controller
             'organizer', 
             'functions.ticketTypes.sector'
         ]);
+
+        // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
 
         // Formatear los datos del evento
         $eventData = [
@@ -591,8 +606,13 @@ class EventController extends Controller
 
         // Cargar el evento con sus funciones
         $event->load(['functions' => function ($query) {
-            $query->orderBy('start_time', 'asc');
+            $query->orderBy('start_time', 'asc')->with('ticketTypes');
         }]);
+
+        // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
 
         // Formatear los datos del evento
         $eventData = [

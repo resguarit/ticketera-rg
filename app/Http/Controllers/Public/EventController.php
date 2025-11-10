@@ -29,7 +29,7 @@ class EventController extends Controller
         // ACTUALIZADO: incluir ciudad y provincia
         $query = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
 
-        // Filtros
+        // Filtros existentes...
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
@@ -55,6 +55,13 @@ class EventController extends Controller
 
         $events = $query->get();
 
+        // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+        foreach ($events as $event) {
+            foreach ($event->functions as $function) {
+                $function->updateStatus();
+            }
+        }
+
         // Categorías para filtros
         $categories = Category::all()->map(function($category) {
             return [
@@ -69,7 +76,7 @@ class EventController extends Controller
 
         return Inertia::render('public/events', [
             'events' => EventResource::collection($events)->additional([
-                'with_ticket_info' => true // Agregar flag para incluir info de tickets
+                'with_ticket_info' => true
             ]),
             'categories' => $categories,
             'cities' => $cities,
@@ -86,6 +93,11 @@ class EventController extends Controller
     {
         // ACTUALIZADO: incluir ciudad y provincia
         $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
+
+        // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
 
         // Preparar funciones con sus tickets
         $functions = $event->functions
@@ -104,17 +116,14 @@ class EventController extends Controller
                     'time' => $function->start_time?->format('H:i'),
                     'day_name' => $function->start_time?->locale('es')->format('l'),
                     'is_active' => $function->is_active,
-                    // ACTUALIZADO: Usar el enum EventFunctionStatus
                     'status' => $function->status->value,
                     'status_label' => $function->status->label(),
                     'status_color' => $function->status->color(),
                     'ticketTypes' => $function->ticketTypes
                         ->filter(function($ticket) {
-                            // Solo mostrar tickets no ocultos
                             return !$ticket->is_hidden;
                         })
                         ->map(function($ticket) {
-                            // CORREGIDO: Usar el nuevo método getLockedQuantity
                             $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
                             $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
                             
@@ -136,10 +145,10 @@ class EventController extends Controller
                                 'color' => 'from-blue-500 to-cyan-500',
                             ];
                         })
-                        ->values(), // Reiniciar índices del array después del filter
+                        ->values(),
                 ];
             })
-            ->values(); // Reiniciar índices del array después del filter
+            ->values();
 
         $eventData = [
             'id' => $event->id,
@@ -148,7 +157,6 @@ class EventController extends Controller
             'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
             'hero_image_url' => $event->hero_image_url,
             'location' => $event->venue->name,
-            // ACTUALIZADO: usar la nueva estructura
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
             'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                 $event->venue->ciudad->provincia->name : null,
@@ -165,7 +173,6 @@ class EventController extends Controller
                 'coordinates' => $event->venue->coordinates,
                 'full_address' => $event->venue->getFullAddressAttribute(),
             ],
-            // Para compatibilidad con el código existente
             'date' => $functions->first()['date'] ?? 'Fecha por confirmar',
             'time' => $functions->first()['time'] ?? '',
         ];
@@ -175,7 +182,6 @@ class EventController extends Controller
         ]);
     }
 
-    // NUEVO: Endpoint para obtener disponibilidad actualizada en tiempo real
     public function getAvailability(Event $event, Request $request)
     {
         $functionId = $request->get('function_id');
@@ -185,13 +191,14 @@ class EventController extends Controller
             return response()->json(['error' => 'Function not found'], 404);
         }
 
+        // ACTUALIZAR ESTADO DE LA FUNCIÓN
+        $function->updateStatus();
+
         $ticketTypes = $function->ticketTypes
             ->filter(function($ticket) {
-                // Solo mostrar tickets no ocultos
                 return !$ticket->is_hidden;
             })
             ->map(function($ticket) {
-                // CORREGIDO: Usar el nuevo método getLockedQuantity
                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
                 $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
                 
@@ -201,7 +208,7 @@ class EventController extends Controller
                     'locked_quantity' => $lockedQuantity,
                 ];
             })
-            ->values(); // Reiniciar índices del array después del filter
+            ->values();
 
         return response()->json([
             'ticket_types' => $ticketTypes,
