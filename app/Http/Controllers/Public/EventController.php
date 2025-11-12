@@ -129,11 +129,29 @@ class EventController extends Controller
                     'status' => $function->status->value,
                     'status_label' => $function->status->label(),
                     'status_color' => $function->status->color(),
-                    'should_show_tickets' => $shouldShowTickets, // NUEVO: Indicador
+                    'should_show_tickets' => $shouldShowTickets,
                     'ticketTypes' => $shouldShowTickets 
                         ? $function->ticketTypes
                             ->filter(function($ticket) {
-                                return !$ticket->is_hidden;
+                                // NUEVO: Filtrar por fechas de venta además de is_hidden
+                                $now = now();
+                                
+                                // No mostrar tickets ocultos
+                                if ($ticket->is_hidden) {
+                                    return false;
+                                }
+                                
+                                // No mostrar si la venta aún no ha comenzado
+                                if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
+                                    return false;
+                                }
+                                
+                                // No mostrar si la venta ya ha finalizado
+                                if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
+                                    return false;
+                                }
+                                
+                                return true;
                             })
                             ->map(function($ticket) {
                                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
@@ -207,9 +225,26 @@ class EventController extends Controller
         // ACTUALIZAR ESTADO DE LA FUNCIÓN
         $function->updateStatus();
 
+        $now = now();
+        
         $ticketTypes = $function->ticketTypes
-            ->filter(function($ticket) {
-                return !$ticket->is_hidden;
+            ->filter(function($ticket) use ($now) {
+                // NUEVO: Aplicar el mismo filtro de fechas de venta
+                if ($ticket->is_hidden) {
+                    return false;
+                }
+                
+                // No mostrar si la venta aún no ha comenzado
+                if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
+                    return false;
+                }
+                
+                // No mostrar si la venta ya ha finalizado
+                if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
+                    return false;
+                }
+                
+                return true;
             })
             ->map(function($ticket) {
                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
