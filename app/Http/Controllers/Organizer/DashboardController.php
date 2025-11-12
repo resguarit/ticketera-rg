@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Organizer;
 
 use App\Http\Controllers\Controller;
 use App\Services\RevenueService;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -48,13 +49,15 @@ class DashboardController extends Controller
         
         $activeEventsCount = $organizer->events()
             ->whereHas('functions', function ($query) {
-                $query->where('start_time', '>=', Carbon::now());
+                $query->where('start_time', '>=', Carbon::now())
+                      ->where('is_active', true);
             })->count();
 
         $totalEventsCount = $organizer->events()->count();
 
-        // --- Eventos Recientes (últimos 5) ---
+        // --- Eventos Recientes (últimos 5) con estado ---
         $recentEvents = $organizer->events()
+            ->with(['functions'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -72,7 +75,7 @@ class DashboardController extends Controller
                         
                         // Entradas vendidas: lotes + individuales (para progreso)
                         $entradasVendidas += $vendidos;
-                        $totalEntradas += $quantity; // CORREGIDO: Total de entradas disponibles (lotes + individuales)
+                        $totalEntradas += $quantity;
                         
                         // Tickets emitidos: considerar bundle_quantity (para info adicional)
                         if ($ticketType->is_bundle) {
@@ -85,20 +88,27 @@ class DashboardController extends Controller
                         }
                     }
                 }
+
+                // Determinar estado del evento
+                $statusInfo = $this->determineEventStatus($event);
                 
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'image_url' => $event->image_url,
                     'date' => $event->functions->first()?->start_time->format('d M Y'),
-                    'entradas_vendidas' => $entradasVendidas,   // CORREGIDO: Para la barra de progreso
-                    'total_entradas' => $totalEntradas,         // NUEVO: Total de entradas para progreso
-                    'tickets_sold' => $ticketsEmitidos,         // CORREGIDO: tickets emitidos (para compatibilidad)
-                    'total_tickets' => $totalTickets,           // CORREGIDO: total de tickets físicos
+                    'entradas_vendidas' => $entradasVendidas,
+                    'total_entradas' => $totalEntradas,
+                    'tickets_sold' => $ticketsEmitidos,
+                    'total_tickets' => $totalTickets,
+                    'status' => $statusInfo['value'],
+                    'status_label' => $statusInfo['label'],
+                    'status_color' => $statusInfo['color'],
+                    'is_active' => $statusInfo['is_active'],
                 ];
             });
 
-        // --- Eventos con mejor rendimiento (por ingresos) ---
+        // --- Eventos con mejor rendimiento (por ingresos) con estado ---
         $topEvents = $organizer->events
             ->map(function($event) {
                 // CORREGIDO: Usar el cálculo correcto para tickets
@@ -113,12 +123,19 @@ class DashboardController extends Controller
                         }
                     }
                 }
+
+                // Determinar estado del evento
+                $statusInfo = $this->determineEventStatus($event);
                 
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'revenue' => $this->revenueService->forEvent($event),
-                    'tickets_sold' => $ticketsEmitidos, // CORREGIDO: tickets emitidos
+                    'tickets_sold' => $ticketsEmitidos,
+                    'status' => $statusInfo['value'],
+                    'status_label' => $statusInfo['label'],
+                    'status_color' => $statusInfo['color'],
+                    'is_active' => $statusInfo['is_active'],
                 ];
             })
             ->sortByDesc('revenue')
@@ -132,8 +149,8 @@ class DashboardController extends Controller
             'organizer' => $organizer,
             'stats' => [
                 'totalRevenue' => $totalRevenue,
-                'totalEntradasVendidas' => $totalEntradasVendidas, // NUEVO: entradas vendidas
-                'totalTicketsSold' => $totalTicketsEmitidos, // CORREGIDO: tickets emitidos
+                'totalEntradasVendidas' => $totalEntradasVendidas,
+                'totalTicketsSold' => $totalTicketsEmitidos,
                 'activeEventsCount' => $activeEventsCount,
                 'totalEventsCount' => $totalEventsCount,
             ],
@@ -141,6 +158,56 @@ class DashboardController extends Controller
             'topEvents' => $topEvents,
             'revenueChartData' => $revenueChartData,
         ]);
+    }
+    
+    /**
+     * Determina el estado de un evento basado en sus funciones
+     */
+    private function determineEventStatus($event): array
+    {
+        if ($event->functions->isEmpty()) {
+            return [
+                'value' => 'draft',
+                'label' => 'Borrador',
+                'color' => 'gray',
+                'is_active' => false,
+            ];
+        }
+
+        // Ordenar funciones por prioridad de estado
+        $priorityOrder = [
+            EventFunctionStatus::ON_SALE->value => 1,
+            EventFunctionStatus::UPCOMING->value => 2,
+            EventFunctionStatus::REPROGRAMMED->value => 3,
+            EventFunctionStatus::CANCELLED->value => 4,
+            EventFunctionStatus::SOLD_OUT->value => 5,
+            EventFunctionStatus::INACTIVE->value => 6,
+            EventFunctionStatus::FINISHED->value => 7,
+        ];
+
+        $primaryFunction = $event->functions
+            ->filter(fn($f) => $f->is_active)
+            ->sortBy(function($function) use ($priorityOrder) {
+                return $priorityOrder[$function->status->value] ?? 999;
+            })
+            ->first();
+
+        if (!$primaryFunction) {
+            $primaryFunction = $event->functions
+                ->sortBy(function($function) use ($priorityOrder) {
+                    return $priorityOrder[$function->status->value] ?? 999;
+                })
+                ->first();
+        }
+
+        $hasAnyActiveFunction = $event->functions->where('is_active', true)->isNotEmpty();
+
+        return [
+            'value' => $primaryFunction->status->value,
+            'label' => $primaryFunction->status->label(),
+            'color' => $primaryFunction->status->color(),
+            'is_active' => $hasAnyActiveFunction,
+        ];
     }
     
     public function helpGuide(): Response

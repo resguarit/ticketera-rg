@@ -17,8 +17,9 @@ interface EventFunctionDetail extends EventFunction {
     time: string;       
     formatted_date: string; 
     day_name: string;
-    min_price: number;
-    max_price: number;
+    status: string;
+    status_label: string;
+    status_color: string;
 }
 
 interface EventDetail extends Event {
@@ -30,6 +31,15 @@ interface EventDetail extends Event {
     max_price: number;
     next_function_date: string | null;
     functions_count: number;
+    status: string;
+    status_label: string;
+    status_color: string;
+    is_active: boolean;
+}
+
+interface EventStatus {
+    value: string;
+    label: string;
 }
 
 interface EventsIndexProps {
@@ -37,6 +47,7 @@ interface EventsIndexProps {
     events: EventDetail[];
     categories: Category[];
     venues: Venue[];
+    statuses: EventStatus[];
     filters: {
         search: string;
         category_id: string;
@@ -50,7 +61,14 @@ interface EventsIndexProps {
     };
 }
 
-export default function EventsIndex({ auth, events = [], categories = [], venues = [], filters }: EventsIndexProps) {
+export default function EventsIndex({ 
+    auth, 
+    events = [], 
+    categories = [], 
+    venues = [], 
+    statuses = [],
+    filters 
+}: EventsIndexProps) {
     const { user } = auth;
 
     // Estados para filtros locales - con valores por defecto seguros
@@ -188,7 +206,7 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
                 </div>
 
                 {/* Search and Filters */}
-                <div className="  mb-6">
+                <div className="mb-6">
                     {/* Search Bar */}
                     <div className="relative mb-4">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -201,7 +219,7 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
                     </div>
 
                     {/* Filters Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         {/* Category Filter */}
                         <div className="space-y-2">
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -236,6 +254,22 @@ export default function EventsIndex({ auth, events = [], categories = [], venues
                             </Select>
                         </div>
 
+                        {/* Status Filter */}
+                        <div className="space-y-2">
+                            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Todos los estados" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los estados</SelectItem>
+                                    {statuses && statuses.length > 0 && statuses.map(status => (
+                                        <SelectItem key={status.value} value={status.value}>
+                                            {status.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
                         {/* Sort Filter */}
                         <div className="space-y-2">

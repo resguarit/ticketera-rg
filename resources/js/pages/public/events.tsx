@@ -30,7 +30,8 @@ const eventStatuses = [
     { value: 'upcoming', label: 'Próximas', icon: Calendar },
     { value: 'sold_out', label: 'Agotadas', icon: XCircle },
     { value: 'finished', label: 'Finalizadas', icon: CheckCircle },
-    { value: 'featured', label: 'Destacados', icon: Star },
+    { value: 'cancelled', label: 'Canceladas', icon: XCircle },
+    { value: 'reprogrammed', label: 'Reprogramadas', icon: Calendar },
 ];
 
 interface EventDetail extends Event {
@@ -42,9 +43,15 @@ interface EventDetail extends Event {
     category: string;
     price: number;
     venue: Venue;
-    status: string;
-    has_ticket_types: boolean;
-    has_free_tickets: boolean;
+    status: {
+        value: string;
+        label: string;
+        color: string;
+    };
+    has_active_functions: boolean;
+    tickets_available?: number;
+    total_capacity?: number;
+    is_sold_out?: boolean;
     functions: EventFunction[];
 }
 
@@ -83,8 +90,17 @@ export default function Events({ events, categories, cities, filters }: PublicEv
             const matchesCategory = selectedCategory === "all" || event.category.toLowerCase() === selectedCategory.toLowerCase();
             const matchesCity = selectedCity === "all" || event.city === selectedCity;
             
-            const matchesStatus = selectedStatus === 'all' || 
-                                (selectedStatus === 'featured' ? event.featured === true : event.status === selectedStatus);
+            // CORREGIDO: Filtro de estado
+            let matchesStatus = false;
+            
+            if (selectedStatus === 'all') {
+                matchesStatus = true;
+            } else if (selectedStatus === 'featured') {
+                matchesStatus = event.featured === true;
+            } else {
+                // Verificar si el evento tiene el estado seleccionado
+                matchesStatus = event.status && event.status.value === selectedStatus;
+            }
             
             return matchesSearch && matchesCategory && matchesCity && matchesStatus;
         })
@@ -281,6 +297,24 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                 
                                 {/* Filtros de estado - Solo en LG+ */}
                                 <div className="flex flex-wrap gap-1 sm:gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedStatus("all")}
+                                        className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedStatus === "all" ? "bg-primary text-white" : ""}`}
+                                    >
+                                        <BringToFront className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
+                                        Todos
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedStatus("featured")}
+                                        className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedStatus === "featured" ? "bg-primary text-white" : ""}`}
+                                    >
+                                        <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
+                                        Destacados
+                                    </Button>
                                     {eventStatuses.map((status) => {
                                         const IconComponent = status.icon;
                                         return (
@@ -296,15 +330,6 @@ export default function Events({ events, categories, cities, filters }: PublicEv
                                             </Button>
                                         );
                                     })}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setSelectedStatus("all")}
-                                        className={`text-foreground hover:bg-primary hover:text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 ${selectedStatus === "all" ? "bg-primary text-white" : ""}`}
-                                    >
-                                        <BringToFront className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
-                                        Todos
-                                    </Button>
                                 </div>
                             </div>
                         </div>

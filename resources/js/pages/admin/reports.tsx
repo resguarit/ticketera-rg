@@ -10,6 +10,7 @@ import {
     Download,
     Filter,
     Eye,
+    EyeOff,
     RefreshCw,
     FileText,
     PieChart,
@@ -23,7 +24,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-// import { PageProps } from '@/types';
 
 interface RealTimeStats {
     today_sales: number;
@@ -51,6 +51,9 @@ interface ReportsProps {
         tickets_sold: number;
         growth: string;
         status: string;
+        status_label: string;
+        status_color: string;
+        is_active: boolean;
     }>;
     monthlyData: Array<{
         month: string;
@@ -69,7 +72,7 @@ interface ReportsProps {
         users: number;
     }>;
     timeRange: string;
-    [key: string]: any; // Index signature para satisfacer PageProps
+    [key: string]: any;
 }
 
 export default function Reports({ auth }: any) {
@@ -156,17 +159,32 @@ export default function Reports({ auth }: any) {
         }
     };
 
-    const getCategoryIcon = (category: string) => {
-        switch (category.toLowerCase()) {
-            case "música": return "🎵";
-            case "deportes": return "⚽";
-            case "teatro": return "🎭";
-            case "conferencias": return "💼";
-            case "arte": return "🎨";
-            case "cine": return "🎬";
-            case "gastronomía": return "🍽️";
-            default: return "📅";
-        }
+    // Función actualizada para usar el enum de estados
+    const getEventStatusBadge = (status: string, statusLabel: string, statusColor: string, isActive: boolean) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[statusColor] || 'bg-gray-500 hover:bg-gray-600';
+        
+        return (
+            <div className="flex items-center gap-2">
+                <Badge className={`${badgeColor} text-white border-0 text-xs`}>
+                    {statusLabel}
+                </Badge>
+                {!isActive && (
+                    <Badge className="bg-gray-400 hover:bg-gray-500 text-white border-0 text-xs">
+                        <EyeOff className="w-3 h-3 mr-1" />
+                        Oculto
+                    </Badge>
+                )}
+            </div>
+        );
     };
 
     const formatCurrency = (amount: number) => {
@@ -176,7 +194,6 @@ export default function Reports({ auth }: any) {
         }).format(amount);
     };
 
-    // Manejar caso cuando monthlyData está vacío
     const getMaxRevenue = () => {
         if (monthlyData.length === 0) return 1;
         return Math.max(...monthlyData.map(m => m.revenue));
@@ -463,22 +480,22 @@ export default function Reports({ auth }: any) {
                                     <div className="space-y-4">
                                         {topEvents.length > 0 ? topEvents.map((event, index) => (
                                             <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                                <div className="flex items-center space-x-4">
+                                                <div className="flex items-center space-x-4 flex-1">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-lg flex items-center justify-center">
                                                         <span className="text-white font-bold">#{index + 1}</span>
                                                     </div>
-                                                    <div>
+                                                    <div className="flex-1">
                                                         <h3 className="font-semibold text-black">{event.name}</h3>
                                                         <div className="flex items-center space-x-2 mt-1">
-                                                            <span className="text-sm">{getCategoryIcon(event.category)}</span>
                                                             <Badge className="bg-gray-200 text-gray-800 border-0 text-xs">
                                                                 {event.category}
                                                             </Badge>
-                                                            <Badge className={`border-0 text-xs ${
-                                                                event.status === 'active' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
-                                                            }`}>
-                                                                {event.status === 'active' ? 'Activo' : 'Completado'}
-                                                            </Badge>
+                                                            {getEventStatusBadge(
+                                                                event.status,
+                                                                event.status_label,
+                                                                event.status_color,
+                                                                event.is_active
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

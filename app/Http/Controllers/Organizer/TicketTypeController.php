@@ -51,7 +51,17 @@ class TicketTypeController extends Controller
 
         return Inertia::render('organizer/events/ticket-types/create', [
             'event' => $event,
-            'function' => $function,
+            'function' => [
+                'id' => $function->id,
+                'name' => $function->name,
+                'description' => $function->description,
+                'start_time' => $function->start_time,
+                'end_time' => $function->end_time,
+                'is_active' => $function->is_active,
+                'status' => $function->status->value,
+                'status_label' => $function->status->label(),
+                'status_color' => $function->status->color(),
+            ],
             'sectors' => $event->venue->sectors,
             'sectorsWithAvailability' => $sectorsWithAvailability,
         ]);
@@ -301,7 +311,17 @@ class TicketTypeController extends Controller
 
         return Inertia::render('organizer/events/ticket-types/edit', [
             'event' => $event,
-            'function' => $function,
+            'function' => [
+                'id' => $function->id,
+                'name' => $function->name,
+                'description' => $function->description,
+                'start_time' => $function->start_time,
+                'end_time' => $function->end_time,
+                'is_active' => $function->is_active,
+                'status' => $function->status->value,
+                'status_label' => $function->status->label(),
+                'status_color' => $function->status->color(),
+            ],
             'ticketType' => $ticketType,
             'sectors' => $event->venue->sectors,
             'sectorsWithAvailability' => $sectorsWithAvailability,

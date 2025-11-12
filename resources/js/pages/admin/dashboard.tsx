@@ -53,6 +53,9 @@ interface RecentEvent extends Event {
     category: Category;
     organizer: string;
     status: string;
+    status_label: string;
+    status_color: string;
+    is_active: boolean;
     date: string;
     tickets_sold: number;
     total_tickets: number;
@@ -99,7 +102,7 @@ interface DashboardProps {
 // Mapeo de iconos para las estadísticas
 const getStatIcon = (title: string) => {
     switch (title) {
-        case 'Total Clientes': return Users; // Cambié de 'Total Usuarios' a 'Total Clientes'
+        case 'Total Clientes': return Users;
         case 'Eventos Activos': return Calendar;
         case 'Ingresos Totales': return DollarSign;
         case 'Tickets Vendidos': return Ticket;
@@ -110,7 +113,7 @@ const getStatIcon = (title: string) => {
 // Mapeo de colores para las estadísticas
 const getStatColor = (title: string) => {
     switch (title) {
-        case 'Total Clientes': return 'bg-primary'; // Cambié de 'Total Usuarios' a 'Total Clientes'
+        case 'Total Clientes': return 'bg-primary';
         case 'Eventos Activos': return 'bg-chart-2';
         case 'Ingresos Totales': return 'bg-chart-3';
         case 'Tickets Vendidos': return 'bg-chart-4';
@@ -151,17 +154,43 @@ export default function AdminDashboard({
         });
     };
 
-    const getStatusBadge = (status: string) => {
+    // Función actualizada para obtener el badge de estado usando el enum
+    const getEventStatusBadge = (status: string, statusLabel: string, statusColor: string, isActive: boolean) => {
+        // Mapeo de colores del enum a clases de Tailwind
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[statusColor] || 'bg-gray-500 hover:bg-gray-600';
+        
+        return (
+            <div className="flex items-center gap-2">
+                <Badge className={`${badgeColor} text-white border-0`}>
+                    {statusLabel}
+                </Badge>
+                {!isActive && (
+                    <Badge className="bg-gray-400 hover:bg-gray-500 text-white border-0 text-xs">
+                        Oculto
+                    </Badge>
+                )}
+            </div>
+        );
+    };
+
+    // Función para obtener el badge de estado de usuario
+    const getUserStatusBadge = (status: string) => {
         const statusConfig = {
-            published: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
             active: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
             pending: { label: "Pendiente", color: "bg-yellow-500 hover:bg-yellow-600" },
-            draft: { label: "Borrador", color: "bg-gray-500 hover:bg-gray-600" },
             suspended: { label: "Suspendido", color: "bg-red-500 hover:bg-red-600" },
-            cancelled: { label: "Cancelado", color: "bg-red-500 hover:bg-red-600" }
         };
         
-        const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+        const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
         
         return (
             <Badge className={`${config.color} text-white border-0`}>
@@ -189,7 +218,9 @@ export default function AdminDashboard({
     const getAlertIcon = (type: string) => {
         switch (type) {
             case "warning": return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+            case "error": return <XCircle className="w-4 h-4 text-red-500" />;
             case "success": return <CheckCircle className="w-4 h-4 text-green-500" />;
+            case "info": return <Activity className="w-4 h-4 text-blue-500" />;
             default: return <Activity className="w-4 h-4 text-blue-500" />;
         }
     };
@@ -255,7 +286,6 @@ export default function AdminDashboard({
                                     <SelectItem value="90d">Últimos 90 días</SelectItem>
                                 </SelectContent>
                             </Select>
-                            
                         </div>
                     </div>
 
@@ -294,7 +324,7 @@ export default function AdminDashboard({
                                 <CardHeader className="border-b border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-foreground flex items-center space-x-3">
-                                            <Calendar className="w-6 h-6 " />
+                                            <Calendar className="w-6 h-6" />
                                             <span>Eventos Recientes</span>
                                         </CardTitle>
                                         <div className="flex items-center space-x-2">
@@ -313,7 +343,12 @@ export default function AdminDashboard({
                                                 <div className="flex-1">
                                                     <div className="flex items-center space-x-3 mb-2">
                                                         <h4 className="text-black font-semibold">{event.name}</h4>
-                                                        {getStatusBadge(event.status)}
+                                                        {getEventStatusBadge(
+                                                            event.status, 
+                                                            event.status_label, 
+                                                            event.status_color,
+                                                            event.is_active
+                                                        )}
                                                     </div>
                                                     <p className="text-gray-600 text-sm mb-2">
                                                         Por: {event.organizer} • {formatDate(event.date)}
@@ -331,11 +366,11 @@ export default function AdminDashboard({
                                                         className="mt-2 h-2"
                                                     />
                                                 </div>
-                                                            <Link href={`/admin/events/${event.id}`} className="cursor-pointer">
-                                                            <Button variant="outline" className="flex items-center">
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                        </Link>
+                                                <Link href={`/admin/events/${event.id}`} className="cursor-pointer">
+                                                    <Button variant="outline" className="flex items-center">
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
+                                                </Link>
                                             </div>
                                         )) : (
                                             <div className="text-center py-8">
@@ -369,18 +404,15 @@ export default function AdminDashboard({
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
                                                         <span className="text-white font-semibold text-sm tracking-tight">
-                                                            {user.name.charAt(0).toUpperCase()} 
-                                                        </span>
-                                                        <span className="text-white font-semibold text-sm tracking-tight">
-                                                             {user.last_name.charAt(0).toUpperCase()}
+                                                            {user.name.charAt(0).toUpperCase()}{user.last_name.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-black font-medium">{user.name}</h4>
+                                                        <h4 className="text-black font-medium">{user.name} {user.last_name}</h4>
                                                         <p className="text-gray-600 text-sm">{user.email}</p>
                                                         <div className="flex items-center space-x-2 mt-1">
                                                             {getRoleBadge(user.role)}
-                                                            {getStatusBadge(user.status)}
+                                                            {getUserStatusBadge(user.status)}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -413,11 +445,35 @@ export default function AdminDashboard({
 
                         {/* Right Column - Alerts & Quick Actions */}
                         <div className="space-y-8">
-                            {/* System Status */}
+                            {/* System Alerts */}
+                            {systemAlerts && systemAlerts.length > 0 && (
+                                <Card className="bg-white border-gray-200 shadow-lg gap-0">
+                                    <CardHeader className="border-b border-gray-200">
+                                        <CardTitle className="text-foreground flex items-center space-x-3">
+                                            <AlertTriangle className="w-6 h-6" />
+                                            <span>Alertas del Sistema</span>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-6">
+                                        <div className="space-y-3">
+                                            {systemAlerts.map((alert) => (
+                                                <div key={alert.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                    {getAlertIcon(alert.type)}
+                                                    <div className="flex-1">
+                                                        <h4 className="text-black font-medium text-sm">{alert.title}</h4>
+                                                        <p className="text-gray-600 text-xs mt-1">{alert.message}</p>
+                                                        <p className="text-gray-500 text-xs mt-1">{alert.time}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Quick Actions */}
                             <Card className="bg-white border-gray-200 shadow-lg gap-0 pb-0">
-                                <CardHeader className="border-b border-gray-200 ">
+                                <CardHeader className="border-b border-gray-200">
                                     <CardTitle className="text-foreground flex items-center space-x-3">
                                         <Settings className="w-6 h-6" />
                                         <span>Acciones Rápidas</span>
@@ -448,9 +504,8 @@ export default function AdminDashboard({
                                             Ver Reportes
                                         </Button>
                                     </Link>
-                                    
                                     <Link href="/admin/settings">
-                                        <Button className="w-full bbg-primary mb-2 hover:bg-primary-hover text-white justify-start">
+                                        <Button className="w-full bg-primary mb-2 hover:bg-primary-hover text-white justify-start">
                                             <Settings className="w-4 h-4 mr-2" />
                                             Configuración
                                         </Button>

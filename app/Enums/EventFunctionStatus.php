@@ -10,6 +10,7 @@ enum EventFunctionStatus: string
     case FINISHED = 'finished';
     case INACTIVE = 'inactive';
     case CANCELLED = 'cancelled';
+    case REPROGRAMMED = 'reprogrammed';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum EventFunctionStatus: string
             self::FINISHED => 'Finalizado',
             self::INACTIVE => 'Inactivo',
             self::CANCELLED => 'Cancelado',
+            self::REPROGRAMMED => 'Reprogramado',
         };
     }
 
@@ -32,6 +34,7 @@ enum EventFunctionStatus: string
             self::FINISHED => 'gray',
             self::INACTIVE => 'yellow',
             self::CANCELLED => 'red',
+            self::REPROGRAMMED => 'orange',
         };
     }
 }

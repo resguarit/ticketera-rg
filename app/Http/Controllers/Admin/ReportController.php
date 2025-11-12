@@ -11,6 +11,7 @@ use App\Models\IssuedTicket;
 use App\Models\Category;
 use App\Enums\UserRole;
 use App\Enums\OrderStatus;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -175,7 +176,7 @@ class ReportController extends Controller
 
     private function getTopEvents(Carbon $startDate, int $limit): array
     {
-        return Event::with(['category', 'venue.ciudad'])
+        return Event::with(['category', 'venue.ciudad', 'functions'])
             ->select('events.*')
             ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
             ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
@@ -209,6 +210,9 @@ class ReportController extends Controller
                     ->where('orders.created_at', '>=', $startDate)
                     ->count();
 
+                // Determinar estado del evento usando la misma lógica del EventController
+                $statusInfo = $this->determineEventStatus($event);
+
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
@@ -216,10 +220,64 @@ class ReportController extends Controller
                     'revenue' => $revenue,
                     'tickets_sold' => $ticketsSold,
                     'growth' => '+' . rand(5, 25) . '%', // Puedes calcular el crecimiento real
-                    'status' => $event->functions()->where('start_time', '>', Carbon::now())->exists() ? 'active' : 'completed',
+                    'status' => $statusInfo['value'],
+                    'status_label' => $statusInfo['label'],
+                    'status_color' => $statusInfo['color'],
+                    'is_active' => $statusInfo['is_active'],
                 ];
             })
             ->toArray();
+    }
+
+    /**
+     * Determina el estado de un evento basado en sus funciones
+     */
+    private function determineEventStatus(Event $event): array
+    {
+        if ($event->functions->isEmpty()) {
+            return [
+                'value' => 'draft',
+                'label' => 'Borrador',
+                'color' => 'gray',
+                'is_active' => false,
+            ];
+        }
+
+        // Ordenar funciones por prioridad de estado
+        $priorityOrder = [
+            EventFunctionStatus::ON_SALE->value => 1,
+            EventFunctionStatus::UPCOMING->value => 2,
+            EventFunctionStatus::REPROGRAMMED->value => 3,
+            EventFunctionStatus::CANCELLED->value => 4,
+            EventFunctionStatus::SOLD_OUT->value => 5,
+            EventFunctionStatus::INACTIVE->value => 6,
+            EventFunctionStatus::FINISHED->value => 7,
+        ];
+
+        $primaryFunction = $event->functions
+            ->filter(fn($f) => $f->is_active) // Priorizar funciones activas
+            ->sortBy(function($function) use ($priorityOrder) {
+                return $priorityOrder[$function->status->value] ?? 999;
+            })
+            ->first();
+
+        // Si no hay funciones activas, tomar cualquier función
+        if (!$primaryFunction) {
+            $primaryFunction = $event->functions
+                ->sortBy(function($function) use ($priorityOrder) {
+                    return $priorityOrder[$function->status->value] ?? 999;
+                })
+                ->first();
+        }
+
+        $hasAnyActiveFunction = $event->functions->where('is_active', true)->isNotEmpty();
+
+        return [
+            'value' => $primaryFunction->status->value,
+            'label' => $primaryFunction->status->label(),
+            'color' => $primaryFunction->status->color(),
+            'is_active' => $hasAnyActiveFunction,
+        ];
     }
 
     private function getMonthlyData(Carbon $startDate): array

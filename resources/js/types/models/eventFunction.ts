@@ -8,6 +8,7 @@ export interface EventFunction {
     start_time: string;
     end_time: string | null;
     is_active: boolean;
+    status: string; 
     created_at: string;
     updated_at: string;
     deleted_at: string | null;

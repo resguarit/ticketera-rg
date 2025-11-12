@@ -6,14 +6,29 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Event, EventFunction } from '@/types';
 import { toast } from 'sonner';
-import { Save } from 'lucide-react';
+import { Save, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import BackButton from '../Backbutton';
+
+interface EventStatus {
+    value: string;
+    label: string;
+    color: string;
+}
+
+interface EventFunctionWithStatus extends EventFunction {
+    status?: string;
+    status_label?: string;
+    status_color?: string;
+}
 
 interface FunctionFormProps {
     event: Event;
-    functionData?: EventFunction;
+    functionData?: EventFunctionWithStatus;
+    statuses?: EventStatus[];
     isEditing?: boolean;
 }
 
@@ -40,13 +55,14 @@ const formatDateTimeForInput = (dateString: string | undefined): string => {
     }
 };
 
-export default function FunctionForm({ event, functionData, isEditing = false }: FunctionFormProps) {
+export default function FunctionForm({ event, functionData, statuses = [], isEditing = false }: FunctionFormProps) {
     const { data, setData, processing, errors } = useForm({
         name: functionData?.name || '',
         description: functionData?.description || '',
         start_time: formatDateTimeForInput(functionData?.start_time),
         end_time: formatDateTimeForInput(functionData?.end_time),
         is_active: functionData?.is_active ?? true,
+        status: isEditing ? (functionData?.status || 'upcoming') : 'upcoming',
     });
 
     const validateForm = (): boolean => {
@@ -137,6 +153,11 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                         id: 'function-submit',
                         description: Array.isArray(errors.end_time) ? errors.end_time[0] : errors.end_time
                     });
+                } else if (errors.status) {
+                    toast.error('Error en el estado', {
+                        id: 'function-submit',
+                        description: Array.isArray(errors.status) ? errors.status[0] : errors.status
+                    });
                 } else {
                     const firstError = Object.values(errors)[0];
                     const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
@@ -161,11 +182,40 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
         setData('start_time', value);
     };
 
+    // Función para obtener badge de estado seleccionado
+    const getSelectedStatusBadge = () => {
+        const selectedStatus = statuses.find(s => s.value === data.status);
+        if (!selectedStatus) return null;
+
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500',
+            'blue': 'bg-blue-500',
+            'red': 'bg-red-500',
+            'gray': 'bg-gray-500',
+            'yellow': 'bg-yellow-500',
+            'orange': 'bg-orange-500',
+        };
+
+        const badgeColor = colorMap[selectedStatus.color] || 'bg-gray-500';
+
+        return (
+            <Badge className={`${badgeColor} text-white border-0`}>
+                {selectedStatus.label}
+            </Badge>
+        );
+    };
+
     return (
         <form onSubmit={handleSubmit}>
             <Card>
                 <CardHeader className='pb-0'>
                     <CardTitle className='text-lg'>Información de la Función</CardTitle>
+                    <CardDescription>
+                        {isEditing 
+                            ? 'Actualiza la información de la función del evento.'
+                            : 'Completa los datos para crear una nueva función. El estado inicial será "Próximamente".'
+                        }
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid gap-3">
@@ -265,7 +315,7 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                                 className={errors.end_time ? 'border-red-500' : ''}
                                 min={data.start_time ? data.start_time.split('T')[0] : ''}
                             />
-                            {errors.end_time && <p className="text-sm text-red-600">{errors.end_time}</p>}
+                            {errors.end_date && <p className="text-sm text-red-600">{errors.end_time}</p>}
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="end_time">Hora de Fin</Label>
@@ -298,17 +348,81 @@ export default function FunctionForm({ event, functionData, isEditing = false }:
                         </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
-                        <Switch
-                            id="is_active"
-                            checked={data.is_active}
-                            className="bg-primary"
-                            onCheckedChange={(checked) => setData('is_active', checked)}
-                        />
-                        <Label htmlFor="is_active" className="cursor-pointer">
-                            Función Activa
-                        </Label>
+                    {/* Campo de Estado - Solo visible al editar */}
+                    {isEditing && statuses && statuses.length > 0 && (
+                        <div className="grid gap-3">
+                            <Label htmlFor="status">
+                                Estado de la Función <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="flex items-center gap-3">
+                                <Select 
+                                    value={data.status} 
+                                    onValueChange={(value) => setData('status', value)}
+                                >
+                                    <SelectTrigger className={`flex-1 ${errors.status ? 'border-red-500' : ''}`}>
+                                        <SelectValue placeholder="Selecciona un estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {statuses.map(status => (
+                                            <SelectItem key={status.value} value={status.value}>
+                                                {status.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {getSelectedStatusBadge()}
+                            </div>
+                            {errors.status && (
+                                <p className="text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {errors.status}
+                                </p>
+                            )}
+                            <p className="text-sm text-gray-500">
+                                El estado define cómo se muestra la función (en venta, agotado, finalizado, etc.)
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Visibilidad */}
+                    <div className="grid gap-3">
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                            <div className="flex items-center gap-3 flex-1">
+                                {data.is_active ? (
+                                    <Eye className="w-5 h-5 text-graty-500" />
+                                ) : (
+                                    <EyeOff className="w-5 h-5 text-gray-500" />
+                                )}
+                                <div>
+                                    <Label htmlFor="is_active" className="cursor-pointer font-medium">
+                                        {data.is_active ? 'Función Visible' : 'Función Oculta'}
+                                    </Label>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {data.is_active 
+                                            ? 'La función es visible para el público y se pueden comprar entradas'
+                                            : 'La función está oculta y no se pueden comprar entradas'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                id="is_active"
+                                checked={data.is_active}
+                                onCheckedChange={(checked) => setData('is_active', checked)}
+                            />
+                        </div>
                     </div>
+
+                    {/* Información adicional */}
+                    {isEditing && (
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                                <strong>Nota:</strong> El estado y la visibilidad son independientes. Puedes tener una función "En venta" pero oculta, 
+                                o una función "Agotada" pero visible para que los usuarios la vean.
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
                     <div className="flex items-center justify-end space-x-4 pt-6 border-t">
                         <Link 
