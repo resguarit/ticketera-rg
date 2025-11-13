@@ -88,11 +88,12 @@ class OrderService
             }
             
             // NUEVO: Verificar y activar tandas después de procesar todas las compras
-            $this->checkStagesAfterPurchase($processedTicketTypes);
+            //$this->checkStagesAfterPurchase($processedTicketTypes);
     
             return [
                 'order' => $order,
-                'account_created' => $accountCreated
+                'account_created' => $accountCreated,
+                'processed_ticket_types' => $processedTicketTypes,
             ];
         });
     }
@@ -341,12 +342,13 @@ class OrderService
         ];
     }
 
-    public function finalizeOrderPayment(Order $order, PaymentResult $paymentResult): void
+    public function finalizeOrderPayment(Order $order, PaymentResult $paymentResult, array $processedTicketTypes): void
     {
         try {
             if ($paymentResult->success) {
                 $order->update([ 'status' => OrderStatus::PAID ]);
                 $order->items()->update(['status' => IssuedTicketStatus::AVAILABLE]);
+                $this->checkStagesAfterPurchase($processedTicketTypes);
             } else {
                 $this->cancelOrder($order);
             }

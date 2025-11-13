@@ -18,6 +18,7 @@ class CheckoutService
         private OrderService $orderService,
         private PaymentGatewayInterface $paymentGateway,
         private EmailDispatcherService $emailDispatcher,
+        private StageTicketService $stageTicketService,
     ) {}
 
     public function processOrderPayment(CheckoutData $checkoutData): CheckoutResult
@@ -88,7 +89,7 @@ class CheckoutService
 
             $paymentResult = $this->paymentGateway->charge($paymentData);
 
-            $this->orderService->finalizeOrderPayment($order, $paymentResult);
+            $this->orderService->finalizeOrderPayment($order, $paymentResult, $orderResult['processed_ticket_types']);
 
             if ($paymentResult->success) {
                 $this->emailDispatcher->sendTicketPurchaseConfirmation($order);
