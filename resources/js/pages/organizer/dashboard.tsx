@@ -211,7 +211,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                             <p className="text-sm font-medium leading-none truncate">{event.name}</p>
                                             <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
                                         </div>
-                                        <div className="font-medium text-green-600 ml-2">{formatCurrency(event.revenue)}</div>
+                                        <div className="font-medium text-sm text-green-600 ml-2">{formatCurrency(event.revenue)}</div>
                                     </div>
                                     {getStatusBadge(event)}
                                 </div>
