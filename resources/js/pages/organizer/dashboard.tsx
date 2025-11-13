@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import ChangePasswordDialog from '@/components/change-password-modal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Stat {
     totalRevenue: number;
@@ -57,9 +58,10 @@ interface DashboardProps {
     recentEvents: RecentEvent[];
     topEvents: TopEvent[];
     revenueChartData: ChartData[];
+    currentPeriod: string;
 }
 
-export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData }: DashboardProps) {
+export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData, currentPeriod }: DashboardProps) {
     const statCards = [
         { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
         { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3', description: 'lotes + individuales' },
@@ -79,6 +81,22 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
     const handleModalOpenChange = (open: boolean) => {
         setIsModalOpen(open);
     };
+
+    const handlePeriodChange = (period: string) => {
+        router.get(route('organizer.dashboard'), { period }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const periodOptions = [
+        { value: 'today', label: 'Hoy' },
+        { value: 'week', label: 'Última semana' },
+        { value: 'month', label: 'Último mes' },
+        { value: 'quarter', label: 'Últimos 3 meses' },
+        { value: 'year', label: 'Último año' },
+        { value: 'three_years', label: 'Últimos 3 años' },
+    ];
 
     // Función para obtener badge de estado
     const getStatusBadge = (event: RecentEvent | TopEvent) => {
@@ -107,6 +125,10 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         );
     };
 
+    const getPeriodLabel = () => {
+        return periodOptions.find(opt => opt.value === currentPeriod)?.label || 'Último año';
+    };
+
     return (
         <>
             <Head title="Mi Dashboard" />
@@ -117,12 +139,26 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
-                    <Link href={route('organizer.events.create')}>
-                        <Button className="bg-primary hover:bg-primary-hover text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Crear Evento
-                        </Button>
-                    </Link>
+                    <div className="flex gap-3 items-center">
+                        <Select value={currentPeriod} onValueChange={handlePeriodChange}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Seleccionar período" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {periodOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Link href={route('organizer.events.create')}>
+                            <Button className="bg-primary hover:bg-primary-hover text-white">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Crear Evento
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Stat Cards */}
@@ -147,7 +183,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     {/* Revenue Chart */}
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Ingresos en los últimos 30 días</CardTitle>
+                            <CardTitle>Ingresos - {getPeriodLabel()}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>

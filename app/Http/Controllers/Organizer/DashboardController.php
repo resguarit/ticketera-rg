@@ -22,8 +22,12 @@ class DashboardController extends Controller
         $organizer = Auth::user()->organizer;
         $organizer->load(['events.functions.ticketTypes', 'events.venue', 'events.category']);
 
-        // --- Estadísticas Generales ---
-        $totalRevenue = $this->revenueService->forOrganizer($organizer);
+        // Obtener período del request, por defecto último año
+        $period = $request->input('period', 'year');
+        $dates = $this->getPeriodDates($period);
+
+        // --- Estadísticas Generales (con filtro de período) ---
+        $totalRevenue = $this->revenueService->forOrganizer($organizer, $dates['start'], $dates['end']);
         
         // CORREGIDO: Calcular entradas vendidas y tickets emitidos por separado
         $totalEntradasVendidas = 0; // lotes + entradas individuales (sin multiplicar)
@@ -32,15 +36,32 @@ class DashboardController extends Controller
         foreach ($organizer->events as $event) {
             foreach ($event->functions as $function) {
                 foreach ($function->ticketTypes as $ticketType) {
-                    $vendidos = (int) $ticketType->quantity_sold;
+                    // Obtener cantidad vendida en el período
+                    $vendidos = $ticketType->issuedTickets()
+                        ->whereHas('order', function($q) use ($dates) {
+                            $q->where('status', \App\Enums\OrderStatus::PAID)
+                              ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                        })
+                        ->count();
                     
-                    // Entradas vendidas: contar lotes y entradas individuales por igual
-                    $totalEntradasVendidas += $vendidos;
-                    
-                    // Tickets emitidos: multiplicar por bundle_quantity si es bundle
                     if ($ticketType->is_bundle) {
-                        $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                        // Para bundles: contar órdenes únicas (lotes vendidos)
+                        $lotesVendidos = $ticketType->issuedTickets()
+                            ->whereHas('order', function($q) use ($dates) {
+                                $q->where('status', \App\Enums\OrderStatus::PAID)
+                                  ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                            })
+                            ->distinct('order_id')
+                            ->count('order_id');
+                        
+                        // Entradas vendidas: contar solo los lotes
+                        $totalEntradasVendidas += $lotesVendidos;
+                        
+                        // Tickets emitidos: multiplicar lotes por bundle_quantity
+                        $totalTicketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                     } else {
+                        // Para individuales: contar tickets normalmente
+                        $totalEntradasVendidas += $vendidos;
                         $totalTicketsEmitidos += $vendidos;
                     }
                 }
@@ -61,7 +82,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function($event) {
+            ->map(function($event) use ($dates) {
                 // CORREGIDO: Calcular entradas vendidas y tickets emitidos por evento
                 $entradasVendidas = 0;   // Para la barra de progreso
                 $ticketsEmitidos = 0;    // Para mostrar información adicional
@@ -70,19 +91,38 @@ class DashboardController extends Controller
                 
                 foreach ($event->functions as $function) {
                     foreach ($function->ticketTypes as $ticketType) {
-                        $vendidos = (int) $ticketType->quantity_sold;
                         $quantity = (int) $ticketType->quantity;
                         
-                        // Entradas vendidas: lotes + individuales (para progreso)
-                        $entradasVendidas += $vendidos;
-                        $totalEntradas += $quantity;
-                        
-                        // Tickets emitidos: considerar bundle_quantity (para info adicional)
                         if ($ticketType->is_bundle) {
+                            // Para bundles: contar órdenes únicas
+                            $lotesVendidos = $ticketType->issuedTickets()
+                                ->whereHas('order', function($q) use ($dates) {
+                                    $q->where('status', \App\Enums\OrderStatus::PAID)
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                })
+                                ->distinct('order_id')
+                                ->count('order_id');
+                            
                             $bundleQuantity = $ticketType->bundle_quantity ?? 1;
-                            $ticketsEmitidos += $vendidos * $bundleQuantity;
+                            
+                            // Entradas: solo lotes
+                            $entradasVendidas += $lotesVendidos;
+                            $totalEntradas += $quantity;
+                            
+                            // Tickets: lotes × bundle_quantity
+                            $ticketsEmitidos += $lotesVendidos * $bundleQuantity;
                             $totalTickets += $quantity * $bundleQuantity;
                         } else {
+                            // Para individuales
+                            $vendidos = $ticketType->issuedTickets()
+                                ->whereHas('order', function($q) use ($dates) {
+                                    $q->where('status', \App\Enums\OrderStatus::PAID)
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                })
+                                ->count();
+                            
+                            $entradasVendidas += $vendidos;
+                            $totalEntradas += $quantity;
                             $ticketsEmitidos += $vendidos;
                             $totalTickets += $quantity;
                         }
@@ -110,15 +150,30 @@ class DashboardController extends Controller
 
         // --- Eventos con mejor rendimiento (por ingresos) con estado ---
         $topEvents = $organizer->events
-            ->map(function($event) {
+            ->map(function($event) use ($dates) {
                 // CORREGIDO: Usar el cálculo correcto para tickets
                 $ticketsEmitidos = 0;
                 foreach ($event->functions as $function) {
                     foreach ($function->ticketTypes as $ticketType) {
-                        $vendidos = (int) $ticketType->quantity_sold;
                         if ($ticketType->is_bundle) {
-                            $ticketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                            // Para bundles: contar órdenes únicas
+                            $lotesVendidos = $ticketType->issuedTickets()
+                                ->whereHas('order', function($q) use ($dates) {
+                                    $q->where('status', \App\Enums\OrderStatus::PAID)
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                })
+                                ->distinct('order_id')
+                                ->count('order_id');
+                            
+                            $ticketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                         } else {
+                            $vendidos = $ticketType->issuedTickets()
+                                ->whereHas('order', function($q) use ($dates) {
+                                    $q->where('status', \App\Enums\OrderStatus::PAID)
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                })
+                                ->count();
+                            
                             $ticketsEmitidos += $vendidos;
                         }
                     }
@@ -130,7 +185,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
-                    'revenue' => $this->revenueService->forEvent($event),
+                    'revenue' => $this->revenueService->forEvent($event, $dates['start'], $dates['end']),
                     'tickets_sold' => $ticketsEmitidos,
                     'status' => $statusInfo['value'],
                     'status_label' => $statusInfo['label'],
@@ -142,8 +197,9 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
             
-        // --- Datos para gráfico de ingresos (últimos 30 días) ---
-        $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, 30);
+        // --- Datos para gráfico de ingresos ---
+        $chartDays = $this->getChartDays($period);
+        $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, $chartDays);
 
         return Inertia::render('organizer/dashboard', [
             'organizer' => $organizer,
@@ -157,7 +213,44 @@ class DashboardController extends Controller
             'recentEvents' => $recentEvents,
             'topEvents' => $topEvents,
             'revenueChartData' => $revenueChartData,
+            'currentPeriod' => $period,
         ]);
+    }
+    
+    /**
+     * Obtiene las fechas de inicio y fin según el período seleccionado
+     */
+    private function getPeriodDates(string $period): array
+    {
+        $end = Carbon::now()->endOfDay();
+        
+        $start = match($period) {
+            'today' => Carbon::now()->startOfDay(),
+            'week' => Carbon::now()->subWeek()->startOfDay(),
+            'month' => Carbon::now()->subMonth()->startOfDay(),
+            'quarter' => Carbon::now()->subMonths(3)->startOfDay(),
+            'year' => Carbon::now()->subYear()->startOfDay(),
+            'three_years' => Carbon::now()->subYears(3)->startOfDay(),
+            default => Carbon::now()->subYear()->startOfDay(),
+        };
+        
+        return ['start' => $start, 'end' => $end];
+    }
+    
+    /**
+     * Obtiene la cantidad de días a mostrar en el gráfico según el período
+     */
+    private function getChartDays(string $period): int
+    {
+        return match($period) {
+            'today' => 1,
+            'week' => 7,
+            'month' => 30,
+            'quarter' => 90,
+            'year' => 365,
+            'three_years' => 1095,
+            default => 365,
+        };
     }
     
     /**
