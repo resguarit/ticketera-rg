@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Assistant;
-use App\Models\EventFunction;
-use App\Models\IssuedTicket;
 use App\Models\Order;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Enums\OrderStatus;
+use App\Enums\IssuedTicketStatus;
+use App\Models\EventFunction;
+use Carbon\Carbon;
+use App\Models\IssuedTicket;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Response;
 use App\Services\EmailDispatcherService;
 
@@ -33,254 +36,177 @@ class AssistantController extends Controller
             abort(403);
         }
     }
-    public function index(Event $event, Request $request): Response
+    public function index(Request $request, Event $event)
     {
-        $this->checkOwnership($event);
-        
-        $functionId = $request->get('function_id');
-        
-        $event->load(['category', 'venue', 'organizer', 'functions']);
+        $organizer = Auth::user()->organizer;
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403, 'No tienes permisos para ver esta página.');
+        }
 
-        $eventData = [
-            'id' => $event->id,
-            'name' => $event->name,
-            'description' => $event->description,
-            'image_url' => $event->image_url,
-            'featured' => $event->featured,
-            'category' => $event->category,
-            'venue' => $event->venue,
-            'organizer' => $event->organizer,
-            'created_at' => $event->created_at,
-            'updated_at' => $event->updated_at,
-            'functions' => $event->functions->map(function($function) {
-                return [
-                    'id' => $function->id,
-                    'name' => $function->name,
-                    'description' => $function->description,
-                    'start_time' => $function->start_time,
-                    'end_time' => $function->end_time,
-                    'date' => $function->start_time?->format('d M Y'),
-                    'time' => $function->start_time?->format('H:i'),
-                    'formatted_date' => $function->start_time?->format('Y-m-d'),
-                    'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
-                    'is_active' => $function->is_active,
-                ];
-            }),
-        ];
+        // --- Obtener filtros de la request ---
+        $selectedFunctionId = $request->input('function_id');
+        $searchTerm = $request->input('search');
+        $sortDirection = $request->input('sort_direction', 'desc'); // default 'desc'
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        // --- Fin filtros ---
+
+        // 1. Query para Asistentes Invitados (Modelo Assistant)
+        $invitedQuery = Assistant::query()
+            ->join('person', 'assistants.person_id', '=', 'person.id')
+            ->join('event_functions', 'assistants.event_function_id', '=', 'event_functions.id')
+            ->where('event_functions.event_id', $event->id)
+            ->select(
+                'assistants.id as assistant_id',
+                DB::raw('null as order_id'),
+                DB::raw('"invited" as type'),
+                DB::raw("CONCAT(person.name, ' ', person.last_name) as full_name"),
+                'person.dni',
+                'assistants.email',
+                'event_functions.name as function_name',
+                'event_functions.start_time as function_date_time',
+                DB::raw('0 as total_amount'),
+                DB::raw('null as order_status'),
+                'assistants.deleted_at as is_cancelled_at', // Usar soft delete
+                'assistants.created_at as invited_at',
+                'assistants.sended_at',
+                DB::raw('null as purchased_at'),
+                'assistants.created_at as sort_date' // Columna para ordenar
+            )
+            ->withCount('issuedTickets as tickets_count')
+            ->withCount(['issuedTickets as tickets_used' => function ($query) {
+                $query->where('status', IssuedTicketStatus::USED);
+            }]);
+
+        // 2. Query para Compradores (Modelo Order)
+        $buyersQuery = Order::query()
+            ->join('users', 'orders.client_id', '=', 'users.id')
+            ->join('person', 'users.person_id', '=', 'person.id')
+            // Join para obtener la función (tomamos la del primer ticket)
+            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+            ->where('event_functions.event_id', $event->id)
+            // No filtramos por status 'completed' para poder mostrar cancelados
+            ->select(
+                DB::raw('null as assistant_id'),
+                'orders.id as order_id',
+                DB::raw('"buyer" as type'),
+                DB::raw("CONCAT(person.name, ' ', person.last_name) as full_name"),
+                'person.dni',
+                'users.email',
+                DB::raw('ANY_VALUE(event_functions.name) as function_name'),
+                DB::raw('ANY_VALUE(event_functions.start_time) as function_date_time'),
+                'orders.total_amount',
+                'orders.status as order_status',
+                DB::raw('null as is_cancelled_at'),
+                DB::raw('null as invited_at'),
+                DB::raw('null as sended_at'),
+                'orders.order_date as purchased_at',
+                'orders.order_date as sort_date' // Columna para ordenar
+            )
+            ->withCount('issuedTickets as tickets_count') // Total tickets en la orden
+            ->withCount(['issuedTickets as tickets_used' => function ($query) {
+                $query->where('status', IssuedTicketStatus::USED);
+            }])
+            ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.status', 'orders.order_date'); // Agrupar por orden
+
+        // 3. Aplicar Filtro de Función
+        if ($selectedFunctionId && $selectedFunctionId !== 'all') {
+            $invitedQuery->where('assistants.event_function_id', $selectedFunctionId);
+            
+            // Filtra órdenes que tengan al menos un ticket para esa función
+            $buyersQuery->whereIn('orders.id', function ($query) use ($selectedFunctionId) {
+                $query->select('order_id')
+                    ->from('issued_tickets')
+                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->where('ticket_types.event_function_id', $selectedFunctionId);
+            });
+        }
+
+        // 4. Aplicar Filtro de Búsqueda (NUEVO)
+        if ($searchTerm) {
+            $invitedQuery->where(function ($q) use ($searchTerm) {
+                $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
+                  ->orWhere('person.dni', 'like', "%{$searchTerm}%")
+                  ->orWhere('assistants.email', 'like', "%{$searchTerm}%");
+            });
+
+            $buyersQuery->where(function ($q) use ($searchTerm) {
+                $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
+                  ->orWhere('person.dni', 'like', "%{$searchTerm}%")
+                  ->orWhere('users.email', 'like', "%{$searchTerm}%")
+                  ->orWhere('orders.transaction_id', 'like', "%{$searchTerm}%");
+            });
+        }
         
-        $functions = $event->functions()
-            ->select('id', 'name', 'start_time')
-            ->orderBy('start_time')
-            ->get()
+        // 5. Combinar Queries
+        $combinedQuery = $invitedQuery->unionAll($buyersQuery);
+
+        // 6. Aplicar Ordenamiento (NUEVO)
+        // Se debe hacer sobre la query combinada (UNION)
+        $finalQuery = DB::query()->fromSub($combinedQuery, 'attendees')
+            ->orderBy('sort_date', $sortDirection);
+
+        // 7. Paginar
+        $attendees = $finalQuery->paginate(10)->appends($request->query());
+
+        // 8. Formatear datos para la vista
+        $attendees->getCollection()->transform(function ($attendee) {
+            $attendee = (array) $attendee; // Convertir stdClass a array
+            
+            $functionDate = new Carbon($attendee['function_date_time']);
+            return [
+                'assistant_id' => $attendee['assistant_id'],
+                'order_id' => $attendee['order_id'],
+                'type' => $attendee['type'],
+                'full_name' => $attendee['full_name'],
+                'dni' => $attendee['dni'],
+                'email' => $attendee['email'],
+                'function_name' => $attendee['function_name'],
+                'function_date' => $functionDate->isoFormat('D MMM YYYY, HH:mm'),
+                'total_amount' => (float) $attendee['total_amount'],
+                'order_status' => $attendee['order_status'],
+                // 'is_cancelled' para invitados (soft delete) o compradores (status orden)
+                'is_cancelled' => !empty($attendee['is_cancelled_at']) || $attendee['order_status'] === OrderStatus::CANCELLED->value,
+                'invited_at' => $attendee['invited_at'] ? (new Carbon($attendee['invited_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
+                'sended_at' => $attendee['sended_at'] ? (new Carbon($attendee['sended_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
+                'purchased_at' => $attendee['purchased_at'] ? (new Carbon($attendee['purchased_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
+                'tickets_count' => (int) $attendee['tickets_count'],
+                'tickets_used' => (int) $attendee['tickets_used'],
+            ];
+        });
+
+        // 9. Obtener datos adicionales para la página
+        $functions = $event->functions()->get(['id', 'name', 'start_time'])
             ->map(function ($function) {
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
-                    'start_time' => $function->start_time->format('d/m/Y H:i'),
+                    'start_time' => $function->start_time->isoFormat('D MMM, HH:mm'),
                 ];
             });
-
-        $attendees = $this->getAttendeesFromIssuedTickets($event, $functionId);
         
-        $attendees = $attendees->sortByDesc(function ($attendee) {
-            return $attendee['type'] === 'buyer' 
-                ? $attendee['purchased_at'] 
-                : $attendee['invited_at'];
-        });
-        
-        $stats = $this->calculateStats($attendees);
-        
-        $perPage = 10; 
-        $currentPage = request()->input('page', 1);
-        $offset = ($currentPage - 1) * $perPage;
-        
-        $paginatedItems = $attendees->slice($offset, $perPage)->values()->all();
-        $totalItems = $attendees->count();
-        
-        $lastPage = ceil($totalItems / $perPage);
-        $links = [];
-        
-        $links[] = [
-            'url' => $currentPage > 1 ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage - 1])) : null,
-            'label' => '&laquo; Anterior',
-            'active' => false,
-        ];
-        
-        $startPage = max(1, $currentPage - 2);
-        $endPage = min($lastPage, $currentPage + 2);
-        
-        for ($i = $startPage; $i <= $endPage; $i++) {
-            $links[] = [
-                'url' => url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $i])),
-                'label' => (string)$i,
-                'active' => $i === (int)$currentPage,
-            ];
-        }
-        
-        $links[] = [
-            'url' => $currentPage < $lastPage ? url()->current() . '?' . http_build_query(array_merge(request()->query(), ['page' => $currentPage + 1])) : null,
-            'label' => 'Siguiente &raquo;',
-            'active' => false,
-        ];
-        
-        $attendeesPaginated = [
-            'data' => $paginatedItems,
-            'links' => $links,
-            'total' => $totalItems,
-            'current_page' => $currentPage,
-            'last_page' => $lastPage,
-            'per_page' => $perPage,
-            'from' => ($currentPage - 1) * $perPage + 1,
-            'to' => min($currentPage * $perPage, $totalItems),
+        // Stats (Ejemplo simple, puedes hacerlo más complejo si lo necesitas)
+        $stats = [
+            'total_attendees' => $finalQuery->count(), // Stat simple
         ];
 
         return Inertia::render('organizer/events/attendees', [
-            'event' => $eventData,
-            'attendees' => $attendeesPaginated,
+            'event' => $event->load('functions'),
+            'attendees' => $attendees,
             'functions' => $functions,
-            'selectedFunctionId' => $functionId,
+            'selectedFunctionId' => $selectedFunctionId ? (int) $selectedFunctionId : null,
             'stats' => $stats,
+            // --- Devolver props de filtros a la vista ---
+            'search' => $searchTerm,
+            'sort_direction' => $sortDirection
+            // --- Fin ---
         ]);
     }
 
-    private function getAttendeesFromIssuedTickets(Event $event, $functionId = null)
-    {
-        $issuedTicketsQuery = DB::table('issued_tickets as it')
-            ->join('ticket_types as tt', 'it.ticket_type_id', '=', 'tt.id')
-            ->join('event_functions as ef', 'tt.event_function_id', '=', 'ef.id')
-            ->where('ef.event_id', $event->id);
 
-        if ($functionId) {
-            $issuedTicketsQuery->where('ef.id', $functionId);
-        }
-
-        $issuedTickets = $issuedTicketsQuery
-            ->select([
-                'it.*', 
-                'tt.name as ticket_type_name', 
-                'tt.price as ticket_price',
-                'ef.name as function_name',
-                'ef.start_time as function_start_time'
-            ])
-            ->get();
-
-        $attendees = collect();
-
-        $invitedTickets = $issuedTickets->whereNotNull('assistant_id');
-        $invitedGroups = $invitedTickets->groupBy('assistant_id');
-
-        foreach ($invitedGroups as $assistantId => $tickets) {
-            $assistant = Assistant::withTrashed() // Incluir soft-deleted
-                ->with(['person', 'eventFunction'])
-                ->find($assistantId);
-            
-            if (!$assistant) continue;
-
-            $person = $assistant->person;
-            $function = $assistant->eventFunction;
-            
-            // Verificar si tiene tickets cancelados
-            $isCancelled = $tickets->where('status', 'cancelled')->count() === $tickets->count();
-            
-            $attendees->push([
-                'type' => 'invited',
-                'assistant_id' => $assistant->id,
-                'is_cancelled' => $isCancelled || $assistant->trashed(), // NUEVO
-                'full_name' => trim($person->name . ' ' . $person->last_name),
-                'dni' => $person->dni,
-                'email' => $assistant->email ?: $person->user?->email,
-                'phone' => $person->phone,
-                'function_name' => $function->name,
-                'function_date' => $function->start_time->format('d/m/Y H:i'),
-                'invited_at' => $assistant->created_at->format('d/m/Y H:i'),
-                'sended_at' => $assistant->sended_at?->format('d/m/Y H:i'),
-                'tickets_count' => $tickets->count(),
-                'tickets_used' => $tickets->where('status', 'used')->count(),
-                'tickets' => $tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'unique_code' => $ticket->unique_code,
-                        'status' => $ticket->status,
-                        'ticket_type_name' => $ticket->ticket_type_name,
-                        'price' => $ticket->ticket_price,
-                        'validated_at' => $ticket->validated_at ? 
-                            \Carbon\Carbon::parse($ticket->validated_at)->format('d/m/Y H:i') : null,
-                    ];
-                })->toArray(),
-            ]);
-        }
-
-        $buyerTickets = $issuedTickets->whereNull('assistant_id')->whereNotNull('order_id');
-        $buyerGroups = $buyerTickets->groupBy('order_id');
-
-        foreach ($buyerGroups as $orderId => $tickets) {
-            $order = \App\Models\Order::with(['client.person'])
-                ->find($orderId);
-            
-            if (!$order || !$order->client || !$order->client->person) continue;
-
-            $person = $order->client->person;
-            $firstTicket = $tickets->first();
-            
-            $attendees->push([
-                'type' => 'buyer',
-                'order_id' => $order->id,
-                'order_status' => $order->status,
-                'full_name' => trim($person->name . ' ' . $person->last_name),
-                'dni' => $person->dni,
-                'email' => $order->client->email,
-                'phone' => $person->phone,
-                'function_name' => $firstTicket->function_name,
-                'function_date' => \Carbon\Carbon::parse($firstTicket->function_start_time)->format('d/m/Y H:i'),
-                'purchased_at' => $order->created_at->format('d/m/Y H:i'),
-                'total_amount' => (float) $order->total_amount, // Usar el total real de la orden
-                'tickets_count' => $tickets->count(),
-                'tickets_used' => $tickets->where('status', 'used')->count(),
-                'tickets' => $tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'unique_code' => $ticket->unique_code,
-                        'status' => $ticket->status,
-                        'ticket_type_name' => $ticket->ticket_type_name,
-                        'price' => $ticket->ticket_price,
-                        'validated_at' => $ticket->validated_at ? 
-                            \Carbon\Carbon::parse($ticket->validated_at)->format('d/m/Y H:i') : null,
-                    ];
-                })->toArray(),
-            ]);
-        }
-
-        return $attendees->sortBy('full_name')->values();
-    }
-
-    private function calculateStats($attendees)
-    {
-        $invitedAttendees = $attendees->where('type', 'invited');
-        $buyerAttendees = $attendees->where('type', 'buyer');
-        
-        // CORREGIDO: Separar entradas vendidas vs tickets emitidos
-        $totalEntradasVendidas = $attendees->sum('tickets_count'); // Esto sigue siendo correcto (lotes + individuales)
-        $totalTicketsEmitidos = $attendees->sum(function($attendee) {
-            // Para compradores: ya viene calculado correctamente en tickets_count
-            // Para invitados: también viene calculado correctamente
-            return $attendee['tickets_count']; // Este es el número real de tickets físicos
-        });
-        
-        $ticketsUsed = $attendees->sum('tickets_used');
-        $totalRevenue = $buyerAttendees->sum('total_amount');
-
-        return [
-            'total_attendees' => $attendees->count(),
-            'invited_attendees' => $invitedAttendees->count(),
-            'buyer_attendees' => $buyerAttendees->count(),
-            'total_entradas_vendidas' => $totalEntradasVendidas, // CAMBIADO: entradas vendidas
-            'total_tickets_emitidos' => $totalTicketsEmitidos,   // NUEVO: tickets emitidos físicos
-            'total_tickets' => $totalTicketsEmitidos, // Mantener compatibilidad hacia atrás
-            'tickets_used' => $ticketsUsed,
-            'tickets_pending' => $totalTicketsEmitidos - $ticketsUsed,
-            'total_revenue' => $totalRevenue,
-        ];
-    }
 
     public function store(Event $event, Request $request)
     {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router, Head, Link } from '@inertiajs/react';
+import { router, Head, Link, usePage } from '@inertiajs/react'; // Importar usePage
 import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock, ShoppingCart, UserCheck, DollarSign, RefreshCw } from 'lucide-react';
 import { AttendeeForTable, AttendeeStats, TicketDetails } from '@/types/models/assistant';
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -17,6 +16,12 @@ import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModa
 import { PaginatedResponse } from '@/types/ui/ui';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ConfirmDeleteModal from '@/components/ConfirmationModal';
+import { 
+    UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock, 
+    ShoppingCart, UserCheck, DollarSign, RefreshCw, 
+    Search, ArrowDown, ArrowUp, ArrowUpDown
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface EventAttendeeFunction {
     id: number;
@@ -42,6 +47,10 @@ interface EventAttendeesProps {
     functions: EventAttendeeFunction[];
     selectedFunctionId: number | null;
     stats: AttendeeStats;
+    // --- AGREGAR PROPS ---
+    search?: string;
+    sort_direction?: 'asc' | 'desc';
+    // --- FIN AGREGAR PROPS ---
 }
 
 export default function EventAttendees({ 
@@ -50,8 +59,18 @@ export default function EventAttendees({
     attendees, 
     functions,
     selectedFunctionId,
-    stats 
+    stats,
+    // --- AGREGAR PROPS ---
+    search: initialSearch = '',
+    sort_direction: initialSort = null
+    // --- FIN AGREGAR PROPS ---
 }: EventAttendeesProps) {
+    
+    // --- AGREGAR ESTADOS ---
+    const [searchQuery, setSearchQuery] = useState(initialSearch);
+    const [dateSort, setDateSort] = useState<'asc' | 'desc' | null>(initialSort);
+    // --- FIN AGREGAR ESTADOS ---
+
     const [filterFunction, setFilterFunction] = useState<string>(
         selectedFunctionId?.toString() || 'all'
     );
@@ -68,31 +87,74 @@ export default function EventAttendees({
     const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
     const [eliminatedAttendee, setEliminatedAttendee] = useState<AttendeeForTable | null>(null);
 
-    const handleFunctionFilter = (value: string) => {
-        setFilterFunction(value);
-        const params = value === 'all' ? {} : { function_id: value };
-        
+    // --- REFACTORIZAR MANEJO DE FILTROS ---
+    const applyFilters = (
+        newFilters: {
+            function_id?: string;
+            search?: string;
+            sort_direction?: 'asc' | 'desc' | null;
+            page?: number;
+        }
+    ) => {
+        // Obtener la página actual de los props de paginación
+        const currentPage = attendees.current_page;
+
+        const currentParams = {
+            page: newFilters.page || currentPage, // Usar nueva página si se provee
+            function_id: filterFunction !== 'all' ? filterFunction : undefined,
+            search: searchQuery || undefined,
+            sort_direction: dateSort || undefined,
+            ...newFilters,
+        };
+
+        // Si el filtro no es de paginación, volver a la página 1
+        if (newFilters.page === undefined) {
+            currentParams.page = 1;
+        }
+
+        // Limpiar parámetros indefinidos o nulos
+        Object.keys(currentParams).forEach(key => {
+            const k = key as keyof typeof currentParams;
+            if (currentParams[k] === undefined || currentParams[k] === null || currentParams[k] === '') {
+                delete currentParams[k];
+            }
+        });
+
         router.get(
             route('organizer.events.attendees', event.id),
-            params,
-            { preserveState: true, preserveScroll: true }
-        );
-    };
-
-    const handleRefresh = () => {
-        // Usar visit en lugar de reload para mantener mejor control
-        router.visit(
-            route('organizer.events.attendees', event.id), 
+            currentParams as any,
             { 
-                preserveState: true,
-                preserveScroll: true,
-                only: ['attendees', 'stats'],
-                data: {
-                    function_id: filterFunction !== 'all' ? filterFunction : undefined
-                }
+                preserveState: true, 
+                preserveScroll: true, 
+                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction'] 
             }
         );
     };
+
+    const handleFunctionFilter = (value: string) => {
+        setFilterFunction(value);
+        applyFilters({ function_id: value === 'all' ? undefined : value });
+    };
+
+    const handleSearch = () => {
+        applyFilters({ search: searchQuery });
+    };
+
+    const toggleDateSort = () => {
+        let newSort: 'asc' | 'desc' | null = null;
+        if (dateSort === null) newSort = 'desc';
+        else if (dateSort === 'desc') newSort = 'asc';
+        else newSort = null;
+        
+        setDateSort(newSort);
+        applyFilters({ sort_direction: newSort });
+    };
+
+    const handleRefresh = () => {
+        applyFilters({}); // Aplicar filtros actuales
+    };
+    // --- FIN REFACTORIZAR ---
+
 
     const handleInviteAssistant = () => {
         router.visit(route('organizer.events.attendees.invite', event.id));
@@ -374,20 +436,51 @@ export default function EventAttendees({
                             </div>
                         </div>
                     </CardHeader>
+
+                    {/* --- AGREGAR BARRA DE BÚSQUEDA --- */}
+                    <CardHeader className="pt-0 border-t mt-4">
+                        <div className="flex items-center gap-2 pt-4">
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Buscar por nombre, DNI, email o N° de orden..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch();
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <Button onClick={handleSearch}>
+                                <Search className="h-4 w-4 mr-2" />
+                                Buscar
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    {/* --- FIN BARRA DE BÚSQUEDA --- */}
+
                     <CardContent>
                         {(!attendees.data || attendees.data.length === 0) ? (
                             <div className="text-center py-8">
                                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    No hay asistentes invitados
+                                    {/* MODIFICADO: Mensaje dinámico */}
+                                    {initialSearch ? "No se encontraron resultados" : "No hay asistentes"}
                                 </h3>
                                 <p className="text-gray-600 mb-4">
-                                    Comienza invitando a tu primer asistente al evento.
+                                    {initialSearch
+                                        ? "Intenta con otros términos de búsqueda o limpia los filtros."
+                                        : "Comienza invitando a tu primer asistente al evento."}
                                 </p>
-                                <Button onClick={handleInviteAssistant}>
-                                    <UserPlus className="h-4 w-4 mr-2" />
-                                    Invitar asistente
-                                </Button>
+                                {!initialSearch && (
+                                    <Button onClick={handleInviteAssistant}>
+                                        <UserPlus className="h-4 w-4 mr-2" />
+                                        Invitar asistente
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <Table>
@@ -400,7 +493,20 @@ export default function EventAttendees({
                                         <TableHead>Función</TableHead>
                                         <TableHead>Estado</TableHead>
                                         <TableHead>Tickets</TableHead>
-                                        <TableHead>Fecha</TableHead>
+                                        {/* --- MODIFICAR CABECERA FECHA --- */}
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={toggleDateSort}
+                                                className="h-auto p-0 hover:bg-transparent font-medium"
+                                            >
+                                                Fecha
+                                                {dateSort === null && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                                                {dateSort === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
+                                                {dateSort === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
+                                            </Button>
+                                        </TableHead>
+                                        {/* --- FIN MODIFICAR --- */}
                                         <TableHead className="text-right">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -507,13 +613,16 @@ export default function EventAttendees({
                         )}
                         
                         {/* Pagination */}
-                        {attendees.links && Array.isArray(attendees.links) && attendees.links.length > 0 && (
+                        {attendees.links && attendees.data.length > 0 && (
                             <div className="mt-6 flex justify-center">
                                 <div className="flex items-center space-x-2">
                                     {attendees.links.map((link, index) => (
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
+                                            onClick={(e) => {
+                                                if (!link.url) e.preventDefault();
+                                            }}
                                             className={`px-3 py-2 text-sm rounded-md ${
                                                 link.active
                                                     ? 'bg-black text-white'
@@ -522,6 +631,9 @@ export default function EventAttendees({
                                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                             }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
+                                            preserveState
+                                            preserveScroll
+                                            only={['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction']}
                                         />
                                     ))}
                                 </div>
