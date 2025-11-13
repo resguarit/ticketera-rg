@@ -95,6 +95,21 @@ class HomeController extends Controller
             ];
         });
 
+        $cities = Event::with(['venue.ciudad.provincia'])
+            ->get()
+            ->pluck('venue.ciudad')
+            ->filter()
+            ->unique('id')
+            ->map(function($ciudad) {
+                return [
+                    'id' => $ciudad->id,
+                    'name' => $ciudad->name,
+                    'provincia' => $ciudad->provincia?->name,
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
         $processedEvents = $events->map(function($event) {
             // Obtener funciones activas
             $activeFunctions = $event->functions->where('is_active', true);
@@ -156,6 +171,7 @@ class HomeController extends Controller
             'featuredEvents' => $featuredEvents,
             'events' => $processedEvents,
             'categories' => $categories,
+            'cities' => $cities,
         ]);
     }
 }

@@ -30,10 +30,17 @@ interface EventDetail extends Event {
     };
 }
 
+interface City {
+    id: number;
+    name: string;
+    provincia?: string;
+}
+
 interface HomeProps {
     featuredEvents: EventDetail[];
     events: EventDetail[];
     categories: Category[];
+    cities: City[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,7 +50,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Home({ featuredEvents, events, categories }: HomeProps) {
+
+
+export default function Home({ featuredEvents, events, categories, cities }: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
@@ -79,7 +88,8 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                 event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 event.location.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === "all" || event.category?.toLowerCase() === selectedCategory.toLowerCase();
-            const matchesCity = selectedCity === "all" || event.city === selectedCity;
+            const eventCityProvince = event.city && event.province ? `${event.city}, ${event.province}` : event.city || '';
+            const matchesCity = selectedCity === "all" || eventCityProvince === selectedCity;
 
             return matchesSearch && matchesCategory && matchesCity;
         })
@@ -103,9 +113,6 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
         const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
         return category?.color || '#3b82f6';
     };
-
-    // Obtener colores únicos de ciudades para el filtro
-    const cities = [...new Set(events.map(event => event.city).filter(Boolean))];
 
     return (
         <>
@@ -234,9 +241,12 @@ export default function Home({ featuredEvents, events, categories }: HomeProps) 
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Todas las ciudades</SelectItem>
-                                            {cities.filter(city => city).map((city) => (
-                                                <SelectItem key={city} value={city!}>
-                                                    {city}
+                                            {cities.map((city) => (
+                                                <SelectItem
+                                                    key={city.id}
+                                                    value={`${city.name}, ${city.provincia ?? ''}`.trim()}
+                                                >
+                                                    {`${city.name}${city.provincia ? `, ${city.provincia}` : ''}`}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

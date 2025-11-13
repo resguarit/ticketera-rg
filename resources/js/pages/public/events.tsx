@@ -121,15 +121,17 @@ export default function Events({ events, categories, cities, filters }: PublicEv
         return (
             <>
                 <Head title="Eventos" />
-                <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
+                <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background flex flex-col">
                     <Header />
-                    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
+                    
+                    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 flex-grow">
                         <div className="text-center py-8 sm:py-12">
                             <p className="text-base sm:text-lg text-foreground/60 px-4">
                                 {eventsArray === null ? 'Cargando eventos...' : 'No hay eventos disponibles en este momento.'}
                             </p>
                         </div>
                     </div>
+                    
                     <Footer />
                 </div>
             </>
@@ -140,10 +142,10 @@ export default function Events({ events, categories, cities, filters }: PublicEv
         <>
             <Head title="Eventos" />
             
-            <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
+            <div className="min-h-screen flex-grow bg-gradient-to-br from-gray-200 to-background">
                 <Header />
                 
-                <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4">
+                <div className="container  mx-auto px-3 sm:px-4 py-2 sm:py-4">
                     {/* Filters */}
                     <div className="mb-4 sm:mb-6 lg:mb-8 w-full mt-6">
                         {/* MÓVIL: Solo searchbar y ordenador */}
