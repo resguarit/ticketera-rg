@@ -96,6 +96,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         { value: 'quarter', label: 'Últimos 3 meses' },
         { value: 'year', label: 'Último año' },
         { value: 'three_years', label: 'Últimos 3 años' },
+        { value: 'all', label: 'Histórico' },
     ];
 
     // Función para obtener badge de estado

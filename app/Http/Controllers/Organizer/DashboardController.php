@@ -231,6 +231,7 @@ class DashboardController extends Controller
             'quarter' => Carbon::now()->subMonths(3)->startOfDay(),
             'year' => Carbon::now()->subYear()->startOfDay(),
             'three_years' => Carbon::now()->subYears(3)->startOfDay(),
+            'all' => Carbon::create(1970, 1, 1)->startOfDay(), // Fecha muy antigua para obtener todo el historial
             default => Carbon::now()->subYear()->startOfDay(),
         };
         
@@ -249,6 +250,7 @@ class DashboardController extends Controller
             'quarter' => 90,
             'year' => 365,
             'three_years' => 1095,
+            'all' => 3650, // 10 años de datos aproximadamente
             default => 365,
         };
     }
