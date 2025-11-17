@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\VenueController;
 use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Organizer\SectorController;
+use App\Http\Controllers\Admin\SettingsController;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -62,11 +63,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
     
     // Configuración
-    Route::prefix('settings')->name('settings.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('admin/settings');
-        })->name('index');
-    });
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/test-email', [SettingsController::class, 'testEmail'])->name('settings.test-email');
+    Route::post('/settings/backup', [SettingsController::class, 'backupDatabase'])->name('settings.backup');
 
     // Gestión de categorías
     Route::resource('categories', CategoryController::class)->except(['show']);

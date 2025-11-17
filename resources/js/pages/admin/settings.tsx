@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { 
     Settings as SettingsIcon,
     Mail,
@@ -29,74 +30,103 @@ import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
-export default function Settings({ auth }: any) {
+export default function Settings({ auth, generalSettings: initialGeneral, emailSettings: initialEmail, paymentSettings: initialPayment, securitySettings: initialSecurity, notificationSettings: initialNotification }: any) {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
 
-    // Estados para configuraciones
-    const [generalSettings, setGeneralSettings] = useState({
-        siteName: "RG Entradas",
-        siteDescription: "La mejor plataforma de venta de tickets",
-        contactEmail: "contact@rgentradas.com",
-        supportEmail: "support@rgentradas.com",
-        timezone: "America/Argentina/Buenos_Aires",
-        currency: "ARS",
-        language: "es"
-    });
-
-    const [emailSettings, setEmailSettings] = useState({
-        smtpHost: "smtp.gmail.com",
-        smtpPort: "587",
-        smtpUsername: "",
-        smtpPassword: "",
-        smtpEncryption: "tls",
-        fromEmail: "noreply@rgentradas.com",
-        fromName: "RG Entradas"
-    });
-
-    const [paymentSettings, setPaymentSettings] = useState({
-        stripeEnabled: true,
-        stripePublicKey: "",
-        stripeSecretKey: "",
-        mercadopagoEnabled: true,
-        mercadopagoAccessToken: "",
-        commissionRate: "5.0"
-    });
-
-    const [securitySettings, setSecuritySettings] = useState({
-        twoFactorRequired: false,
-        passwordMinLength: 8,
-        sessionTimeout: 60,
-        maxLoginAttempts: 5,
-        ipWhitelistEnabled: false,
-        maintenanceMode: false
-    });
-
-    const [notificationSettings, setNotificationSettings] = useState({
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        newUserNotification: true,
-        newEventNotification: true,
-        paymentNotification: true,
-        securityAlerts: true
-    });
+    // Estados para configuraciones usando datos del backend
+    const [generalSettings, setGeneralSettings] = useState(initialGeneral);
+    const [emailSettings, setEmailSettings] = useState(initialEmail);
+    const [paymentSettings, setPaymentSettings] = useState(initialPayment);
+    const [securitySettings, setSecuritySettings] = useState(initialSecurity);
+    const [notificationSettings, setNotificationSettings] = useState(initialNotification);
 
     const handleSaveSettings = async (settingsType: string) => {
         setIsLoading(true);
-        // Simular guardado
-        setTimeout(() => {
+        
+        const settingsMap: any = {
+            'general': generalSettings,
+            'email': emailSettings,
+            'payment': paymentSettings,
+            'security': securitySettings,
+            'notification': notificationSettings,
+        };
+
+        const settings = settingsType === 'all' 
+            ? Object.entries(settingsMap).reduce((acc, [group, data]) => ({ ...acc, [group]: data }), {})
+            : { [settingsType]: settingsMap[settingsType] };
+
+        try {
+            if (settingsType === 'all') {
+                // Guardar todas las configuraciones
+                for (const [group, data] of Object.entries(settings)) {
+                    await fetch(route('admin.settings.update'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        },
+                        body: JSON.stringify({ group, settings: data }),
+                    });
+                }
+            } else {
+                await fetch(route('admin.settings.update'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({ group: settingsType, settings: settingsMap[settingsType] }),
+                });
+            }
+
+            alert('Configuraciones guardadas correctamente');
+        } catch (error) {
+            console.error('Error al guardar:', error);
+            alert('Error al guardar las configuraciones');
+        } finally {
             setIsLoading(false);
-            console.log(`Configuraciones de ${settingsType} guardadas`);
-        }, 1500);
+        }
     };
 
-    const handleTestEmail = () => {
-        console.log("Enviando email de prueba...");
+    const handleTestEmail = async () => {
+        const email = prompt('Ingrese el email donde quiere recibir la prueba:');
+        if (!email) return;
+
+        try {
+            await fetch(route('admin.settings.test-email'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            alert('Email de prueba enviado correctamente');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al enviar el email de prueba');
+        }
     };
 
-    const handleBackupDatabase = () => {
-        console.log("Iniciando backup de base de datos...");
+    const handleBackupDatabase = async () => {
+        if (!confirm('¿Está seguro de que desea realizar un backup de la base de datos?')) return;
+
+        try {
+            await fetch(route('admin.settings.backup'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            alert('Backup iniciado correctamente');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al iniciar el backup');
+        }
     };
 
     return (
