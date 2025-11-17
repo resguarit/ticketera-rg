@@ -527,7 +527,7 @@ export default function Reports({ auth }: any) {
                                     <CardHeader>
                                         <CardTitle className="text-black flex items-center space-x-2">
                                             <Users className="w-5 h-5" />
-                                            <span>Demografía por Edad</span>
+                                            <span>Estadísticas de Usuarios</span>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
@@ -535,7 +535,7 @@ export default function Reports({ auth }: any) {
                                             {userDemographics.map((demo, index) => (
                                                 <div key={index} className="space-y-2">
                                                     <div className="flex justify-between text-sm">
-                                                        <span className="text-black font-medium">{demo.age} años</span>
+                                                        <span className="text-black font-medium">{demo.age}</span>
                                                         <span className="text-gray-600">{formatNumber(Math.round(demo.users))} usuarios ({demo.percentage}%)</span>
                                                     </div>
                                                     <Progress value={demo.percentage} className="h-2" />
@@ -556,26 +556,31 @@ export default function Reports({ auth }: any) {
                                                 <p className="text-2xl font-bold text-blue-900">{userDemographics.reduce((sum, demo) => sum + demo.users, 0).toLocaleString()}</p>
                                             </div>
                                             <div className="p-4 bg-green-50 rounded-lg text-center">
-                                                <p className="text-green-600 text-sm font-medium">Más Activos</p>
+                                                <p className="text-green-600 text-sm font-medium">Verificados</p>
                                                 <p className="text-2xl font-bold text-green-900">
                                                     {userDemographics.length > 0 
-                                                        ? userDemographics.find(d => d.percentage === Math.max(...userDemographics.map(ud => ud.percentage)))?.age || 'N/A'
-                                                        : 'N/A'
+                                                        ? (userDemographics.find(d => d.age === 'Email verificado')?.users || 0).toLocaleString()
+                                                        : '0'
                                                     }
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-purple-50 rounded-lg text-center">
-                                                <p className="text-purple-600 text-sm font-medium">Promedio</p>
+                                                <p className="text-purple-600 text-sm font-medium">Con Teléfono</p>
                                                 <p className="text-2xl font-bold text-purple-900">
                                                     {userDemographics.length > 0 
-                                                        ? Math.round(userDemographics.reduce((sum, demo) => sum + demo.users, 0) / userDemographics.length).toLocaleString()
+                                                        ? (userDemographics.find(d => d.age === 'Con teléfono')?.users || 0).toLocaleString()
                                                         : '0'
                                                     }
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-orange-50 rounded-lg text-center">
-                                                <p className="text-orange-600 text-sm font-medium">Crecimiento</p>
-                                                <p className="text-2xl font-bold text-orange-900">+12.5%</p>
+                                                <p className="text-orange-600 text-sm font-medium">Sin Verificar</p>
+                                                <p className="text-2xl font-bold text-orange-900">
+                                                    {userDemographics.length > 0 
+                                                        ? (userDemographics.find(d => d.age === 'Email sin verificar')?.users || 0).toLocaleString()
+                                                        : '0'
+                                                    }
+                                                </p>
                                             </div>
                                         </div>
                                     </CardContent>

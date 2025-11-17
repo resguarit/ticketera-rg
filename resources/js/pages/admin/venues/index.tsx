@@ -245,18 +245,12 @@ export default function VenuesIndex() {
                     </div>
                 ) : (
                     <div className="text-center py-12">
-                        <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-                            <Building2 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes recintos creados</h3>
+                        <div className="rounded-lg p-8  mx-auto">
+                            <Building2 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-xl font-semibold text-black mb-2">No tienes recintos creados</h3>
                             <p className="text-gray-600 mb-4">
                                 Comienza creando tu primer recinto para poder asociarlo a tus eventos.
                             </p>
-                            <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Link href={route('admin.venues.create')}>
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Crear tu primer recinto
-                                </Link>
-                            </Button>
                         </div>
                     </div>
                 )}
