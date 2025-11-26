@@ -1,19 +1,21 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import ChangePasswordDialog from '@/components/change-password-modal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Stat {
     totalRevenue: number;
-    totalEntradasVendidas: number; // NUEVO: entradas vendidas
-    totalTicketsSold: number; // CAMBIADO: tickets emitidos
+    totalEntradasVendidas: number;
+    totalTicketsSold: number;
     activeEventsCount: number;
     totalEventsCount: number;
 }
@@ -23,10 +25,14 @@ interface RecentEvent {
     name: string;
     image_url: string;
     date: string;
-    entradas_vendidas: number;  // NUEVO: entradas vendidas para progreso
-    total_entradas: number;     // NUEVO: total entradas para progreso
-    tickets_sold: number;       // tickets emitidos
-    total_tickets: number;      // total tickets físicos
+    entradas_vendidas: number;
+    total_entradas: number;
+    tickets_sold: number;
+    total_tickets: number;
+    status: string;
+    status_label: string;
+    status_color: string;
+    is_active: boolean;
 }
 
 interface TopEvent {
@@ -34,6 +40,10 @@ interface TopEvent {
     name: string;
     revenue: number;
     tickets_sold: number;
+    status: string;
+    status_label: string;
+    status_color: string;
+    is_active: boolean;
 }
 
 interface ChartData {
@@ -48,13 +58,14 @@ interface DashboardProps {
     recentEvents: RecentEvent[];
     topEvents: TopEvent[];
     revenueChartData: ChartData[];
+    currentPeriod: string;
 }
 
-export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData }: DashboardProps) {
+export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData, currentPeriod }: DashboardProps) {
     const statCards = [
         { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
-        { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3' },
-        { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4' },
+        { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3', description: 'lotes + individuales' },
+        { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4', description: 'entradas físicas' },
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
 
@@ -71,6 +82,54 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         setIsModalOpen(open);
     };
 
+    const handlePeriodChange = (period: string) => {
+        router.get(route('organizer.dashboard'), { period }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const periodOptions = [
+        { value: 'today', label: 'Hoy' },
+        { value: 'week', label: 'Última semana' },
+        { value: 'month', label: 'Último mes' },
+        { value: 'quarter', label: 'Últimos 3 meses' },
+        { value: 'year', label: 'Último año' },
+        { value: 'three_years', label: 'Últimos 3 años' },
+        { value: 'all', label: 'Histórico' },
+    ];
+
+    // Función para obtener badge de estado
+    const getStatusBadge = (event: RecentEvent | TopEvent) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500',
+            'blue': 'bg-blue-500',
+            'red': 'bg-red-500',
+            'gray': 'bg-gray-500',
+            'yellow': 'bg-yellow-500',
+            'orange': 'bg-orange-500',
+        };
+
+        const badgeColor = colorMap[event.status_color] || 'bg-gray-500';
+
+        return (
+            <div className="flex items-center gap-1 flex-wrap">
+                <Badge className={`${badgeColor} text-white border-0 text-xs`}>
+                    {event.status_label}
+                </Badge>
+                {!event.is_active && (
+                    <Badge className="bg-gray-400 text-white border-0 text-xs">
+                        <EyeOff className="w-3 h-3" />
+                    </Badge>
+                )}
+            </div>
+        );
+    };
+
+    const getPeriodLabel = () => {
+        return periodOptions.find(opt => opt.value === currentPeriod)?.label || 'Último año';
+    };
+
     return (
         <>
             <Head title="Mi Dashboard" />
@@ -81,15 +140,29 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
-                    <Link href={route('organizer.events.create')}>
-                        <Button className="bg-primary hover:bg-primary-hover text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Crear Evento
-                        </Button>
-                    </Link>
+                    <div className="flex gap-3 items-center">
+                        <Select value={currentPeriod} onValueChange={handlePeriodChange}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Seleccionar período" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {periodOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Link href={route('organizer.events.create')}>
+                            <Button className="bg-primary hover:bg-primary-hover text-white">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Crear Evento
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Stat Cards - ACTUALIZADO con 4 estadísticas */}
+                {/* Stat Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {statCards.map((card, index) => (
                         <Card key={index} className="p-6 border-l-4 border-l-blue-500">
@@ -99,12 +172,8 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                     <card.icon className={`w-4 h-4 ${card.color}`} />
                                 </div>
                                 <p className="text-3xl font-bold text-gray-900">{card.value}</p>
-                                {/* NUEVO: Añadir descripción para las nuevas métricas */}
-                                {card.title === 'Entradas Vendidas' && (
-                                    <p className="text-xs text-gray-500">lotes + individuales</p>
-                                )}
-                                {card.title === 'Tickets Emitidos' && (
-                                    <p className="text-xs text-gray-500">entradas físicas</p>
+                                {card.description && (
+                                    <p className="text-xs text-gray-500">{card.description}</p>
                                 )}
                             </div>
                         </Card>
@@ -115,7 +184,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     {/* Revenue Chart */}
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Ingresos en los últimos 30 días</CardTitle>
+                            <CardTitle>Ingresos - {getPeriodLabel()}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
@@ -136,19 +205,22 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {topEvents.length > 0 ? topEvents.map(event => (
-                                <div key={event.id} className="flex items-center">
-                                    <div className="flex-1 space-y-1">
-                                        <p className="text-sm font-medium leading-none truncate">{event.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
+                                <div key={event.id} className="space-y-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1 space-y-1">
+                                            <p className="text-sm font-medium leading-none truncate">{event.name}</p>
+                                            <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
+                                        </div>
+                                        <div className="font-medium text-sm text-green-600 ml-2">{formatCurrency(event.revenue)}</div>
                                     </div>
-                                    <div className="font-medium text-green-600">{formatCurrency(event.revenue)}</div>
+                                    {getStatusBadge(event)}
                                 </div>
                             )) : <p className="text-sm text-muted-foreground text-center py-4">No hay datos de rendimiento.</p>}
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Recent Events - CORREGIDO para usar entradas en progreso */}
+                {/* Recent Events */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Eventos Recientes</CardTitle>
@@ -165,18 +237,21 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                     <Link key={event.id} href={route('organizer.events.manage', event.id)}>
                                         <div className="border rounded-lg overflow-hidden group hover:shadow-lg transition-shadow">
                                             <img src={event.image_url} alt={event.name} className="h-32 w-full object-cover" />
-                                            <div className="p-3">
+                                            <div className="p-3 space-y-2">
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
                                                 
-                                                {/* CORREGIDO: Barra de progreso basada en entradas vendidas */}
+                                                {/* Estado del evento */}
+                                                {getStatusBadge(event)}
+                                                
+                                                {/* Barra de progreso */}
                                                 <Progress 
                                                     value={event.total_entradas > 0 ? (event.entradas_vendidas / event.total_entradas) * 100 : 0} 
                                                     className="h-2 mt-2 bg-white border border-gray-300" 
                                                 />
                                                 
-                                                {/* CORREGIDO: Mostrar entradas vendidas para el progreso */}
-                                                <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                                {/* Estadísticas */}
+                                                <div className="text-xs text-muted-foreground space-y-0.5">
                                                     <div>{formatNumber(event.entradas_vendidas)} / {formatNumber(event.total_entradas)} entradas</div>
                                                     <div className="text-purple-600">{formatNumber(event.tickets_sold)} tickets emitidos</div>
                                                 </div>

@@ -20,6 +20,7 @@ interface EventCardProps {
         time?: string;
         price?: number;
         has_ticket_types?: boolean;
+        status?: string; // NUEVO: Estado del evento
     };
     className?: string;
 }
@@ -35,18 +36,30 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
     const timeHour = event.time ? event.time.split(':')[0] : '00';
     const timeMinutes = event.time ? event.time.split(':')[1] : '00';
 
+    // Determinar si el evento está agotado
+    const isSoldOut = event.status === 'sold_out';
+
     return (
         <Link href={`/events/${event.id}`} className={`block ${className}`}>
             {/* Diseño para pantallas menores a sm (móvil) */}
             <div className="sm:hidden">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 relative">
+                    {/* Bandera diagonal AGOTADO - Mobile */}
+                    {isSoldOut && (
+                        <div className="absolute top-0 right-0 z-10 overflow-hidden w-24 h-24">
+                            <div className="absolute top-4 -right-8 w-32 bg-red-600 text-white text-xs font-bold py-1 text-center transform rotate-45 shadow-md">
+                                AGOTADO
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex h-32">
                         {/* Imagen izquierda */}
-                        <div className="w-32 h-32 flex-shrink-0">
+                        <div className="w-32 h-32 flex-shrink-0 relative">
                             <img 
                                 src={event.image_url || "/placeholder.svg?height=400&width=800"} 
                                 alt={event.name} 
-                                className="w-full h-full object-cover" 
+                                className={`w-full h-full object-cover ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
                             />
                         </div>
                         
@@ -91,7 +104,16 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
 
             {/* Diseño original para pantallas sm y mayores */}
             <div className="hidden sm:block">
-                <div className="w-full h-[440px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col">
+                <div className="w-full h-[440px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col relative">
+                    {/* Bandera diagonal AGOTADO - Desktop */}
+                    {isSoldOut && (
+                        <div className="absolute top-0 right-0 z-10 overflow-hidden w-32 h-32">
+                            <div className="absolute top-6 -right-10 w-40 bg-red-600 text-white text-sm font-bold py-2 text-center transform rotate-45 shadow-lg">
+                                AGOTADO
+                            </div>
+                        </div>
+                    )}
+
                     {/* Header section with dark background - altura fija */}
                     <div className="relative h-[260px] overflow-hidden flex-shrink-0">
                         {/* Background image */}
@@ -99,7 +121,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                             <img 
                                 src={event.image_url || "/placeholder.svg?height=400&width=800"} 
                                 alt={event.name} 
-                                className="w-full h-full object-cover" 
+                                className={`w-full h-full object-cover transition-all duration-300 ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
                             />
                         </div>
                     </div>

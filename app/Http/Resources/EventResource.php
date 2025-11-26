@@ -42,6 +42,7 @@ class EventResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description,
             'image_url' => $this->image_url ?: "/placeholder.svg?height=400&width=800",
@@ -68,43 +69,59 @@ class EventResource extends JsonResource
                     'status' => $function->status->value,
                 ];
             }),
-            'status' => $this->getConsolidatedStatus(), // Método para obtener estado consolidado
+            'status' => $this->getConsolidatedStatus(), // Método para obtener estado consolidado con label y color
         ];
     }
 
     /**
      * Obtener el estado consolidado del evento basado en todas sus funciones
      */
-    private function getConsolidatedStatus()
+    private function getConsolidatedStatus(): array
     {
         if ($this->functions->isEmpty()) {
-            return 'upcoming';
+            return [
+                'value' => EventFunctionStatus::UPCOMING->value,
+                'label' => EventFunctionStatus::UPCOMING->label(),
+                'color' => EventFunctionStatus::UPCOMING->color(),
+            ];
         }
 
-        $statuses = $this->functions->pluck('status')->map(function ($status) {
-            return $status->value;
-        })->unique();
+        // Orden de prioridad para determinar el estado del evento
+        $priorityOrder = [
+            EventFunctionStatus::ON_SALE->value => 1,
+            EventFunctionStatus::UPCOMING->value => 2,
+            EventFunctionStatus::REPROGRAMMED->value => 3,
+            EventFunctionStatus::CANCELLED->value => 4,
+            EventFunctionStatus::SOLD_OUT->value => 5,
+            EventFunctionStatus::INACTIVE->value => 6,
+            EventFunctionStatus::FINISHED->value => 7,
+        ];
 
-        // Si hay al menos una función en venta, el evento está en venta
-        if ($statuses->contains('on_sale')) {
-            return 'on_sale';
+        // Obtener funciones activas
+        $activeFunctions = $this->functions->where('is_active', true);
+
+        // Si no hay funciones activas, usar todas las funciones
+        $functionsToCheck = $activeFunctions->isNotEmpty() ? $activeFunctions : $this->functions;
+
+        // Obtener la función con el estado de mayor prioridad
+        $primaryFunction = $functionsToCheck
+            ->sortBy(function($function) use ($priorityOrder) {
+                return $priorityOrder[$function->status->value] ?? 999;
+            })
+            ->first();
+
+        if (!$primaryFunction) {
+            return [
+                'value' => EventFunctionStatus::UPCOMING->value,
+                'label' => EventFunctionStatus::UPCOMING->label(),
+                'color' => EventFunctionStatus::UPCOMING->color(),
+            ];
         }
 
-        // Si todas están agotadas, el evento está agotado
-        if ($statuses->every(fn ($status) => $status === 'sold_out')) {
-            return 'sold_out';
-        }
-
-        // Si todas están finalizadas, el evento está finalizado
-        if ($statuses->every(fn ($status) => $status === 'finished')) {
-            return 'finished';
-        }
-
-        // Si hay alguna inactiva y el resto son upcoming, es upcoming
-        if ($statuses->contains('upcoming') || $statuses->contains('inactive')) {
-            return 'upcoming';
-        }
-
-        return 'upcoming';
+        return [
+            'value' => $primaryFunction->status->value,
+            'label' => $primaryFunction->status->label(),
+            'color' => $primaryFunction->status->color(),
+        ];
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Ciudad;
 use App\Models\Order;
 use App\Models\IssuedTicket;
 use App\Services\RevenueService;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -35,11 +36,11 @@ class EventController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        // Consulta base con relaciones ACTUALIZADA
+        // Consulta base con relaciones
         $query = Event::with([
             'organizer',
             'category',
-            'venue.ciudad.provincia', // NUEVO: incluir ciudad y provincia
+            'venue.ciudad.provincia',
             'functions.ticketTypes'
         ]);
 
@@ -63,30 +64,51 @@ class EventController extends Controller
             });
         }
 
-        // ACTUALIZADO: Filtro por ciudad usando la nueva relación
+        // Filtro por ciudad
         if ($city !== 'all') {
             $query->whereHas('venue.ciudad', function($q) use ($city) {
                 $q->where('name', $city);
             });
         }
 
-        // Filtro por estado (basado en funciones)
+        // Filtro por estado (usando el nuevo enum status)
         if ($status !== 'all') {
             switch ($status) {
-                case 'active':
+                case 'on_sale':
                     $query->whereHas('functions', function($q) {
-                        $q->where('is_active', true)
-                          ->where('start_time', '>', Carbon::now());
+                        $q->where('status', EventFunctionStatus::ON_SALE->value)
+                          ->where('is_active', true);
                     });
                     break;
-                case 'inactive':
+                case 'upcoming':
                     $query->whereHas('functions', function($q) {
-                        $q->where('is_active', false);
+                        $q->where('status', EventFunctionStatus::UPCOMING->value);
+                    });
+                    break;
+                case 'sold_out':
+                    $query->whereHas('functions', function($q) {
+                        $q->where('status', EventFunctionStatus::SOLD_OUT->value);
                     });
                     break;
                 case 'finished':
                     $query->whereHas('functions', function($q) {
-                        $q->where('start_time', '<', Carbon::now());
+                        $q->where('status', EventFunctionStatus::FINISHED->value);
+                    });
+                    break;
+                case 'inactive':
+                    $query->whereHas('functions', function($q) {
+                        $q->where('status', EventFunctionStatus::INACTIVE->value)
+                          ->orWhere('is_active', false);
+                    });
+                    break;
+                case 'cancelled':
+                    $query->whereHas('functions', function($q) {
+                        $q->where('status', EventFunctionStatus::CANCELLED->value);
+                    });
+                    break;
+                case 'reprogrammed':
+                    $query->whereHas('functions', function($q) {
+                        $q->where('status', EventFunctionStatus::REPROGRAMMED->value);
                     });
                     break;
                 case 'draft':
@@ -130,7 +152,7 @@ class EventController extends Controller
             $revenue = $event->getRevenue();
 
             // Determinar estado basado en funciones
-            $status = $this->determineEventStatus($event);
+            $statusInfo = $this->determineEventStatus($event);
 
             // Calcular rango de precios
             $priceRange = $this->calculatePriceRange($event);
@@ -148,11 +170,13 @@ class EventController extends Controller
                 'time' => $firstFunction ? $firstFunction->start_time->format('H:i') : null,
                 'datetime' => $firstFunction ? $firstFunction->start_time->toISOString() : null,
                 'location' => $event->venue->name ?? 'Sin venue',
-                // ACTUALIZADO: usar la nueva estructura de ciudad
                 'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                 'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                     $event->venue->ciudad->provincia->name : null,
-                'status' => $status,
+                'status' => $statusInfo['value'],
+                'status_label' => $statusInfo['label'],
+                'status_color' => $statusInfo['color'],
+                'is_active' => $statusInfo['is_active'],
                 'tickets_sold' => $soldTickets,
                 'total_tickets' => $totalTickets,
                 'revenue' => $revenue,
@@ -173,9 +197,20 @@ class EventController extends Controller
 
         // Filtros para el frontend
         $categories = Category::pluck('name')->unique();
-        
-        // ACTUALIZADO: Obtener ciudades de la nueva tabla
         $cities = Ciudad::orderBy('name')->pluck('name');
+
+        // Estados disponibles del enum
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+        ]);
+
+        // Actualizar estado de las funciones (nuevo código)
+        foreach ($events as $event) {
+            foreach ($event->functions as $function) {
+                $function->updateStatus();
+            }
+        }
 
         return Inertia::render('admin/events', [
             'events' => $events,
@@ -190,12 +225,12 @@ class EventController extends Controller
             ],
             'categories' => $categories,
             'cities' => $cities,
+            'statuses' => $statuses,
         ]);
     }
 
     public function show(int $eventId): Response
     {
-        // ACTUALIZADO: incluir ciudad y provincia en la consulta
         $event = Event::with([
             'organizer',
             'category',
@@ -208,7 +243,7 @@ class EventController extends Controller
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
-            'image_url' => $event->image_url, // CORREGIDO: usar image_url en lugar de banner_url
+            'image_url' => $event->image_url,
             'hero_image_url' => $event->hero_image_url,
             'featured' => $event->featured,
             'total_revenue' => $event->getRevenue(),
@@ -243,6 +278,9 @@ class EventController extends Controller
                     'end_date' => $function->end_time ? $function->end_time->format('Y-m-d') : null,
                     'end_time_only' => $function->end_time ? $function->end_time->format('H:i') : null,
                     'is_active' => $function->is_active,
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
                     'total_tickets' => $function->ticketTypes->sum('quantity'),
                     'function_revenue' => $function->getRevenue(),
                     'ticket_types' => $function->ticketTypes->map(function($ticketType) {
@@ -262,6 +300,11 @@ class EventController extends Controller
             'updated_at' => $event->updated_at->format('Y-m-d H:i:s'),
         ];
 
+        // Actualizar estado de las funciones (nuevo código)
+        foreach ($event->functions as $function) {
+            $function->updateStatus();
+        }
+
         return Inertia::render('admin/events/show', [
             'event' => $eventData,
         ]);
@@ -279,6 +322,25 @@ class EventController extends Controller
             $function->is_active 
                 ? 'Función activada correctamente' 
                 : 'Función desactivada correctamente'
+        );
+    }
+
+    public function updateFunctionStatus(Request $request, int $functionId): RedirectResponse
+    {
+        $request->validate([
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value'))
+        ]);
+
+        $function = EventFunction::findOrFail($functionId);
+        
+        $function->update([
+            'status' => $request->status
+        ]);
+
+        $statusEnum = EventFunctionStatus::from($request->status);
+
+        return redirect()->back()->with('success', 
+            "Estado actualizado a: {$statusEnum->label()}"
         );
     }
 
@@ -301,19 +363,34 @@ class EventController extends Controller
     {
         $totalEvents = Event::count();
         
-        $activeEvents = Event::whereHas('functions', function($q) {
-            $q->where('is_active', true)
-              ->where('start_time', '>', Carbon::now());
+        $onSaleEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::ON_SALE->value)
+              ->where('is_active', true);
         })->count();
 
-        $inactiveEvents = Event::whereHas('functions', function($q) {
-            $q->where('is_active', false);
+        $upcomingEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::UPCOMING->value);
+        })->count();
+
+        $soldOutEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::SOLD_OUT->value);
         })->count();
 
         $finishedEvents = Event::whereHas('functions', function($q) {
-            $q->where('start_time', '<', Carbon::now());
-        })->whereDoesntHave('functions', function($q) {
-            $q->where('start_time', '>', Carbon::now());
+            $q->where('status', EventFunctionStatus::FINISHED->value);
+        })->count();
+
+        $inactiveEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::INACTIVE->value)
+              ->orWhere('is_active', false);
+        })->count();
+
+        $cancelledEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::CANCELLED->value);
+        })->count();
+
+        $reprogrammedEvents = Event::whereHas('functions', function($q) {
+            $q->where('status', EventFunctionStatus::REPROGRAMMED->value);
         })->count();
 
         $draftEvents = Event::whereDoesntHave('functions')->count();
@@ -326,44 +403,65 @@ class EventController extends Controller
 
         return [
             'total' => $totalEvents,
-            'active' => $activeEvents,
-            'inactive' => $inactiveEvents,
+            'on_sale' => $onSaleEvents,
+            'upcoming' => $upcomingEvents,
+            'sold_out' => $soldOutEvents,
             'finished' => $finishedEvents,
+            'inactive' => $inactiveEvents,
+            'cancelled' => $cancelledEvents,
+            'reprogrammed' => $reprogrammedEvents,
             'draft' => $draftEvents,
             'totalTicketsSold' => $totalTicketsSold,
             'totalRevenue' => $totalRevenue,
         ];
     }
 
-    private function determineEventStatus(Event $event): string
+    private function determineEventStatus(Event $event): array
     {
         if ($event->functions->isEmpty()) {
-            return 'draft';
+            return [
+                'value' => 'draft',
+                'label' => 'Borrador',
+                'color' => 'gray',
+                'is_active' => false,
+            ];
         }
 
-        $now = Carbon::now();
-        $hasActiveFutureFunctions = $event->functions
-            ->where('is_active', true)
-            ->where('start_time', '>', $now)
-            ->isNotEmpty();
+        // Ordenar funciones por prioridad de estado
+        $priorityOrder = [
+            EventFunctionStatus::ON_SALE->value => 1,
+            EventFunctionStatus::UPCOMING->value => 2,
+            EventFunctionStatus::REPROGRAMMED->value => 3,
+            EventFunctionStatus::CANCELLED->value => 4,
+            EventFunctionStatus::SOLD_OUT->value => 5,
+            EventFunctionStatus::INACTIVE->value => 6,
+            EventFunctionStatus::FINISHED->value => 7,
+        ];
 
-        $hasInactiveFunctions = $event->functions
-            ->where('is_active', false)
-            ->isNotEmpty();
+        $primaryFunction = $event->functions
+            ->filter(fn($f) => $f->is_active) // Priorizar funciones activas
+            ->sortBy(function($function) use ($priorityOrder) {
+                return $priorityOrder[$function->status->value] ?? 999;
+            })
+            ->first();
 
-        $allFunctionsFinished = $event->functions
-            ->where('start_time', '>', $now)
-            ->isEmpty();
-
-        if ($hasActiveFutureFunctions) {
-            return 'active';
-        } elseif ($hasInactiveFunctions && !$allFunctionsFinished) {
-            return 'inactive';
-        } elseif ($allFunctionsFinished) {
-            return 'finished';
+        // Si no hay funciones activas, tomar cualquier función
+        if (!$primaryFunction) {
+            $primaryFunction = $event->functions
+                ->sortBy(function($function) use ($priorityOrder) {
+                    return $priorityOrder[$function->status->value] ?? 999;
+                })
+                ->first();
         }
 
-        return 'draft';
+        $hasAnyActiveFunction = $event->functions->where('is_active', true)->isNotEmpty();
+
+        return [
+            'value' => $primaryFunction->status->value,
+            'label' => $primaryFunction->status->label(),
+            'color' => $primaryFunction->status->color(),
+            'is_active' => $hasAnyActiveFunction,
+        ];
     }
 
     private function calculatePriceRange(Event $event): string

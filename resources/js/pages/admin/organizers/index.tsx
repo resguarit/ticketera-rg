@@ -390,12 +390,6 @@ export default function Index({ auth }: any) {
                                     ? "Prueba ajustando los filtros de búsqueda"
                                     : "Aún no hay organizadores registrados"}
                             </p>
-                            <Link href={route('admin.organizers.create')}>
-                                <Button className="bg-black text-white hover:bg-gray-800">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Crear primer organizador
-                                </Button>
-                            </Link>
                         </div>
                     )}
                 </div>

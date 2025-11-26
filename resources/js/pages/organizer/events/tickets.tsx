@@ -185,6 +185,26 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                             <Badge variant="default" className="ml-1 text-xs">
                                                 {func.date}
                                             </Badge>
+                                            {/* Agregar badge de estado */}
+                                            {func.status && (
+                                                <Badge 
+                                                    className={`ml-1 text-xs ${
+                                                        func.status_color === 'green' ? 'bg-green-500' :
+                                                        func.status_color === 'blue' ? 'bg-blue-500' :
+                                                        func.status_color === 'red' ? 'bg-red-500' :
+                                                        func.status_color === 'yellow' ? 'bg-yellow-500' :
+                                                        func.status_color === 'orange' ? 'bg-orange-500' :
+                                                        'bg-gray-500'
+                                                    } text-white border-0`}
+                                                >
+                                                    {func.status_label}
+                                                </Badge>
+                                            )}
+                                            {!func.is_active && (
+                                                <Badge className="ml-1 bg-gray-400 text-white border-0 text-xs">
+                                                    <EyeOff className="w-3 h-3" />
+                                                </Badge>
+                                            )}
                                         </TabsTrigger>
                                     ))}
                                 </TabsList>
