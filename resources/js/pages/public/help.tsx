@@ -45,45 +45,13 @@ interface FaqCategory extends FaqCategoryModel {
 
 interface HelpPageProps extends PageProps {
     faqCategories: FaqCategory[];
+    supportEmail: string;
     [key: string]: unknown;
 }
 
-const contactOptions = [
-    {
-        title: "Chat en Vivo",
-        description: "Habla con nuestro equipo de soporte",
-        icon: MessageCircle,
-        color: "primary",
-        available: "24/7",
-        action: "Iniciar Chat",
-        href: "https://wa.me/5492216914649?text=Hola,%20necesito%20ayuda",
-        type: "whatsapp"
-    },
-    {
-        title: "Teléfono",
-        description: "Llámanos para soporte inmediato",
-        icon: Phone,
-        color: "green-500",
-        available: "Lun-Vie 9:00-18:00",
-        action: "+54 2216 914649",
-        href: "tel:+542216914649",
-        type: "phone"
-    },
-    {
-        title: "Email",
-        description: "Envíanos un mensaje detallado",
-        icon: Mail,
-        color: "red-500",
-        available: "Respuesta en 24hs",
-        action: "soporte@rgentradas.com",
-        href: "mailto:soporte@rgentradas.com?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...",
-        type: "email"
-    },
-];
-
 export default function Help() {
-    // Obtener las categorías desde las props pasadas por el controlador
-    const { faqCategories } = usePage<HelpPageProps>().props;
+    // Obtener las categorías y email de soporte desde las props
+    const { faqCategories, supportEmail } = usePage<HelpPageProps>().props;
 
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
@@ -116,6 +84,39 @@ export default function Help() {
         // Reset form
         setContactForm({ name: "", email: "", subject: "", message: "" });
     };
+
+    const contactOptions = [
+        {
+            title: "Chat en Vivo",
+            description: "Habla con nuestro equipo de soporte",
+            icon: MessageCircle,
+            color: "primary",
+            available: "24/7",
+            action: "Iniciar Chat",
+            href: "https://wa.me/5492216914649?text=Hola,%20necesito%20ayuda",
+            type: "whatsapp"
+        },
+        {
+            title: "Teléfono",
+            description: "Llámanos para soporte inmediato",
+            icon: Phone,
+            color: "green-500",
+            available: "Lun-Vie 9:00-18:00",
+            action: "+54 2216 914649",
+            href: "tel:+542216914649",
+            type: "phone"
+        },
+        {
+            title: "Email",
+            description: "Envíanos un mensaje detallado",
+            icon: Mail,
+            color: "red-500",
+            available: "Respuesta en 24hs",
+            action: supportEmail, // Usar el email dinámico
+            href: `mailto:${supportEmail}?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...`,
+            type: "email"
+        },
+    ];
 
     return (
         <>

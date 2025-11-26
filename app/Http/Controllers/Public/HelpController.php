@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\FaqCategory;
+use App\Models\Setting;
 use Inertia\Inertia;
 
 class HelpController extends Controller
@@ -16,6 +17,7 @@ class HelpController extends Controller
 
         return Inertia::render('public/help', [
             'faqCategories' => $categories,
+            'supportEmail' => Setting::get('support_email', 'soporte@rgentradas.com'),
         ]);
     }
 }
