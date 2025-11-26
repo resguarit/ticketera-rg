@@ -65,7 +65,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Configuración
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
-    Route::post('/settings/test-email', [SettingsController::class, 'testEmail'])->name('settings.test-email');
     Route::post('/settings/backup', [SettingsController::class, 'backupDatabase'])->name('settings.backup');
 
     // Gestión de categorías
