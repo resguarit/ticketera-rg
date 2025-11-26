@@ -15,7 +15,9 @@ import {
     Server,
     Palette,
     Check,
-    AlertTriangle
+    AlertTriangle,
+    Edit,
+    X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +35,7 @@ import { Head } from '@inertiajs/react';
 export default function Settings({ auth, generalSettings: initialGeneral, emailSettings: initialEmail, paymentSettings: initialPayment, securitySettings: initialSecurity, notificationSettings: initialNotification }: any) {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
+    const [editingField, setEditingField] = useState<string | null>(null);
 
     // Estados para configuraciones usando datos del backend
     const [generalSettings, setGeneralSettings] = useState(initialGeneral);
@@ -40,6 +43,153 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
     const [paymentSettings, setPaymentSettings] = useState(initialPayment);
     const [securitySettings, setSecuritySettings] = useState(initialSecurity);
     const [notificationSettings, setNotificationSettings] = useState(initialNotification);
+
+    // Estados temporales para edición
+    const [tempValue, setTempValue] = useState<any>(null);
+
+    const handleStartEdit = (fieldKey: string, currentValue: any) => {
+        setEditingField(fieldKey);
+        setTempValue(currentValue);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingField(null);
+        setTempValue(null);
+    };
+
+    const handleSaveField = async (group: string, fieldKey: string) => {
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(route('admin.settings.update'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ 
+                    group, 
+                    settings: { [fieldKey]: tempValue } 
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Actualizar el estado local con el nuevo valor
+                switch(group) {
+                    case 'general':
+                        setGeneralSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
+                        break;
+                    case 'email':
+                        setEmailSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
+                        break;
+                    case 'payment':
+                        setPaymentSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
+                        break;
+                    case 'security':
+                        setSecuritySettings(prev => ({ ...prev, [fieldKey]: tempValue }));
+                        break;
+                    case 'notification':
+                        setNotificationSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
+                        break;
+                }
+
+                setEditingField(null);
+                setTempValue(null);
+                alert('Campo actualizado correctamente');
+            } else {
+                alert('Error al guardar: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error al guardar:', error);
+            alert('Error al guardar el campo');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const renderEditableField = (
+        group: string,
+        fieldKey: string,
+        label: string,
+        value: any,
+        type: 'text' | 'email' | 'number' | 'password' | 'select' = 'text',
+        selectOptions?: { value: string, label: string }[]
+    ) => {
+        const isEditing = editingField === `${group}.${fieldKey}`;
+        const fieldId = `${group}.${fieldKey}`;
+
+        return (
+            <div>
+                <Label htmlFor={fieldId} className="text-black">{label}</Label>
+                <div className="flex items-center space-x-2">
+                    {isEditing ? (
+                        <>
+                            {type === 'select' && selectOptions ? (
+                                <Select value={tempValue} onValueChange={setTempValue}>
+                                    <SelectTrigger className="bg-white border-gray-300 text-black flex-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {selectOptions.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Input
+                                    id={fieldId}
+                                    type={type}
+                                    value={tempValue}
+                                    onChange={(e) => setTempValue(type === 'number' ? parseInt(e.target.value) : e.target.value)}
+                                    className="bg-white border-gray-300 text-black flex-1"
+                                />
+                            )}
+                            <Button
+                                size="sm"
+                                onClick={() => handleSaveField(group, fieldKey)}
+                                disabled={isLoading}
+                                className="bg-green-500 hover:bg-green-600 text-white"
+                            >
+                                <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                disabled={isLoading}
+                                className="border-gray-300"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Input
+                                id={fieldId}
+                                type={type === 'password' ? 'password' : 'text'}
+                                value={value}
+                                className="bg-gray-50 border-gray-300 text-black flex-1"
+                                disabled
+                                readOnly
+                            />
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStartEdit(fieldId, value)}
+                                className="border-gray-300"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </Button>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     const handleSaveSettings = async (settingsType: string) => {
         setIsLoading(true);
@@ -155,24 +305,6 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                 <Database className="w-4 h-4 mr-2" />
                                 Backup
                             </Button>
-                            
-                            <Button 
-                                className="bg-primary text-white hover:bg-primary-hover"
-                                onClick={() => handleSaveSettings('all')}
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <div className="flex items-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Guardando...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center space-x-2">
-                                        <Save className="w-4 h-4" />
-                                        <span>Guardar Todo</span>
-                                    </div>
-                                )}
-                            </Button>
                         </div>
                     </div>
 
@@ -226,16 +358,7 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             </p>
                                         </div>
 
-                                        <div>
-                                            <Label htmlFor="supportEmail" className="text-black">Email de Soporte</Label>
-                                            <Input
-                                                id="supportEmail"
-                                                type="email"
-                                                value={generalSettings.supportEmail}
-                                                onChange={(e) => setGeneralSettings(prev => ({ ...prev, supportEmail: e.target.value }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
+                                        {renderEditableField('general', 'supportEmail', 'Email de Soporte', generalSettings.supportEmail, 'email')}
                                     </CardContent>
                                 </Card>
 
@@ -247,54 +370,23 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="timezone" className="text-black">Zona Horaria</Label>
-                                            <Select value={generalSettings.timezone} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, timezone: value }))}>
-                                                <SelectTrigger className="bg-white border-gray-300 text-black">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</SelectItem>
-                                                    <SelectItem value="America/Montevideo">Montevideo (GMT-3)</SelectItem>
-                                                    <SelectItem value="America/Santiago">Santiago (GMT-3)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
+                                        {renderEditableField('general', 'timezone', 'Zona Horaria', generalSettings.timezone, 'select', [
+                                            { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
+                                            { value: 'America/Montevideo', label: 'Montevideo (GMT-3)' },
+                                            { value: 'America/Santiago', label: 'Santiago (GMT-3)' },
+                                        ])}
 
-                                        <div>
-                                            <Label htmlFor="currency" className="text-black">Moneda</Label>
-                                            <Select value={generalSettings.currency} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, currency: value }))}>
-                                                <SelectTrigger className="bg-white border-gray-300 text-black">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="ARS">Peso Argentino (ARS)</SelectItem>
-                                                    <SelectItem value="USD">Dólar Estadounidense (USD)</SelectItem>
-                                                    <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
+                                        {renderEditableField('general', 'currency', 'Moneda', generalSettings.currency, 'select', [
+                                            { value: 'ARS', label: 'Peso Argentino (ARS)' },
+                                            { value: 'USD', label: 'Dólar Estadounidense (USD)' },
+                                            { value: 'EUR', label: 'Euro (EUR)' },
+                                        ])}
 
-                                        <div>
-                                            <Label htmlFor="language" className="text-black">Idioma</Label>
-                                            <Select value={generalSettings.language} onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, language: value }))}>
-                                                <SelectTrigger className="bg-white border-gray-300 text-black">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="es">Español</SelectItem>
-                                                    <SelectItem value="en">English</SelectItem>
-                                                    <SelectItem value="pt">Português</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <Button 
-                                            onClick={() => handleSaveSettings('general')}
-                                            className="w-full bg-primary text-white hover:bg-primary-hover"
-                                        >
-                                            Guardar Configuración General
-                                        </Button>
+                                        {renderEditableField('general', 'language', 'Idioma', generalSettings.language, 'select', [
+                                            { value: 'es', label: 'Español' },
+                                            { value: 'en', label: 'English' },
+                                            { value: 'pt', label: 'Português' },
+                                        ])}
                                     </CardContent>
                                 </Card>
                             </div>
@@ -312,100 +404,29 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                 <CardContent>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div className="space-y-4">
-                                            <div>
-                                                <Label htmlFor="smtpHost" className="text-black">Servidor SMTP</Label>
-                                                <Input
-                                                    id="smtpHost"
-                                                    value={emailSettings.smtpHost}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="smtpPort" className="text-black">Puerto</Label>
-                                                <Input
-                                                    id="smtpPort"
-                                                    value={emailSettings.smtpPort}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpPort: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="smtpUsername" className="text-black">Usuario</Label>
-                                                <Input
-                                                    id="smtpUsername"
-                                                    value={emailSettings.smtpUsername}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpUsername: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="smtpPassword" className="text-black">Contraseña</Label>
-                                                <Input
-                                                    id="smtpPassword"
-                                                    type="password"
-                                                    value={emailSettings.smtpPassword}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpPassword: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
+                                            {renderEditableField('email', 'smtpHost', 'Servidor SMTP', emailSettings.smtpHost)}
+                                            {renderEditableField('email', 'smtpPort', 'Puerto', emailSettings.smtpPort, 'number')}
+                                            {renderEditableField('email', 'smtpUsername', 'Usuario', emailSettings.smtpUsername)}
+                                            {renderEditableField('email', 'smtpPassword', 'Contraseña', emailSettings.smtpPassword, 'password')}
                                         </div>
 
                                         <div className="space-y-4">
-                                            <div>
-                                                <Label htmlFor="smtpEncryption" className="text-black">Encriptación</Label>
-                                                <Select value={emailSettings.smtpEncryption} onValueChange={(value) => setEmailSettings(prev => ({ ...prev, smtpEncryption: value }))}>
-                                                    <SelectTrigger className="bg-white border-gray-300 text-black">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="tls">TLS</SelectItem>
-                                                        <SelectItem value="ssl">SSL</SelectItem>
-                                                        <SelectItem value="none">Ninguna</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
+                                            {renderEditableField('email', 'smtpEncryption', 'Encriptación', emailSettings.smtpEncryption, 'select', [
+                                                { value: 'tls', label: 'TLS' },
+                                                { value: 'ssl', label: 'SSL' },
+                                                { value: 'none', label: 'Ninguna' },
+                                            ])}
 
-                                            <div>
-                                                <Label htmlFor="fromEmail" className="text-black">Email Remitente</Label>
-                                                <Input
-                                                    id="fromEmail"
-                                                    type="email"
-                                                    value={emailSettings.fromEmail}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, fromEmail: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
+                                            {renderEditableField('email', 'fromEmail', 'Email Remitente', emailSettings.fromEmail, 'email')}
+                                            {renderEditableField('email', 'fromName', 'Nombre Remitente', emailSettings.fromName)}
 
-                                            <div>
-                                                <Label htmlFor="fromName" className="text-black">Nombre Remitente</Label>
-                                                <Input
-                                                    id="fromName"
-                                                    value={emailSettings.fromName}
-                                                    onChange={(e) => setEmailSettings(prev => ({ ...prev, fromName: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                />
-                                            </div>
-
-                                            <div className="flex space-x-2">
-                                                <Button 
-                                                    onClick={handleTestEmail}
-                                                    variant="outline"
-                                                    className="flex-1 border-gray-300 text-black hover:bg-gray-50"
-                                                >
-                                                    Enviar Email de Prueba
-                                                </Button>
-                                                
-                                                <Button 
-                                                    onClick={() => handleSaveSettings('email')}
-                                                    className="flex-1 bg-primary text-white hover:bg-primary-hover"
-                                                >
-                                                    Guardar
-                                                </Button>
-                                            </div>
+                                            <Button 
+                                                onClick={handleTestEmail}
+                                                variant="outline"
+                                                className="w-full border-gray-300 text-black hover:bg-gray-50"
+                                            >
+                                                Enviar Email de Prueba
+                                            </Button>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -430,34 +451,17 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             <Label className="text-black">Habilitar Stripe</Label>
                                             <Switch
                                                 checked={paymentSettings.stripeEnabled}
-                                                onCheckedChange={(checked) => setPaymentSettings(prev => ({ ...prev, stripeEnabled: checked }))}
+                                                onCheckedChange={async (checked) => {
+                                                    await handleSaveField('payment', 'stripeEnabled');
+                                                    setPaymentSettings(prev => ({ ...prev, stripeEnabled: checked }));
+                                                }}
                                             />
                                         </div>
 
                                         {paymentSettings.stripeEnabled && (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor="stripePublicKey" className="text-black">Clave Pública</Label>
-                                                    <Input
-                                                        id="stripePublicKey"
-                                                        value={paymentSettings.stripePublicKey}
-                                                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, stripePublicKey: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-black"
-                                                        placeholder="pk_..."
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <Label htmlFor="stripeSecretKey" className="text-black">Clave Secreta</Label>
-                                                    <Input
-                                                        id="stripeSecretKey"
-                                                        type="password"
-                                                        value={paymentSettings.stripeSecretKey}
-                                                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, stripeSecretKey: e.target.value }))}
-                                                        className="bg-white border-gray-300 text-black"
-                                                        placeholder="sk_..."
-                                                    />
-                                                </div>
+                                                {renderEditableField('payment', 'stripePublicKey', 'Clave Pública', paymentSettings.stripePublicKey)}
+                                                {renderEditableField('payment', 'stripeSecretKey', 'Clave Secreta', paymentSettings.stripeSecretKey, 'password')}
                                             </div>
                                         )}
                                     </CardContent>
@@ -478,22 +482,16 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             <Label className="text-black">Habilitar MercadoPago</Label>
                                             <Switch
                                                 checked={paymentSettings.mercadopagoEnabled}
-                                                onCheckedChange={(checked) => setPaymentSettings(prev => ({ ...prev, mercadopagoEnabled: checked }))}
+                                                onCheckedChange={async (checked) => {
+                                                    setTempValue(checked);
+                                                    await handleSaveField('payment', 'mercadopagoEnabled');
+                                                    setPaymentSettings(prev => ({ ...prev, mercadopagoEnabled: checked }));
+                                                }}
                                             />
                                         </div>
 
                                         {paymentSettings.mercadopagoEnabled && (
-                                            <div>
-                                                <Label htmlFor="mercadopagoAccessToken" className="text-black">Access Token</Label>
-                                                <Input
-                                                    id="mercadopagoAccessToken"
-                                                    type="password"
-                                                    value={paymentSettings.mercadopagoAccessToken}
-                                                    onChange={(e) => setPaymentSettings(prev => ({ ...prev, mercadopagoAccessToken: e.target.value }))}
-                                                    className="bg-white border-gray-300 text-black"
-                                                    placeholder="APP_USR-..."
-                                                />
-                                            </div>
+                                            renderEditableField('payment', 'mercadopagoAccessToken', 'Access Token', paymentSettings.mercadopagoAccessToken, 'password')
                                         )}
                                     </CardContent>
                                 </Card>
@@ -503,27 +501,10 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                         <CardTitle className="text-black">Configuración de Comisiones</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div>
-                                            <Label htmlFor="commissionRate" className="text-black">Tasa de Comisión (%)</Label>
-                                            <Input
-                                                id="commissionRate"
-                                                type="number"
-                                                step="0.1"
-                                                value={paymentSettings.commissionRate}
-                                                onChange={(e) => setPaymentSettings(prev => ({ ...prev, commissionRate: e.target.value }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                            <p className="text-gray-600 text-sm mt-1">
-                                                Comisión que se cobra a los organizadores por cada venta
-                                            </p>
-                                        </div>
-
-                                        <Button 
-                                            onClick={() => handleSaveSettings('payments')}
-                                            className="w-full mt-4 bg-primary text-white hover:bg-primary-hover"
-                                        >
-                                            Guardar Configuración de Pagos
-                                        </Button>
+                                        {renderEditableField('payment', 'commissionRate', 'Tasa de Comisión (%)', paymentSettings.commissionRate, 'number')}
+                                        <p className="text-gray-600 text-sm mt-1">
+                                            Comisión que se cobra a los organizadores por cada venta
+                                        </p>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -547,31 +528,16 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             </div>
                                             <Switch
                                                 checked={securitySettings.twoFactorRequired}
-                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, twoFactorRequired: checked }))}
+                                                onCheckedChange={async (checked) => {
+                                                    setTempValue(checked);
+                                                    await handleSaveField('security', 'twoFactorRequired');
+                                                    setSecuritySettings(prev => ({ ...prev, twoFactorRequired: checked }));
+                                                }}
                                             />
                                         </div>
 
-                                        <div>
-                                            <Label htmlFor="passwordMinLength" className="text-black">Longitud Mínima de Contraseña</Label>
-                                            <Input
-                                                id="passwordMinLength"
-                                                type="number"
-                                                value={securitySettings.passwordMinLength}
-                                                onChange={(e) => setSecuritySettings(prev => ({ ...prev, passwordMinLength: parseInt(e.target.value) }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="maxLoginAttempts" className="text-black">Máximos Intentos de Login</Label>
-                                            <Input
-                                                id="maxLoginAttempts"
-                                                type="number"
-                                                value={securitySettings.maxLoginAttempts}
-                                                onChange={(e) => setSecuritySettings(prev => ({ ...prev, maxLoginAttempts: parseInt(e.target.value) }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
+                                        {renderEditableField('security', 'passwordMinLength', 'Longitud Mínima de Contraseña', securitySettings.passwordMinLength, 'number')}
+                                        {renderEditableField('security', 'maxLoginAttempts', 'Máximos Intentos de Login', securitySettings.maxLoginAttempts, 'number')}
                                     </CardContent>
                                 </Card>
 
@@ -583,16 +549,7 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="sessionTimeout" className="text-black">Timeout de Sesión (minutos)</Label>
-                                            <Input
-                                                id="sessionTimeout"
-                                                type="number"
-                                                value={securitySettings.sessionTimeout}
-                                                onChange={(e) => setSecuritySettings(prev => ({ ...prev, sessionTimeout: parseInt(e.target.value) }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
+                                        {renderEditableField('security', 'sessionTimeout', 'Timeout de Sesión (minutos)', securitySettings.sessionTimeout, 'number')}
 
                                         <div className="flex items-center justify-between">
                                             <div>
@@ -601,7 +558,11 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             </div>
                                             <Switch
                                                 checked={securitySettings.ipWhitelistEnabled}
-                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, ipWhitelistEnabled: checked }))}
+                                                onCheckedChange={async (checked) => {
+                                                    setTempValue(checked);
+                                                    await handleSaveField('security', 'ipWhitelistEnabled');
+                                                    setSecuritySettings(prev => ({ ...prev, ipWhitelistEnabled: checked }));
+                                                }}
                                             />
                                         </div>
 
@@ -615,16 +576,13 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             </div>
                                             <Switch
                                                 checked={securitySettings.maintenanceMode}
-                                                onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, maintenanceMode: checked }))}
+                                                onCheckedChange={async (checked) => {
+                                                    setTempValue(checked);
+                                                    await handleSaveField('security', 'maintenanceMode');
+                                                    setSecuritySettings(prev => ({ ...prev, maintenanceMode: checked }));
+                                                }}
                                             />
                                         </div>
-
-                                        <Button 
-                                            onClick={() => handleSaveSettings('security')}
-                                            className="w-full bg-primary text-white hover:bg-primary-hover"
-                                        >
-                                            Guardar Configuración de Seguridad
-                                        </Button>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -685,20 +643,15 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                                 </div>
                                                 <Switch
                                                     checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
-                                                    onCheckedChange={(checked) =>
-                                                        setNotificationSettings(prev => ({ ...prev, [setting.key]: checked }))
-                                                    }
+                                                    onCheckedChange={async (checked) => {
+                                                        setTempValue(checked);
+                                                        await handleSaveField('notification', setting.key);
+                                                        setNotificationSettings(prev => ({ ...prev, [setting.key]: checked }));
+                                                    }}
                                                 />
                                             </div>
                                         ))}
                                     </div>
-
-                                    <Button 
-                                        onClick={() => handleSaveSettings('notifications')}
-                                        className="w-full mt-6 bg-primary text-white hover:bg-primary-hover"
-                                    >
-                                        Guardar Configuración de Notificaciones
-                                    </Button>
                                 </CardContent>
                             </Card>
                         </TabsContent>
