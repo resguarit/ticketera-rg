@@ -227,17 +227,6 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="contactEmail" className="text-black">Email de Contacto</Label>
-                                            <Input
-                                                id="contactEmail"
-                                                type="email"
-                                                value={generalSettings.contactEmail}
-                                                onChange={(e) => setGeneralSettings(prev => ({ ...prev, contactEmail: e.target.value }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
-                                        </div>
-
-                                        <div>
                                             <Label htmlFor="supportEmail" className="text-black">Email de Soporte</Label>
                                             <Input
                                                 id="supportEmail"
