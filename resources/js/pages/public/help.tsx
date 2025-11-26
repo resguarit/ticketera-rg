@@ -45,45 +45,16 @@ interface FaqCategory extends FaqCategoryModel {
 
 interface HelpPageProps extends PageProps {
     faqCategories: FaqCategory[];
+    supportEmail: string;
+    supportPhone: string;
+    businessDays: string;
+    businessHours: string;
     [key: string]: unknown;
 }
 
-const contactOptions = [
-    {
-        title: "Chat en Vivo",
-        description: "Habla con nuestro equipo de soporte",
-        icon: MessageCircle,
-        color: "primary",
-        available: "24/7",
-        action: "Iniciar Chat",
-        href: "https://wa.me/5492216914649?text=Hola,%20necesito%20ayuda",
-        type: "whatsapp"
-    },
-    {
-        title: "Teléfono",
-        description: "Llámanos para soporte inmediato",
-        icon: Phone,
-        color: "green-500",
-        available: "Lun-Vie 9:00-18:00",
-        action: "+54 2216 914649",
-        href: "tel:+542216914649",
-        type: "phone"
-    },
-    {
-        title: "Email",
-        description: "Envíanos un mensaje detallado",
-        icon: Mail,
-        color: "red-500",
-        available: "Respuesta en 24hs",
-        action: "soporte@rgentradas.com",
-        href: "mailto:soporte@rgentradas.com?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...",
-        type: "email"
-    },
-];
-
 export default function Help() {
-    // Obtener las categorías desde las props pasadas por el controlador
-    const { faqCategories } = usePage<HelpPageProps>().props;
+    // Obtener las categorías y datos de configuración desde las props
+    const { faqCategories, supportEmail, supportPhone, businessDays, businessHours } = usePage<HelpPageProps>().props;
 
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
@@ -117,6 +88,42 @@ export default function Help() {
         setContactForm({ name: "", email: "", subject: "", message: "" });
     };
 
+    // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
+    const whatsappNumber = supportPhone.replace(/\D/g, '');
+
+    const contactOptions = [
+        {
+            title: "Chat en Vivo",
+            description: "Habla con nuestro equipo de soporte",
+            icon: MessageCircle,
+            color: "primary",
+            available: "24/7",
+            action: "Iniciar Chat",
+            href: `https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20ayuda`,
+            type: "whatsapp"
+        },
+        {
+            title: "Teléfono",
+            description: "Llámanos para soporte inmediato",
+            icon: Phone,
+            color: "green-500",
+            available: `${businessDays} ${businessHours}`, // Usar datos dinámicos
+            action: supportPhone, // Usar teléfono dinámico
+            href: `tel:${supportPhone.replace(/\s/g, '')}`,
+            type: "phone"
+        },
+        {
+            title: "Email",
+            description: "Envíanos un mensaje detallado",
+            icon: Mail,
+            color: "red-500",
+            available: "Respuesta en 24hs",
+            action: supportEmail, // Usar el email dinámico
+            href: `mailto:${supportEmail}?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...`,
+            type: "email"
+        },
+    ];
+
     return (
         <>
             <Head title="Centro de Ayuda" />
@@ -131,7 +138,7 @@ export default function Help() {
                         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4">
                             Centro de Ayuda
                         </h1>
-                        <p className="text-white text-sm sm:text-base lg:text-lg  mx-auto px-4">
+                        <p className="text-white text-sm sm:text-base lg:text-lg mx-auto px-4">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
                     </div>

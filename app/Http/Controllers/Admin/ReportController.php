@@ -163,13 +163,25 @@ class ReportController extends Controller
         $growthRate = $previousRevenue > 0 ? 
             (($totalRevenue - $previousRevenue) / $previousRevenue) * 100 : 0;
 
+        // Todas las órdenes iniciadas (incluye pending, cancelled, etc.)
+        $totalOrdersStarted = Order::where('created_at', '>=', $startDate)->count();
+        
+        // Órdenes completadas
+        $totalOrdersPaid = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->count();
+
+        // Tasa de conversión: órdenes pagadas / órdenes iniciadas
+        $conversionRate = $totalOrdersStarted > 0 ? 
+            round(($totalOrdersPaid / $totalOrdersStarted) * 100, 1) : 0;
+
         return [
             'totalRevenue' => $totalRevenue,
             'monthlyRevenue' => $monthlyRevenue,
             'totalTickets' => $totalTickets,
             'monthlyTickets' => $monthlyTickets,
             'averageTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
-            'conversionRate' => 73.5, // Puedes calcular esto basado en visitas vs compras
+            'conversionRate' => $conversionRate,
             'growthRate' => round($growthRate, 1),
         ];
     }
@@ -201,6 +213,27 @@ class ReportController extends Controller
                     ->where('orders.created_at', '>=', $startDate)
                     ->sum('ticket_types.price');
 
+                // Calcular revenue del período anterior
+                $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
+                $previousRevenue = DB::table('issued_tickets')
+                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                    ->where('event_functions.event_id', $event->id)
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->whereBetween('orders.created_at', [$previousPeriod, $startDate])
+                    ->sum('ticket_types.price');
+
+                // Calcular tasa de crecimiento
+                $growthRate = $previousRevenue > 0 
+                    ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 1) 
+                    : 0;
+
+                // Formatear como string con signo
+                $growthFormatted = $growthRate > 0 
+                    ? '+' . $growthRate . '%' 
+                    : $growthRate . '%';
+
                 $ticketsSold = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -219,7 +252,7 @@ class ReportController extends Controller
                     'category' => $event->category->name ?? 'Sin categoría',
                     'revenue' => $revenue,
                     'tickets_sold' => $ticketsSold,
-                    'growth' => '+' . rand(5, 25) . '%', // Puedes calcular el crecimiento real
+                    'growth' => $growthFormatted,
                     'status' => $statusInfo['value'],
                     'status_label' => $statusInfo['label'],
                     'status_color' => $statusInfo['color'],
@@ -355,12 +388,49 @@ class ReportController extends Controller
 
     private function getUserDemographics(): array
     {
-        // Datos simulados de demografía - puedes implementar la lógica real
+        $totalClients = User::where('role', UserRole::CLIENT)->count();
+        
+        if ($totalClients === 0) {
+            return [];
+        }
+
+        // Usuarios verificados vs no verificados
+        $verifiedUsers = User::where('role', UserRole::CLIENT)
+            ->whereNotNull('email_verified_at')
+            ->count();
+        
+        $unverifiedUsers = $totalClients - $verifiedUsers;
+
+        // Usuarios con teléfono vs sin teléfono
+        $usersWithPhone = User::where('role', UserRole::CLIENT)
+            ->whereHas('person', function($query) {
+                $query->whereNotNull('phone');
+            })
+            ->count();
+
+        $usersWithoutPhone = $totalClients - $usersWithPhone;
+
         return [
-            ['age' => '18-25', 'percentage' => 30, 'users' => 1500],
-            ['age' => '26-35', 'percentage' => 35, 'users' => 1750],
-            ['age' => '36-45', 'percentage' => 20, 'users' => 1000],
-            ['age' => '46+', 'percentage' => 15, 'users' => 750],
+            [
+                'age' => 'Email verificado',
+                'percentage' => $totalClients > 0 ? round(($verifiedUsers / $totalClients) * 100, 1) : 0,
+                'users' => $verifiedUsers,
+            ],
+            [
+                'age' => 'Email sin verificar',
+                'percentage' => $totalClients > 0 ? round(($unverifiedUsers / $totalClients) * 100, 1) : 0,
+                'users' => $unverifiedUsers,
+            ],
+            [
+                'age' => 'Con teléfono',
+                'percentage' => $totalClients > 0 ? round(($usersWithPhone / $totalClients) * 100, 1) : 0,
+                'users' => $usersWithPhone,
+            ],
+            [
+                'age' => 'Sin teléfono',
+                'percentage' => $totalClients > 0 ? round(($usersWithoutPhone / $totalClients) * 100, 1) : 0,
+                'users' => $usersWithoutPhone,
+            ],
         ];
     }
 
