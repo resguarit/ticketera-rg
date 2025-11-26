@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 import { 
     Settings as SettingsIcon,
     Mail,
@@ -61,22 +62,12 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
         setIsLoading(true);
 
         try {
-            const response = await fetch(route('admin.settings.update'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ 
-                    group, 
-                    settings: { [fieldKey]: tempValue } 
-                }),
+            const { data } = await axios.post(route('admin.settings.update'), {
+                group,
+                settings: { [fieldKey]: tempValue }
             });
 
-            const data = await response.json();
-
             if (data.success) {
-                // Actualizar el estado local con el nuevo valor
                 switch(group) {
                     case 'general':
                         setGeneralSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
@@ -101,11 +92,36 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
             } else {
                 alert('Error al guardar: ' + data.message);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error al guardar:', error);
-            alert('Error al guardar el campo');
+            alert('Error al guardar el campo: ' + (error.response?.data?.message || error.message));
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleTestEmail = async () => {
+        const email = prompt('Ingrese el email donde quiere recibir la prueba:');
+        if (!email) return;
+
+        try {
+            const { data } = await axios.post(route('admin.settings.test-email'), { email });
+            alert(data.message || 'Email de prueba enviado correctamente');
+        } catch (error: any) {
+            console.error('Error:', error);
+            alert('Error al enviar el email de prueba: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleBackupDatabase = async () => {
+        if (!confirm('¿Está seguro de que desea realizar un backup de la base de datos?')) return;
+
+        try {
+            const { data } = await axios.post(route('admin.settings.backup'));
+            alert(data.message || 'Backup iniciado correctamente');
+        } catch (error: any) {
+            console.error('Error:', error);
+            alert('Error al iniciar el backup: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -189,94 +205,6 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                 </div>
             </div>
         );
-    };
-
-    const handleSaveSettings = async (settingsType: string) => {
-        setIsLoading(true);
-        
-        const settingsMap: any = {
-            'general': generalSettings,
-            'email': emailSettings,
-            'payment': paymentSettings,
-            'security': securitySettings,
-            'notification': notificationSettings,
-        };
-
-        const settings = settingsType === 'all' 
-            ? Object.entries(settingsMap).reduce((acc, [group, data]) => ({ ...acc, [group]: data }), {})
-            : { [settingsType]: settingsMap[settingsType] };
-
-        try {
-            if (settingsType === 'all') {
-                // Guardar todas las configuraciones
-                for (const [group, data] of Object.entries(settings)) {
-                    await fetch(route('admin.settings.update'), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        },
-                        body: JSON.stringify({ group, settings: data }),
-                    });
-                }
-            } else {
-                await fetch(route('admin.settings.update'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    },
-                    body: JSON.stringify({ group: settingsType, settings: settingsMap[settingsType] }),
-                });
-            }
-
-            alert('Configuraciones guardadas correctamente');
-        } catch (error) {
-            console.error('Error al guardar:', error);
-            alert('Error al guardar las configuraciones');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleTestEmail = async () => {
-        const email = prompt('Ingrese el email donde quiere recibir la prueba:');
-        if (!email) return;
-
-        try {
-            await fetch(route('admin.settings.test-email'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            alert('Email de prueba enviado correctamente');
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al enviar el email de prueba');
-        }
-    };
-
-    const handleBackupDatabase = async () => {
-        if (!confirm('¿Está seguro de que desea realizar un backup de la base de datos?')) return;
-
-        try {
-            await fetch(route('admin.settings.backup'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            alert('Backup iniciado correctamente');
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al iniciar el backup');
-        }
     };
 
     return (
@@ -452,6 +380,7 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                             <Switch
                                                 checked={paymentSettings.stripeEnabled}
                                                 onCheckedChange={async (checked) => {
+                                                    setTempValue(checked);
                                                     await handleSaveField('payment', 'stripeEnabled');
                                                     setPaymentSettings(prev => ({ ...prev, stripeEnabled: checked }));
                                                 }}
@@ -662,5 +591,4 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
     );
 }
 
-// Asignamos el Layout de Administrador
 Settings.layout = (page: any) => <AppLayout children={page} />;

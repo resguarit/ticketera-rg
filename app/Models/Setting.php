@@ -56,16 +56,71 @@ class Setting extends Model
      */
     public static function set(string $key, $value): void
     {
-        $setting = self::firstOrCreate(['key' => $key]);
+        $setting = self::where('key', $key)->first();
         
-        // Solo encriptar si el campo debe estar encriptado Y tiene un valor
-        if ($setting->is_encrypted && !empty($value)) {
-            $value = Crypt::encryptString($value);
-        }
+        if (!$setting) {
+            // Si no existe, crear con valores por defecto
+            $setting = self::create([
+                'key' => $key,
+                'value' => $value,
+                'group' => self::getGroupFromKey($key),
+                'type' => self::getTypeFromValue($value),
+                'is_encrypted' => false,
+            ]);
+        } else {
+            // Si existe, actualizar el valor
+            $valueToSave = $value;
+            
+            // Solo encriptar si el campo está marcado como encriptado Y tiene un valor
+            if ($setting->is_encrypted && !empty($value)) {
+                $valueToSave = Crypt::encryptString($value);
+            }
 
-        $setting->update(['value' => $value]);
+            $setting->update(['value' => $valueToSave]);
+        }
         
         Cache::forget("setting_{$key}");
+    }
+
+    /**
+     * Obtener el grupo desde la clave
+     */
+    private static function getGroupFromKey(string $key): string
+    {
+        $parts = explode('_', $key);
+        
+        // Si la clave tiene guiones bajos, el primer segmento podría ser el grupo
+        $possibleGroups = ['email', 'payment', 'security', 'notification', 'general'];
+        
+        if (in_array($parts[0], $possibleGroups)) {
+            return $parts[0];
+        }
+        
+        return 'general';
+    }
+
+    /**
+     * Determinar el tipo desde el valor
+     */
+    private static function getTypeFromValue($value): string
+    {
+        if (is_bool($value)) {
+            return 'boolean';
+        }
+        
+        if (is_int($value)) {
+            return 'integer';
+        }
+        
+        if (is_float($value)) {
+            return 'float';
+        }
+        
+        if (is_array($value)) {
+            return 'json';
+        }
+        
+        return 'string';
     }
 
     /**
@@ -124,6 +179,17 @@ class Setting extends Model
      */
     public static function clearCache(): void
     {
-        Cache::tags(['settings'])->flush();
+        // Obtener todas las configuraciones y limpiar su caché individual
+        $settings = self::all();
+        foreach ($settings as $setting) {
+            Cache::forget("setting_{$setting->key}");
+        }
+        
+        // También limpiar algunas claves comunes de grupos
+        Cache::forget('settings_general');
+        Cache::forget('settings_email');
+        Cache::forget('settings_payment');
+        Cache::forget('settings_security');
+        Cache::forget('settings_notification');
     }
 }
