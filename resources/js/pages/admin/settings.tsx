@@ -9,7 +9,8 @@ import {
     X,
     Phone,
     Clock,
-    Mail
+    Mail,
+    Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,45 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
             console.error('Error:', error);
             alert('Error al iniciar el backup: ' + (error.response?.data?.message || error.message));
         }
+    };
+
+    const renderReadOnlyField = (
+        label: string,
+        value: any,
+        type: 'text' | 'textarea' = 'text',
+        icon?: React.ReactNode
+    ) => {
+        return (
+            <div>
+                <Label className="text-black flex items-center gap-2">
+                    {icon}
+                    {label}
+                </Label>
+                <div className="mt-2">
+                    {type === 'textarea' ? (
+                        <Textarea
+                            value={value}
+                            className="bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed"
+                            disabled
+                            readOnly
+                            rows={3}
+                        />
+                    ) : (
+                        <Input
+                            type="text"
+                            value={value}
+                            className="bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed"
+                            disabled
+                            readOnly
+                        />
+                    )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    Este campo no puede ser modificado desde la interfaz
+                </p>
+            </div>
+        );
     };
 
     const renderEditableField = (
@@ -202,18 +242,14 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {renderEditableField(
-                                    'general', 
-                                    'siteName', 
+                                {renderReadOnlyField(
                                     'Nombre del Sitio', 
                                     generalSettings.siteName, 
                                     'text',
                                     <SettingsIcon className="w-4 h-4 text-gray-600" />
                                 )}
 
-                                {renderEditableField(
-                                    'general', 
-                                    'siteDescription', 
+                                {renderReadOnlyField(
                                     'Descripción del Sitio', 
                                     generalSettings.siteDescription, 
                                     'textarea',
@@ -257,7 +293,7 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                                     <span>Horarios de Atención</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {renderEditableField(
                                     'general', 
                                     'businessDays', 

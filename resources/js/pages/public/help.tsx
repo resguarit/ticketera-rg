@@ -46,12 +46,15 @@ interface FaqCategory extends FaqCategoryModel {
 interface HelpPageProps extends PageProps {
     faqCategories: FaqCategory[];
     supportEmail: string;
+    supportPhone: string;
+    businessDays: string;
+    businessHours: string;
     [key: string]: unknown;
 }
 
 export default function Help() {
-    // Obtener las categorías y email de soporte desde las props
-    const { faqCategories, supportEmail } = usePage<HelpPageProps>().props;
+    // Obtener las categorías y datos de configuración desde las props
+    const { faqCategories, supportEmail, supportPhone, businessDays, businessHours } = usePage<HelpPageProps>().props;
 
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
@@ -85,6 +88,9 @@ export default function Help() {
         setContactForm({ name: "", email: "", subject: "", message: "" });
     };
 
+    // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
+    const whatsappNumber = supportPhone.replace(/\D/g, '');
+
     const contactOptions = [
         {
             title: "Chat en Vivo",
@@ -93,7 +99,7 @@ export default function Help() {
             color: "primary",
             available: "24/7",
             action: "Iniciar Chat",
-            href: "https://wa.me/5492216914649?text=Hola,%20necesito%20ayuda",
+            href: `https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20ayuda`,
             type: "whatsapp"
         },
         {
@@ -101,9 +107,9 @@ export default function Help() {
             description: "Llámanos para soporte inmediato",
             icon: Phone,
             color: "green-500",
-            available: "Lun-Vie 9:00-18:00",
-            action: "+54 2216 914649",
-            href: "tel:+542216914649",
+            available: `${businessDays} ${businessHours}`, // Usar datos dinámicos
+            action: supportPhone, // Usar teléfono dinámico
+            href: `tel:${supportPhone.replace(/\s/g, '')}`,
             type: "phone"
         },
         {
@@ -132,7 +138,7 @@ export default function Help() {
                         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4">
                             Centro de Ayuda
                         </h1>
-                        <p className="text-white text-sm sm:text-base lg:text-lg  mx-auto px-4">
+                        <p className="text-white text-sm sm:text-base lg:text-lg mx-auto px-4">
                             Encuentra respuestas rápidas a tus preguntas o contacta con nuestro equipo de soporte
                         </p>
                     </div>
