@@ -208,23 +208,22 @@ export default function Settings({ auth, generalSettings: initialGeneral, emailS
                                     <CardContent className="space-y-4">
                                         <div>
                                             <Label htmlFor="siteName" className="text-black">Nombre del Sitio</Label>
-                                            <Input
-                                                id="siteName"
-                                                value={generalSettings.siteName}
-                                                onChange={(e) => setGeneralSettings(prev => ({ ...prev, siteName: e.target.value }))}
-                                                className="bg-white border-gray-300 text-black"
-                                            />
+                                            <div className="p-2 text-sm bg-gray-50 border border-gray-300 rounded-md text-black">
+                                                {generalSettings.siteName}
+                                            </div>
+                                            <p className="text-gray-500 text-xs mt-1">
+                                                Este valor no puede ser modificado desde la interfaz
+                                            </p>
                                         </div>
 
                                         <div>
                                             <Label htmlFor="siteDescription" className="text-black">Descripción</Label>
-                                            <Textarea
-                                                id="siteDescription"
-                                                value={generalSettings.siteDescription}
-                                                onChange={(e) => setGeneralSettings(prev => ({ ...prev, siteDescription: e.target.value }))}
-                                                className="bg-white border-gray-300 text-black"
-                                                rows={3}
-                                            />
+                                            <div className="p-2 text-sm bg-gray-50 border border-gray-300 rounded-md text-black min-h-[72px]">
+                                                {generalSettings.siteDescription}
+                                            </div>
+                                            <p className="text-gray-500 text-xs mt-1">
+                                                Este valor no puede ser modificado desde la interfaz
+                                            </p>
                                         </div>
 
                                         <div>
