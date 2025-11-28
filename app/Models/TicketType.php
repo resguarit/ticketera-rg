@@ -27,10 +27,10 @@ class TicketType extends Model
         'quantity_sold',
         'max_purchase_quantity',
         'is_hidden',
-        'is_bundle',        // ← NUEVO
-        'bundle_quantity',  // ← NUEVO
-        'stage_group',      // ← AGREGAR
-        'stage_order',      // ← AGREGAR
+        'is_bundle',
+        'bundle_quantity',
+        'stage_group',  // ← Ahora es columna real
+        'stage_order',  // ← Ahora es columna real
     ];
 
     protected $casts = [
@@ -39,14 +39,12 @@ class TicketType extends Model
         'quantity_sold' => 'integer',
         'max_purchase_quantity' => 'integer',
         'is_hidden' => 'boolean',
-        'is_bundle' => 'boolean',        // ← NUEVO
-        'bundle_quantity' => 'integer',  // ← NUEVO
+        'is_bundle' => 'boolean',
+        'bundle_quantity' => 'integer',
         'sales_start_date' => 'datetime',
         'sales_end_date' => 'datetime',
-        'stage_order' => 'integer',  // ← AGREGAR
+        'stage_order' => 'integer',
     ];
-
-    protected $appends = ['stage_group', 'stage_number'];
 
     public function eventFunction()
     {
@@ -95,10 +93,6 @@ class TicketType extends Model
     {
         return app(RevenueService::class)->forTicketType($this, $startDate, $endDate);
     }
-
-    // ELIMINAR los accessors antiguos (ya no se necesitan)
-    // public function getStageGroupAttribute() { ... }
-    // public function getStageNumberAttribute() { ... }
 
     /**
      * Scope para filtrar tandas del mismo grupo
