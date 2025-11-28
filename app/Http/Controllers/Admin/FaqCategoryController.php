@@ -83,7 +83,6 @@ class FaqCategoryController extends Controller
     public function destroy(FaqCategory $faqCategory)
     {
         $faqCategory->delete();
-
         return redirect()->route('admin.faqs.index')->with('success', 'Categoría eliminada.');
     }
 }

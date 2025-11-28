@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
+use App\Models\Person;
+use Illuminate\Support\Facades\Log;
 
 class RegisteredUserController extends Controller
 {
@@ -67,8 +67,7 @@ class RegisteredUserController extends Controller
 
         } catch (\Exception $e) {
             // Log registration failure
-            Log::error('Registration failed: '.$e->getMessage());
-
+            Log::error('Registration failed: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Registration failed.']);
         }
     }
@@ -93,16 +92,15 @@ class RegisteredUserController extends Controller
 
             // Verificar si ya existe una persona con ese DNI
             $existingPerson = Person::where('dni', $validated['documentNumber'])->first();
-
+            
             if ($existingPerson) {
                 DB::rollBack();
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Ya existe una persona registrada con ese número de documento.',
                     'errors' => [
-                        'documentNumber' => ['El número de documento ya está registrado.'],
-                    ],
+                        'documentNumber' => ['El número de documento ya está registrado.']
+                    ]
                 ], 422);
             }
 
@@ -129,29 +127,29 @@ class RegisteredUserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Cuenta creada exitosamente',
-                'user' => $user,
+                'user' => $user
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error de validación',
-                'errors' => $e->errors(),
+                'errors' => $e->errors()
             ], 422);
 
         } catch (\Exception $e) {
             DB::rollBack();
-
+            
             Log::error('Error en registro desde checkout', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear la cuenta. Por favor intenta nuevamente.',
+                'message' => 'Error al crear la cuenta. Por favor intenta nuevamente.'
             ], 500);
         }
     }

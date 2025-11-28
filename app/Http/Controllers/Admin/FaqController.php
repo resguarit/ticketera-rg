@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class FaqController extends Controller
 {
@@ -17,7 +17,7 @@ class FaqController extends Controller
     public function index(): Response
     {
         $faqs = Faq::orderBy('category')->orderBy('order')->get()->groupBy('category');
-
+        
         // Para mantener la consistencia con help.tsx, definimos iconos y colores
         $categoryDetails = [
             'Compra de Tickets' => ['icon' => 'Ticket', 'color' => 'primary'],
@@ -38,7 +38,6 @@ class FaqController extends Controller
     public function create(): Response
     {
         $categories = Faq::select('category')->distinct()->pluck('category');
-
         return Inertia::render('admin/faqs/create', [
             'categories' => $categories,
         ]);
@@ -75,7 +74,6 @@ class FaqController extends Controller
     public function edit(Faq $faq): Response
     {
         $categories = Faq::select('category')->distinct()->pluck('category');
-
         return Inertia::render('admin/faqs/edit', [
             'faq' => $faq,
             'categories' => $categories,
@@ -104,7 +102,6 @@ class FaqController extends Controller
     public function destroy(Faq $faq): RedirectResponse
     {
         $faq->delete();
-
         return redirect()->route('admin.faqs.index')->with('success', 'Pregunta frecuente eliminada exitosamente.');
     }
 }

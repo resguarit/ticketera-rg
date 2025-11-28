@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTO\PaymentContext;
 use App\DTO\PaymentResult;
+use App\Models\Order;
 use App\Services\Interface\PaymentGatewayInterface;
 use Decidir\Connector;
 use Decidir\Exception\SdkException;
@@ -20,28 +21,28 @@ class PaywayService implements PaymentGatewayInterface
         $keys = $config['keys'][$env];
         $this->connector = new Connector($keys, $env);
     }
-
+    
     public function charge(PaymentContext $context): PaymentResult
     {
         $paymentData = [
-            'site_transaction_id' => $context->siteTransactionId,
-            'token' => $context->paymentToken,
-            'bin' => $context->bin,
-            'amount' => (int) ($context->amount * 100),
-            'currency' => $context->currency,
-            'installments' => $context->installments,
-            'payment_method_id' => $context->paymentMethodId,
-            'payment_type' => 'single',
-            'sub_payments' => [],
-            'fraud_detection' => [
-                'send_to_cs' => false,
-                'channel' => 'Web',
-                'device_unique_identifier' => '12345',
+            "site_transaction_id" => $context->siteTransactionId,
+            "token" => $context->paymentToken,
+            "bin" => $context->bin,
+            "amount" => (int) ($context->amount * 100),
+            "currency" => $context->currency,
+            "installments" => $context->installments,
+            "payment_method_id" => $context->paymentMethodId,
+            "payment_type" => "single",
+            "sub_payments" => [],
+            "fraud_detection" => [ 
+                "send_to_cs" => false,
+                "channel" => "Web",
+                "device_unique_identifier" => "12345"
             ],
-            'customer' => [
-                'id' => $context->customerId,
-                'email' => $context->customerEmail,
-            ],
+            "customer" => [
+                "id" => $context->customerId,
+                "email" => $context->customerEmail,
+            ]
         ];
 
         try {
@@ -54,7 +55,7 @@ class PaywayService implements PaymentGatewayInterface
                 if ($e instanceof SdkException && strpos($e->getMessage(), 'Property') !== false) {
                     $responseData = $e->getData();
                     Log::warning('PaywayDebug: SDK property error in payment, extracting data from exception', [
-                        'message' => $e->getMessage(),
+                        'message' => $e->getMessage()
                     ]);
                 } else {
                     throw $e; // Re-lanzar si es otro tipo de error
@@ -72,7 +73,7 @@ class PaywayService implements PaymentGatewayInterface
                 'site_transaction_id' => $context->siteTransactionId,
                 'installments' => $responseData['installments'] ?? null,
                 'fraud_detection' => $responseData['fraud_detection'] ?? null,
-                'raw_response' => $responseData,
+                'raw_response' => $responseData
             ];
 
             Log::info('PaywayDebug: Payment response', $result);
@@ -81,7 +82,6 @@ class PaywayService implements PaymentGatewayInterface
                 return PaymentResult::success($responseData['id'], $responseData['status'], $responseData);
             } else {
                 $reason = $responseData['status_details']['error']['reason']['description'] ?? 'Pago rechazado';
-
                 return PaymentResult::failure($reason, $responseData);
             }
 
@@ -90,7 +90,7 @@ class PaywayService implements PaymentGatewayInterface
             Log::error('PaywayDebug: Payment failed', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'data' => $e->getData(),
+                'data' => $e->getData()
             ]);
 
             return PaymentResult::failure($e->getMessage(), $e->getData());
@@ -98,7 +98,7 @@ class PaywayService implements PaymentGatewayInterface
         } catch (\Exception $e) {
 
             Log::error('PaywayDebug: Payment exception', [
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ]);
 
             return PaymentResult::failure($e->getMessage());

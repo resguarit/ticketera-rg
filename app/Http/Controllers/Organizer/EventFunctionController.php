@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Organizer;
 
-use App\Enums\EventFunctionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
-use Illuminate\Http\RedirectResponse;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class EventFunctionController extends Controller
 {
@@ -28,7 +28,7 @@ class EventFunctionController extends Controller
     public function index(Event $event): Response
     {
         $this->authorize('view', $event);
-
+        
         $event->load(['functions' => function ($query) {
             $query->orderBy('start_time', 'asc');
         }]);
@@ -46,7 +46,7 @@ class EventFunctionController extends Controller
         $this->checkOwnership($event);
 
         // Estados disponibles del enum
-        $statuses = collect(EventFunctionStatus::cases())->map(fn ($status) => [
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
             'value' => $status->value,
             'label' => $status->label(),
             'color' => $status->color(),
@@ -71,25 +71,25 @@ class EventFunctionController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'is_active' => 'required|boolean',
-            'status' => 'required|in:'.implode(',', array_column(EventFunctionStatus::cases(), 'value')),
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
             DB::beginTransaction();
-
+            
             $event->functions()->create($validated);
-
+            
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función creada exitosamente.');
-
+                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error creating function: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Error al crear la función: '.$e->getMessage()])
-                ->withInput();
+            \Log::error('Error creating function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al crear la función: ' . $e->getMessage()])
+                        ->withInput();
         }
     }
 
@@ -101,7 +101,7 @@ class EventFunctionController extends Controller
         $this->checkOwnership($event);
 
         // Estados disponibles del enum
-        $statuses = collect(EventFunctionStatus::cases())->map(fn ($status) => [
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
             'value' => $status->value,
             'label' => $status->label(),
             'color' => $status->color(),
@@ -137,25 +137,25 @@ class EventFunctionController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'is_active' => 'required|boolean',
-            'status' => 'required|in:'.implode(',', array_column(EventFunctionStatus::cases(), 'value')),
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
             DB::beginTransaction();
-
+            
             $function->update($validated);
-
+            
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función actualizada exitosamente.');
-
+                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error updating function: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Error al actualizar la función: '.$e->getMessage()])
-                ->withInput();
+            \Log::error('Error updating function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al actualizar la función: ' . $e->getMessage()])
+                        ->withInput();
         }
     }
 
@@ -173,19 +173,19 @@ class EventFunctionController extends Controller
             }
 
             DB::beginTransaction();
-
+            
             $function->delete();
-
+            
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función eliminada exitosamente.');
-
+                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error deleting function: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Error al eliminar la función: '.$e->getMessage()]);
+            \Log::error('Error deleting function: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al eliminar la función: ' . $e->getMessage()]);
         }
     }
 
@@ -197,28 +197,28 @@ class EventFunctionController extends Controller
         $this->checkOwnership($event);
 
         $validated = $request->validate([
-            'status' => 'required|in:'.implode(',', array_column(EventFunctionStatus::cases(), 'value')),
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
             DB::beginTransaction();
-
+            
             $function->update([
-                'status' => $validated['status'],
+                'status' => $validated['status']
             ]);
-
+            
             DB::commit();
 
             $statusEnum = EventFunctionStatus::from($validated['status']);
 
             return redirect()->back()
                 ->with('success', "Estado actualizado a: {$statusEnum->label()}");
-
+                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error updating function status: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Error al actualizar el estado: '.$e->getMessage()]);
+            \Log::error('Error updating function status: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al actualizar el estado: ' . $e->getMessage()]);
         }
     }
 
@@ -231,23 +231,23 @@ class EventFunctionController extends Controller
 
         try {
             DB::beginTransaction();
-
+            
             $function->update([
-                'is_active' => ! $function->is_active,
+                'is_active' => !$function->is_active
             ]);
-
+            
             DB::commit();
 
             return redirect()->back()
-                ->with('success', $function->is_active
-                    ? 'Función activada correctamente'
+                ->with('success', $function->is_active 
+                    ? 'Función activada correctamente' 
                     : 'Función desactivada correctamente');
-
+                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error toggling function active state: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Error al cambiar el estado: '.$e->getMessage()]);
+            \Log::error('Error toggling function active state: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al cambiar el estado: ' . $e->getMessage()]);
         }
     }
 }

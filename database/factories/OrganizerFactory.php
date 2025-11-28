@@ -22,9 +22,9 @@ class OrganizerFactory extends Factory
             'email' => $this->faker->unique()->safeEmail,
             'phone' => $this->faker->phoneNumber,
             'logo_url' => null,
-            'facebook_url' => 'https://facebook.com/'.$this->faker->userName,
-            'instagram_url' => 'https://instagram.com/'.$this->faker->userName,
-            'twitter_url' => 'https://twitter.com/'.$this->faker->userName,
+            'facebook_url' => 'https://facebook.com/' . $this->faker->userName,
+            'instagram_url' => 'https://instagram.com/' . $this->faker->userName,
+            'twitter_url' => 'https://twitter.com/' . $this->faker->userName,
             'tax' => 10.00, // 10% por defecto
             'decidir_public_key_prod' => null,
             'decidir_secret_key_prod' => null,

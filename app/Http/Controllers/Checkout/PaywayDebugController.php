@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Checkout;
 
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Decidir\Connector;
-use Decidir\Exception\SdkException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Decidir\Exception\SdkException;
 
 class PaywayDebugController extends Controller
 {
@@ -16,19 +16,19 @@ class PaywayDebugController extends Controller
     private function getConnector(Request $request)
     {
         $environment = $request->input('environment', 'test'); // 'test' o 'prod'
-
+        
         $keys_data = [
-            'public_key' => $environment === 'prod'
+            'public_key' => $environment === 'prod' 
                 ? env('PAYWAY_PUBLIC_KEY_PROD', '9960377671874d4fb71d0a8448642730')
                 : env('PAYWAY_PUBLIC_KEY', '2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y'),
-            'private_key' => $environment === 'prod'
+            'private_key' => $environment === 'prod' 
                 ? env('PAYWAY_PRIVATE_KEY_PROD')
-                : env('PAYWAY_PRIVATE_KEY'),
+                : env('PAYWAY_PRIVATE_KEY')
         ];
 
         Log::info("PaywayDebug: Creating connector for environment: {$environment}", [
             'public_key' => $keys_data['public_key'],
-            'private_key_length' => strlen($keys_data['private_key']),
+            'private_key_length' => strlen($keys_data['private_key'])
         ]);
 
         return new Connector($keys_data, $environment);
@@ -51,33 +51,32 @@ class PaywayDebugController extends Controller
             ];
 
             Log::info('PaywayDebug: HealthCheck successful', $response);
-
             return response()->json($response);
 
         } catch (SdkException $e) {
             Log::error('PaywayDebug: HealthCheck failed', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'data' => $e->getData(),
+                'data' => $e->getData()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'HealthCheck failed',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'details' => $e->getData(),
+                'details' => $e->getData()
             ], 500);
         } catch (\Exception $e) {
             Log::error('PaywayDebug: HealthCheck exception', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Unexpected error',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -108,12 +107,12 @@ class PaywayDebugController extends Controller
                 'security_code' => $request->input('security_code'),
                 'card_holder_identification' => [
                     'type' => $request->input('card_holder_identification.type'),
-                    'number' => $request->input('card_holder_identification.number'),
-                ],
+                    'number' => $request->input('card_holder_identification.number')
+                ]
             ];
 
             Log::info('PaywayDebug: Creating token', [
-                'card_last_4' => substr($tokenData['card_number'], -4),
+                'card_last_4' => substr($tokenData['card_number'], -4)
             ]);
 
             try {
@@ -125,13 +124,13 @@ class PaywayDebugController extends Controller
                 if ($e instanceof SdkException && strpos($e->getMessage(), 'Property') !== false) {
                     $responseData = $e->getData();
                     Log::warning('PaywayDebug: SDK property error, extracting data from exception', [
-                        'message' => $e->getMessage(),
+                        'message' => $e->getMessage()
                     ]);
                 } else {
                     throw $e; // Re-lanzar si es otro tipo de error
                 }
             }
-
+            
             $result = [
                 'success' => true,
                 'token' => $responseData['id'] ?? null,
@@ -145,44 +144,43 @@ class PaywayDebugController extends Controller
                 'date_created' => $responseData['date_created'] ?? null,
                 'date_due' => $responseData['date_due'] ?? null,
                 'cardholder' => $responseData['cardholder'] ?? null,
-                'raw_response' => $responseData,
+                'raw_response' => $responseData
             ];
 
             Log::info('PaywayDebug: Token created successfully', $result);
-
             return response()->json($result);
 
         } catch (SdkException $e) {
             Log::error('PaywayDebug: Tokenization failed', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'data' => $e->getData(),
+                'data' => $e->getData()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Tokenization failed',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'details' => $e->getData(),
+                'details' => $e->getData()
             ], 500);
         } catch (\Throwable $e) {
             // Capturar cualquier otro error, incluyendo errores del SDK
             Log::error('PaywayDebug: Tokenization exception', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
             ]);
-
+            
             // Si el error es por una propiedad inexistente pero tenemos datos, intentar extraerlos
             if (strpos($e->getMessage(), 'Property') !== false || strpos($e->getMessage(), 'not exists') !== false) {
                 Log::warning('PaywayDebug: SDK property error, but response may be valid');
             }
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Unexpected error',
                 'message' => $e->getMessage(),
-                'type' => get_class($e),
+                'type' => get_class($e)
             ], 500);
         }
     }
@@ -203,34 +201,34 @@ class PaywayDebugController extends Controller
 
         try {
             $connector = $this->getConnector($request);
-            $siteTransactionId = 'DEBUG-'.time().'-'.rand(1000, 9999);
+            $siteTransactionId = "DEBUG-" . time() . "-" . rand(1000, 9999);
 
             $paymentData = [
-                'site_transaction_id' => $siteTransactionId,
-                'token' => $request->input('payment_token'),
-                'bin' => $request->input('bin'),
-                'amount' => (int) ($request->input('amount') * 100),
-                'currency' => 'ARS',
-                'installments' => (int) $request->input('installments'),
-                'payment_method_id' => (int) $request->input('payment_method_id'),
-                'payment_type' => 'single',
-                'sub_payments' => [],
-                'fraud_detection' => [
-                    'send_to_cs' => false,
-                    'channel' => 'Web',
-                    'device_unique_identifier' => '12345',
+                "site_transaction_id" => $siteTransactionId,
+                "token" => $request->input('payment_token'),
+                "bin" => $request->input('bin'),
+                "amount" => (int) ($request->input('amount') * 100),
+                "currency" => "ARS",
+                "installments" => (int) $request->input('installments'),
+                "payment_method_id" => (int) $request->input('payment_method_id'),
+                "payment_type" => "single",
+                "sub_payments" => [],
+                "fraud_detection" => [ 
+                    "send_to_cs" => false,
+                    "channel" => "Web",
+                    "device_unique_identifier" => "12345"
                 ],
-                'customer' => [
-                    'id' => 'DEBUG-CUSTOMER-'.time(),
-                    'email' => $request->input('customer_email'),
-                ],
+                "customer" => [
+                    "id" => "DEBUG-CUSTOMER-" . time(),
+                    "email" => $request->input('customer_email')
+                ]
             ];
 
             Log::info('PaywayDebug: Processing payment', [
                 'site_transaction_id' => $siteTransactionId,
                 'amount' => $paymentData['amount'],
                 'bin' => $paymentData['bin'],
-                'payment_method_id' => $paymentData['payment_method_id'],
+                'payment_method_id' => $paymentData['payment_method_id']
             ]);
 
             try {
@@ -241,7 +239,7 @@ class PaywayDebugController extends Controller
                 if ($e instanceof SdkException && strpos($e->getMessage(), 'Property') !== false) {
                     $responseData = $e->getData();
                     Log::warning('PaywayDebug: SDK property error in payment, extracting data from exception', [
-                        'message' => $e->getMessage(),
+                        'message' => $e->getMessage()
                     ]);
                 } else {
                     throw $e; // Re-lanzar si es otro tipo de error
@@ -260,36 +258,35 @@ class PaywayDebugController extends Controller
                 'installments' => $responseData['installments'] ?? null,
                 'payment_method_id' => $paymentData['payment_method_id'],
                 'fraud_detection' => $responseData['fraud_detection'] ?? null,
-                'raw_response' => $responseData,
+                'raw_response' => $responseData
             ];
 
             Log::info('PaywayDebug: Payment processed', $result);
-
             return response()->json($result);
 
         } catch (SdkException $e) {
             Log::error('PaywayDebug: Payment failed', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'data' => $e->getData(),
+                'data' => $e->getData()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Payment failed',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'details' => $e->getData(),
+                'details' => $e->getData()
             ], 500);
         } catch (\Exception $e) {
             Log::error('PaywayDebug: Payment exception', [
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Unexpected error',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -325,21 +322,20 @@ class PaywayDebugController extends Controller
                 'site_transaction_id' => $data['site_transaction_id'] ?? null,
                 'installments' => $data['installments'] ?? null,
                 'fraud_detection' => $data['fraud_detection'] ?? null,
-                'raw_response' => $data,
+                'raw_response' => $data
             ];
 
             Log::info('PaywayDebug: Payment info retrieved', $result);
-
             return response()->json($result);
 
         } catch (SdkException $e) {
             // ⚠️ El SDK puede lanzar excepción pero tener los datos
             $errorData = $e->getData();
-
+            
             // Si tiene ID, la consulta fue exitosa
             if (isset($errorData['id'])) {
                 Log::info('PaywayDebug: Payment info retrieved (from exception)', ['data' => $errorData]);
-
+                
                 return response()->json([
                     'success' => true,
                     'payment_id' => $errorData['id'],
@@ -351,33 +347,33 @@ class PaywayDebugController extends Controller
                     'site_transaction_id' => $errorData['site_transaction_id'] ?? null,
                     'installments' => $errorData['installments'] ?? null,
                     'fraud_detection' => $errorData['fraud_detection'] ?? null,
-                    'raw_response' => $errorData,
+                    'raw_response' => $errorData
                 ]);
             }
-
+            
             // Error real
             Log::error('PaywayDebug: Payment info failed', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'data' => $errorData,
+                'data' => $errorData
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Payment info failed',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'details' => $errorData,
+                'details' => $errorData
             ], 500);
         } catch (\Exception $e) {
             Log::error('PaywayDebug: Payment info exception', [
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Unexpected error',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -389,14 +385,14 @@ class PaywayDebugController extends Controller
     {
         try {
             $environment = $request->input('environment', 'test');
-
+            
             $keys_data = [
-                'public_key' => $environment === 'prod'
+                'public_key' => $environment === 'prod' 
                     ? env('PAYWAY_PUBLIC_KEY_PROD', '9960377671874d4fb71d0a8448642730')
                     : env('PAYWAY_PUBLIC_KEY', '2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y'),
-                'private_key' => $environment === 'prod'
+                'private_key' => $environment === 'prod' 
                     ? env('PAYWAY_PRIVATE_KEY_PROD')
-                    : env('PAYWAY_PRIVATE_KEY'),
+                    : env('PAYWAY_PRIVATE_KEY')
             ];
 
             $result = [
@@ -404,28 +400,27 @@ class PaywayDebugController extends Controller
                 'environment' => $environment,
                 'public_key' => $keys_data['public_key'],
                 'private_key_length' => strlen($keys_data['private_key']),
-                'private_key_starts_with' => substr($keys_data['private_key'], 0, 4).'...',
+                'private_key_starts_with' => substr($keys_data['private_key'], 0, 4) . '...',
                 'env_vars' => [
                     'PAYWAY_PUBLIC_KEY' => env('PAYWAY_PUBLIC_KEY'),
                     'PAYWAY_PRIVATE_KEY' => env('PAYWAY_PRIVATE_KEY') ? 'SET' : 'NOT SET',
                     'PAYWAY_PUBLIC_KEY_PROD' => env('PAYWAY_PUBLIC_KEY_PROD'),
                     'PAYWAY_PRIVATE_KEY_PROD' => env('PAYWAY_PRIVATE_KEY_PROD') ? 'SET' : 'NOT SET',
-                ],
+                ]
             ];
 
             Log::info('PaywayDebug: Raw connection test', $result);
-
             return response()->json($result);
 
         } catch (\Exception $e) {
             Log::error('PaywayDebug: Raw connection exception', [
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'error' => 'Unexpected error',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -437,11 +432,11 @@ class PaywayDebugController extends Controller
     {
         try {
             $logFile = storage_path('logs/laravel.log');
-
-            if (! file_exists($logFile)) {
+            
+            if (!file_exists($logFile)) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Log file not found',
+                    'error' => 'Log file not found'
                 ], 404);
             }
 
@@ -451,9 +446,9 @@ class PaywayDebugController extends Controller
             $file->seek(PHP_INT_MAX);
             $lastLine = $file->key();
             $start = max(0, $lastLine - 200);
-
+            
             $file->seek($start);
-            while (! $file->eof()) {
+            while (!$file->eof()) {
                 $line = $file->current();
                 if (stripos($line, 'payway') !== false || stripos($line, 'decidir') !== false) {
                     $lines[] = trim($line);
@@ -464,14 +459,14 @@ class PaywayDebugController extends Controller
             return response()->json([
                 'success' => true,
                 'logs' => $lines,
-                'count' => count($lines),
+                'count' => count($lines)
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Error reading logs',
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }

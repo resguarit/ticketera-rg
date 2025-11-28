@@ -1,5 +1,4 @@
 <?php
-
 // filepath: database/seeders/OrganizerSeeder.php
 
 namespace Database\Seeders;

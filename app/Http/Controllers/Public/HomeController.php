@@ -1,13 +1,13 @@
 <?php
-
 // filepath: app/Http/Controllers/Public/HomeController.php
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\EventFunctionStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Http\Resources\EventResource;
 use App\Models\Event;
+use App\Models\Category;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,10 +22,10 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function ($event) {
+            ->map(function($event) {
                 // Obtener funciones activas
                 $activeFunctions = $event->functions->where('is_active', true);
-
+                
                 // Determinar el estado del evento basado en sus funciones activas
                 $priorityOrder = [
                     EventFunctionStatus::ON_SALE->value => 1,
@@ -38,13 +38,13 @@ class HomeController extends Controller
                 ];
 
                 $primaryFunction = $activeFunctions
-                    ->sortBy(function ($function) use ($priorityOrder) {
+                    ->sortBy(function($function) use ($priorityOrder) {
                         return $priorityOrder[$function->status->value] ?? 999;
                     })
                     ->first();
 
                 // Si no hay función activa, usar cualquiera
-                if (! $primaryFunction) {
+                if (!$primaryFunction) {
                     $primaryFunction = $event->functions->first();
                 }
 
@@ -59,7 +59,7 @@ class HomeController extends Controller
                 ];
 
                 $firstFunction = $event->functions->sortBy('start_time')->first();
-                $minPrice = $event->functions->flatMap(fn ($func) => $func->ticketTypes ?? collect())->min('price') ?? 0;
+                $minPrice = $event->functions->flatMap(fn($func) => $func->ticketTypes ?? collect())->min('price') ?? 0;
 
                 return [
                     'id' => $event->id,
@@ -86,7 +86,7 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $categories = Category::all()->map(function ($category) {
+        $categories = Category::all()->map(function($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -100,7 +100,7 @@ class HomeController extends Controller
             ->pluck('venue.ciudad')
             ->filter()
             ->unique('id')
-            ->map(function ($ciudad) {
+            ->map(function($ciudad) {
                 return [
                     'id' => $ciudad->id,
                     'name' => $ciudad->name,
@@ -110,10 +110,10 @@ class HomeController extends Controller
             ->sortBy('name')
             ->values();
 
-        $processedEvents = $events->map(function ($event) {
+        $processedEvents = $events->map(function($event) {
             // Obtener funciones activas
             $activeFunctions = $event->functions->where('is_active', true);
-
+            
             // Determinar el estado del evento basado en sus funciones activas
             $priorityOrder = [
                 EventFunctionStatus::ON_SALE->value => 1,
@@ -126,13 +126,13 @@ class HomeController extends Controller
             ];
 
             $primaryFunction = $activeFunctions
-                ->sortBy(function ($function) use ($priorityOrder) {
+                ->sortBy(function($function) use ($priorityOrder) {
                     return $priorityOrder[$function->status->value] ?? 999;
                 })
                 ->first();
 
             // Si no hay función activa, usar cualquiera
-            if (! $primaryFunction) {
+            if (!$primaryFunction) {
                 $primaryFunction = $event->functions->first();
             }
 
@@ -147,8 +147,8 @@ class HomeController extends Controller
             ];
 
             $firstFunction = $event->functions->sortBy('start_time')->first();
-            $minPrice = $event->functions->flatMap(fn ($func) => $func->ticketTypes ?? collect())->min('price') ?? 0;
-
+            $minPrice = $event->functions->flatMap(fn($func) => $func->ticketTypes ?? collect())->min('price') ?? 0;
+            
             return [
                 'id' => $event->id,
                 'slug' => $event->slug,

@@ -5,8 +5,9 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\IssuedTicket;
 use App\Services\PdfService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 
 class TicketPDFController extends Controller
 {
@@ -25,7 +26,7 @@ class TicketPDFController extends Controller
         }
 
         $ticketData = $this->pdfService->generateTicketPdfWithName($ticket, 220);
-
+        
         return $ticketData['pdf']->download($ticketData['filename']);
     }
 
@@ -35,28 +36,27 @@ class TicketPDFController extends Controller
     public function downloadOrder($transaction_id)
     {
         $user = Auth::user();
-
+        
         $order = \App\Models\Order::with([
             'items.ticketType.eventFunction.event.venue.ciudad.provincia',
             'items.ticketType.eventFunction.event.organizer',
-            'client.person',
+            'client.person'
         ])
-            ->where('client_id', $user->id)
-            ->where('transaction_id', $transaction_id)
-            ->firstOrFail();
+        ->where('client_id', $user->id)
+        ->where('transaction_id', $transaction_id)
+        ->firstOrFail();
 
         if ($order === null || $order->items->isEmpty()) {
             abort(404, 'No se encontraron tickets para esta orden');
         }
 
-        $ticketsWithQR = $order->items->map(function ($ticket) {
+        $ticketsWithQR = $order->items->map(function($ticket) {
             $ticketData = $this->pdfService->generateTicketData($ticket, 120);
             $ticket->qrCode = $ticketData['qrCode'];
-
             return $ticket;
         });
 
-        $ticketsByEvent = $ticketsWithQR->groupBy(function ($ticket) {
+        $ticketsByEvent = $ticketsWithQR->groupBy(function($ticket) {
             return $ticket->ticketType->eventFunction->event->id;
         });
 
@@ -68,9 +68,9 @@ class TicketPDFController extends Controller
         ];
 
         $pdf = Pdf::loadView('pdfs.order-tickets', $data);
-
+        
         $orderNumber = $order->transaction_id ?? $order->id;
-
+        
         return $pdf->download("tickets-orden-{$orderNumber}.pdf");
     }
 }

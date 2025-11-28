@@ -7,10 +7,10 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 class Event extends Model
@@ -68,8 +68,7 @@ class Event extends Model
     {
         return Attribute::make(
             get: function () {
-                $allTickets = $this->functions->flatMap(fn ($func) => $func->ticketTypes ?? collect());
-
+                $allTickets = $this->functions->flatMap(fn($func) => $func->ticketTypes ?? collect());
                 return $allTickets->where('quantity_sold', '<', 'quantity')->min('price') ?? 0;
             }
         );

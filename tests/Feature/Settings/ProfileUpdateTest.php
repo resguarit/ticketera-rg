@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Person;
 use App\Models\User;
+use App\Models\Person;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -296,7 +296,7 @@ test('user relationships are preserved after update', function () {
 
 test('soft deleted user cannot update profile', function () {
     $user = User::factory()->create();
-
+    
     $user->delete();
 
     $response = $this
@@ -355,7 +355,7 @@ test('address can be empty', function () {
 
 test('user name method returns full name', function () {
     $user = User::factory()->create();
-
+    
     $user->person->update([
         'name' => 'John',
         'last_name' => 'Doe',

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -20,7 +20,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $user->load('person');
-
+        
         return Inertia::render('user/myaccount', [
             'user' => [
                 'id' => $user->id,
@@ -32,8 +32,8 @@ class ProfileController extends Controller
                     'dni' => $user->person->dni ?? '',
                     'phone' => $user->person->phone ?? '',
                     'address' => $user->person->address ?? '',
-                ],
-            ],
+                ]
+            ]
         ]);
     }
 
@@ -43,11 +43,11 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = Auth::user();
-
+        
         $validated = $request->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'documentNumber' => 'required|string|max:20',
             'address' => 'nullable|string|max:500',
@@ -61,7 +61,7 @@ class ProfileController extends Controller
         // Actualizar persona según el modelo Person que tienes
         $user->person->update([
             'name' => $validated['firstName'],        // ✅ name
-            'last_name' => $validated['lastName'],    // ✅ last_name
+            'last_name' => $validated['lastName'],    // ✅ last_name  
             'dni' => $validated['documentNumber'],    // ✅ dni
             'phone' => $validated['phone'],           // ✅ phone
             'address' => $validated['address'],       // ✅ address
@@ -76,7 +76,7 @@ class ProfileController extends Controller
     public function updatePassword(Request $request): RedirectResponse
     {
         $user = Auth::user();
-
+        
         $validated = $request->validate([
             'current_password' => 'required|current_password',
             'password' => ['required', 'confirmed', Password::defaults()],
@@ -84,7 +84,7 @@ class ProfileController extends Controller
 
         // Actualizar solo el password según tu modelo User
         $user->update([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($validated['password'])
         ]);
 
         return redirect()->back()->with('success', 'Contraseña actualizada correctamente');

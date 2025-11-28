@@ -20,7 +20,6 @@ class EnsurePasswordIsChanged
         if (Auth::user()->password_changed_at === null) {
             Inertia::share('must_change_password', true);
         }
-
         return $next($request);
     }
 }

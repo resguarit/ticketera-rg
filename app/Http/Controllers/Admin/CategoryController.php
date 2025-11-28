@@ -1,15 +1,14 @@
 <?php
-
 // filepath: app/Http/Controllers/Admin/CategoryController.php
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class CategoryController extends Controller
 {
@@ -18,16 +17,16 @@ class CategoryController extends Controller
         $categories = Category::withCount('events')->get();
 
         return Inertia::render('admin/categories/index', [
-            'categories' => $categories,
+            'categories' => $categories
         ]);
-    } /* ---------------------------------------------------------------- */
+    } /*----------------------------------------------------------------*/
 
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories',
             'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:7',
+            'color' => 'nullable|string|max:7'
         ]);
 
         Category::create($request->only(['name', 'icon', 'color']));
@@ -38,9 +37,9 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,'.$category->id,
+            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
             'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:7',
+            'color' => 'nullable|string|max:7'
         ]);
 
         $category->update($request->only(['name', 'icon', 'color']));
@@ -64,7 +63,7 @@ class CategoryController extends Controller
     public function getForSelect()
     {
         $categories = Category::select('id', 'name', 'icon', 'color')->get();
-
+        
         return response()->json($categories);
     }
 }

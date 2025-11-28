@@ -5,9 +5,12 @@ namespace App\Services;
 use App\Jobs\SendOrderConfirmationJob;
 use App\Jobs\SendOrderTicketJob;
 use App\Jobs\SendTicketBatchJob;
+use App\Jobs\SendTicketEmailJob;
+use App\Models\Invitation;
 use App\Models\Order;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Support\Collection;
 
 class EmailDispatcherService
 {

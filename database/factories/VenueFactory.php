@@ -18,10 +18,10 @@ class VenueFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->company.' Hall',
+            'name' => $this->faker->company . ' Hall',
             'address' => $this->faker->streetAddress,
             'ciudad_id' => Ciudad::factory(),
-            'coordinates' => $this->faker->latitude.','.$this->faker->longitude,
+            'coordinates' => $this->faker->latitude . ',' . $this->faker->longitude,
             'banner_url' => null,
             'referring' => $this->faker->name,
         ];

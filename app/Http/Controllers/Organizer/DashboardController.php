@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Organizer;
 
-use App\Enums\EventFunctionStatus;
 use App\Http\Controllers\Controller;
 use App\Services\RevenueService;
-use Carbon\Carbon;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function __construct(private RevenueService $revenueService) {}
+    public function __construct(private RevenueService $revenueService)
+    {
+    }
 
     public function __invoke(Request $request): Response
     {
@@ -26,35 +28,35 @@ class DashboardController extends Controller
 
         // --- Estadísticas Generales (con filtro de período) ---
         $totalRevenue = $this->revenueService->forOrganizer($organizer, $dates['start'], $dates['end']);
-
+        
         // CORREGIDO: Calcular entradas vendidas y tickets emitidos por separado
         $totalEntradasVendidas = 0; // lotes + entradas individuales (sin multiplicar)
         $totalTicketsEmitidos = 0;  // tickets físicos reales emitidos
-
+        
         foreach ($organizer->events as $event) {
             foreach ($event->functions as $function) {
                 foreach ($function->ticketTypes as $ticketType) {
                     // Obtener cantidad vendida en el período
                     $vendidos = $ticketType->issuedTickets()
-                        ->whereHas('order', function ($q) use ($dates) {
+                        ->whereHas('order', function($q) use ($dates) {
                             $q->where('status', \App\Enums\OrderStatus::PAID)
-                                ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                              ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                         })
                         ->count();
-
+                    
                     if ($ticketType->is_bundle) {
                         // Para bundles: contar órdenes únicas (lotes vendidos)
                         $lotesVendidos = $ticketType->issuedTickets()
-                            ->whereHas('order', function ($q) use ($dates) {
+                            ->whereHas('order', function($q) use ($dates) {
                                 $q->where('status', \App\Enums\OrderStatus::PAID)
-                                    ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                  ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                             })
                             ->distinct('order_id')
                             ->count('order_id');
-
+                        
                         // Entradas vendidas: contar solo los lotes
                         $totalEntradasVendidas += $lotesVendidos;
-
+                        
                         // Tickets emitidos: multiplicar lotes por bundle_quantity
                         $totalTicketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                     } else {
@@ -65,11 +67,11 @@ class DashboardController extends Controller
                 }
             }
         }
-
+        
         $activeEventsCount = $organizer->events()
             ->whereHas('functions', function ($query) {
                 $query->where('start_time', '>=', Carbon::now())
-                    ->where('is_active', true);
+                      ->where('is_active', true);
             })->count();
 
         $totalEventsCount = $organizer->events()->count();
@@ -80,45 +82,45 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function ($event) use ($dates) {
+            ->map(function($event) use ($dates) {
                 // CORREGIDO: Calcular entradas vendidas y tickets emitidos por evento
                 $entradasVendidas = 0;   // Para la barra de progreso
                 $ticketsEmitidos = 0;    // Para mostrar información adicional
                 $totalEntradas = 0;      // Para la barra de progreso (total de lotes + individuales)
                 $totalTickets = 0;       // Total de tickets físicos disponibles
-
+                
                 foreach ($event->functions as $function) {
                     foreach ($function->ticketTypes as $ticketType) {
                         $quantity = (int) $ticketType->quantity;
-
+                        
                         if ($ticketType->is_bundle) {
                             // Para bundles: contar órdenes únicas
                             $lotesVendidos = $ticketType->issuedTickets()
-                                ->whereHas('order', function ($q) use ($dates) {
+                                ->whereHas('order', function($q) use ($dates) {
                                     $q->where('status', \App\Enums\OrderStatus::PAID)
-                                        ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                                 })
                                 ->distinct('order_id')
                                 ->count('order_id');
-
+                            
                             $bundleQuantity = $ticketType->bundle_quantity ?? 1;
-
+                            
                             // Entradas: solo lotes
                             $entradasVendidas += $lotesVendidos;
                             $totalEntradas += $quantity;
-
+                            
                             // Tickets: lotes × bundle_quantity
                             $ticketsEmitidos += $lotesVendidos * $bundleQuantity;
                             $totalTickets += $quantity * $bundleQuantity;
                         } else {
                             // Para individuales
                             $vendidos = $ticketType->issuedTickets()
-                                ->whereHas('order', function ($q) use ($dates) {
+                                ->whereHas('order', function($q) use ($dates) {
                                     $q->where('status', \App\Enums\OrderStatus::PAID)
-                                        ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                                 })
                                 ->count();
-
+                            
                             $entradasVendidas += $vendidos;
                             $totalEntradas += $quantity;
                             $ticketsEmitidos += $vendidos;
@@ -129,7 +131,7 @@ class DashboardController extends Controller
 
                 // Determinar estado del evento
                 $statusInfo = $this->determineEventStatus($event);
-
+                
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
@@ -148,7 +150,7 @@ class DashboardController extends Controller
 
         // --- Eventos con mejor rendimiento (por ingresos) con estado ---
         $topEvents = $organizer->events
-            ->map(function ($event) use ($dates) {
+            ->map(function($event) use ($dates) {
                 // CORREGIDO: Usar el cálculo correcto para tickets
                 $ticketsEmitidos = 0;
                 foreach ($event->functions as $function) {
@@ -156,22 +158,22 @@ class DashboardController extends Controller
                         if ($ticketType->is_bundle) {
                             // Para bundles: contar órdenes únicas
                             $lotesVendidos = $ticketType->issuedTickets()
-                                ->whereHas('order', function ($q) use ($dates) {
+                                ->whereHas('order', function($q) use ($dates) {
                                     $q->where('status', \App\Enums\OrderStatus::PAID)
-                                        ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                                 })
                                 ->distinct('order_id')
                                 ->count('order_id');
-
+                            
                             $ticketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                         } else {
                             $vendidos = $ticketType->issuedTickets()
-                                ->whereHas('order', function ($q) use ($dates) {
+                                ->whereHas('order', function($q) use ($dates) {
                                     $q->where('status', \App\Enums\OrderStatus::PAID)
-                                        ->whereBetween('order_date', [$dates['start'], $dates['end']]);
+                                      ->whereBetween('order_date', [$dates['start'], $dates['end']]);
                                 })
                                 ->count();
-
+                            
                             $ticketsEmitidos += $vendidos;
                         }
                     }
@@ -179,7 +181,7 @@ class DashboardController extends Controller
 
                 // Determinar estado del evento
                 $statusInfo = $this->determineEventStatus($event);
-
+                
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
@@ -194,7 +196,7 @@ class DashboardController extends Controller
             ->sortByDesc('revenue')
             ->take(5)
             ->values();
-
+            
         // --- Datos para gráfico de ingresos ---
         $chartDays = $this->getChartDays($period);
         $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, $chartDays);
@@ -214,15 +216,15 @@ class DashboardController extends Controller
             'currentPeriod' => $period,
         ]);
     }
-
+    
     /**
      * Obtiene las fechas de inicio y fin según el período seleccionado
      */
     private function getPeriodDates(string $period): array
     {
         $end = Carbon::now()->endOfDay();
-
-        $start = match ($period) {
+        
+        $start = match($period) {
             'today' => Carbon::now()->startOfDay(),
             'week' => Carbon::now()->subWeek()->startOfDay(),
             'month' => Carbon::now()->subMonth()->startOfDay(),
@@ -232,16 +234,16 @@ class DashboardController extends Controller
             'all' => Carbon::create(1970, 1, 1)->startOfDay(), // Fecha muy antigua para obtener todo el historial
             default => Carbon::now()->subYear()->startOfDay(),
         };
-
+        
         return ['start' => $start, 'end' => $end];
     }
-
+    
     /**
      * Obtiene la cantidad de días a mostrar en el gráfico según el período
      */
     private function getChartDays(string $period): int
     {
-        return match ($period) {
+        return match($period) {
             'today' => 1,
             'week' => 7,
             'month' => 30,
@@ -252,7 +254,7 @@ class DashboardController extends Controller
             default => 365,
         };
     }
-
+    
     /**
      * Determina el estado de un evento basado en sus funciones
      */
@@ -279,15 +281,15 @@ class DashboardController extends Controller
         ];
 
         $primaryFunction = $event->functions
-            ->filter(fn ($f) => $f->is_active)
-            ->sortBy(function ($function) use ($priorityOrder) {
+            ->filter(fn($f) => $f->is_active)
+            ->sortBy(function($function) use ($priorityOrder) {
                 return $priorityOrder[$function->status->value] ?? 999;
             })
             ->first();
 
-        if (! $primaryFunction) {
+        if (!$primaryFunction) {
             $primaryFunction = $event->functions
-                ->sortBy(function ($function) use ($priorityOrder) {
+                ->sortBy(function($function) use ($priorityOrder) {
                     return $priorityOrder[$function->status->value] ?? 999;
                 })
                 ->first();
@@ -302,7 +304,7 @@ class DashboardController extends Controller
             'is_active' => $hasAnyActiveFunction,
         ];
     }
-
+    
     public function helpGuide(): Response
     {
         return Inertia::render('organizer/help-guide');

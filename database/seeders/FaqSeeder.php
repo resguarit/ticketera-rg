@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Faq;
-use App\Models\FaqCategory;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\FaqCategory;
+use App\Models\Faq;
 
 class FaqSeeder extends Seeder
 {

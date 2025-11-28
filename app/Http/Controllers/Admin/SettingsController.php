@@ -44,9 +44,9 @@ class SettingsController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-
+            
             return response()->json([
-                'message' => 'Error al guardar las configuraciones: '.$e->getMessage(),
+                'message' => 'Error al guardar las configuraciones: ' . $e->getMessage(),
                 'success' => false,
             ], 500);
         }
@@ -65,7 +65,7 @@ class SettingsController extends Controller
             ],
         ];
 
-        return $keyMappings[$group][$key] ?? $group.'_'.$key;
+        return $keyMappings[$group][$key] ?? $group . '_' . $key;
     }
 
     public function backupDatabase()
@@ -80,7 +80,7 @@ class SettingsController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error al iniciar el backup: '.$e->getMessage(),
+                'message' => 'Error al iniciar el backup: ' . $e->getMessage(),
                 'success' => false,
             ], 500);
         }

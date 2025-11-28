@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table('ticket_types', function (Blueprint $table) {
             $table->string('stage_group')->nullable()->after('name');
             $table->integer('stage_order')->nullable()->after('stage_group');
-
+            
             // Índice para búsquedas eficientes
             $table->index(['event_function_id', 'stage_group', 'stage_order']);
         });

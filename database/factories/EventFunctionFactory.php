@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\EventFunctionStatus;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Event; // Importar Modelo
-use Illuminate\Database\Eloquent\Factories\Factory; // Importar Enum
+use App\Enums\EventFunctionStatus; // Importar Enum
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\EventFunction>

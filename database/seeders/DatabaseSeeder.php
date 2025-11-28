@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
+use App\Models\Person;
 
 class DatabaseSeeder extends Seeder
 {
@@ -39,10 +39,10 @@ class DatabaseSeeder extends Seeder
                 CategorySeeder::class,
                 VenueSeeder::class,
                 SectorSeeder::class,
-                // OrganizerSeeder::class,
-                // EventSeeder::class,
-                // EventFunctionSeeder::class,
-                // TicketTypeSeeder::class,
+                //OrganizerSeeder::class,
+                //EventSeeder::class,
+                //EventFunctionSeeder::class,
+                //TicketTypeSeeder::class,
                 FaqCategorySeeder::class, // <-- AÑADIR ESTA LÍNEA
                 FaqSeeder::class,         // <-- AÑADIR ESTA LÍNEA
             ]);

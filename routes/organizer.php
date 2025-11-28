@@ -1,18 +1,23 @@
 <?php
 
+use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
+use App\Http\Controllers\Organizer\CategoryController;
+use App\Http\Controllers\Organizer\VenueController;
+use App\Http\Controllers\Organizer\SectorController;
+use App\Http\Controllers\Organizer\EventController;
+use App\Http\Controllers\Organizer\TicketTypeController;
+use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
 use App\Http\Controllers\Organizer\AssistantController;
 use App\Http\Controllers\Organizer\AttendeeInvitationController;
-use App\Http\Controllers\Organizer\DashboardController as OrganizerDashboardController;
-use App\Http\Controllers\Organizer\EventController; // <-- ADD THIS
-use App\Http\Controllers\Organizer\EventFunctionController;
 use App\Http\Controllers\Organizer\OrganizerUserController;
-use App\Http\Controllers\Organizer\TicketTypeController;
 use Illuminate\Support\Facades\Route;
+
+use function Pest\Laravel\get;
 
 Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
 
-    Route::prefix('events')->name('events.')->group(function () {
+    Route::prefix('events')->name('events.')->group(function () { 
         Route::get('/', [EventController::class, 'index'])->name('index');
         Route::get('/create', [EventController::class, 'create'])->name('create');
         Route::post('/', [EventController::class, 'store'])->name('store');
@@ -22,7 +27,7 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
         Route::get('/attendees/{event}', [AssistantController::class, 'index'])->name('attendees');
-
+        
         // Rutas para gestión de asistentes
         Route::prefix('{event}/attendees')->name('attendees.')->group(function () {
             Route::get('/invite', [AttendeeInvitationController::class, 'create'])->name('invite');
@@ -39,6 +44,7 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::resource('{event}/functions', EventFunctionController::class)
             ->except(['show', 'index'])
             ->names('functions');
+
 
         // Rutas para Tipos de Entrada (TicketType) anidadas
         Route::prefix('{event}/functions/{function}/ticket-types')->name('functions.ticket-types.')->group(function () {
@@ -72,7 +78,8 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
 
     });
 
-    // Ruta de guia de ayuda para organizadores
+    //Ruta de guia de ayuda para organizadores
     Route::get('/help-guide', [OrganizerDashboardController::class, 'helpGuide'])->name('helpGuide');
+    
 
 });

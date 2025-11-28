@@ -2,24 +2,29 @@
 
 namespace App\Jobs;
 
-use App\Mail\TicketsResend;
-use App\Models\Order;
-use App\Services\PdfService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\TicketsPurchased;
+use App\Mail\TicketsResend;
+use App\Models\Order;
+use App\Services\PdfService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SendOrderTicketJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public Order $order) {}
+    public function __construct(public Order $order)
+    {
+        
+    }
 
     /**
      * Execute the job.
@@ -33,8 +38,8 @@ class SendOrderTicketJob implements ShouldQueue
 
             $attachments[] = [
                 'content' => $ticketData['pdf']->output(),
-                'name' => $ticketData['filename'],
-                'mime' => 'application/pdf',
+                'name'    => $ticketData['filename'],
+                'mime'    => 'application/pdf',
             ];
         }
 

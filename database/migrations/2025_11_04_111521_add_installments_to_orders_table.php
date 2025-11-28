@@ -15,8 +15,8 @@ return new class extends Migration
             $table->integer('cuotas')->default(1)->after('status');
 
             $table->foreignId('cuota_id')->nullable()->after('cuotas')
-                ->constrained('cuotas')
-                ->onDelete('set null');
+                  ->constrained('cuotas')
+                  ->onDelete('set null');
         });
     }
 

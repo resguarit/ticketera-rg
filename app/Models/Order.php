@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Enums\OrderStatus;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\OrderStatus;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Order extends Model
 {
@@ -80,15 +80,16 @@ class Order extends Model
         return Attribute::make(
             get: function () {
                 // Carga la relación si aún no está cargada
-                if (! $this->relationLoaded('items.ticketType.eventFunction.event.organizer')) {
+                if (!$this->relationLoaded('items.ticketType.eventFunction.event.organizer')) {
                     $this->load('items.ticketType.eventFunction.event.organizer');
                 }
-
+                
                 // Devuelve el organizador del primer item
                 return $this->items->first()?->ticketType?->eventFunction?->event?->organizer;
             }
         );
     }
+
 
     // Accessors for calculated values
 
@@ -99,7 +100,6 @@ class Order extends Model
                 return $carry + ($item->ticketType->price ?? 0);
             }, 0);
         }
-
         return $value;
     }
 
@@ -109,10 +109,8 @@ class Order extends Model
             // El tax (como tasa decimal) se almacena en la orden al momento de la compra.
             $taxRate = $this->attributes['tax'] ?? 0;
             $subtotalWithDiscount = $this->subtotal * (1 - ($this->discount ?? 0));
-
             return $subtotalWithDiscount * $taxRate;
         }
-
         return $value;
     }
 
@@ -123,11 +121,10 @@ class Order extends Model
             $discountRate = $this->attributes['discount'] ?? $this->discountCode?->value ?? 0;
 
             $subtotalWithDiscount = $this->subtotal * (1 - $discountRate);
-
             // Llama al accesor de service_fee para obtener el valor calculado
             return $subtotalWithDiscount + $this->getServiceFeeAttribute(null);
         }
-
         return $value;
     }
+
 }

@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\EventFunctionStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\EventFunctionStatus;
 
 return new class extends Migration
 {
@@ -17,7 +17,7 @@ return new class extends Migration
                 ->default(EventFunctionStatus::UPCOMING->value)
                 ->after('is_active')
                 ->comment('Current status of the event function');
-
+            
             // Agregar índice para mejorar las consultas por status
             $table->index('status');
         });

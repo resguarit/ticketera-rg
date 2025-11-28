@@ -1,5 +1,4 @@
 <?php
-
 // filepath: database/migrations/2025_01_XX_000001_create_provincias_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -20,7 +19,7 @@ return new class extends Migration
             $table->string('country', 50)->default('Argentina');
             $table->timestamps();
             $table->softDeletes();
-
+            
             $table->unique(['name', 'country']);
         });
     }

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Services\RevenueService;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Services\RevenueService;
+use Carbon\Carbon;
 
 class TicketType extends Model
 {
@@ -100,9 +100,9 @@ class TicketType extends Model
     public function scopeInStageGroup($query, string $stageGroup, int $functionId)
     {
         return $query->where('event_function_id', $functionId)
-            ->where('stage_group', $stageGroup)
-            ->whereNotNull('stage_order')
-            ->orderBy('stage_order');
+                    ->where('stage_group', $stageGroup)
+                    ->whereNotNull('stage_order')
+                    ->orderBy('stage_order');
     }
 
     /**
@@ -110,7 +110,7 @@ class TicketType extends Model
      */
     public function isStaged(): bool
     {
-        return ! is_null($this->stage_group) && ! is_null($this->stage_order);
+        return !is_null($this->stage_group) && !is_null($this->stage_order);
     }
 
     /**
@@ -118,7 +118,7 @@ class TicketType extends Model
      */
     public function getNextStage(): ?TicketType
     {
-        if (! $this->isStaged()) {
+        if (!$this->isStaged()) {
             return null;
         }
 
@@ -133,12 +133,12 @@ class TicketType extends Model
     // Método para obtener tandas del mismo grupo
     public function getStageSiblings()
     {
-        if (! $this->stage_group) {
+        if (!$this->stage_group) {
             return collect([]);
         }
-
+        
         return TicketType::where('event_function_id', $this->event_function_id)
-            ->where('name', 'LIKE', $this->stage_group.' %')
+            ->where('name', 'LIKE', $this->stage_group . ' %')
             ->orderBy('name')
             ->get();
     }

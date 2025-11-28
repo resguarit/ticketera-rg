@@ -21,7 +21,7 @@ class ProfileUpdateRequest extends FormRequest
             'person.name' => ['required', 'string', 'max:255'],
             'person.last_name' => ['required', 'string', 'max:255'],
             'person.phone' => ['nullable', 'string', 'max:20'],
-            'person.dni' => ['required', 'string', 'max:255', 'unique:person,dni,'.$this->user()->person->id],
+            'person.dni' => ['required', 'string', 'max:255', 'unique:person,dni,' . $this->user()->person->id],
 
             'email' => [
                 'required',

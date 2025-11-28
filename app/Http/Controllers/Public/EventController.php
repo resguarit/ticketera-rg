@@ -1,17 +1,17 @@
 <?php
-
 // filepath: app/Http/Controllers/Public/EventController.php
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\EventFunctionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
+use App\Models\Event;
 use App\Models\Category;
 use App\Models\Ciudad;
-use App\Models\Event;
 use App\Services\TicketLockService;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,23 +32,23 @@ class EventController extends Controller
         // Filtros existentes...
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhereHas('venue', function ($venue) use ($search) {
-                        $venue->where('name', 'LIKE', "%{$search}%");
-                    });
+                  ->orWhereHas('venue', function($venue) use ($search) {
+                      $venue->where('name', 'LIKE', "%{$search}%");
+                  });
             });
         }
 
         if ($request->filled('category') && $request->get('category') !== 'all') {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('name', 'LIKE', '%'.$request->get('category').'%');
+            $query->whereHas('category', function($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->get('category') . '%');
             });
         }
 
         if ($request->filled('city') && $request->get('city') !== 'all') {
             $city = $request->get('city');
-            $query->whereHas('venue.ciudad', function ($q) use ($city) {
+            $query->whereHas('venue.ciudad', function($q) use ($city) {
                 $q->where('name', $city);
             });
         }
@@ -63,7 +63,7 @@ class EventController extends Controller
         }
 
         // Categorías para filtros
-        $categories = Category::all()->map(function ($category) {
+        $categories = Category::all()->map(function($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -76,7 +76,7 @@ class EventController extends Controller
 
         return Inertia::render('public/events', [
             'events' => EventResource::collection($events)->additional([
-                'with_ticket_info' => true,
+                'with_ticket_info' => true
             ]),
             'categories' => $categories,
             'cities' => $cities,
@@ -85,7 +85,7 @@ class EventController extends Controller
                 'category' => $request->get('category', 'all'),
                 'city' => $request->get('city', 'all'),
                 'sortBy' => $request->get('sortBy', 'date'),
-            ],
+            ]
         ]);
     }
 
@@ -101,11 +101,11 @@ class EventController extends Controller
 
         // Preparar funciones con sus tickets
         $functions = $event->functions
-            ->filter(function ($function) {
+            ->filter(function($function) {
                 // Solo mostrar funciones activas al público
                 return $function->is_active;
             })
-            ->map(function ($function) {
+            ->map(function($function) {
                 // Estados donde NO se deben mostrar tickets
                 $hideTicketsStates = [
                     EventFunctionStatus::CANCELLED->value,
@@ -114,7 +114,7 @@ class EventController extends Controller
                     EventFunctionStatus::INACTIVE->value,
                 ];
 
-                $shouldShowTickets = ! in_array($function->status->value, $hideTicketsStates);
+                $shouldShowTickets = !in_array($function->status->value, $hideTicketsStates);
 
                 return [
                     'id' => $function->id,
@@ -130,33 +130,33 @@ class EventController extends Controller
                     'status_label' => $function->status->label(),
                     'status_color' => $function->status->color(),
                     'should_show_tickets' => $shouldShowTickets,
-                    'ticketTypes' => $shouldShowTickets
+                    'ticketTypes' => $shouldShowTickets 
                         ? $function->ticketTypes
-                            ->filter(function ($ticket) {
+                            ->filter(function($ticket) {
                                 // NUEVO: Filtrar por fechas de venta además de is_hidden
                                 $now = now();
-
+                                
                                 // No mostrar tickets ocultos
                                 if ($ticket->is_hidden) {
                                     return false;
                                 }
-
+                                
                                 // No mostrar si la venta aún no ha comenzado
                                 if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
                                     return false;
                                 }
-
+                                
                                 // No mostrar si la venta ya ha finalizado
                                 if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
                                     return false;
                                 }
-
+                                
                                 return true;
                             })
-                            ->map(function ($ticket) {
+                            ->map(function($ticket) {
                                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
                                 $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-
+                                
                                 return [
                                     'id' => $ticket->id,
                                     'name' => $ticket->name,
@@ -185,11 +185,11 @@ class EventController extends Controller
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
-            'image_url' => $event->image_url ?: '/placeholder.svg?height=400&width=800',
+            'image_url' => $event->image_url ?: "/placeholder.svg?height=400&width=800",
             'hero_image_url' => $event->hero_image_url,
             'location' => $event->venue->name,
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'category' => strtolower($event->category->name),
@@ -209,7 +209,7 @@ class EventController extends Controller
         ];
 
         return Inertia::render('public/eventdetail', [
-            'eventData' => $eventData,
+            'eventData' => $eventData
         ]);
     }
 
@@ -217,8 +217,8 @@ class EventController extends Controller
     {
         $functionId = $request->get('function_id');
         $function = $event->functions()->with('ticketTypes')->find($functionId);
-
-        if (! $function) {
+        
+        if (!$function) {
             return response()->json(['error' => 'Function not found'], 404);
         }
 
@@ -226,30 +226,30 @@ class EventController extends Controller
         $function->updateStatus();
 
         $now = now();
-
+        
         $ticketTypes = $function->ticketTypes
-            ->filter(function ($ticket) use ($now) {
+            ->filter(function($ticket) use ($now) {
                 // NUEVO: Aplicar el mismo filtro de fechas de venta
                 if ($ticket->is_hidden) {
                     return false;
                 }
-
+                
                 // No mostrar si la venta aún no ha comenzado
                 if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
                     return false;
                 }
-
+                
                 // No mostrar si la venta ya ha finalizado
                 if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
                     return false;
                 }
-
+                
                 return true;
             })
-            ->map(function ($ticket) {
+            ->map(function($ticket) {
                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
                 $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-
+                
                 return [
                     'id' => $ticket->id,
                     'available' => $realAvailable,
@@ -264,7 +264,7 @@ class EventController extends Controller
                 'value' => $function->status->value,
                 'label' => $function->status->label(),
                 'color' => $function->status->color(),
-            ],
+            ]
         ]);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Venue;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Venue;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Sector>
