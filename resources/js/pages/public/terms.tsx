@@ -218,11 +218,21 @@ export default function Terms() {
                                 <CardTitle className="text-primary">9. Contacto y Atención al Usuario</CardTitle>
                             </CardHeader>
                             <CardContent className="text-foreground/80">
-                                <p className="mb-4">El Usuario podrá realizar consultas, reclamos o solicitudes de reembolso a través de los siguientes medios de contacto:</p>
+                                <p className="mb-2">El Usuario podrá realizar consultas, reclamos o solicitudes de reembolso a través de los siguientes medios de contacto:</p>
                                 <div className="space-y-2">
-                                    <p><strong>Email:</strong> *************</p>
-                                    <p><strong>Teléfono:</strong> *************</p>
-                                    <p><strong>Formulario de contacto en la Plataforma:</strong> LINK</p>
+                                    <p><strong>Email:</strong> soporte@rgentradas.com</p>
+                                    <p><strong>Teléfono:</strong>  +54 9 11 1234-5678</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="mb-0"><strong>Formulario de contacto en la Plataforma:</strong></p> 
+                                        <Link href={route('help')}>
+                                            <Button 
+                                                size="sm"
+                                                className="bg-primary hover:bg-primary-hover text-white"
+                                            >
+                                                Contactar
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
