@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\Event;
-use App\Models\Order;
-use App\Models\IssuedTicket;
-use App\Models\Category;
-use App\Models\Organizer;
-use App\Enums\UserRole;
 use App\Enums\OrderStatus;
+use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Event;
+use App\Models\IssuedTicket;
+use App\Models\Order;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +20,7 @@ class ReportPDFService
         $salesData = $this->getSalesData($startDate);
         $monthlyData = $this->getMonthlyData($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 10);
-        
+
         $data = [
             'title' => 'Reporte de Ventas',
             'period' => $this->getPeriodName($timeRange),
@@ -37,7 +36,7 @@ class ReportPDFService
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-        return $pdf->download('reporte-ventas-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('reporte-ventas-'.date('Y-m-d').'.pdf');
     }
 
     public function generateEventsReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
@@ -46,7 +45,7 @@ class ReportPDFService
         $categoryStats = $this->getCategoryStats($startDate);
         $venueStats = $this->getVenueStats($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 15);
-        
+
         $data = [
             'title' => 'Reporte de Eventos',
             'period' => $this->getPeriodName($timeRange),
@@ -63,7 +62,7 @@ class ReportPDFService
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-        return $pdf->download('reporte-eventos-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('reporte-eventos-'.date('Y-m-d').'.pdf');
     }
 
     public function generateFinancialReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
@@ -71,7 +70,7 @@ class ReportPDFService
         $financialData = $this->getFinancialAnalytics($startDate);
         $organizerStats = $this->getOrganizerStats($startDate);
         $paymentMethodStats = $this->getPaymentMethodStats($startDate);
-        
+
         $data = [
             'title' => 'Reporte Financiero',
             'period' => $this->getPeriodName($timeRange),
@@ -87,7 +86,7 @@ class ReportPDFService
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-        return $pdf->download('reporte-financiero-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('reporte-financiero-'.date('Y-m-d').'.pdf');
     }
 
     public function generateUsersReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
@@ -95,7 +94,7 @@ class ReportPDFService
         $userStats = $this->getUserStats($startDate);
         $registrationTrends = $this->getRegistrationTrends($startDate);
         $topBuyers = $this->getTopBuyers($startDate);
-        
+
         $data = [
             'title' => 'Reporte de Usuarios',
             'period' => $this->getPeriodName($timeRange),
@@ -111,7 +110,7 @@ class ReportPDFService
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-        return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('reporte-usuarios-'.date('Y-m-d').'.pdf');
     }
 
     public function generateCompleteReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
@@ -125,7 +124,7 @@ class ReportPDFService
         $venueStats = $this->getVenueStats($startDate);
         $financialData = $this->getFinancialAnalytics($startDate);
         $userStats = $this->getUserStats($startDate);
-        
+
         $data = [
             'title' => 'Reporte Completo de la Plataforma',
             'period' => $this->getPeriodName($timeRange),
@@ -146,7 +145,7 @@ class ReportPDFService
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-        return $pdf->download('reporte-completo-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('reporte-completo-'.date('Y-m-d').'.pdf');
     }
 
     // Métodos privados para obtener datos
@@ -156,9 +155,9 @@ class ReportPDFService
             ->where('created_at', '>=', $startDate)
             ->sum('total_amount');
 
-        $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
+        $totalTickets = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
-                  ->where('created_at', '>=', $startDate);
+                ->where('created_at', '>=', $startDate);
         })->count();
 
         $totalOrders = Order::where('status', OrderStatus::PAID)
@@ -180,27 +179,27 @@ class ReportPDFService
     {
         $months = [];
         $current = $startDate->copy()->startOfMonth();
-        
+
         while ($current <= Carbon::now()->endOfMonth()) {
             $monthRevenue = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
+                    $current->copy()->endOfMonth(),
                 ])
                 ->sum('total_amount');
 
-            $monthTickets = IssuedTicket::whereHas('order', function($query) use ($current) {
+            $monthTickets = IssuedTicket::whereHas('order', function ($query) use ($current) {
                 $query->where('status', OrderStatus::PAID)
-                      ->whereBetween('created_at', [
-                          $current->copy()->startOfMonth(),
-                          $current->copy()->endOfMonth()
-                      ]);
+                    ->whereBetween('created_at', [
+                        $current->copy()->startOfMonth(),
+                        $current->copy()->endOfMonth(),
+                    ]);
             })->count();
 
             $monthOrders = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
+                    $current->copy()->endOfMonth(),
                 ])
                 ->count();
 
@@ -224,10 +223,10 @@ class ReportPDFService
             ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
             ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
             ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
+            ->leftJoin('orders', function ($join) use ($startDate) {
                 $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate);
             })
             ->whereNotNull('orders.id')
             ->groupBy('events.id')
@@ -268,11 +267,11 @@ class ReportPDFService
     private function getEventsAnalytics(Carbon $startDate): array
     {
         $totalEvents = Event::where('created_at', '>=', $startDate)->count();
-        $activeEvents = Event::whereHas('functions', function($query) {
+        $activeEvents = Event::whereHas('functions', function ($query) {
             $query->where('start_time', '>', Carbon::now());
         })->count();
 
-        $completedEvents = Event::whereHas('functions', function($query) {
+        $completedEvents = Event::whereHas('functions', function ($query) {
             $query->where('start_time', '<', Carbon::now());
         })->count();
 
@@ -314,7 +313,7 @@ class ReportPDFService
                     'eventsCount' => $eventsCount,
                 ];
             })
-            ->filter(function($item) {
+            ->filter(function ($item) {
                 return $item['revenue'] > 0 || $item['eventsCount'] > 0;
             })
             ->sortByDesc('revenue')
@@ -329,17 +328,17 @@ class ReportPDFService
                 'venues.name',
                 'ciudades.name as city',
                 DB::raw('COUNT(DISTINCT events.id) as events_count'),
-                DB::raw('COALESCE(SUM(ticket_types.price), 0) as total_revenue')
+                DB::raw('COALESCE(SUM(ticket_types.price), 0) as total_revenue'),
             ])
             ->leftJoin('events', 'venues.id', '=', 'events.venue_id')
             ->leftJoin('ciudades', 'venues.ciudad_id', '=', 'ciudades.id')
             ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
             ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
             ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
+            ->leftJoin('orders', function ($join) use ($startDate) {
                 $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate);
             })
             ->where('events.created_at', '>=', $startDate)
             ->groupBy('venues.id', 'venues.name', 'ciudades.name')
@@ -378,16 +377,16 @@ class ReportPDFService
                 'organizers.business_name',
                 DB::raw('COUNT(DISTINCT events.id) as events_count'),
                 DB::raw('COALESCE(SUM(ticket_types.price), 0) as total_revenue'),
-                DB::raw('COUNT(issued_tickets.id) as tickets_sold')
+                DB::raw('COUNT(issued_tickets.id) as tickets_sold'),
             ])
             ->leftJoin('events', 'organizers.id', '=', 'events.organizer_id')
             ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
             ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
             ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
+            ->leftJoin('orders', function ($join) use ($startDate) {
                 $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate);
             })
             ->groupBy('organizers.id', 'organizers.name', 'organizers.business_name')
             ->having('total_revenue', '>', 0)
@@ -405,7 +404,7 @@ class ReportPDFService
             ->select([
                 'payment_method',
                 DB::raw('COUNT(*) as orders_count'),
-                DB::raw('SUM(total_amount) as total_revenue')
+                DB::raw('SUM(total_amount) as total_revenue'),
             ])
             ->orderBy('total_revenue', 'DESC')
             ->get()
@@ -418,7 +417,7 @@ class ReportPDFService
         $newUsers = User::where('role', UserRole::CLIENT)
             ->where('created_at', '>=', $startDate)
             ->count();
-        
+
         $activeUsers = User::where('role', UserRole::CLIENT)
             ->whereNotNull('email_verified_at')
             ->count();
@@ -439,19 +438,19 @@ class ReportPDFService
     {
         $trends = [];
         $current = $startDate->copy()->startOfMonth();
-        
+
         while ($current <= Carbon::now()->endOfMonth()) {
             $registrations = User::where('role', UserRole::CLIENT)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
+                    $current->copy()->endOfMonth(),
                 ])
                 ->count();
 
             $firstOrders = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
+                    $current->copy()->endOfMonth(),
                 ])
                 ->whereRaw('(SELECT COUNT(*) FROM orders o2 WHERE o2.client_id = orders.client_id AND o2.status = "PAID" AND o2.created_at < orders.created_at) = 0')
                 ->count();
@@ -472,24 +471,24 @@ class ReportPDFService
     {
         return User::with('person')
             ->where('role', UserRole::CLIENT)
-            ->whereHas('orders', function($query) use ($startDate) {
+            ->whereHas('orders', function ($query) use ($startDate) {
                 $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
+                    ->where('created_at', '>=', $startDate);
             })
-            ->withCount(['orders' => function($query) use ($startDate) {
+            ->withCount(['orders' => function ($query) use ($startDate) {
                 $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
+                    ->where('created_at', '>=', $startDate);
             }])
-            ->withSum(['orders' => function($query) use ($startDate) {
+            ->withSum(['orders' => function ($query) use ($startDate) {
                 $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
+                    ->where('created_at', '>=', $startDate);
             }], 'total_amount')
             ->orderBy('orders_sum_total_amount', 'desc')
             ->limit(15)
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 return [
-                    'name' => $user->person ? $user->person->name . ' ' . $user->person->last_name : 'Sin nombre',
+                    'name' => $user->person ? $user->person->name.' '.$user->person->last_name : 'Sin nombre',
                     'email' => $user->email,
                     'total_orders' => $user->orders_count,
                     'total_spent' => $user->orders_sum_total_amount ?? 0,
@@ -502,7 +501,7 @@ class ReportPDFService
 
     private function getPeriodName(string $timeRange): string
     {
-        return match($timeRange) {
+        return match ($timeRange) {
             '1m' => 'Último mes',
             '3m' => 'Últimos 3 meses',
             '6m' => 'Últimos 6 meses',

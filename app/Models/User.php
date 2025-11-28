@@ -57,7 +57,7 @@ class User extends Authenticatable
 
     public function name(): string
     {
-        return $this->person->name . ' ' . $this->person->last_name;
+        return $this->person->name.' '.$this->person->last_name;
     }
 
     public function person(): BelongsTo

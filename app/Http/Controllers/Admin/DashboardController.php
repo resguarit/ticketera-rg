@@ -2,26 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\EventFunctionStatus;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Event;
 use App\Models\Order;
-use App\Models\IssuedTicket;
+use App\Models\User;
 use App\Services\RevenueService;
-use App\Enums\EventFunctionStatus;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
-    public function __construct(private RevenueService $revenueService)
-    {
-    }
+    public function __construct(private RevenueService $revenueService) {}
 
     public function __invoke(Request $request): Response
     {
@@ -30,16 +26,16 @@ class DashboardController extends Controller
         $startDate = $this->getStartDate($timeRange);
         // Estadísticas principales
         $stats = $this->getDashboardStats($startDate);
-        
+
         // Eventos recientes
         $recentEvents = $this->getRecentEvents();
-        
+
         // Usuarios recientes
         $recentUsers = $this->getRecentUsers();
-        
+
         // Alertas del sistema
         $systemAlerts = $this->getSystemAlerts();
-        
+
         // Estado del sistema
         $systemStatus = $this->getSystemStatus();
 
@@ -49,13 +45,13 @@ class DashboardController extends Controller
             'recentUsers' => $recentUsers,
             'systemAlerts' => $systemAlerts,
             'systemStatus' => $systemStatus,
-            'timeRange' => $timeRange
+            'timeRange' => $timeRange,
         ]);
     }
 
     private function getStartDate(string $timeRange): Carbon
     {
-        return match($timeRange) {
+        return match ($timeRange) {
             '1d' => Carbon::now()->subDay(),
             '7d' => Carbon::now()->subWeek(),
             '30d' => Carbon::now()->subMonth(),
@@ -72,28 +68,28 @@ class DashboardController extends Controller
             ->where('created_at', '<', $startDate)
             ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
             ->count();
-        
-        $userGrowth = $previousPeriodUsers > 0 
+
+        $userGrowth = $previousPeriodUsers > 0
             ? round((($newUsersThisPeriod - $previousPeriodUsers) / $previousPeriodUsers) * 100)
             : 0;
 
         // Eventos activos (usando el nuevo enum status y is_active)
-        $activeEvents = Event::whereHas('functions', function($query) {
+        $activeEvents = Event::whereHas('functions', function ($query) {
             $query->whereIn('status', [
                 EventFunctionStatus::ON_SALE->value,
                 EventFunctionStatus::UPCOMING->value,
             ])
-            ->where('is_active', true)
-            ->where('start_time', '>=', Carbon::now());
+                ->where('is_active', true)
+                ->where('start_time', '>=', Carbon::now());
         })->count();
-        
+
         $newEventsThisPeriod = Event::where('created_at', '>=', $startDate)->count();
-        
+
         // Ingresos totales
         $totalRevenue = $this->revenueService->forPlatform($startDate, Carbon::now());
         $previousRevenue = $this->revenueService->forPlatform($startDate->copy()->subDays($startDate->diffInDays(Carbon::now())), $startDate);
 
-        $revenueGrowth = $previousRevenue > 0 
+        $revenueGrowth = $previousRevenue > 0
             ? round((($totalRevenue - $previousRevenue) / $previousRevenue) * 100)
             : 0;
 
@@ -103,31 +99,31 @@ class DashboardController extends Controller
             [
                 'title' => 'Total Clientes',
                 'value' => number_format($totalUsers),
-                'change' => ($userGrowth >= 0 ? '+' : '') . $userGrowth . '%',
+                'change' => ($userGrowth >= 0 ? '+' : '').$userGrowth.'%',
                 'changeType' => $userGrowth >= 0 ? 'positive' : 'negative',
-                'description' => 'Clientes registrados en el periodo'
+                'description' => 'Clientes registrados en el periodo',
             ],
             [
                 'title' => 'Eventos Activos',
                 'value' => number_format($activeEvents),
-                'change' => '+' . $newEventsThisPeriod,
+                'change' => '+'.$newEventsThisPeriod,
                 'changeType' => 'positive',
-                'description' => 'Eventos activos y programados'
+                'description' => 'Eventos activos y programados',
             ],
             [
                 'title' => 'Ingresos Totales',
                 'value' => number_format($totalRevenue, 2),
-                'change' => ($revenueGrowth >= 0 ? '+' : '') . $revenueGrowth . '%',
+                'change' => ($revenueGrowth >= 0 ? '+' : '').$revenueGrowth.'%',
                 'changeType' => $revenueGrowth >= 0 ? 'positive' : 'negative',
-                'description' => 'Ingresos en el periodo'
+                'description' => 'Ingresos en el periodo',
             ],
             [
                 'title' => 'Tickets Vendidos',
                 'value' => number_format($ticketsSold),
-                'change' => '+' . $ticketsSold,
+                'change' => '+'.$ticketsSold,
                 'changeType' => 'positive',
-                'description' => 'Tickets vendidos en el periodo'
-            ]
+                'description' => 'Tickets vendidos en el periodo',
+            ],
         ];
     }
 
@@ -139,10 +135,10 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($event) {
                 $function = $event->functions->first();
-                $totalTickets = $event->functions->sum(function($func) {
+                $totalTickets = $event->functions->sum(function ($func) {
                     return $func->ticketTypes->sum('quantity');
                 });
-                $soldTickets = $event->functions->sum(function($func) {
+                $soldTickets = $event->functions->sum(function ($func) {
                     return $func->ticketTypes->sum('quantity_sold');
                 });
                 $revenue = $event->getRevenue();
@@ -164,7 +160,7 @@ class DashboardController extends Controller
                     'revenue' => $revenue,
                     'venue' => $event->venue->name ?? 'Sin venue',
                     'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
                         $event->venue->ciudad->provincia->name : null,
                 ];
             })->toArray();
@@ -197,7 +193,7 @@ class DashboardController extends Controller
                     'joined' => $user->created_at->toDateString(),
                     'status' => $user->email_verified_at ? 'active' : 'pending',
                     'purchases' => $purchases,
-                    'events_created' => $eventsCreated
+                    'events_created' => $eventsCreated,
                 ];
             })->toArray();
     }
@@ -205,7 +201,7 @@ class DashboardController extends Controller
     private function getSystemAlerts(): array
     {
         $alerts = [];
-        
+
         // Verificar alto tráfico (ejemplo)
         $recentOrders = Order::where('created_at', '>=', Carbon::now()->subHour())->count();
         if ($recentOrders > 50) {
@@ -214,19 +210,19 @@ class DashboardController extends Controller
                 'type' => 'warning',
                 'title' => 'Alto tráfico detectado',
                 'message' => "Se han procesado {$recentOrders} órdenes en la última hora",
-                'time' => 'hace ' . Carbon::now()->diffInMinutes(Carbon::now()->subHour()) . ' min'
+                'time' => 'hace '.Carbon::now()->diffInMinutes(Carbon::now()->subHour()).' min',
             ];
         }
 
         // Verificar eventos próximos sin tickets
-        $eventsWithoutTickets = Event::whereHas('functions', function($query) {
+        $eventsWithoutTickets = Event::whereHas('functions', function ($query) {
             $query->where('start_time', '>=', Carbon::now())
-                  ->where('start_time', '<=', Carbon::now()->addDays(7))
-                  ->whereIn('status', [
-                      EventFunctionStatus::ON_SALE->value,
-                      EventFunctionStatus::UPCOMING->value,
-                  ])
-                  ->where('is_active', true);
+                ->where('start_time', '<=', Carbon::now()->addDays(7))
+                ->whereIn('status', [
+                    EventFunctionStatus::ON_SALE->value,
+                    EventFunctionStatus::UPCOMING->value,
+                ])
+                ->where('is_active', true);
         })->whereDoesntHave('functions.ticketTypes')->count();
 
         if ($eventsWithoutTickets > 0) {
@@ -235,14 +231,14 @@ class DashboardController extends Controller
                 'type' => 'warning',
                 'title' => 'Eventos sin tickets',
                 'message' => "{$eventsWithoutTickets} eventos próximos no tienen tickets configurados",
-                'time' => 'Verificación automática'
+                'time' => 'Verificación automática',
             ];
         }
 
         // Verificar eventos cancelados recientes
-        $recentCancelledEvents = Event::whereHas('functions', function($query) {
+        $recentCancelledEvents = Event::whereHas('functions', function ($query) {
             $query->where('status', EventFunctionStatus::CANCELLED->value)
-                  ->where('updated_at', '>=', Carbon::now()->subDay());
+                ->where('updated_at', '>=', Carbon::now()->subDay());
         })->count();
 
         if ($recentCancelledEvents > 0) {
@@ -251,15 +247,15 @@ class DashboardController extends Controller
                 'type' => 'error',
                 'title' => 'Eventos cancelados',
                 'message' => "{$recentCancelledEvents} eventos fueron cancelados en las últimas 24 horas",
-                'time' => 'Últimas 24 horas'
+                'time' => 'Últimas 24 horas',
             ];
         }
 
         // Verificar eventos agotados próximos
-        $upcomingSoldOut = Event::whereHas('functions', function($query) {
+        $upcomingSoldOut = Event::whereHas('functions', function ($query) {
             $query->where('status', EventFunctionStatus::SOLD_OUT->value)
-                  ->where('start_time', '>=', Carbon::now())
-                  ->where('start_time', '<=', Carbon::now()->addWeek());
+                ->where('start_time', '>=', Carbon::now())
+                ->where('start_time', '<=', Carbon::now()->addWeek());
         })->count();
 
         if ($upcomingSoldOut > 0) {
@@ -268,18 +264,18 @@ class DashboardController extends Controller
                 'type' => 'info',
                 'title' => 'Eventos agotados',
                 'message' => "{$upcomingSoldOut} eventos próximos están agotados",
-                'time' => 'Próxima semana'
+                'time' => 'Próxima semana',
             ];
         }
 
         // Verificar funciones inactivas con fechas futuras
-        $inactiveFutureFunctions = Event::whereHas('functions', function($query) {
+        $inactiveFutureFunctions = Event::whereHas('functions', function ($query) {
             $query->where('is_active', false)
-                  ->where('start_time', '>=', Carbon::now())
-                  ->whereIn('status', [
-                      EventFunctionStatus::ON_SALE->value,
-                      EventFunctionStatus::UPCOMING->value,
-                  ]);
+                ->where('start_time', '>=', Carbon::now())
+                ->whereIn('status', [
+                    EventFunctionStatus::ON_SALE->value,
+                    EventFunctionStatus::UPCOMING->value,
+                ]);
         })->count();
 
         if ($inactiveFutureFunctions > 0) {
@@ -288,7 +284,7 @@ class DashboardController extends Controller
                 'type' => 'warning',
                 'title' => 'Funciones inactivas',
                 'message' => "{$inactiveFutureFunctions} funciones futuras están marcadas como inactivas",
-                'time' => 'Verificación automática'
+                'time' => 'Verificación automática',
             ];
         }
 
@@ -304,11 +300,11 @@ class DashboardController extends Controller
             $dbStart = microtime(true);
             DB::connection()->getPdo();
             $dbTime = (microtime(true) - $dbStart) * 1000; // Convertir a ms
-            
+
             $dbStatus = 'operational';
             $dbLabel = 'Operativo';
-            $dbDetails = round($dbTime, 2) . 'ms';
-            
+            $dbDetails = round($dbTime, 2).'ms';
+
             if ($dbTime > 100) {
                 $dbStatus = 'slow';
                 $dbLabel = 'Lento';
@@ -327,7 +323,7 @@ class DashboardController extends Controller
             'name' => 'Base de Datos',
             'status' => $dbStatus,
             'label' => $dbLabel,
-            'details' => $dbDetails ?? null
+            'details' => $dbDetails ?? null,
         ];
 
         // 2. Estado del Cache
@@ -336,11 +332,11 @@ class DashboardController extends Controller
             Cache::put('health_check', true, 1);
             $cacheResult = Cache::get('health_check');
             $cacheTime = (microtime(true) - $cacheStart) * 1000;
-            
+
             $cacheStatus = $cacheResult ? 'operational' : 'down';
             $cacheLabel = $cacheResult ? 'Operativo' : 'Fallo';
-            $cacheDetails = $cacheResult ? round($cacheTime, 2) . 'ms' : 'Sin respuesta';
-            
+            $cacheDetails = $cacheResult ? round($cacheTime, 2).'ms' : 'Sin respuesta';
+
             if ($cacheTime > 50 && $cacheResult) {
                 $cacheStatus = 'slow';
                 $cacheLabel = 'Lento';
@@ -355,7 +351,7 @@ class DashboardController extends Controller
             'name' => 'Sistema de Cache',
             'status' => $cacheStatus,
             'label' => $cacheLabel,
-            'details' => $cacheDetails
+            'details' => $cacheDetails,
         ];
 
         // 3. Uso de Memoria
@@ -379,7 +375,7 @@ class DashboardController extends Controller
             'name' => 'Memoria PHP',
             'status' => $memoryStatus,
             'label' => $memoryLabel,
-            'details' => $this->formatBytes($memoryUsage) . ' / ' . $memoryLimit . ' (' . round($memoryPercent, 1) . '%)'
+            'details' => $this->formatBytes($memoryUsage).' / '.$memoryLimit.' ('.round($memoryPercent, 1).'%)',
         ];
 
         // 4. Espacio en Disco
@@ -402,7 +398,7 @@ class DashboardController extends Controller
             'name' => 'Espacio en Disco',
             'status' => $diskStatus,
             'label' => $diskLabel,
-            'details' => $this->formatBytes($diskFree) . ' libre (' . round(100 - $diskUsedPercent, 1) . '%)'
+            'details' => $this->formatBytes($diskFree).' libre ('.round(100 - $diskUsedPercent, 1).'%)',
         ];
 
         // 5. Cola de Trabajos (Jobs Queue)
@@ -415,7 +411,7 @@ class DashboardController extends Controller
             if ($failedJobs > 0) {
                 $queueStatus = 'slow';
                 $queueLabel = 'Atención';
-                $queueDetails = $failedJobs . ' trabajos fallidos';
+                $queueDetails = $failedJobs.' trabajos fallidos';
             }
             if ($failedJobs > 10) {
                 $queueStatus = 'down';
@@ -431,7 +427,7 @@ class DashboardController extends Controller
             'name' => 'Cola de Trabajos',
             'status' => $queueStatus,
             'label' => $queueLabel,
-            'details' => $queueDetails
+            'details' => $queueDetails,
         ];
 
         return $status;
@@ -463,16 +459,16 @@ class DashboardController extends Controller
         ];
 
         $primaryFunction = $event->functions
-            ->filter(fn($f) => $f->is_active) // Priorizar funciones activas
-            ->sortBy(function($function) use ($priorityOrder) {
+            ->filter(fn ($f) => $f->is_active) // Priorizar funciones activas
+            ->sortBy(function ($function) use ($priorityOrder) {
                 return $priorityOrder[$function->status->value] ?? 999;
             })
             ->first();
 
         // Si no hay funciones activas, tomar cualquier función
-        if (!$primaryFunction) {
+        if (! $primaryFunction) {
             $primaryFunction = $event->functions
-                ->sortBy(function($function) use ($priorityOrder) {
+                ->sortBy(function ($function) use ($priorityOrder) {
                     return $priorityOrder[$function->status->value] ?? 999;
                 })
                 ->first();
@@ -492,11 +488,11 @@ class DashboardController extends Controller
     {
         $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
         $size = preg_replace('/[^0-9\.]/', '', $size);
-        
+
         if ($unit) {
             return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
         }
-        
+
         return round($size);
     }
 
@@ -505,6 +501,6 @@ class DashboardController extends Controller
         $base = log($size, 1024);
         $suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-        return round(pow(1024, $base - floor($base)), $precision) . ' ' . $suffixes[floor($base)];
+        return round(pow(1024, $base - floor($base)), $precision).' '.$suffixes[floor($base)];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -23,7 +22,7 @@ class TicketsPurchased extends Mailable
     public function __construct(
         public Order $order,
         array $pdfAttachmentsData = []
-    ){
+    ) {
         $this->pdfAttachmentsData = $pdfAttachmentsData;
     }
 
@@ -34,9 +33,9 @@ class TicketsPurchased extends Mailable
     {
         // Get event name from the first ticket in the order
         $eventName = $this->order->items->first()?->ticketType?->eventFunction?->event?->name ?? 'Evento';
-        
+
         return new Envelope(
-            subject: 'Tus entradas para ' . $eventName,
+            subject: 'Tus entradas para '.$eventName,
         );
     }
 
@@ -64,6 +63,7 @@ class TicketsPurchased extends Mailable
                 $attachmentData['name']
             )->withMime($attachmentData['mime']);
         }
+
         return $attachments;
     }
 }

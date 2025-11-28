@@ -1,16 +1,16 @@
 <?php
+
 // filepath: app/Http/Controllers/User/TicketController.php
 
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\IssuedTicket;
-use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class TicketController extends Controller
 {
@@ -20,48 +20,48 @@ class TicketController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        
+
         // ACTUALIZADO: Obtener todos los tickets del usuario excluyendo los cancelados
         $tickets = IssuedTicket::with([
             'order',
             'ticketType.eventFunction.event.venue.ciudad.provincia',
             'ticketType.eventFunction.event.category',
-            'ticketType.eventFunction.event.organizer'
+            'ticketType.eventFunction.event.organizer',
         ])
-        ->where('client_id', $user->id)
-        ->where('status', '!=', 'cancelled') // Excluir tickets cancelados
-        ->get()
-        ->map(function ($ticket) {
-            $event = $ticket->ticketType->eventFunction->event;
-            $eventFunction = $ticket->ticketType->eventFunction;
-            
-            return [
-                'id' => $ticket->id,
-                'eventId' => $event->id,
-                'eventTitle' => $event->name,
-                'eventImage' => $event->image_url ?: "/placeholder.svg?height=200&width=300",
-                'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
-                'time' => $eventFunction->start_time?->format('H:i') ?? '',
-                'location' => $event->venue->name,
-                'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-                'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
-                    $event->venue->ciudad->provincia->name : null,
-                'full_address' => $event->venue->getFullAddressAttribute(),
-                'ticketType' => $ticket->ticketType->name,
-                'quantity' => 1, // Cada IssuedTicket es individual
-                'price' => $ticket->ticketType->price,
-                'total' => $ticket->ticketType->price,
-                'status' => $this->mapTicketStatus($ticket->status->value),
-                'qrCode' => $ticket->unique_code,
-                'purchaseDate' => $ticket->order->order_date->format('Y-m-d'),
-                'eventStartTime' => $eventFunction->start_time,
-                'eventEndTime' => $eventFunction->end_time,
-                'order' => [
-                    'id' => $ticket->order->id,
-                    'order_number' => $ticket->order->transaction_id,
-                ]
-            ];
-        });
+            ->where('client_id', $user->id)
+            ->where('status', '!=', 'cancelled') // Excluir tickets cancelados
+            ->get()
+            ->map(function ($ticket) {
+                $event = $ticket->ticketType->eventFunction->event;
+                $eventFunction = $ticket->ticketType->eventFunction;
+
+                return [
+                    'id' => $ticket->id,
+                    'eventId' => $event->id,
+                    'eventTitle' => $event->name,
+                    'eventImage' => $event->image_url ?: '/placeholder.svg?height=200&width=300',
+                    'date' => $eventFunction->start_time?->format('d M Y') ?? 'Fecha por confirmar',
+                    'time' => $eventFunction->start_time?->format('H:i') ?? '',
+                    'location' => $event->venue->name,
+                    'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
+                        $event->venue->ciudad->provincia->name : null,
+                    'full_address' => $event->venue->getFullAddressAttribute(),
+                    'ticketType' => $ticket->ticketType->name,
+                    'quantity' => 1, // Cada IssuedTicket es individual
+                    'price' => $ticket->ticketType->price,
+                    'total' => $ticket->ticketType->price,
+                    'status' => $this->mapTicketStatus($ticket->status->value),
+                    'qrCode' => $ticket->unique_code,
+                    'purchaseDate' => $ticket->order->order_date->format('Y-m-d'),
+                    'eventStartTime' => $eventFunction->start_time,
+                    'eventEndTime' => $eventFunction->end_time,
+                    'order' => [
+                        'id' => $ticket->order->id,
+                        'order_number' => $ticket->order->transaction_id,
+                    ],
+                ];
+            });
 
         // ACTUALIZADO: Separar tickets próximos y pasados basado en fecha/hora de finalización del evento Y estado del ticket
         $now = Carbon::now();
@@ -70,8 +70,8 @@ class TicketController extends Controller
             // 1. El evento aún no ha finalizado
             // 2. El ticket está disponible (no usado)
             $eventHasEnded = $this->hasEventEnded($ticket['eventStartTime'], $ticket['eventEndTime'], $now);
-            
-            return !$eventHasEnded && $ticket['status'] === 'available';
+
+            return ! $eventHasEnded && $ticket['status'] === 'available';
         })->values();
 
         $pastTickets = $tickets->filter(function ($ticket) use ($now) {
@@ -79,7 +79,7 @@ class TicketController extends Controller
             // 1. El evento ya finalizó, O
             // 2. El ticket fue usado (independientemente de la fecha)
             $eventHasEnded = $this->hasEventEnded($ticket['eventStartTime'], $ticket['eventEndTime'], $now);
-            
+
             return $eventHasEnded || $ticket['status'] === 'used';
         })->values();
 
@@ -109,20 +109,22 @@ class TicketController extends Controller
     private function hasEventEnded($startTime, $endTime, Carbon $now): bool
     {
         // Si no hay fecha de inicio, no podemos determinar si finalizó
-        if (!$startTime) {
+        if (! $startTime) {
             return false;
         }
 
         $startTime = Carbon::parse($startTime);
-        
+
         // Si hay fecha de finalización, usar esa
         if ($endTime) {
             $endTime = Carbon::parse($endTime);
+
             return $now->gt($endTime);
         }
-        
+
         // Si no hay fecha de finalización, asumir que dura 24 horas desde el inicio
         $assumedEndTime = $startTime->copy()->addHours(24);
+
         return $now->gt($assumedEndTime);
     }
 
@@ -160,10 +162,10 @@ class TicketController extends Controller
                 'date' => $ticket->ticketType->eventFunction->start_time?->format('d/m/Y H:i'),
                 'type' => $ticket->ticketType->name,
                 'venue' => $ticket->ticketType->eventFunction->event->venue->name,
-                'city' => $ticket->ticketType->eventFunction->event->venue->ciudad ? 
+                'city' => $ticket->ticketType->eventFunction->event->venue->ciudad ?
                     $ticket->ticketType->eventFunction->event->venue->ciudad->name : 'Sin ciudad',
                 'full_address' => $ticket->ticketType->eventFunction->event->venue->getFullAddressAttribute(),
-            ]
+            ],
         ]);
     }
 
@@ -185,7 +187,7 @@ class TicketController extends Controller
         // Por ahora solo retornamos respuesta
         // Implementar lógica de transferencia más adelante
         return response()->json([
-            'message' => 'Función de transferencia en desarrollo'
+            'message' => 'Función de transferencia en desarrollo',
         ]);
     }
 
@@ -194,7 +196,7 @@ class TicketController extends Controller
      */
     private function mapTicketStatus(string $status): string
     {
-        return match($status) {
+        return match ($status) {
             'available' => 'available',
             'used' => 'used',
             'cancelled' => 'cancelled',
@@ -202,5 +204,4 @@ class TicketController extends Controller
             default => 'available'
         };
     }
-
 }

@@ -1,12 +1,12 @@
 <?php
+
 // filepath: database/seeders/EventFunctionSeeder.php
 
 namespace Database\Seeders;
 
 use App\Models\EventFunction;
-use App\Models\Event;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class EventFunctionSeeder extends Seeder
 {
@@ -30,7 +30,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 9, 17, 4, 0),
                 'is_active' => true,
             ],
-            
+
             // Concierto Sinfónico de Primavera
             [
                 'event_id' => 2,
@@ -40,7 +40,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 9, 22, 22, 0),
                 'is_active' => true,
             ],
-            
+
             // Copa Mundial de Fútbol
             [
                 'event_id' => 3,
@@ -50,7 +50,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 9, 30, 18, 0),
                 'is_active' => true,
             ],
-            
+
             // Romeo y Julieta
             [
                 'event_id' => 4,
@@ -68,7 +68,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 10, 6, 23, 30),
                 'is_active' => true,
             ],
-            
+
             // Festival de Jazz
             [
                 'event_id' => 5,
@@ -86,7 +86,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 10, 13, 23, 0),
                 'is_active' => true,
             ],
-            
+
             // Campeonato de Tenis
             [
                 'event_id' => 6,
@@ -104,7 +104,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 11, 21, 19, 0),
                 'is_active' => true,
             ],
-            
+
             // Rock Nacional
             [
                 'event_id' => 7,
@@ -114,7 +114,7 @@ class EventFunctionSeeder extends Seeder
                 'end_time' => Carbon::create(2025, 12, 29, 2, 0),
                 'is_active' => true,
             ],
-            
+
             // Tech Conference
             [
                 'event_id' => 8,

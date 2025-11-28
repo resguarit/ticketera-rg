@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Sector;
 use App\Models\Venue;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class SectorController extends Controller
 {
@@ -37,7 +37,7 @@ class SectorController extends Controller
 
         // Eliminar sectores que ya no vienen en la petición
         $sectorsToDelete = array_diff($existingSectorIds, $incomingSectorIds);
-        if (!empty($sectorsToDelete)) {
+        if (! empty($sectorsToDelete)) {
             Sector::destroy($sectorsToDelete);
         }
 

@@ -37,9 +37,9 @@ class StoreOrganizerRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'facebook_url' => $this->facebook_url ? 'https://www.facebook.com/' . $this->facebook_url : null,
-            'instagram_url' => $this->instagram_url ? 'https://www.instagram.com/' . $this->instagram_url : null,
-            'twitter_url' => $this->twitter_url ? 'https://x.com/' . $this->twitter_url : null,
+            'facebook_url' => $this->facebook_url ? 'https://www.facebook.com/'.$this->facebook_url : null,
+            'instagram_url' => $this->instagram_url ? 'https://www.instagram.com/'.$this->instagram_url : null,
+            'twitter_url' => $this->twitter_url ? 'https://x.com/'.$this->twitter_url : null,
         ]);
     }
 }

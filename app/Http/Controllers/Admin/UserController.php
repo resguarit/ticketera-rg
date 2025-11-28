@@ -1,21 +1,22 @@
 <?php
+
 // filepath: app/Http/Controllers/Admin/UserController.php
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Person;
-use App\Models\Order;
 use App\Enums\UserRole;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Person;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -33,13 +34,13 @@ class UserController extends Controller
 
         // Aplicar filtros de búsqueda
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
-                  ->orWhereHas('person', function($pq) use ($search) {
-                      $pq->where('name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('dni', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('person', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('dni', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -59,23 +60,23 @@ class UserController extends Controller
         switch ($sortBy) {
             case 'name':
                 $query->leftJoin('person', 'users.person_id', '=', 'person.id')
-                      ->orderBy('person.name', $sortDirection)
-                      ->select('users.*');
+                    ->orderBy('person.name', $sortDirection)
+                    ->select('users.*');
                 break;
             case 'email':
                 $query->orderBy('email', $sortDirection);
                 break;
             case 'purchases':
-                $query->withCount(['orders' => function($q) {
+                $query->withCount(['orders' => function ($q) {
                     $q->where('status', 'PAID');
                 }])
-                ->orderBy('orders_count', $sortDirection);
+                    ->orderBy('orders_count', $sortDirection);
                 break;
             case 'spent':
-                $query->withSum(['orders' => function($q) {
+                $query->withSum(['orders' => function ($q) {
                     $q->where('status', 'PAID');
                 }], 'total_amount')
-                ->orderBy('orders_sum_total_amount', $sortDirection);
+                    ->orderBy('orders_sum_total_amount', $sortDirection);
                 break;
             default:
                 $query->orderBy('created_at', $sortDirection);
@@ -90,7 +91,7 @@ class UserController extends Controller
             $totalPurchases = Order::where('client_id', $user->id)
                 ->where('status', 'PAID')
                 ->count();
-            
+
             $totalSpent = Order::where('client_id', $user->id)
                 ->where('status', 'PAID')
                 ->sum('total_amount');
@@ -148,7 +149,7 @@ class UserController extends Controller
             ->with(['items.ticketType.eventFunction.event'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function($order) {
+            ->map(function ($order) {
                 return [
                     'id' => $order->id,
                     'order_date' => $order->order_date->format('Y-m-d H:i'),
@@ -156,7 +157,7 @@ class UserController extends Controller
                     'status' => $order->status->value,
                     'payment_method' => $order->payment_method,
                     'items_count' => $order->items->count(),
-                    'events' => $order->items->map(function($item) {
+                    'events' => $order->items->map(function ($item) {
                         return $item->ticketType->eventFunction->event->name;
                     })->unique()->values(),
                 ];
@@ -207,7 +208,7 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        DB::transaction(function() use ($validated) {
+        DB::transaction(function () use ($validated) {
             // Crear persona
             $person = Person::create([
                 'name' => $validated['firstName'],
@@ -267,14 +268,14 @@ class UserController extends Controller
         $validated = $request->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
-            'dni' => 'required|string|max:20|unique:person,dni,' . $user->person->id,
+            'dni' => 'required|string|max:20|unique:person,dni,'.$user->person->id,
             'address' => 'nullable|string|max:500',
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
 
-        DB::transaction(function() use ($user, $validated) {
+        DB::transaction(function () use ($user, $validated) {
             // Actualizar persona
             $user->person->update([
                 'name' => $validated['firstName'],
@@ -289,7 +290,7 @@ class UserController extends Controller
                 'email' => $validated['email'],
             ];
 
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $userData['password'] = Hash::make($validated['password']);
                 $userData['password_changed_at'] = now();
             }
@@ -312,13 +313,13 @@ class UserController extends Controller
 
         // Verificar si tiene órdenes
         $hasOrders = Order::where('client_id', $user->id)->exists();
-        
+
         if ($hasOrders) {
             return redirect()->back()
                 ->with('error', 'No se puede eliminar un usuario que tiene órdenes asociadas');
         }
 
-        DB::transaction(function() use ($user) {
+        DB::transaction(function () use ($user) {
             $person = $user->person;
             $user->delete();
             if ($person) {
@@ -340,11 +341,11 @@ class UserController extends Controller
         }
 
         $user->update([
-            'email_verified_at' => $user->email_verified_at ? null : now()
+            'email_verified_at' => $user->email_verified_at ? null : now(),
         ]);
 
         $status = $user->email_verified_at ? 'activado' : 'desactivado';
-        
+
         return redirect()->back()
             ->with('success', "Usuario {$status} correctamente");
     }
@@ -363,7 +364,7 @@ class UserController extends Controller
         $newUsersThisMonth = User::where('role', UserRole::CLIENT)
             ->whereBetween('created_at', [
                 Carbon::now()->startOfMonth(),
-                Carbon::now()->endOfMonth()
+                Carbon::now()->endOfMonth(),
             ])
             ->count();
 

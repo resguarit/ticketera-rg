@@ -1,4 +1,5 @@
 <?php
+
 // filepath: database/seeders/SectorSeeder.php
 
 namespace Database\Seeders;
@@ -16,7 +17,7 @@ class SectorSeeder extends Seeder
         foreach ($venues as $venue) {
             // Crear sectores básicos para cada venue
             $sectors = $this->getSectorsForVenue($venue->name);
-            
+
             foreach ($sectors as $sectorData) {
                 Sector::create([
                     'venue_id' => $venue->id,

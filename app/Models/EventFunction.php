@@ -65,7 +65,7 @@ class EventFunction extends Model
     {
         $now = Carbon::now();
         $currentStatus = $this->status;
-        
+
         // No actualizar si está cancelado o reprogramado (estados manuales)
         if (in_array($currentStatus, [EventFunctionStatus::CANCELLED, EventFunctionStatus::REPROGRAMMED])) {
             return;
@@ -74,32 +74,36 @@ class EventFunction extends Model
         // 1. Si la función ya finalizó (end_time pasó o start_time pasó si no hay end_time)
         if ($this->end_time && $this->end_time->isPast()) {
             $this->updateStatusIfChanged(EventFunctionStatus::FINISHED);
+
             return;
         }
 
-        if (!$this->end_time && $this->start_time->isPast()) {
+        if (! $this->end_time && $this->start_time->isPast()) {
             $this->updateStatusIfChanged(EventFunctionStatus::FINISHED);
+
             return;
         }
 
         // 2. Obtener tickets visibles (no ocultos)
         $visibleTickets = $this->ticketTypes()->where('is_hidden', false)->get();
-        
+
         if ($visibleTickets->isEmpty()) {
             $this->updateStatusIfChanged(EventFunctionStatus::UPCOMING);
+
             return;
         }
 
         // 3. Verificar si hay tickets en periodo de venta
-        $ticketsOnSale = $visibleTickets->filter(function ($ticket) use ($now) {
-            $salesStarted = !$ticket->sales_start_date || Carbon::parse($ticket->sales_start_date)->isPast();
-            $salesNotEnded = !$ticket->sales_end_date || Carbon::parse($ticket->sales_end_date)->isFuture();
-            
+        $ticketsOnSale = $visibleTickets->filter(function ($ticket) {
+            $salesStarted = ! $ticket->sales_start_date || Carbon::parse($ticket->sales_start_date)->isPast();
+            $salesNotEnded = ! $ticket->sales_end_date || Carbon::parse($ticket->sales_end_date)->isFuture();
+
             return $salesStarted && $salesNotEnded;
         });
 
         if ($ticketsOnSale->isEmpty()) {
             $this->updateStatusIfChanged(EventFunctionStatus::UPCOMING);
+
             return;
         }
 
@@ -111,6 +115,7 @@ class EventFunction extends Model
         if ($availableTickets->isEmpty()) {
             // Todos los tickets en venta están agotados
             $this->updateStatusIfChanged(EventFunctionStatus::SOLD_OUT);
+
             return;
         }
 

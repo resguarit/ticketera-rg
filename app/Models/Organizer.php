@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Services\RevenueService;
 use Carbon\Carbon;
-use Dom\Attr;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

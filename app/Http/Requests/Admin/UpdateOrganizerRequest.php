@@ -38,12 +38,13 @@ class UpdateOrganizerRequest extends FormRequest
 
     private function normalizeSocial($value, string $prefix): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
             return $value; // already a full URL
         }
-        return $prefix . ltrim($value, '/');
+
+        return $prefix.ltrim($value, '/');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Mail\AssistantInvited;
 use App\Mail\TicketsInvited;
 use App\Models\IssuedTicket;
 use App\Services\PdfService;
@@ -17,15 +16,12 @@ use Illuminate\Support\Facades\Mail;
 
 class SendTicketBatchJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SerializesAndRestoresModelIdentifiers;
-
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesAndRestoresModelIdentifiers, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public Collection $tickets, public string $recipientEmail)
-    {
-    }
+    public function __construct(public Collection $tickets, public string $recipientEmail) {}
 
     /**
      * Execute the job.
@@ -42,8 +38,8 @@ class SendTicketBatchJob implements ShouldQueue
             $ticketData = $pdfService->generateTicketPdfWithName($ticket);
             $attachments[] = [
                 'content' => $ticketData['pdf']->output(),
-                'name'    => $ticketData['filename'],
-                'mime'    => 'application/pdf',
+                'name' => $ticketData['filename'],
+                'mime' => 'application/pdf',
             ];
         }
 

@@ -2,25 +2,23 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrganizerRequest;
 use App\Http\Requests\Admin\UpdateOrganizerRequest;
 use App\Models\Event;
+use App\Models\Organizer;
+use App\Models\Person;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Organizer;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
-use App\Models\User;
-use App\Models\Person;
-use Illuminate\Support\Str;
-use App\Enums\UserRole;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class OrganizerController extends Controller
 {
@@ -42,7 +40,7 @@ class OrganizerController extends Controller
             ->withCount('events')
             ->when($request->input('search'), function (Builder $query, $search) {
                 $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             })
             // Manejar el caso de ordenamiento
             ->when($request->input('sort_by') && $request->input('sort_by') !== 'all', function (Builder $query) use ($request) {
@@ -72,17 +70,17 @@ class OrganizerController extends Controller
 
         if ($request->hasFile('logo_url')) {
             $file = $request->file('logo_url');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            
+            $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
+
             // Guardar en storage/app/public/organizers/
             $path = $file->storeAs('organizers', $filename, 'public');
-            
+
             // Guardar la ruta completa en la base de datos
             $validated['logo_url'] = $path;
         }
 
         Organizer::create($validated);
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador creado correctamente.');
     }
@@ -90,11 +88,11 @@ class OrganizerController extends Controller
     public function show(int $organizerId): Response
     {
         $organizer = Organizer::with([
-            'events.category', 
+            'events.category',
             'events.venue.ciudad.provincia', // Cargar venue con city y province
-            'users.person'
+            'users.person',
         ])->findOrFail($organizerId);
-        
+
         return Inertia::render('admin/organizers/show', [
             'organizer' => $organizer,
         ]);
@@ -103,6 +101,7 @@ class OrganizerController extends Controller
     public function edit(int $organizerId): Response
     {
         $organizer = Organizer::findOrFail($organizerId);
+
         return Inertia::render('admin/organizers/edit', [
             'organizer' => $organizer,
         ]);
@@ -120,16 +119,16 @@ class OrganizerController extends Controller
             }
 
             $file = $request->file('logo_url');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            
+            $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
+
             // Guardar en storage/app/public/organizers/
             $path = $file->storeAs('organizers', $filename, 'public');
-            
+
             $validated['logo_url'] = $path;
         }
 
         $organizer->update($validated);
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador actualizado correctamente.');
     }
@@ -137,14 +136,14 @@ class OrganizerController extends Controller
     public function destroy(int $organizerId): RedirectResponse
     {
         $organizer = Organizer::findOrFail($organizerId);
-        
+
         // Eliminar el logo si existe
         if ($organizer->logo_url && Storage::disk('public')->exists($organizer->logo_url)) {
             Storage::disk('public')->delete($organizer->logo_url);
         }
-        
+
         $organizer->delete();
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador eliminado correctamente.');
     }
@@ -164,7 +163,7 @@ class OrganizerController extends Controller
             'email' => 'required_if:mode,new|email|max:255|unique:users,email',
         ]);
 
-        if (!isset($validated['mode'])) {
+        if (! isset($validated['mode'])) {
             return redirect()->back()->with('error', 'Modo inválido.');
         }
 
@@ -173,6 +172,7 @@ class OrganizerController extends Controller
             $user->role = UserRole::ORGANIZER;
             $user->organizer_id = $organizer->id;
             $user->save();
+
             return redirect()->back()->with('success', 'Usuario asignado correctamente.');
         }
 
@@ -201,6 +201,7 @@ class OrganizerController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Error creando usuario de organizador', ['error' => $e->getMessage()]);
+
             return redirect()->back()->with('error', 'No se pudo crear el usuario, intenta nuevamente.');
         }
 
@@ -232,17 +233,17 @@ class OrganizerController extends Controller
             ->whereNull('organizer_id')
             ->when($query, function ($q) use ($query) {
                 $q->where('email', 'like', "%{$query}%")
-                  ->orWhereHas('person', function ($p) use ($query) {
-                      $p->where('name', 'like', "%{$query}%")
-                        ->orWhere('last_name', 'like', "%{$query}%");
-                  });
+                    ->orWhereHas('person', function ($p) use ($query) {
+                        $p->where('name', 'like', "%{$query}%")
+                            ->orWhere('last_name', 'like', "%{$query}%");
+                    });
             })
             ->limit(10)
             ->get()
             ->map(function ($u) {
                 return [
                     'id' => $u->id,
-                    'name' => $u->person ? $u->person->name . ' ' . $u->person->last_name : $u->email,
+                    'name' => $u->person ? $u->person->name.' '.$u->person->last_name : $u->email,
                     'email' => $u->email,
                 ];
             });

@@ -1,25 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\OrganizerController;
-use App\Http\Controllers\Admin\EventController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CuotaController;
-use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
-use App\Http\Controllers\Organizer\SectorController;
+use App\Http\Controllers\Admin\OrganizerController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\Organizer\SectorController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
+
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
-    
+
     // Gestión de eventos
     Route::prefix('events')->name('events.')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('index');
@@ -27,7 +25,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::patch('/{event}/toggle-featured', [EventController::class, 'toggleFeatured'])->name('toggle-featured');
         Route::patch('/functions/{function}/toggle', [EventController::class, 'toggleFunction'])->name('functions.toggle');
     });
-    
+
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
@@ -39,7 +37,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
     });
-    
+
     // Gestión de organizadores
     Route::prefix('organizers')->name('organizers.')->group(function () {
         Route::get('/', [OrganizerController::class, 'index'])->name('index');
@@ -54,7 +52,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{organizerId}/users/{userId}', [OrganizerController::class, 'removeUser'])->name('remove-user');
         Route::post('/{organizerId}/users/{userId}/regenerate-credentials', [OrganizerController::class, 'regenerateCredentials'])->name('regenerate-credentials');
     });
-    
+
     // Reportes - CORREGIDO: usar solo 'admin' middleware
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
@@ -62,7 +60,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/download/{reportType}', [ReportController::class, 'downloadReport'])->name('download');
         Route::get('/real-time', [ReportController::class, 'realTimeStats'])->name('real-time');
     });
-    
+
     // Configuración
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
@@ -82,12 +80,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Gestión de categorías
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('/api/categories/select', [CategoryController::class, 'getForSelect']);
-    
+
     // Gestión de venues
     Route::resource('venues', VenueController::class);
     Route::post('/venues/{venue}/sectors', [SectorController::class, 'store'])->name('venues.sectors.store');
     Route::get('/api/venues/select', [VenueController::class, 'getForSelect']);
-    
+
     // Gestión de sectores
     Route::resource('sectors', SectorController::class);
     Route::get('/api/venues/{venue}/sectors', [SectorController::class, 'getByVenue']);

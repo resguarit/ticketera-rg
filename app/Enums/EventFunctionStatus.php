@@ -14,7 +14,7 @@ enum EventFunctionStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UPCOMING => 'Próximamente',
             self::ON_SALE => 'En venta',
             self::SOLD_OUT => 'Agotado',
@@ -27,7 +27,7 @@ enum EventFunctionStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UPCOMING => 'blue',
             self::ON_SALE => 'green',
             self::SOLD_OUT => 'red',

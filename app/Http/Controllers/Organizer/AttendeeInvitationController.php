@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers\Organizer;
 
+use App\Enums\IssuedTicketStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Assistant;
 use App\Models\Event;
 use App\Models\EventFunction;
-use App\Models\TicketType;
-use App\Models\Person;
-use App\Models\Assistant;
 use App\Models\IssuedTicket;
-use App\Enums\IssuedTicketStatus;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Illuminate\Support\Str;
+use App\Models\Person;
+use App\Models\TicketType;
 use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class AttendeeInvitationController extends Controller
 {
     protected $emailService;
+
     protected $orderService;
 
     public function __construct(EmailDispatcherService $emailService, OrderService $orderService)
@@ -43,29 +43,29 @@ class AttendeeInvitationController extends Controller
 
         // Obtener las funciones del evento con sus tipos de tickets (solo individuales, no bundles)
         $eventFunctions = $event->functions()
-            ->with(['ticketTypes' => function($query) {
+            ->with(['ticketTypes' => function ($query) {
                 $query->where('is_bundle', false) // Solo tickets individuales
                     ->with('issuedTickets');
             }])
             ->where('is_active', true)
             ->get()
-            ->map(function($function) {
+            ->map(function ($function) {
                 // Formatear las fechas
                 $startTime = Carbon::parse($function->start_time);
-                
-                $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
+
+                $function->ticketTypes = $function->ticketTypes->map(function ($ticketType) {
                     // Contar solo tickets vinculados a órdenes (no invitaciones)
                     $totalIssued = $ticketType->issuedTickets()
                         ->whereNotNull('order_id')
                         ->where('status', '!=', IssuedTicketStatus::CANCELLED)
                         ->count();
-                    
+
                     $available = $ticketType->quantity - $totalIssued;
-                    
+
                     // Agregar propiedades calculadas al modelo existente
                     $ticketType->sold = $totalIssued;
                     $ticketType->available = max(0, $available);
-                    
+
                     return $ticketType;
                 });
 
@@ -74,7 +74,7 @@ class AttendeeInvitationController extends Controller
                 $function->time = $startTime->format('H:i');
                 $function->formatted_date = $startTime->format('d \d\e F \d\e Y');
                 $function->day_name = $startTime->locale('es')->dayName;
-                
+
                 return $function;
             });
 
@@ -124,7 +124,7 @@ class AttendeeInvitationController extends Controller
             // Verificar que las funciones pertenezcan al evento
             $functionIds = collect($request->tickets)->pluck('event_function_id')->unique();
             $validFunctions = $event->functions()->whereIn('id', $functionIds)->pluck('id');
-            
+
             if ($validFunctions->count() !== $functionIds->count()) {
                 throw new \Exception('Una o más funciones no pertenecen a este evento.');
             }
@@ -135,7 +135,7 @@ class AttendeeInvitationController extends Controller
                     ->where('event_function_id', $ticketRequest['event_function_id'])
                     ->first();
 
-                if (!$ticketType) {
+                if (! $ticketType) {
                     throw new \Exception('Tipo de ticket inválido para la función seleccionada.');
                 }
 
@@ -154,7 +154,7 @@ class AttendeeInvitationController extends Controller
                 $person = Person::where('dni', $personData['dni'])->first();
             }
 
-            if (!$person) {
+            if (! $person) {
                 // Crear nueva persona
                 $person = Person::create([
                     'name' => $personData['name'],
@@ -186,7 +186,7 @@ class AttendeeInvitationController extends Controller
                     ->where('email', $personData['email'])
                     ->first();
 
-                if (!$assistant) {
+                if (! $assistant) {
                     // Crear nuevo assistant
                     $assistant = Assistant::create([
                         'event_function_id' => $eventFunction->id,
@@ -222,7 +222,7 @@ class AttendeeInvitationController extends Controller
             $ticketsWithRelations = IssuedTicket::whereIn('id', $ticketIds)
                 ->with([
                     'assistant.person',
-                    'ticketType.eventFunction.event'
+                    'ticketType.eventFunction.event',
                 ])
                 ->get();
 
@@ -233,6 +233,7 @@ class AttendeeInvitationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->withErrors(['general' => $e->getMessage()])
                 ->withInput();

@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\IssuedTicketStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Enums\IssuedTicketStatus;
 
 class IssuedTicket extends Model
 {
@@ -57,13 +57,13 @@ class IssuedTicket extends Model
     // ← NUEVO: Método para verificar si pertenece a un bundle
     public function isFromBundle(): bool
     {
-        return !is_null($this->bundle_reference);
+        return ! is_null($this->bundle_reference);
     }
 
     // ← NUEVO: Obtener todos los tickets del mismo bundle
     public function bundleTickets()
     {
-        if (!$this->isFromBundle()) {
+        if (! $this->isFromBundle()) {
             return collect([$this]);
         }
 

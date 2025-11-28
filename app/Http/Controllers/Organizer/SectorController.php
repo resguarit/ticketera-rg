@@ -1,4 +1,5 @@
 <?php
+
 // filepath: app/Http/Controllers/Organizer/SectorController.php
 
 namespace App\Http\Controllers\Organizer;
@@ -6,10 +7,10 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Sector;
 use App\Models\Venue;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
 
 class SectorController extends Controller
 {
@@ -18,18 +19,18 @@ class SectorController extends Controller
         $sectors = Sector::with('venue')
             ->latest()
             ->get();
-        
+
         return Inertia::render('organizer/sectors', [
-            'sectors' => $sectors
+            'sectors' => $sectors,
         ]);
     }
 
     public function create(): Response
     {
         $venues = Venue::select('id', 'name')->get();
-        
+
         return Inertia::render('organizer/sectors/create', [
-            'venues' => $venues
+            'venues' => $venues,
         ]);
     }
 
@@ -39,14 +40,14 @@ class SectorController extends Controller
             'venue_id' => 'required|exists:venues,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'capacity' => 'required|integer|min:1'
+            'capacity' => 'required|integer|min:1',
         ]);
 
         Sector::create($request->only([
             'venue_id',
             'name',
-            'description', 
-            'capacity'
+            'description',
+            'capacity',
         ]));
 
         return redirect()->route('organizer.sectors.index')
@@ -56,19 +57,19 @@ class SectorController extends Controller
     public function show(Sector $sector): Response
     {
         $sector->load('venue');
-        
+
         return Inertia::render('organizer/sectors/show', [
-            'sector' => $sector
+            'sector' => $sector,
         ]);
     }
 
     public function edit(Sector $sector): Response
     {
         $venues = Venue::select('id', 'name')->get();
-        
+
         return Inertia::render('organizer/sectors/edit', [
             'sector' => $sector,
-            'venues' => $venues
+            'venues' => $venues,
         ]);
     }
 
@@ -78,14 +79,14 @@ class SectorController extends Controller
             'venue_id' => 'required|exists:venues,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'capacity' => 'required|integer|min:1'
+            'capacity' => 'required|integer|min:1',
         ]);
 
         $sector->update($request->only([
             'venue_id',
             'name',
-            'description', 
-            'capacity'
+            'description',
+            'capacity',
         ]));
 
         return redirect()->route('organizer.sectors.index')
@@ -109,7 +110,7 @@ class SectorController extends Controller
     public function getByVenue(Venue $venue)
     {
         $sectors = $venue->sectors()->select('id', 'name', 'capacity')->get();
-        
+
         return response()->json($sectors);
     }
 }

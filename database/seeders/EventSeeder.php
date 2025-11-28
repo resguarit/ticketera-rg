@@ -1,10 +1,11 @@
 <?php
+
 // filepath: database/seeders/EventSeeder.php
 
 namespace Database\Seeders;
 
-use App\Models\Event;
 use App\Models\Category;
+use App\Models\Event;
 use Illuminate\Database\Seeder;
 
 class EventSeeder extends Seeder

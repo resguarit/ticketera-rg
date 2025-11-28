@@ -17,7 +17,7 @@ class EventResource extends JsonResource
     {
         // Obtener la primera función activa para mostrar fecha/hora
         $firstFunction = $this->functions->where('is_active', true)->sortBy('start_time')->first();
-        
+
         // Calcular precio mínimo
         $minPrice = null;
         foreach ($this->functions as $function) {
@@ -45,7 +45,7 @@ class EventResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description,
-            'image_url' => $this->image_url ?: "/placeholder.svg?height=400&width=800",
+            'image_url' => $this->image_url ?: '/placeholder.svg?height=400&width=800',
             'featured' => $this->featured ?? false,
             'location' => $this->venue->name,
             'city' => $this->venue->ciudad ? $this->venue->ciudad->name : 'Sin ciudad',
@@ -105,12 +105,12 @@ class EventResource extends JsonResource
 
         // Obtener la función con el estado de mayor prioridad
         $primaryFunction = $functionsToCheck
-            ->sortBy(function($function) use ($priorityOrder) {
+            ->sortBy(function ($function) use ($priorityOrder) {
                 return $priorityOrder[$function->status->value] ?? 999;
             })
             ->first();
 
-        if (!$primaryFunction) {
+        if (! $primaryFunction) {
             return [
                 'value' => EventFunctionStatus::UPCOMING->value,
                 'label' => EventFunctionStatus::UPCOMING->label(),

@@ -1,14 +1,15 @@
 <?php
+
 // filepath: database/seeders/TicketTypeSeeder.php
 
 namespace Database\Seeders;
 
-use App\Models\TicketType;
 use App\Models\EventFunction;
 use App\Models\Sector;
+use App\Models\TicketType;
 use App\Models\Venue;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class TicketTypeSeeder extends Seeder
 {
@@ -358,17 +359,17 @@ class TicketTypeSeeder extends Seeder
             // Obtener el event_function para saber el venue
             $eventFunction = EventFunction::with('event.venue')->find($ticketData['event_function_id']);
             $venue = $eventFunction->event->venue;
-            
+
             // Buscar el sector por nombre y venue
             $sector = Sector::where('venue_id', $venue->id)
-                           ->where('name', $ticketData['sector_name'])
-                           ->first();
+                ->where('name', $ticketData['sector_name'])
+                ->first();
 
             if ($sector) {
                 // Remover sector_name del array y agregar sector_id
                 unset($ticketData['sector_name']);
                 $ticketData['sector_id'] = $sector->id;
-                
+
                 TicketType::create($ticketData);
             }
         }

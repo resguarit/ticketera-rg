@@ -1,18 +1,19 @@
 <?php
+
 // filepath: app/Http/Controllers/Admin/VenueController.php
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Venue;
 use App\Models\Ciudad;
 use App\Models\Provincia;
-use App\Models\Sector; // <-- AÑADIR ESTO
+use App\Models\Sector;
+use App\Models\Venue; // <-- AÑADIR ESTO
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 
 class VenueController extends Controller
 {
@@ -22,13 +23,13 @@ class VenueController extends Controller
             ->withCount(['eventos', 'sectors'])
             ->latest()
             ->get()
-            ->map(function($venue) {
+            ->map(function ($venue) {
                 return [
                     'id' => $venue->id,
                     'name' => $venue->name,
                     'address' => $venue->address,
                     'city' => $venue->ciudad ? $venue->ciudad->name : 'Sin ciudad',
-                    'province' => $venue->ciudad && $venue->ciudad->provincia ? 
+                    'province' => $venue->ciudad && $venue->ciudad->provincia ?
                         $venue->ciudad->provincia->name : null,
                     'full_address' => $venue->getFullAddressAttribute(),
                     'eventos_count' => $venue->eventos_count,
@@ -40,7 +41,7 @@ class VenueController extends Controller
             });
 
         return Inertia::render('admin/venues/index', [
-            'venues' => $venues
+            'venues' => $venues,
         ]);
     }
 
@@ -116,14 +117,14 @@ class VenueController extends Controller
         $venue->load(['eventos', 'sectors', 'ciudad.provincia']);
 
         return Inertia::render('admin/venues/show', [
-            'venue' => $venue
+            'venue' => $venue,
         ]);
     }
 
     public function edit(Venue $venue): Response
     {
         $venue->load('ciudad.provincia', 'sectors'); // Cargar la relación de sectores
-        
+
         $venueData = [
             'id' => $venue->id,
             'name' => $venue->name,
@@ -138,7 +139,7 @@ class VenueController extends Controller
         ];
 
         return Inertia::render('admin/venues/edit', array_merge($this->getFormData(), [
-            'venue' => $venueData
+            'venue' => $venueData,
         ]));
     }
 
@@ -180,7 +181,7 @@ class VenueController extends Controller
             // Si no, creamos uno nuevo.
             $sector = $venue->sectors()->updateOrCreate(
                 [
-                    'id' => isset($sectorData['id']) && Sector::find($sectorData['id']) ? $sectorData['id'] : null
+                    'id' => isset($sectorData['id']) && Sector::find($sectorData['id']) ? $sectorData['id'] : null,
                 ],
                 [
                     'name' => $sectorData['name'],
@@ -219,7 +220,7 @@ class VenueController extends Controller
         $venues = Venue::with('ciudad')
             ->select('id', 'name', 'address', 'ciudad_id')
             ->get()
-            ->map(function($venue) {
+            ->map(function ($venue) {
                 return [
                     'id' => $venue->id,
                     'name' => $venue->name,
@@ -228,7 +229,7 @@ class VenueController extends Controller
                     'full_address' => $venue->getFullAddressAttribute(),
                 ];
             });
-        
+
         return response()->json($venues);
     }
 }

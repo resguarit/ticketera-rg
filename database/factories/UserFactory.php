@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
+use App\Models\Person;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use App\Models\Person; // Importar Modelo
-use App\Enums\UserRole; // Importar Enum
+use Illuminate\Support\Facades\Hash; // Importar Modelo
+use Illuminate\Support\Str; // Importar Enum
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>

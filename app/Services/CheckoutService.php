@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use App\Services\Interface\PaymentGatewayInterface;
-use Illuminate\Support\Facades\Log;
 use App\DTO\CheckoutData;
 use App\DTO\CheckoutResult;
 use App\DTO\PaymentContext;
 use App\DTO\PaymentResult;
 use App\Models\Cuota;
 use App\Models\Event;
+use App\Services\Interface\PaymentGatewayInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutService
 {
@@ -40,7 +40,7 @@ class CheckoutService
                     ->where('habilitada', true)
                     ->first();
 
-                if (!$validInstallments) {
+                if (! $validInstallments) {
                     Log::warning('Cuotas no válidas o no habilitadas', [
                         'event_id' => $checkoutData->eventId,
                         'bin' => $checkoutData->bin,
@@ -57,20 +57,19 @@ class CheckoutService
             }
 
             $orderData = [
-                    'event_id' => $checkoutData->eventId,
-                    'function_id' => $checkoutData->functionId,
-                    'selected_tickets' => $checkoutData->selected_tickets,
-                    'payment_method' => $paymentMethodId,
-                    'cuotas' => $requestedInstallments,
-                    'cuota_id' => $validInstallments ? $validInstallments->id : null,
-                    'billing_info' => $checkoutData->billingInfo,
-                    'tax' => $eventTax,
-                ];
+                'event_id' => $checkoutData->eventId,
+                'function_id' => $checkoutData->functionId,
+                'selected_tickets' => $checkoutData->selected_tickets,
+                'payment_method' => $paymentMethodId,
+                'cuotas' => $requestedInstallments,
+                'cuota_id' => $validInstallments ? $validInstallments->id : null,
+                'billing_info' => $checkoutData->billingInfo,
+                'tax' => $eventTax,
+            ];
 
             $orderResult = $this->orderService->createOrder($orderData);
             $order = $orderResult['order'];
 
-            
             $paymentData = new PaymentContext(
                 amount: $order->total_amount,
                 currency: 'ARS',
@@ -81,7 +80,7 @@ class CheckoutService
                 installments: $requestedInstallments,
                 customerEmail: $order->client->email,
                 customerId: $order->client->id,
-                customerName: $checkoutData->billingInfo['firstName'] . ' ' . $checkoutData->billingInfo['lastName'],
+                customerName: $checkoutData->billingInfo['firstName'].' '.$checkoutData->billingInfo['lastName'],
                 customerDocument: $checkoutData->billingInfo['documentNumber'] ?? '',
                 customerIp: request()->ip(),
                 deviceFingerprint: null,

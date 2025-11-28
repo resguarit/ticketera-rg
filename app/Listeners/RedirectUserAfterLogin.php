@@ -2,21 +2,16 @@
 
 namespace App\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Enums\UserRole;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
-use App\Enums\UserRole;
 
 class RedirectUserAfterLogin
 {
     /**
      * Create the event listener.
      */
-    public function __construct(protected Request $request)
-    {
-
-    }
+    public function __construct(protected Request $request) {}
 
     /**
      * Handle the event.

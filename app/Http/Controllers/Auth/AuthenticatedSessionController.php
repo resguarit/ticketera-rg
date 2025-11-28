@@ -60,17 +60,17 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'success' => false,
-                'message' => 'Las credenciales proporcionadas son incorrectas.'
+                'message' => 'Las credenciales proporcionadas son incorrectas.',
             ], 401);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Inicio de sesión exitoso',
-            'user' => Auth::user()
+            'user' => Auth::user(),
         ]);
     }
 }

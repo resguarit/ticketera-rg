@@ -35,10 +35,10 @@ class Assistant extends Model
     {
         return $this->belongsTo(Person::class, 'person_id');
     }
- 
+
     public function name(): string
     {
-        return $this->person->name . ' ' . $this->person->last_name;
+        return $this->person->name.' '.$this->person->last_name;
     }
 
     public function issuedTickets(): HasMany

@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
+use App\DTO\PaymentResult;
+use App\Models\Cuota;
 use App\Models\Event;
 use App\Models\EventFunction;
-use App\Models\TicketType;
 use App\Models\Sector;
-use App\Models\Cuota;
+use App\Models\TicketType;
+use App\Models\User;
+use App\Services\Interface\PaymentGatewayInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Mockery;
-use App\Services\Interface\PaymentGatewayInterface;
-use App\DTO\PaymentResult;
 use Illuminate\Support\Str;
+use Mockery;
+use Tests\TestCase;
 
 class TicketPurchaseFlowTest extends TestCase
 {
@@ -23,10 +23,10 @@ class TicketPurchaseFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Crear datos maestros necesarios para todos los tests
         $this->seedPaymentMethods();
-        
+
         // Mock del gateway de pago para todos los tests
         $this->mockPaymentGateway();
     }
@@ -55,12 +55,12 @@ class TicketPurchaseFlowTest extends TestCase
     protected function mockPaymentGateway($success = true, $message = null)
     {
         $mockGateway = Mockery::mock(PaymentGatewayInterface::class);
-        
+
         if ($success) {
             $mockGateway->shouldReceive('charge')
                 ->andReturn(new PaymentResult(
                     true,
-                    'trans-' . Str::random(10),
+                    'trans-'.Str::random(10),
                     'approved',
                     null
                 ));
@@ -68,7 +68,7 @@ class TicketPurchaseFlowTest extends TestCase
             $mockGateway->shouldReceive('charge')
                 ->andReturn(PaymentResult::failure($message ?? 'Fondos insuficientes'));
         }
-        
+
         $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
     }
 
@@ -76,7 +76,7 @@ class TicketPurchaseFlowTest extends TestCase
     {
         // TEMPORAL: Ver excepciones directamente
         $this->withoutExceptionHandling();
-        
+
         // Mock de pago exitoso
         $this->mockPaymentGateway(true);
 
@@ -84,7 +84,7 @@ class TicketPurchaseFlowTest extends TestCase
         $event = Event::factory()->create();
         $function = EventFunction::factory()->create(['event_id' => $event->id]);
         $sector = Sector::factory()->create();
-        
+
         $ticketType = TicketType::factory()->create([
             'event_function_id' => $function->id,
             'sector_id' => $sector->id,
@@ -107,13 +107,13 @@ class TicketPurchaseFlowTest extends TestCase
         $confirmData = base64_encode(json_encode([
             'function_id' => $function->id,
             'tickets' => [
-                $ticketType->id => 2
-            ]
+                $ticketType->id => 2,
+            ],
         ]));
 
         $confirmResponse = $this->get(route('checkout.confirm', [
             'event' => $event->id,
-            'data' => $confirmData
+            'data' => $confirmData,
         ]));
 
         $confirmResponse->assertStatus(200);
@@ -130,10 +130,10 @@ class TicketPurchaseFlowTest extends TestCase
             'bin' => '450799',
             'payment_info' => [
                 'method' => 'visa_credito',
-                'installments' => 1
+                'installments' => 1,
             ],
             'selected_tickets' => [
-                ['id' => $ticketType->id, 'quantity' => 2]
+                ['id' => $ticketType->id, 'quantity' => 2],
             ],
             'billing_info' => [
                 'firstName' => 'Juan',
@@ -141,18 +141,18 @@ class TicketPurchaseFlowTest extends TestCase
                 'email' => 'juan@test.com',
                 'phone' => '12345678',
                 'documentType' => 'DNI',
-                'documentNumber' => '30123456'
+                'documentNumber' => '30123456',
             ],
             'agreements' => [
                 'terms' => true,
-                'privacy' => true
-            ]
+                'privacy' => true,
+            ],
         ];
 
         $response = $this->post(route('checkout.process'), $payload);
 
         // 3. AFIRMACIONES (Assert)
-        
+
         // Verificar redirección a success
         $response->assertRedirect();
         $response->assertSessionHas('success');
@@ -164,7 +164,7 @@ class TicketPurchaseFlowTest extends TestCase
         // Verificar que existe la orden
         $this->assertDatabaseHas('orders', [
             'status' => 'paid',
-            'client_id' => $user->id
+            'client_id' => $user->id,
         ]);
 
         // Verificar tickets emitidos
@@ -188,7 +188,7 @@ class TicketPurchaseFlowTest extends TestCase
         $event = Event::factory()->create();
         $function = EventFunction::factory()->create(['event_id' => $event->id]);
         $sector = Sector::factory()->create();
-        
+
         $ticketType = TicketType::factory()->create([
             'event_function_id' => $function->id,
             'sector_id' => $sector->id,
@@ -208,13 +208,13 @@ class TicketPurchaseFlowTest extends TestCase
         $confirmData = base64_encode(json_encode([
             'function_id' => $function->id,
             'tickets' => [
-                $ticketType->id => 1
-            ]
+                $ticketType->id => 1,
+            ],
         ]));
 
         $this->get(route('checkout.confirm', [
             'event' => $event->id,
-            'data' => $confirmData
+            'data' => $confirmData,
         ]));
 
         // Paso 2: Process Payment (debería fallar)
@@ -225,10 +225,10 @@ class TicketPurchaseFlowTest extends TestCase
             'bin' => '450799',
             'payment_info' => [
                 'method' => 'visa_credito',
-                'installments' => 1
+                'installments' => 1,
             ],
             'selected_tickets' => [
-                ['id' => $ticketType->id, 'quantity' => 1]
+                ['id' => $ticketType->id, 'quantity' => 1],
             ],
             'billing_info' => [
                 'firstName' => 'Fail',
@@ -236,12 +236,12 @@ class TicketPurchaseFlowTest extends TestCase
                 'email' => 'fail@test.com',
                 'phone' => '111',
                 'documentType' => 'DNI',
-                'documentNumber' => '111'
+                'documentNumber' => '111',
             ],
             'agreements' => [
                 'terms' => true,
-                'privacy' => true
-            ]
+                'privacy' => true,
+            ],
         ];
 
         $response = $this->post(route('checkout.process'), $payload);
@@ -250,10 +250,10 @@ class TicketPurchaseFlowTest extends TestCase
 
         // Verificar redirección a error
         $response->assertRedirect();
-        
+
         // Verificar que la orden fue cancelada
         $this->assertDatabaseHas('orders', [
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
 
         // Verificar que los tickets no se contaron como vendidos
@@ -266,7 +266,7 @@ class TicketPurchaseFlowTest extends TestCase
         $event = Event::factory()->create();
         $function = EventFunction::factory()->create(['event_id' => $event->id]);
         $sector = Sector::factory()->create();
-        
+
         $ticketType = TicketType::factory()->create([
             'event_function_id' => $function->id,
             'sector_id' => $sector->id,
@@ -281,10 +281,10 @@ class TicketPurchaseFlowTest extends TestCase
             'bin' => '450799',
             'payment_info' => [
                 'method' => 'visa_credito',
-                'installments' => 1
+                'installments' => 1,
             ],
             'selected_tickets' => [
-                ['id' => $ticketType->id, 'quantity' => 1]
+                ['id' => $ticketType->id, 'quantity' => 1],
             ],
             'billing_info' => [
                 'firstName' => 'Test',
@@ -292,19 +292,19 @@ class TicketPurchaseFlowTest extends TestCase
                 'email' => 'test@test.com',
                 'phone' => '123',
                 'documentType' => 'DNI',
-                'documentNumber' => '123'
+                'documentNumber' => '123',
             ],
             'agreements' => [
                 'terms' => true,
-                'privacy' => true
-            ]
+                'privacy' => true,
+            ],
         ];
 
         $response = $this->post(route('checkout.process'), $payload);
 
         // Debe redirigir a error por sesión expirada
         $response->assertRedirect();
-        
+
         // Verificar que no se vendieron tickets
         $ticketType->refresh();
         $this->assertEquals(0, $ticketType->quantity_sold);

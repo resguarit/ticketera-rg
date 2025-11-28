@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -16,6 +15,7 @@ class TicketsInvited extends Mailable
     use Queueable, SerializesModels;
 
     protected array $pdfAttachmentsData;
+
     public Collection $tickets;
 
     /**
@@ -32,12 +32,12 @@ class TicketsInvited extends Mailable
      */
     public function envelope(): Envelope
     {
-        $eventName = $this->tickets->isNotEmpty() 
+        $eventName = $this->tickets->isNotEmpty()
             ? $this->tickets->first()->ticketType?->eventFunction?->event?->name ?? 'Evento'
             : 'Evento';
-            
+
         return new Envelope(
-            subject: 'Has sido invitado al evento ' . $eventName
+            subject: 'Has sido invitado al evento '.$eventName
         );
     }
 
@@ -68,6 +68,7 @@ class TicketsInvited extends Mailable
                 $attachmentData['name']
             )->withMime($attachmentData['mime']);
         }
+
         return $attachments;
     }
 }

@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\DTO\PaymentResult;
+use App\Models\Cuota;
 use App\Models\Event;
 use App\Models\EventFunction;
-use App\Models\TicketType;
 use App\Models\Sector;
-use App\Models\Cuota;
+use App\Models\TicketType;
 use App\Services\Interface\PaymentGatewayInterface;
-use App\DTO\PaymentResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Mockery;
+use Tests\TestCase;
 
 class StageTicketFlowTest extends TestCase
 {
@@ -22,7 +22,7 @@ class StageTicketFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Crear métodos de pago necesarios
         $this->seedPaymentMethods();
     }
@@ -75,7 +75,7 @@ class StageTicketFlowTest extends TestCase
         $this->assertEquals(1, $tanda1->stage_order);
         $this->assertEquals('general-vip', $tanda2->stage_group);
         $this->assertEquals(2, $tanda2->stage_order);
-        
+
         // Verificar que isStaged() funciona
         $this->assertTrue($tanda1->isStaged());
         $this->assertTrue($tanda2->isStaged());
@@ -93,7 +93,7 @@ class StageTicketFlowTest extends TestCase
         $mockGateway->shouldReceive('charge')
             ->andReturn(new PaymentResult(
                 true,
-                'trans-' . Str::random(10),
+                'trans-'.Str::random(10),
                 'approved',
                 null
             ));
@@ -103,13 +103,13 @@ class StageTicketFlowTest extends TestCase
         $confirmData = base64_encode(json_encode([
             'function_id' => $function->id,
             'tickets' => [
-                $tanda1->id => 1
-            ]
+                $tanda1->id => 1,
+            ],
         ]));
 
         $this->get(route('checkout.confirm', [
             'event' => $event->id,
-            'data' => $confirmData
+            'data' => $confirmData,
         ]));
 
         // Verificar que se creó la sesión
@@ -124,10 +124,10 @@ class StageTicketFlowTest extends TestCase
             'bin' => '450799',
             'payment_info' => [
                 'method' => 'visa_credito',
-                'installments' => 1
+                'installments' => 1,
             ],
             'selected_tickets' => [
-                ['id' => $tanda1->id, 'quantity' => 1]
+                ['id' => $tanda1->id, 'quantity' => 1],
             ],
             'billing_info' => [
                 'firstName' => 'Test',
@@ -135,12 +135,12 @@ class StageTicketFlowTest extends TestCase
                 'email' => 'test@example.com',
                 'phone' => '123456789',
                 'documentType' => 'DNI',
-                'documentNumber' => '12345678'
+                'documentNumber' => '12345678',
             ],
             'agreements' => [
                 'terms' => true,
-                'privacy' => true
-            ]
+                'privacy' => true,
+            ],
         ]);
 
         // Verificar redirección exitosa
@@ -152,7 +152,7 @@ class StageTicketFlowTest extends TestCase
 
         // Tanda 1 debe estar completamente vendida (10/10)
         $this->assertEquals(10, $tanda1->quantity_sold);
-        
+
         // Tanda 1 debe estar oculta ahora
         $this->assertTrue($tanda1->is_hidden, 'Tanda 1 debería estar oculta después de agotarse');
 
@@ -210,12 +210,12 @@ class StageTicketFlowTest extends TestCase
         // Confirm
         $confirmData = base64_encode(json_encode([
             'function_id' => $function->id,
-            'tickets' => [$tanda1->id => 1]
+            'tickets' => [$tanda1->id => 1],
         ]));
 
         $this->get(route('checkout.confirm', [
             'event' => $event->id,
-            'data' => $confirmData
+            'data' => $confirmData,
         ]));
 
         // Comprar 1 ticket (quedarían 4 disponibles)
@@ -232,9 +232,9 @@ class StageTicketFlowTest extends TestCase
                 'email' => 'test2@example.com',
                 'phone' => '123',
                 'documentType' => 'DNI',
-                'documentNumber' => '123'
+                'documentNumber' => '123',
             ],
-            'agreements' => ['terms' => true, 'privacy' => true]
+            'agreements' => ['terms' => true, 'privacy' => true],
         ]);
 
         // Verificar

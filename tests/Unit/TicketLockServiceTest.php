@@ -2,11 +2,10 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Services\TicketLockService;
 use App\Models\TicketType;
+use App\Services\TicketLockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
+use Tests\TestCase;
 
 class TicketLockServiceTest extends TestCase
 {
@@ -33,7 +32,7 @@ class TicketLockServiceTest extends TestCase
 
         // 3. Verificar éxito
         $this->assertTrue($result['success']);
-        
+
         // 4. Verificar disponibilidad real (10 - 2 bloqueados = 8 disponibles)
         $availability = $this->lockService->getAvailability($ticket->id);
         $this->assertEquals(8, $availability['available']);
@@ -64,7 +63,7 @@ class TicketLockServiceTest extends TestCase
 
         // Bloquear
         $this->lockService->lockTickets([['id' => $ticket->id, 'quantity' => 5]], $sessionId);
-        
+
         // Verificar que están bloqueados
         $this->assertEquals(5, $this->lockService->getLockedQuantity($ticket->id));
 

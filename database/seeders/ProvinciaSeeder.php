@@ -1,4 +1,5 @@
 <?php
+
 // filepath: database/seeders/ProvinciaSeeder.php
 
 namespace Database\Seeders;
@@ -36,7 +37,7 @@ class ProvinciaSeeder extends Seeder
             ['name' => 'Santa Cruz', 'code' => 'SC', 'country' => 'Argentina'],
             ['name' => 'Tierra del Fuego', 'code' => 'TF', 'country' => 'Argentina'],
             ['name' => 'La Pampa', 'code' => 'LP', 'country' => 'Argentina'],
-            
+
             // Uruguay
             ['name' => 'Montevideo', 'code' => 'MO', 'country' => 'Uruguay'],
             ['name' => 'Canelones', 'code' => 'CA', 'country' => 'Uruguay'],

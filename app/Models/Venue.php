@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 class Venue extends Model
@@ -55,11 +55,11 @@ class Venue extends Model
     public function getFullAddressAttribute(): string
     {
         $parts = [];
-        
+
         if ($this->address) {
             $parts[] = $this->address;
         }
-        
+
         if ($this->ciudad) {
             $parts[] = $this->ciudad->name;
             if ($this->ciudad->provincia) {
@@ -67,7 +67,7 @@ class Venue extends Model
                 $parts[] = $this->ciudad->provincia->country;
             }
         }
-        
+
         return implode(', ', $parts);
     }
 }

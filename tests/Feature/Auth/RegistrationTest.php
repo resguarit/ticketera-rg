@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\Person;
+use App\Models\User;
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
@@ -34,7 +34,7 @@ test('registration creates person record', function () {
     ]);
 
     $user = User::where('email', 'john@example.com')->first();
-    
+
     expect($user)->not->toBeNull();
     expect($user->person)->not->toBeNull();
     expect($user->person->name)->toBe('John');
@@ -60,7 +60,7 @@ test('email must be unique during registration', function () {
 
 test('dni must be unique during registration', function () {
     $existingUser = User::factory()->create();
-    
+
     $response = $this->post('/register', [
         'name' => 'Test',
         'last_name' => 'User',
@@ -97,7 +97,7 @@ test('all required fields are validated', function () {
         'email',
         'password',
     ]);
-    
+
     $this->assertGuest();
 });
 
@@ -112,7 +112,7 @@ test('dni is optional during registration', function () {
     ]);
 
     $this->assertAuthenticated();
-    
+
     $user = User::where('email', 'test@example.com')->first();
     expect($user->person->dni)->toBeNull();
 });
@@ -128,7 +128,7 @@ test('new users have client role by default', function () {
     ]);
 
     $user = User::where('email', 'client@example.com')->first();
-    
+
     expect($user->role->value)->toBe('client');
 });
 
@@ -143,7 +143,7 @@ test('password_changed_at is set during registration', function () {
     ]);
 
     $user = User::where('email', 'test@example.com')->first();
-    
+
     expect($user->password_changed_at)->not->toBeNull();
 });
 
@@ -158,7 +158,7 @@ test('password is hashed during registration', function () {
     ]);
 
     $user = User::where('email', 'test@example.com')->first();
-    
+
     expect($user->password)->not->toBe('password');
     expect(Hash::check('password', $user->password))->toBeTrue();
 });
@@ -181,7 +181,7 @@ test('registered event is fired', function () {
 test('transaction rolls back on person creation failure', function () {
     // Simular error forzando DNI duplicado en transacción
     $existingPerson = Person::factory()->create(['dni' => '12345678']);
-    
+
     $response = $this->post('/register', [
         'name' => 'Test',
         'last_name' => 'User',
@@ -194,7 +194,7 @@ test('transaction rolls back on person creation failure', function () {
     // No debería crear el usuario si falla la persona
     $user = User::where('email', 'test@example.com')->first();
     expect($user)->toBeNull();
-    
+
     $this->assertGuest();
 });
 
@@ -210,7 +210,7 @@ test('email is converted to lowercase', function () {
 
     // Buscar con el email original (mayúsculas)
     $user = User::where('email', 'TEST@EXAMPLE.COM')->first();
-    
+
     expect($user)->not->toBeNull();
     // El email se guarda tal cual se envió
     expect($user->email)->toBe('TEST@EXAMPLE.COM');
@@ -227,7 +227,7 @@ test('user is automatically logged in after registration', function () {
     ]);
 
     $this->assertAuthenticated();
-    
+
     $user = User::where('email', 'test@example.com')->first();
     expect(auth()->id())->toBe($user->id);
 });
@@ -244,7 +244,7 @@ test('person and user are linked correctly', function () {
 
     $user = User::where('email', 'test@example.com')->first();
     $person = Person::find($user->person_id);
-    
+
     expect($person)->not->toBeNull();
     expect($person->id)->toBe($user->person_id);
     expect($person->name)->toBe('Test');

@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\IssuedTicket;
+use App\Models\Order;
 use App\Models\Organizer;
 use App\Models\TicketType;
-use App\Enums\OrderStatus;
-use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +22,7 @@ class RevenueService
     {
         // Para bundles: necesitamos contar órdenes únicas (lotes vendidos)
         // Para individuales: contamos tickets emitidos normalmente
-        
+
         if ($ticketType->is_bundle) {
             // Para bundles: contar órdenes distintas que compraron este tipo de ticket
             $lotesVendidos = Order::query()
@@ -36,7 +36,7 @@ class RevenueService
             }
 
             $countLotes = $lotesVendidos->count();
-            
+
             // Para bundles: precio del lote × cantidad de lotes vendidos
             return (float) ($countLotes * $ticketType->price);
         } else {
@@ -51,7 +51,7 @@ class RevenueService
                 });
 
             $ticketCount = $query->count();
-            
+
             return (float) ($ticketCount * $ticketType->price);
         }
     }

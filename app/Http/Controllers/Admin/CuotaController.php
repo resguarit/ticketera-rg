@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Cuota;
 use App\Models\Event;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CuotaController extends Controller
@@ -23,6 +23,7 @@ class CuotaController extends Controller
     public function create()
     {
         $events = Event::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('admin/cuotas/new', compact('events'));
     }
 
@@ -47,6 +48,7 @@ class CuotaController extends Controller
     {
         $cuota->load('event:id,name');
         $events = Event::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('admin/cuotas/edit', compact('cuota', 'events'));
     }
 
@@ -71,6 +73,7 @@ class CuotaController extends Controller
     {
         $cuota->habilitada = false;
         $cuota->save();
+
         return redirect()->route('admin.cuotas.index')->with('success', 'Cuota deshabilitada exitosamente.');
     }
 
@@ -78,6 +81,7 @@ class CuotaController extends Controller
     {
         $cuota->habilitada = true;
         $cuota->save();
+
         return redirect()->route('admin.cuotas.index')->with('success', 'Cuota habilitada nuevamente.');
     }
 }

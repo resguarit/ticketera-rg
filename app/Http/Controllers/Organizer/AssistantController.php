@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers\Organizer;
 
+use App\Enums\IssuedTicketStatus;
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Event;
 use App\Models\Assistant;
+use App\Models\Event;
+use App\Models\EventFunction;
+use App\Models\IssuedTicket;
 use App\Models\Order;
+use App\Services\EmailDispatcherService;
+use Carbon\Carbon;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use App\Enums\OrderStatus;
-use App\Enums\IssuedTicketStatus;
-use App\Models\EventFunction;
-use Carbon\Carbon;
-use App\Models\IssuedTicket;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Inertia\Response;
-use App\Services\EmailDispatcherService;
 
 class AssistantController extends Controller
 {
@@ -36,6 +35,7 @@ class AssistantController extends Controller
             abort(403);
         }
     }
+
     public function index(Request $request, Event $event)
     {
         $organizer = Auth::user()->organizer;
@@ -47,7 +47,7 @@ class AssistantController extends Controller
         $selectedFunctionId = $request->input('function_id');
         $searchTerm = $request->input('search');
         $sortDirection = $request->input('sort_direction', 'desc'); // default 'desc'
-        if (!in_array($sortDirection, ['asc', 'desc'])) {
+        if (! in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
         // --- Fin filtros ---
@@ -115,7 +115,7 @@ class AssistantController extends Controller
         // 3. Aplicar Filtro de Función
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
             $invitedQuery->where('assistants.event_function_id', $selectedFunctionId);
-            
+
             // Filtra órdenes que tengan al menos un ticket para esa función
             $buyersQuery->whereIn('orders.id', function ($query) use ($selectedFunctionId) {
                 $query->select('order_id')
@@ -129,18 +129,18 @@ class AssistantController extends Controller
         if ($searchTerm) {
             $invitedQuery->where(function ($q) use ($searchTerm) {
                 $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
-                  ->orWhere('person.dni', 'like', "%{$searchTerm}%")
-                  ->orWhere('assistants.email', 'like', "%{$searchTerm}%");
+                    ->orWhere('person.dni', 'like', "%{$searchTerm}%")
+                    ->orWhere('assistants.email', 'like', "%{$searchTerm}%");
             });
 
             $buyersQuery->where(function ($q) use ($searchTerm) {
                 $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
-                  ->orWhere('person.dni', 'like', "%{$searchTerm}%")
-                  ->orWhere('users.email', 'like', "%{$searchTerm}%")
-                  ->orWhere('orders.transaction_id', 'like', "%{$searchTerm}%");
+                    ->orWhere('person.dni', 'like', "%{$searchTerm}%")
+                    ->orWhere('users.email', 'like', "%{$searchTerm}%")
+                    ->orWhere('orders.transaction_id', 'like', "%{$searchTerm}%");
             });
         }
-        
+
         // 5. Combinar Queries
         $combinedQuery = $invitedQuery->unionAll($buyersQuery);
 
@@ -155,8 +155,9 @@ class AssistantController extends Controller
         // 8. Formatear datos para la vista
         $attendees->getCollection()->transform(function ($attendee) {
             $attendee = (array) $attendee; // Convertir stdClass a array
-            
+
             $functionDate = new Carbon($attendee['function_date_time']);
+
             return [
                 'assistant_id' => $attendee['assistant_id'],
                 'order_id' => $attendee['order_id'],
@@ -169,7 +170,7 @@ class AssistantController extends Controller
                 'total_amount' => (float) $attendee['total_amount'],
                 'order_status' => $attendee['order_status'],
                 // 'is_cancelled' para invitados (soft delete) o compradores (status orden)
-                'is_cancelled' => !empty($attendee['is_cancelled_at']) || $attendee['order_status'] === OrderStatus::CANCELLED->value,
+                'is_cancelled' => ! empty($attendee['is_cancelled_at']) || $attendee['order_status'] === OrderStatus::CANCELLED->value,
                 'invited_at' => $attendee['invited_at'] ? (new Carbon($attendee['invited_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
                 'sended_at' => $attendee['sended_at'] ? (new Carbon($attendee['sended_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
                 'purchased_at' => $attendee['purchased_at'] ? (new Carbon($attendee['purchased_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
@@ -187,7 +188,7 @@ class AssistantController extends Controller
                     'start_time' => $function->start_time->isoFormat('D MMM, HH:mm'),
                 ];
             });
-        
+
         // Stats (Ejemplo simple, puedes hacerlo más complejo si lo necesitas)
         $stats = [
             'total_attendees' => $finalQuery->count(), // Stat simple
@@ -201,12 +202,10 @@ class AssistantController extends Controller
             'stats' => $stats,
             // --- Devolver props de filtros a la vista ---
             'search' => $searchTerm,
-            'sort_direction' => $sortDirection
+            'sort_direction' => $sortDirection,
             // --- Fin ---
         ]);
     }
-
-
 
     public function store(Event $event, Request $request)
     {
@@ -246,12 +245,12 @@ class AssistantController extends Controller
 
             // Cancelar solo los tickets de esta invitación específica
             IssuedTicket::where('assistant_id', $assistant->id)
-                ->whereHas('ticketType', function($query) use ($assistant) {
+                ->whereHas('ticketType', function ($query) use ($assistant) {
                     $query->where('event_function_id', $assistant->event_function_id);
                 })
                 ->where('status', '!=', \App\Enums\IssuedTicketStatus::CANCELLED)
                 ->update([
-                    'status' => \App\Enums\IssuedTicketStatus::CANCELLED
+                    'status' => \App\Enums\IssuedTicketStatus::CANCELLED,
                 ]);
 
             // Eliminar el asistente (soft delete)
@@ -265,8 +264,8 @@ class AssistantController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            return redirect()->back()->withErrors(['error' => 'Error al cancelar el asistente: ' . $e->getMessage()]);
+
+            return redirect()->back()->withErrors(['error' => 'Error al cancelar el asistente: '.$e->getMessage()]);
         }
     }
 
@@ -280,7 +279,7 @@ class AssistantController extends Controller
 
         $request->validate([
             'ticket_ids' => 'required|array|min:1',
-            'ticket_ids.*' => 'required|integer|exists:issued_tickets,id'
+            'ticket_ids.*' => 'required|integer|exists:issued_tickets,id',
         ]);
 
         $ticketIds = $request->ticket_ids;
@@ -289,7 +288,7 @@ class AssistantController extends Controller
             ->where('assistant_id', $assistant->id)
             ->with([
                 'assistant.person',
-                'ticketType.eventFunction.event'
+                'ticketType.eventFunction.event',
             ])
             ->get();
 
@@ -314,7 +313,7 @@ class AssistantController extends Controller
         IssuedTicket::whereIn('id', $ticketIds)
             ->update(['email_sent_at' => now()]);
 
-        return redirect()->back()->with('success', 'Invitación reenviada correctamente para ' . $tickets->count() . ' tickets.');
+        return redirect()->back()->with('success', 'Invitación reenviada correctamente para '.$tickets->count().' tickets.');
     }
 
     public function resendPurchase(Event $event, Order $order)
@@ -328,7 +327,7 @@ class AssistantController extends Controller
             })
             ->exists();
 
-        if (!$orderBelongsToEvent) {
+        if (! $orderBelongsToEvent) {
             abort(404, 'Esta orden no pertenece al evento especificado.');
         }
 
@@ -348,18 +347,18 @@ class AssistantController extends Controller
             })
             ->exists();
 
-        if (!$orderBelongsToEvent) {
+        if (! $orderBelongsToEvent) {
             abort(404, 'Esta orden no pertenece al evento especificado.');
         }
 
         $order->load([
             'client.person',
             'issuedTickets.ticketType',
-            'discountCode'
+            'discountCode',
         ]);
 
         $person = $order->client->person;
-        
+
         $ticketsByType = $order->issuedTickets
             ->groupBy('ticket_type_id');
 
@@ -374,7 +373,7 @@ class AssistantController extends Controller
                 $bundleQuantity = $ticketType->bundle_quantity ?? 1;
                 $lotesVendidos = intval($ticketsEmitidos / $bundleQuantity); // Lotes vendidos
                 $subtotal = $lotesVendidos * $price; // Precio por lote × cantidad de lotes
-                
+
                 return [
                     'ticket_type_id' => $ticketType->id,
                     'ticket_type_name' => $ticketType->name,
@@ -390,7 +389,7 @@ class AssistantController extends Controller
             } else {
                 // Para tickets individuales: mantener lógica original
                 $subtotal = $ticketsEmitidos * $price;
-                
+
                 return [
                     'ticket_type_id' => $ticketType->id,
                     'ticket_type_name' => $ticketType->name,
@@ -407,11 +406,11 @@ class AssistantController extends Controller
         })->values();
 
         $orderSubtotal = $order->subtotal ?? $perType->sum('subtotal');
-        $discountPercentage = $order->discount ?? 0; 
+        $discountPercentage = $order->discount ?? 0;
         $discountAmount = $orderSubtotal * $discountPercentage;
         $subtotalAfterDiscount = $orderSubtotal - $discountAmount;
         $serviceFeeAmount = $order->service_fee ?? 0;
-        $taxPercentage = $order->tax ?? 0; 
+        $taxPercentage = $order->tax ?? 0;
         $totalPaid = $order->total_amount;
 
         return response()->json([
@@ -424,7 +423,7 @@ class AssistantController extends Controller
                 'transaction_id' => $order->transaction_id,
             ],
             'person' => [
-                'full_name' => trim($person->name . ' ' . $person->last_name),
+                'full_name' => trim($person->name.' '.$person->last_name),
                 'dni' => $person->dni,
                 'email' => $order->client->email,
                 'phone' => $person->phone,
@@ -458,11 +457,11 @@ class AssistantController extends Controller
         $assistant->load([
             'person',
             'eventFunction',
-            'issuedTickets.ticketType'
+            'issuedTickets.ticketType',
         ]);
 
         $person = $assistant->person;
-        
+
         $ticketsByType = $assistant->issuedTickets
             ->where('status', '!=', 'cancelled')
             ->groupBy('ticket_type_id');
@@ -472,10 +471,10 @@ class AssistantController extends Controller
         if ($ticketsByType->count() > 0) {
             $perType = $ticketsByType->map(function ($tickets) {
                 $firstTicket = $tickets->first();
-                if (!$firstTicket || !$firstTicket->ticketType) {
+                if (! $firstTicket || ! $firstTicket->ticketType) {
                     return null;
                 }
-                
+
                 $ticketType = $firstTicket->ticketType;
                 $quantity = $tickets->count();
                 $courtesyValue = $ticketType->price;
@@ -491,8 +490,8 @@ class AssistantController extends Controller
                     'ticket_ids' => $tickets->pluck('id')->toArray(), // Agregamos los IDs específicos de los tickets
                 ];
             })
-            ->filter()
-            ->values();
+                ->filter()
+                ->values();
         }
 
         $totalTickets = $assistant->issuedTickets->where('status', '!=', 'cancelled')->count();
@@ -510,7 +509,7 @@ class AssistantController extends Controller
                 'quantity' => $assistant->quantity,
             ],
             'person' => [
-                'full_name' => trim($person->name . ' ' . $person->last_name),
+                'full_name' => trim($person->name.' '.$person->last_name),
                 'dni' => $person->dni,
                 'email' => $assistant->email ?: $person->user?->email,
                 'phone' => $person->phone,

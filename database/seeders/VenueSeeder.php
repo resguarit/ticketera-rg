@@ -1,10 +1,11 @@
 <?php
+
 // filepath: database/seeders/VenueSeeder.php
 
 namespace Database\Seeders;
 
-use App\Models\Venue;
 use App\Models\Ciudad;
+use App\Models\Venue;
 use Illuminate\Database\Seeder;
 
 class VenueSeeder extends Seeder

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('decidir_public_key_prod')->nullable();
             $table->string('decidir_secret_key_prod')->nullable();
             $table->string('decidir_public_key_test')->nullable();
-            $table->string('decidir_secret_key_test')->nullable();  
+            $table->string('decidir_secret_key_test')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

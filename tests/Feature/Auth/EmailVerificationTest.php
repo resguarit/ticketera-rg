@@ -28,7 +28,7 @@ test('email can be verified', function () {
 
     Event::assertDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-    
+
     // Cambiar según tu ruta post-verificación
     $response->assertRedirect('/'); // O la ruta que uses en tu app
 });
@@ -117,7 +117,7 @@ test('user cannot verify another users email', function () {
 
 test('verified event is fired when email is verified', function () {
     Event::fake();
-    
+
     $user = User::factory()->unverified()->create();
 
     $verificationUrl = URL::temporarySignedRoute(
@@ -147,7 +147,7 @@ test('email_verified_at timestamp is set correctly', function () {
     $this->actingAs($user)->get($verificationUrl);
 
     $user->refresh();
-    
+
     expect($user->email_verified_at)->not->toBeNull();
     expect($user->email_verified_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
 });
