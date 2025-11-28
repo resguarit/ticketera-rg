@@ -160,65 +160,28 @@ class TicketTypeController extends Controller
     private function createStages(array $validated, Event $event, EventFunction $function): RedirectResponse
     {
         $stagesCount = $validated['stages_count'];
-        $priceIncrement = $validated['price_increment'] / 100; // Convertir porcentaje a decimal
-        $basePrice = $validated['price'];
         $stageNames = $validated['stage_names'] ?? [];
+        $basePrice = $validated['price'];
+        $priceIncrement = $validated['price_increment'] ?? 0.1;
         
-        // Verificar que tengamos nombres para todas las tandas
-        if (count($stageNames) !== $stagesCount) {
-            throw new \Exception('El número de nombres de tandas no coincide con el número de tandas especificado.');
-        }
-        
-        // Verificar capacidad total para todas las tandas
-        $sector = Sector::find($validated['sector_id']);
-        $isBundle = $validated['is_bundle'] ?? false;
-        $bundleQuantity = $validated['bundle_quantity'] ?? 1;
-        $realQuantityPerStage = $isBundle ? $validated['quantity'] * $bundleQuantity : $validated['quantity'];
-        $totalRealQuantity = $realQuantityPerStage * $stagesCount;
-        
-        // Calcular capacidad ya utilizada
-        $usedCapacity = TicketType::where('event_function_id', $function->id)
-            ->where('sector_id', $sector->id)
-            ->get()
-            ->sum(function ($ticketType) {
-                return $ticketType->is_bundle 
-                    ? $ticketType->quantity * $ticketType->bundle_quantity
-                    : $ticketType->quantity;
-            });
-        
-        $totalAfterCreation = $usedCapacity + $totalRealQuantity;
-        $createdStages = [];
-        
-        // Crear cada tanda con su nombre personalizado
+        // Generar un grupo único para estas tandas
+        $stageGroup = $validated['stage_group_name'] ?? ($validated['sector_id'] . '-' . time());
+
         for ($i = 0; $i < $stagesCount; $i++) {
-            $stagePrice = $basePrice * (1 + ($priceIncrement * $i));
-            
             $stageData = $validated;
-            $stageData['name'] = $stageNames[$i]; // Usar nombre personalizado
-            $stageData['price'] = $stagePrice;
-            $stageData['is_hidden'] = $i > 0; // Solo la primera tanda visible
+            $stageData['name'] = $stageNames[$i] ?? "Tanda " . ($i + 1);
+            $stageData['price'] = $basePrice * (1 + ($priceIncrement * $i));
+            $stageData['is_hidden'] = $i > 0; // Primera visible, resto ocultas
             
-            // Remover campos específicos de tandas antes de crear
-            unset($stageData['create_stages'], $stageData['stages_count'], $stageData['price_increment'], $stageData['stage_names']);
+            // AGREGAR campos de tanda
+            $stageData['stage_group'] = $stageGroup;
+            $stageData['stage_order'] = $i + 1; // 1, 2, 3, ...
             
-            $ticketType = TicketType::create($stageData);
-            $createdStages[] = $ticketType;
-        }
-        
-        // Preparar mensaje con nombres personalizados
-        $message = "Se crearon {$stagesCount} tandas exitosamente:";
-        foreach ($createdStages as $stage) {
-            $status = $stage->is_hidden ? '(Oculta)' : '(Activa)';
-            $message .= "\n• {$stage->name}: \${$stage->price} {$status}";
-        }
-        
-        if ($totalAfterCreation > $sector->capacity) {
-            $excess = $totalAfterCreation - $sector->capacity;
-            $message .= "\n\n⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterCreation}/{$sector->capacity}.";
+            TicketType::create($stageData);
         }
 
-        return redirect()->route('organizer.events.tickets', $event->id)
-            ->with($totalAfterCreation > $sector->capacity ? 'warning' : 'success', $message);
+        return redirect()->route('organizer.events.show', $event)
+            ->with('success', 'Tandas creadas exitosamente.');
     }
 
     /**

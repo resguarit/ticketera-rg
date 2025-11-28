@@ -1,5 +1,5 @@
 <?php
-// Crear app/Services/StageTicketService.php
+// app/Services/StageTicketService.php
 
 namespace App\Services;
 
@@ -10,110 +10,91 @@ class StageTicketService
 {
     public function checkAndActivateNextStage(TicketType $ticketType): bool
     {
-        // Solo procesar si es parte de un sistema de tandas y está VISIBLE (no oculto)
-        if (!$ticketType->stage_group || $ticketType->is_hidden) {
+        // Solo procesar si es parte de un sistema de tandas y está VISIBLE
+        if (!$ticketType->isStaged() || $ticketType->is_hidden) {
             return false;
         }
         
-        // Recargar para obtener datos actualizados
-        $ticketType->refresh();
-        
-        // Verificar si esta tanda está agotada (quantity_available <= 0)
-        $quantityAvailable = $ticketType->quantity - $ticketType->quantity_sold;
-        if ($quantityAvailable > 0) {
-            return false; // Aún hay disponibilidad
+        // Verificar si se agotó
+        if ($ticketType->quantity_available > 0) {
+            return false;
         }
-        
-        Log::info("Tanda agotada detectada", [
-            'tanda' => $ticketType->name,
-            'quantity' => $ticketType->quantity,
-            'sold' => $ticketType->quantity_sold,
-            'available' => $quantityAvailable
-        ]);
-        
-        // Ocultar tanda actual
-        $ticketType->update(['is_hidden' => true]);
-        
-        // Buscar siguiente tanda en el grupo (ordenadas por número)
-        $nextStage = TicketType::where('event_function_id', $ticketType->event_function_id)
-            ->where('name', 'LIKE', $ticketType->stage_group . ' %')
-            ->where('is_hidden', true) // Solo tandas ocultas
-            ->where('name', '>', $ticketType->name) // Siguiente en orden alfabético
-            ->orderBy('name')
-            ->first();
+
+        try {
+            // Ocultar la tanda actual
+            $ticketType->update(['is_hidden' => true]);
             
-        if ($nextStage) {
-            $nextStage->update(['is_hidden' => false]);
-            
-            Log::info("Nueva tanda activada", [
-                'nueva_tanda' => $nextStage->name,
-                'precio' => $nextStage->price,
-                'cantidad' => $nextStage->quantity
+            Log::info("Tanda agotada y ocultada", [
+                'ticket_type_id' => $ticketType->id,
+                'name' => $ticketType->name,
+                'stage_group' => $ticketType->stage_group,
+                'stage_order' => $ticketType->stage_order,
+            ]);
+
+            // Buscar la siguiente tanda en el grupo
+            $nextStage = $ticketType->getNextStage();
+
+            if ($nextStage) {
+                $nextStage->update(['is_hidden' => false]);
+                
+                Log::info("Siguiente tanda activada", [
+                    'ticket_type_id' => $nextStage->id,
+                    'name' => $nextStage->name,
+                    'stage_group' => $nextStage->stage_group,
+                    'stage_order' => $nextStage->stage_order,
+                ]);
+                
+                return true;
+            }
+
+            Log::info("No hay más tandas para activar en el grupo", [
+                'stage_group' => $ticketType->stage_group,
+            ]);
+
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error("Error al activar siguiente tanda", [
+                'error' => $e->getMessage(),
+                'ticket_type_id' => $ticketType->id,
             ]);
             
-            // OPCIONAL: Notificar al organizador por email/push
-            // $this->notifyOrganizerStageActivated($nextStage);
-            
-            return true;
+            return false;
         }
-        
-        Log::info("No hay más tandas disponibles", [
-            'grupo' => $ticketType->stage_group,
-            'function_id' => $ticketType->event_function_id
-        ]);
-        
-        return false;
     }
     
     public function getStageStatus(string $stageGroup, int $functionId): array
     {
-        $stages = TicketType::where('event_function_id', $functionId)
-            ->where('name', 'LIKE', $stageGroup . ' %')
-            ->orderBy('name')
-            ->get();
-            
-        return [
-            'total_stages' => $stages->count(),
-            'active_stage' => $stages->where('is_hidden', false)->first(),
-            'completed_stages' => $stages->filter(function($stage) {
-                return ($stage->quantity - $stage->quantity_sold) <= 0;
-            })->count(),
-            'stages' => $stages->map(fn($stage) => [
+        $stages = TicketType::inStageGroup($stageGroup, $functionId)->get();
+
+        return $stages->map(function ($stage) {
+            return [
+                'id' => $stage->id,
                 'name' => $stage->name,
-                'price' => $stage->price,
-                'available' => $stage->quantity - $stage->quantity_sold,
-                'total' => $stage->quantity,
-                'sold' => $stage->quantity_sold,
-                'is_active' => !$stage->is_hidden,
-                'is_completed' => ($stage->quantity - $stage->quantity_sold) <= 0,
-            ])->toArray()
-        ];
+                'stage_order' => $stage->stage_order,
+                'is_hidden' => $stage->is_hidden,
+                'quantity_available' => $stage->quantity_available,
+                'is_sold_out' => $stage->quantity_available <= 0,
+            ];
+        })->toArray();
     }
     
-    /**
-     * NUEVO: Método para activar manualmente una tanda (para organizadores)
-     */
     public function manuallyActivateStage(int $ticketTypeId): bool
     {
         $ticketType = TicketType::findOrFail($ticketTypeId);
         
-        if (!$ticketType->stage_group) {
+        if (!$ticketType->isStaged()) {
             return false;
         }
-        
-        // Ocultar todas las tandas del grupo
+
+        // Ocultar todas las tandas del mismo grupo
         TicketType::where('event_function_id', $ticketType->event_function_id)
-            ->where('name', 'LIKE', $ticketType->stage_group . ' %')
+            ->where('stage_group', $ticketType->stage_group)
             ->update(['is_hidden' => true]);
-        
-        // Activar la tanda seleccionada
+
+        // Mostrar la tanda seleccionada
         $ticketType->update(['is_hidden' => false]);
-        
-        Log::info("Tanda activada manualmente", [
-            'tanda' => $ticketType->name,
-            'activada_por' => auth()->user()?->email ?? 'sistema'
-        ]);
-        
+
         return true;
     }
 }
