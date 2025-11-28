@@ -88,9 +88,9 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
 
   useEffect(() => {
     if (!decidirSandboxRef.current) {
-      const urlProd = "https://live.decidir.com/api/v2"
-      decidirSandboxRef.current = new (window as any).Decidir(urlProd)
-      decidirSandboxRef.current.setPublishableKey("9960377671874d4fb71d0a8448642730")
+      const urlSandbox = "https://developers-ventasonline.payway.com.ar/api/v2"
+      decidirSandboxRef.current = new (window as any).Decidir(urlSandbox)
+      decidirSandboxRef.current.setPublishableKey("2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y")
     }
   }, [])
 
