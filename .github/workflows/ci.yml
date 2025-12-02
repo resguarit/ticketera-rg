@@ -50,10 +50,6 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: password
 
-      - name: Run Laravel Pint (Code Style)
-        run: ./vendor/bin/pint --test
-        continue-on-error: true
-
       - name: Execute tests
         run: php artisan test
         env:
