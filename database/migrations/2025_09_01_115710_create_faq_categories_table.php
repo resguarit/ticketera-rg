@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // tiene que estar
         Schema::create('faq_categories', function (Blueprint $table) {
             $table->id();
             $table->string('title');
