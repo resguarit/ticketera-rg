@@ -10,6 +10,7 @@ import {
     Download,
     Filter,
     Eye,
+    EyeOff,
     RefreshCw,
     FileText,
     PieChart,
@@ -23,7 +24,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-// import { PageProps } from '@/types';
 
 interface RealTimeStats {
     today_sales: number;
@@ -51,6 +51,9 @@ interface ReportsProps {
         tickets_sold: number;
         growth: string;
         status: string;
+        status_label: string;
+        status_color: string;
+        is_active: boolean;
     }>;
     monthlyData: Array<{
         month: string;
@@ -69,7 +72,7 @@ interface ReportsProps {
         users: number;
     }>;
     timeRange: string;
-    [key: string]: any; // Index signature para satisfacer PageProps
+    [key: string]: any;
 }
 
 export default function Reports({ auth }: any) {
@@ -156,17 +159,32 @@ export default function Reports({ auth }: any) {
         }
     };
 
-    const getCategoryIcon = (category: string) => {
-        switch (category.toLowerCase()) {
-            case "música": return "🎵";
-            case "deportes": return "⚽";
-            case "teatro": return "🎭";
-            case "conferencias": return "💼";
-            case "arte": return "🎨";
-            case "cine": return "🎬";
-            case "gastronomía": return "🍽️";
-            default: return "📅";
-        }
+    // Función actualizada para usar el enum de estados
+    const getEventStatusBadge = (status: string, statusLabel: string, statusColor: string, isActive: boolean) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[statusColor] || 'bg-gray-500 hover:bg-gray-600';
+        
+        return (
+            <div className="flex items-center gap-2">
+                <Badge className={`${badgeColor} text-white border-0 text-xs`}>
+                    {statusLabel}
+                </Badge>
+                {!isActive && (
+                    <Badge className="bg-gray-400 hover:bg-gray-500 text-white border-0 text-xs">
+                        <EyeOff className="w-3 h-3 mr-1" />
+                        Oculto
+                    </Badge>
+                )}
+            </div>
+        );
     };
 
     const formatCurrency = (amount: number) => {
@@ -176,7 +194,6 @@ export default function Reports({ auth }: any) {
         }).format(amount);
     };
 
-    // Manejar caso cuando monthlyData está vacío
     const getMaxRevenue = () => {
         if (monthlyData.length === 0) return 1;
         return Math.max(...monthlyData.map(m => m.revenue));
@@ -463,22 +480,22 @@ export default function Reports({ auth }: any) {
                                     <div className="space-y-4">
                                         {topEvents.length > 0 ? topEvents.map((event, index) => (
                                             <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                                <div className="flex items-center space-x-4">
+                                                <div className="flex items-center space-x-4 flex-1">
                                                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-lg flex items-center justify-center">
                                                         <span className="text-white font-bold">#{index + 1}</span>
                                                     </div>
-                                                    <div>
+                                                    <div className="flex-1">
                                                         <h3 className="font-semibold text-black">{event.name}</h3>
                                                         <div className="flex items-center space-x-2 mt-1">
-                                                            <span className="text-sm">{getCategoryIcon(event.category)}</span>
                                                             <Badge className="bg-gray-200 text-gray-800 border-0 text-xs">
                                                                 {event.category}
                                                             </Badge>
-                                                            <Badge className={`border-0 text-xs ${
-                                                                event.status === 'active' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
-                                                            }`}>
-                                                                {event.status === 'active' ? 'Activo' : 'Completado'}
-                                                            </Badge>
+                                                            {getEventStatusBadge(
+                                                                event.status,
+                                                                event.status_label,
+                                                                event.status_color,
+                                                                event.is_active
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -510,7 +527,7 @@ export default function Reports({ auth }: any) {
                                     <CardHeader>
                                         <CardTitle className="text-black flex items-center space-x-2">
                                             <Users className="w-5 h-5" />
-                                            <span>Demografía por Edad</span>
+                                            <span>Estadísticas de Usuarios</span>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
@@ -518,7 +535,7 @@ export default function Reports({ auth }: any) {
                                             {userDemographics.map((demo, index) => (
                                                 <div key={index} className="space-y-2">
                                                     <div className="flex justify-between text-sm">
-                                                        <span className="text-black font-medium">{demo.age} años</span>
+                                                        <span className="text-black font-medium">{demo.age}</span>
                                                         <span className="text-gray-600">{formatNumber(Math.round(demo.users))} usuarios ({demo.percentage}%)</span>
                                                     </div>
                                                     <Progress value={demo.percentage} className="h-2" />
@@ -539,26 +556,31 @@ export default function Reports({ auth }: any) {
                                                 <p className="text-2xl font-bold text-blue-900">{userDemographics.reduce((sum, demo) => sum + demo.users, 0).toLocaleString()}</p>
                                             </div>
                                             <div className="p-4 bg-green-50 rounded-lg text-center">
-                                                <p className="text-green-600 text-sm font-medium">Más Activos</p>
+                                                <p className="text-green-600 text-sm font-medium">Verificados</p>
                                                 <p className="text-2xl font-bold text-green-900">
                                                     {userDemographics.length > 0 
-                                                        ? userDemographics.find(d => d.percentage === Math.max(...userDemographics.map(ud => ud.percentage)))?.age || 'N/A'
-                                                        : 'N/A'
+                                                        ? (userDemographics.find(d => d.age === 'Email verificado')?.users || 0).toLocaleString()
+                                                        : '0'
                                                     }
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-purple-50 rounded-lg text-center">
-                                                <p className="text-purple-600 text-sm font-medium">Promedio</p>
+                                                <p className="text-purple-600 text-sm font-medium">Con Teléfono</p>
                                                 <p className="text-2xl font-bold text-purple-900">
                                                     {userDemographics.length > 0 
-                                                        ? Math.round(userDemographics.reduce((sum, demo) => sum + demo.users, 0) / userDemographics.length).toLocaleString()
+                                                        ? (userDemographics.find(d => d.age === 'Con teléfono')?.users || 0).toLocaleString()
                                                         : '0'
                                                     }
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-orange-50 rounded-lg text-center">
-                                                <p className="text-orange-600 text-sm font-medium">Crecimiento</p>
-                                                <p className="text-2xl font-bold text-orange-900">+12.5%</p>
+                                                <p className="text-orange-600 text-sm font-medium">Sin Verificar</p>
+                                                <p className="text-2xl font-bold text-orange-900">
+                                                    {userDemographics.length > 0 
+                                                        ? (userDemographics.find(d => d.age === 'Email sin verificar')?.users || 0).toLocaleString()
+                                                        : '0'
+                                                    }
+                                                </p>
                                             </div>
                                         </div>
                                     </CardContent>

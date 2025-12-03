@@ -27,8 +27,10 @@ class TicketType extends Model
         'quantity_sold',
         'max_purchase_quantity',
         'is_hidden',
-        'is_bundle',        // ← NUEVO
-        'bundle_quantity',  // ← NUEVO
+        'is_bundle',
+        'bundle_quantity',
+        'stage_group',  // ← Ahora es columna real
+        'stage_order',  // ← Ahora es columna real
     ];
 
     protected $casts = [
@@ -37,13 +39,12 @@ class TicketType extends Model
         'quantity_sold' => 'integer',
         'max_purchase_quantity' => 'integer',
         'is_hidden' => 'boolean',
-        'is_bundle' => 'boolean',        // ← NUEVO
-        'bundle_quantity' => 'integer',  // ← NUEVO
+        'is_bundle' => 'boolean',
+        'bundle_quantity' => 'integer',
         'sales_start_date' => 'datetime',
         'sales_end_date' => 'datetime',
+        'stage_order' => 'integer',
     ];
-
-    protected $appends = ['stage_group', 'stage_number'];
 
     public function eventFunction()
     {
@@ -93,22 +94,40 @@ class TicketType extends Model
         return app(RevenueService::class)->forTicketType($this, $startDate, $endDate);
     }
 
-    public function getStageGroupAttribute(): ?string
+    /**
+     * Scope para filtrar tandas del mismo grupo
+     */
+    public function scopeInStageGroup($query, string $stageGroup, int $functionId)
     {
-        // Extraer el grupo base del nombre (ej: "General 1" -> "General")
-        if (preg_match('/^(.+)\s+(\d+)$/', $this->name, $matches)) {
-            return trim($matches[1]);
-        }
-        return null;
+        return $query->where('event_function_id', $functionId)
+                    ->where('stage_group', $stageGroup)
+                    ->whereNotNull('stage_order')
+                    ->orderBy('stage_order');
     }
 
-    public function getStageNumberAttribute(): ?int
+    /**
+     * Verificar si este ticket es parte de un sistema de tandas
+     */
+    public function isStaged(): bool
     {
-        // Extraer el número de tanda del nombre
-        if (preg_match('/^(.+)\s+(\d+)$/', $this->name, $matches)) {
-            return (int) $matches[2];
+        return !is_null($this->stage_group) && !is_null($this->stage_order);
+    }
+
+    /**
+     * Obtener la siguiente tanda en el grupo
+     */
+    public function getNextStage(): ?TicketType
+    {
+        if (!$this->isStaged()) {
+            return null;
         }
-        return null;
+
+        return static::where('event_function_id', $this->event_function_id)
+            ->where('stage_group', $this->stage_group)
+            ->where('stage_order', '>', $this->stage_order)
+            ->where('is_hidden', true)
+            ->orderBy('stage_order')
+            ->first();
     }
 
     // Método para obtener tandas del mismo grupo

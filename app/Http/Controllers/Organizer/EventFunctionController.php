@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
+use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,8 +45,16 @@ class EventFunctionController extends Controller
     {
         $this->checkOwnership($event);
 
+        // Estados disponibles del enum
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+            'color' => $status->color(),
+        ]);
+
         return Inertia::render('organizer/events/functions/create', [
             'event' => $event,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -62,6 +71,7 @@ class EventFunctionController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'is_active' => 'required|boolean',
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
@@ -90,9 +100,27 @@ class EventFunctionController extends Controller
     {
         $this->checkOwnership($event);
 
+        // Estados disponibles del enum
+        $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+            'color' => $status->color(),
+        ]);
+
         return Inertia::render('organizer/events/functions/edit', [
             'event' => $event,
-            'function' => $function,
+            'function' => [
+                'id' => $function->id,
+                'name' => $function->name,
+                'description' => $function->description,
+                'start_time' => $function->start_time,
+                'end_time' => $function->end_time,
+                'is_active' => $function->is_active,
+                'status' => $function->status->value,
+                'status_label' => $function->status->label(),
+                'status_color' => $function->status->color(),
+            ],
+            'statuses' => $statuses,
         ]);
     }
 
@@ -109,6 +137,7 @@ class EventFunctionController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'is_active' => 'required|boolean',
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
         ]);
 
         try {
@@ -157,6 +186,68 @@ class EventFunctionController extends Controller
             \Log::error('Error deleting function: ' . $e->getMessage());
             
             return back()->withErrors(['error' => 'Error al eliminar la función: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Update the status of a function
+     */
+    public function updateStatus(Request $request, Event $event, EventFunction $function): RedirectResponse
+    {
+        $this->checkOwnership($event);
+
+        $validated = $request->validate([
+            'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $function->update([
+                'status' => $validated['status']
+            ]);
+            
+            DB::commit();
+
+            $statusEnum = EventFunctionStatus::from($validated['status']);
+
+            return redirect()->back()
+                ->with('success', "Estado actualizado a: {$statusEnum->label()}");
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error updating function status: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al actualizar el estado: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Toggle active state of a function
+     */
+    public function toggleActive(Request $request, Event $event, EventFunction $function): RedirectResponse
+    {
+        $this->checkOwnership($event);
+
+        try {
+            DB::beginTransaction();
+            
+            $function->update([
+                'is_active' => !$function->is_active
+            ]);
+            
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', $function->is_active 
+                    ? 'Función activada correctamente' 
+                    : 'Función desactivada correctamente');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error toggling function active state: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Error al cambiar el estado: ' . $e->getMessage()]);
         }
     }
 }

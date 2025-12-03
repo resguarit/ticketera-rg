@@ -12,6 +12,7 @@ import {
     Clock,
     Star,
     Eye,
+    EyeOff,
     Settings,
     TrendingUp,
     Activity,
@@ -63,6 +64,9 @@ interface EventFunction {
     end_date: string;
     end_time_only: string;
     is_active: boolean;
+    status: string;
+    status_label: string;
+    status_color: string;
     total_tickets: number;
     function_revenue: number;
     ticket_types: TicketType[];
@@ -101,7 +105,7 @@ interface EventData {
         name: string;
         address: string;
         city: string;
-        province?: string; // NUEVO: agregar provincia
+        province?: string;
         full_address?: string; 
     };
     functions: EventFunction[];
@@ -127,30 +131,112 @@ export default function Show({ auth }: any) {
         sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + ticket.quantity_sold, 0), 0
     );
 
-    //const totalRevenue = calculateTotalRevenue(event.functions);
     const totalRevenue = event.total_revenue;
-
     const salesProgress = calculateSalesPercentage(soldTickets, totalTickets);
 
-    // Determinar estado del evento
+    // Determinar estado del evento basado en prioridad de funciones
     const getEventStatus = () => {
-        if (event.functions.length === 0) return { label: 'Borrador', color: 'bg-red-500', icon: AlertTriangle };
-        
-        const now = new Date();
-        const hasActiveFuture = event.functions.some(func => 
-            func.is_active && new Date(func.start_time) > now
-        );
-        const hasInactive = event.functions.some(func => !func.is_active);
-        const allFinished = event.functions.every(func => new Date(func.start_time) < now);
+        if (event.functions.length === 0) {
+            return { 
+                label: 'Borrador', 
+                color: 'bg-gray-500', 
+                icon: AlertTriangle,
+                isActive: false 
+            };
+        }
 
-        if (hasActiveFuture) return { label: 'Activo', color: 'bg-green-500', icon: CheckCircle };
-        if (hasInactive && !allFinished) return { label: 'Inactivo', color: 'bg-yellow-500', icon: Clock };
-        if (allFinished) return { label: 'Finalizado', color: 'bg-gray-500', icon: XCircle };
-        return { label: 'Borrador', color: 'bg-red-500', icon: AlertTriangle };
+        // Orden de prioridad de estados (mismo que en el backend)
+        const priorityOrder: Record<string, number> = {
+            'on_sale': 1,
+            'upcoming': 2,
+            'reprogrammed': 3,
+            'cancelled': 4,
+            'sold_out': 5,
+            'inactive': 6,
+            'finished': 7,
+        };
+
+        // Primero buscar funciones activas
+        const activeFunctions = event.functions.filter(f => f.is_active);
+        
+        let primaryFunction;
+        if (activeFunctions.length > 0) {
+            // Ordenar funciones activas por prioridad
+            primaryFunction = activeFunctions.sort((a, b) => {
+                const priorityA = priorityOrder[a.status] ?? 999;
+                const priorityB = priorityOrder[b.status] ?? 999;
+                return priorityA - priorityB;
+            })[0];
+        } else {
+            // Si no hay funciones activas, tomar la de mayor prioridad
+            primaryFunction = event.functions.sort((a, b) => {
+                const priorityA = priorityOrder[a.status] ?? 999;
+                const priorityB = priorityOrder[b.status] ?? 999;
+                return priorityA - priorityB;
+            })[0];
+        }
+
+        // Mapeo de colores
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500',
+            'blue': 'bg-blue-500',
+            'red': 'bg-red-500',
+            'gray': 'bg-gray-500',
+            'yellow': 'bg-yellow-500',
+            'orange': 'bg-orange-500',
+        };
+
+        // Mapeo de iconos
+        const iconMap: Record<string, any> = {
+            'on_sale': CheckCircle,
+            'upcoming': Clock,
+            'reprogrammed': Clock,
+            'cancelled': XCircle,
+            'sold_out': AlertTriangle,
+            'inactive': EyeOff,
+            'finished': XCircle,
+        };
+
+        const hasAnyActiveFunction = event.functions.some(f => f.is_active);
+
+        return {
+            label: primaryFunction.status_label,
+            color: colorMap[primaryFunction.status_color] || 'bg-gray-500',
+            icon: iconMap[primaryFunction.status] || AlertTriangle,
+            isActive: hasAnyActiveFunction
+        };
     };
 
     const status = getEventStatus();
     const StatusIcon = status.icon;
+
+    // Función para obtener badge de función
+    const getFunctionStatusBadge = (func: EventFunction) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[func.status_color] || 'bg-gray-500 hover:bg-gray-600';
+
+        return (
+            <div className="flex items-center gap-2">
+                <Badge className={`${badgeColor} text-white border-0`}>
+                    {func.status_label}
+                </Badge>
+                {!func.is_active && (
+                    <Badge className="bg-gray-400 hover:bg-gray-500 text-white border-0 text-xs">
+                        <EyeOff className="w-3 h-3 mr-1" />
+                        Oculto
+                    </Badge>
+                )}
+            </div>
+        );
+    };
 
     const handleToggleFeatured = () => {
         router.patch(route('admin.events.toggle-featured', event.id), {}, {
@@ -209,53 +295,52 @@ export default function Show({ auth }: any) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="bg-white">
-                                        <DropdownMenuItem className="text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            Ver como público
-                                        </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Ver como público
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
                     </div>
+
+                    {/* Banners */}
                     <div className='grid grid-cols-4 gap-2 mb-8'>
-                    {/* Hero Banner del evento (panorámico) - 3/4 del ancho */}
-                    {event.hero_image_url && (
-                        <div className='col-span-3'>
-                        <h3 className="text-sm font-medium text-gray-600 mb-2">Hero Banner</h3>
-                        <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                            <img 
-                                src={event.hero_image_url}
-                                alt={`${event.name} - Hero Banner`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    console.error('Error loading hero image:', event.hero_image_url);
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                        </div>
-                        </div>
-                    )}
-                    
-                    {/* Banner Principal (cuadrado) - 1/4 del ancho */}
-                    {event.image_url && (
-                        <div className='col-span-1'>
-                            <h3 className="text-sm font-medium text-gray-600 mb-2">Banner Principal</h3>
-                            <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                                <img 
-                                    src={event.image_url}
-                                    alt={`${event.name} - Banner`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        console.error('Error loading image:', event.image_url);
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
+                        {event.hero_image_url && (
+                            <div className='col-span-3'>
+                                <h3 className="text-sm font-medium text-gray-600 mb-2">Hero Banner</h3>
+                                <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                                    <img 
+                                        src={event.hero_image_url}
+                                        alt={`${event.name} - Hero Banner`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            console.error('Error loading hero image:', event.hero_image_url);
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                        
+                        {event.image_url && (
+                            <div className='col-span-1'>
+                                <h3 className="text-sm font-medium text-gray-600 mb-2">Banner Principal</h3>
+                                <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                                    <img 
+                                        src={event.image_url}
+                                        alt={`${event.name} - Banner`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            console.error('Error loading image:', event.image_url);
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    
                     {/* Estado y estadísticas rápidas */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                         {/* Estado */}
@@ -268,6 +353,9 @@ export default function Show({ auth }: any) {
                                     <div>
                                         <p className="text-sm text-gray-600">Estado</p>
                                         <p className="font-semibold text-black">{status.label}</p>
+                                        {!status.isActive && (
+                                            <p className="text-xs text-gray-500">Todas inactivas</p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -419,14 +507,14 @@ export default function Show({ auth }: any) {
                                                     <div>
                                                         <p className="font-medium text-sm text-gray-600 mb-1">Recinto</p>
                                                         <p className="font-medium text-black">{event.venue.name}</p>
-                                                        <p className="text-sm tex-black">{getVenueCompleteAddress(event.venue)}</p>
+                                                        <p className="text-sm text-black">{getVenueCompleteAddress(event.venue)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-start space-x-2">
                                                     <div>
                                                         <p className="text-sm text-gray-600 mb-1">Creado</p>
                                                         <p className="font-medium text-black">{formatDate(event.created_at)}</p>
-                                                        <p className="text-sm tex-black">Última actualización: {formatRelativeTime(event.updated_at)}</p>
+                                                        <p className="text-sm text-black">Última actualización: {formatRelativeTime(event.updated_at)}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -535,9 +623,7 @@ export default function Show({ auth }: any) {
                                                             <p className="text-gray-600 text-sm">{func.description}</p>
                                                         </div>
                                                         <div className="flex items-center space-x-2">
-                                                            <Badge className={func.is_active ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
-                                                                {func.is_active ? 'Activa' : 'Inactiva'}
-                                                            </Badge>
+                                                            {getFunctionStatusBadge(func)}
                                                             <Button
                                                                 onClick={() => handleToggleFunction(func.id)}
                                                                 variant="outline"
@@ -602,7 +688,10 @@ export default function Show({ auth }: any) {
                                             {event.functions.map((func) => (
                                                 func.ticket_types.length > 0 && (
                                                     <div key={func.id}>
-                                                        <h3 className="font-semibold text-black mb-3">{func.name}</h3>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h3 className="font-semibold text-black">{func.name}</h3>
+                                                            {getFunctionStatusBadge(func)}
+                                                        </div>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                             {func.ticket_types.map((ticket) => (
                                                                 <Card key={ticket.id} className="border-gray-200">
@@ -699,9 +788,7 @@ export default function Show({ auth }: any) {
                                                     <div key={func.id} className="p-3 bg-gray-50 rounded-lg">
                                                         <div className="flex justify-between items-center mb-2">
                                                             <h4 className="font-medium text-black">{func.name}</h4>
-                                                            <Badge className={func.is_active ? 'bg-green-500' : 'bg-red-500'}>
-                                                                {func.is_active ? 'Activa' : 'Inactiva'}
-                                                            </Badge>
+                                                            {getFunctionStatusBadge(func)}
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2 text-sm">
                                                             <div>

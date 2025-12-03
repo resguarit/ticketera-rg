@@ -36,7 +36,10 @@ interface EventFunctionData extends EventFunction {
     date: string;
     time: string;
     day_name: string;
-    status: string; // Agregar el campo status
+    status: string;
+    status_label: string;
+    status_color: string;
+    should_show_tickets: boolean; // NUEVO
     ticketTypes: TicketTypeData[];
 }
 
@@ -49,7 +52,7 @@ interface EventData extends Event {
     functions: EventFunctionData[];
     date: string;
     time: string;
-    hero_image_url?: string;
+    hero_image_url: string | null;
     venue: VenueData; // Agregar información completa del venue
 }
 
@@ -275,6 +278,26 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         }, 1000);
     };
 
+    // Función para obtener badge de estado
+    const getStatusBadge = (status: string, status_label: string, status_color: string) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
+        };
+
+        const badgeColor = colorMap[status_color] || 'bg-gray-500 hover:bg-gray-600';
+
+        return (
+            <Badge className={`${badgeColor} text-white border-0 text-xs`}>
+                {status_label}
+            </Badge>
+        );
+    };
+
     return (
         <>
             <Head title={`${eventData.name}`} />
@@ -348,22 +371,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
-                                                        <Badge 
-                                                            variant="outline" 
-                                                            className={`text-xs ${
-                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
-                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
-                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
-                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
-                                                                'border-orange-300 text-orange-600'
-                                                            }`}
-                                                        >
-                                                            {func.status === 'on_sale' ? 'En venta' :
-                                                             func.status === 'sold_out' ? 'Agotado' :
-                                                             func.status === 'upcoming' ? 'Próximamente' :
-                                                             func.status === 'finished' ? 'Finalizada' :
-                                                             'Inactiva'}
-                                                        </Badge>
+                                                        {getStatusBadge(func.status, func.status_label, func.status_color)}
                                                     </div>
                                                 </div>
                                             ))}
@@ -470,22 +478,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
-                                                        <Badge 
-                                                            variant="outline" 
-                                                            className={`text-xs ${
-                                                                func.status === 'on_sale' ? 'border-green-300 text-green-600' :
-                                                                func.status === 'sold_out' ? 'border-red-300 text-red-600' :
-                                                                func.status === 'upcoming' ? 'border-blue-300 text-blue-600' :
-                                                                func.status === 'finished' ? 'border-gray-300 text-gray-600' :
-                                                                'border-orange-300 text-orange-600'
-                                                            }`}
-                                                        >
-                                                            {func.status === 'on_sale' ? 'En venta' :
-                                                             func.status === 'sold_out' ? 'Agotado' :
-                                                             func.status === 'upcoming' ? 'Próximamente' :
-                                                             func.status === 'finished' ? 'Finalizada' :
-                                                             'Inactiva'}
-                                                        </Badge>
+                                                        {getStatusBadge(func.status, func.status_label, func.status_color)}
                                                     </div>
                                                 </div>
                                             ))}
@@ -520,164 +513,196 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         </div>
                                     )}
                                 </CardHeader>
+                                {/* MOBILE - Sección de selección de tickets */}
                                 <CardContent className="space-y-3 sm:space-y-4">
-                                    {selectedFunction && currentTicketTypes.length > 0 ? (
-                                        <>
-                                            {/* Información de la función seleccionada */}
-                                            <div className="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
-                                                <h4 className="font-semibold text-foreground text-xs sm:text-sm mb-1">
-                                                    {selectedFunction.name}
-                                                </h4>
-                                                <p className="text-foreground/60 text-xs">
-                                                    {selectedFunction.date} • {selectedFunction.time}
-                                                </p>
-                                            </div>
+                                    {selectedFunction ? (
+                                        // NUEVO: Verificar si se deben mostrar tickets basándose en el estado
+                                        selectedFunction.should_show_tickets ? (
+                                            currentTicketTypes.length > 0 ? (
+                                                <>
+                                                    {/* Información de la función seleccionada */}
+                                                    <div className="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                                        <h4 className="font-semibold text-foreground text-xs sm:text-sm mb-1">
+                                                            {selectedFunction.name}
+                                                        </h4>
+                                                        <p className="text-foreground/60 text-xs">
+                                                            {selectedFunction.date} • {selectedFunction.time}
+                                                        </p>
+                                                    </div>
 
-                                            {currentTicketTypes
-                                                .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => {
-                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
-                                                    const isBundle = ticket.is_bundle || false;
-                                                    const bundleQuantity = ticket.bundle_quantity || 1;
-                                                    
-                                                    // Obtener disponibilidad y estado en tiempo real
-                                                    const availabilityStatus = getAvailabilityStatus(ticket);
-                                                    const realAvailable = availabilityStatus.realAvailable;
-                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
-                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
-                                                    
-                                                    return (
-                                                        <div
-                                                            key={ticket.id}
-                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                        >
-                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                                <div className="min-w-0 flex-1 mr-2">
-                                                                    <div className="flex items-center space-x-2 mb-1">
-                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
-                                                                        {isRefreshingAvailability && (
-                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <div className="flex flex-col space-y-1 mt-1">
-                                                                        <div className="flex items-center space-x-2">
-
-                                                                        </div>
-                                                                        
-                                                                        {/* Mostrar advertencia cuando queda poco stock */}
-                                                                        {realAvailable <= 5 && realAvailable > 0 && (
-                                                                            <p className="text-red-600 text-xs font-medium">
-                                                                                ¡Solo quedan {realAvailable} disponibles!
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-right flex-shrink-0">
-                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                        {formatPrice(ticket.price)}
-                                                                    </p>
-                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center space-x-2 sm:space-x-3">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
-                                                                        disabled={selectedQuantity === 0}
-                                                                        className="w-8 h-8 p-0"
-                                                                    >
-                                                                        <Minus className="w-4 h-4" />
-                                                                    </Button>
-                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= maxAllowed}
-                                                                        className="w-8 h-8 p-0"
-                                                                        title={
-                                                                            selectedQuantity >= maxAllowed 
-                                                                                ? `Límite alcanzado (${maxAllowed})` 
-                                                                                : `Agregar (máx. ${maxAllowed})`
-                                                                        }
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
-                                                                {selectedQuantity > 0 && (
-                                                                    <div className="text-sm text-foreground/60 mt-1">
-                                                                        {isBundle ? (
-                                                                            <div>
-                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
-                                                                                <div className="text-blue-600">
-                                                                                    = {selectedQuantity * bundleQuantity} entradas
-                                                                                </div>
+                                                    {currentTicketTypes
+                                                        .filter(ticket => !ticket.is_hidden && ticket.available > 0)
+                                                        .map((ticket) => {
+                                                            const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                            const isBundle = ticket.is_bundle || false;
+                                                            const bundleQuantity = ticket.bundle_quantity || 1;
+                                                            
+                                                            // Obtener disponibilidad y estado en tiempo real
+                                                            const availabilityStatus = getAvailabilityStatus(ticket);
+                                                            const realAvailable = availabilityStatus.realAvailable;
+                                                            const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                            const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                            
+                                                            return (
+                                                                <div
+                                                                    key={ticket.id}
+                                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                        <div className="min-w-0 flex-1 mr-2">
+                                                                            <div className="flex items-center space-x-2 mb-1">
+                                                                                <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                                {isRefreshingAvailability && (
+                                                                                    <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                                )}
                                                                             </div>
-                                                                        ) : (
-                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                            <div className="flex flex-col space-y-1 mt-1">
+                                                                                {realAvailable <= 5 && realAvailable > 0 && (
+                                                                                    <p className="text-red-600 text-xs font-medium">
+                                                                                        ¡Solo quedan {realAvailable} disponibles!
+                                                                                    </p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right flex-shrink-0">
+                                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                                {formatPrice(ticket.price)}
+                                                                            </p>
+                                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                                disabled={selectedQuantity === 0}
+                                                                                className="w-8 h-8 p-0"
+                                                                            >
+                                                                                <Minus className="w-4 h-4" />
+                                                                            </Button>
+                                                                            <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                                disabled={selectedQuantity >= maxAllowed}
+                                                                                className="w-8 h-8 p-0"
+                                                                                title={
+                                                                                    selectedQuantity >= maxAllowed 
+                                                                                        ? `Límite alcanzado (${maxAllowed})` 
+                                                                                        : `Agregar (máx. ${maxAllowed})`
+                                                                                }
+                                                                            >
+                                                                                <Plus className="w-4 h-4" />
+                                                                            </Button>
+                                                                        </div>
+                                                                        {selectedQuantity > 0 && (
+                                                                            <div className="text-sm text-foreground/60 mt-1">
+                                                                                {isBundle ? (
+                                                                                    <div>
+                                                                                        <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                                        <div className="text-blue-600">
+                                                                                            = {selectedQuantity * bundleQuantity} entradas
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                                )}
+                                                                            </div>
                                                                         )}
                                                                     </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                        </>
-                                    ) : selectedFunction ? (
-                                        // Usar el estado real de la función para mostrar el mensaje apropiado
-                                        <div className="text-center py-6 sm:py-8">
-                                            {selectedFunction.status === 'sold_out' ? (
-                                                <>
-                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                        Las entradas para esta función están agotadas
-                                                    </p>
-                                                    <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
-                                                        Agotado
-                                                    </Badge>
-                                                </>
-                                            ) : selectedFunction.status === 'upcoming' ? (
-                                                <>
-                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                        Las entradas para esta función estarán disponibles próximamente
-                                                    </p>
-                                                    <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
-                                                        Próximamente
-                                                    </Badge>
-                                                </>
-                                            ) : selectedFunction.status === 'finished' ? (
-                                                <>
-                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                        Esta función ya ha finalizado
-                                                    </p>
-                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
-                                                        Finalizada
-                                                    </Badge>
-                                                </>
-                                            ) : selectedFunction.status === 'inactive' ? (
-                                                <>
-                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                        Esta función no está activa
-                                                    </p>
-                                                    <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
-                                                        Inactiva
-                                                    </Badge>
+                                                                </div>
+                                                            );
+                                                        })}
                                                 </>
                                             ) : (
-                                                <>
-                                                    <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                        No hay entradas disponibles para esta función
-                                                    </p>
-                                                    <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
-                                                        No disponible
-                                                    </Badge>
-                                                </>
-                                            )}
-                                        </div>
+                                                // No hay tickets disponibles pero el estado permite mostrar tickets
+                                                <div className="text-center py-6 sm:py-8">
+                                                    {selectedFunction.status === 'sold_out' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Las entradas para esta función están agotadas
+                                                            </p>
+                                                            <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                                Agotado
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'reprogrammed' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ha sido reprogramada. Las entradas estarán disponibles próximamente
+                                                            </p>
+                                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                                Reprogramada
+                                                            </Badge>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                No hay entradas disponibles para esta función
+                                                            </p>
+                                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                                Sin disponibilidad
+                                                            </Badge>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )
+                                        ) : (
+                                            // El estado NO permite mostrar tickets (CANCELLED, FINISHED, UPCOMING, INACTIVE)
+                                            <div className="text-center py-6 sm:py-8">
+                                                {selectedFunction.status === 'cancelled' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función ha sido cancelada
+                                                        </p>
+                                                        <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                            Cancelada
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'finished' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función ya ha finalizado
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            Finalizada
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'upcoming' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Las entradas para esta función estarán disponibles próximamente
+                                                        </p>
+                                                        <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                            Próximamente
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'inactive' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función no está disponible en este momento
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            No disponible
+                                                        </Badge>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función no está disponible
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            No disponible
+                                                        </Badge>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
                                             <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
@@ -689,7 +714,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         </div>
                                     )}
 
-                                    {getTotalTickets() > 0 && (
+                                    {/* Total y botón de compra - Solo mostrar si hay tickets seleccionados */}
+                                    {getTotalTickets() > 0 && selectedFunction?.should_show_tickets && (
                                         <>
                                             <Separator className="bg-gray-200" />
                                             <div className="space-y-2 sm:space-y-3">
@@ -703,18 +729,19 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
-                                                    disabled={isLoading || !selectedFunction}
-                                                    className="w-full bg-primary hover:bg-primary-hover text-white py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-semibold rounded-lg sm:rounded-xl transform hover:scale-105 transition-all duration-200 h-10 sm:h-12"
+                                                    disabled={isLoading}
+                                                    className="w-full bg-primary hover:bg-primary/90 text-white h-10 sm:h-12 text-sm sm:text-base"
                                                 >
                                                     {isLoading ? (
                                                         <div className="flex items-center space-x-2">
-                                                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                            <span>Procesando...</span>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            <span className="hidden sm:inline">Procesando...</span>
+                                                            <span className="sm:hidden">...</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center space-x-1 sm:space-x-2">
+                                                        <div className="flex items-center space-x-2">
                                                             <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            <span className="hidden sm:inline">Comprar Entradas</span>
+                                                            <span className="hidden sm:inline">Continuar con la compra</span>
                                                             <span className="sm:hidden">Comprar</span>
                                                         </div>
                                                     )}
@@ -820,122 +847,236 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     )}
                                 </CardHeader>
                                 <CardContent className="space-y-3 sm:space-y-4">
-                                    {selectedFunction && currentTicketTypes.length > 0 ? (
-                                        <>
-                                            {/* Información de la función seleccionada */}
-                                            <div className="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
-                                                <h4 className="font-semibold text-foreground text-xs sm:text-sm mb-1">
-                                                    {selectedFunction.name}
-                                                </h4>
-                                                <p className="text-foreground/60 text-xs">
-                                                    {selectedFunction.date} • {selectedFunction.time}
-                                                </p>
-                                            </div>
+                                    {selectedFunction ? (
+                                        // NUEVO: Verificar si se deben mostrar tickets basándose en el estado
+                                        selectedFunction.should_show_tickets ? (
+                                            currentTicketTypes.length > 0 ? (
+                                                <>
+                                                    {/* Información de la función seleccionada */}
+                                                    <div className="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                                        <h4 className="font-semibold text-foreground text-xs sm:text-sm mb-1">
+                                                            {selectedFunction.name}
+                                                        </h4>
+                                                        <p className="text-foreground/60 text-xs">
+                                                            {selectedFunction.date} • {selectedFunction.time}
+                                                        </p>
+                                                    </div>
 
-                                            {currentTicketTypes
-                                                .filter(ticket => !ticket.is_hidden && ticket.available > 0)
-                                                .map((ticket) => {
-                                                    const selectedQuantity = selectedTickets[ticket.id] || 0;
-                                                    const isBundle = ticket.is_bundle || false;
-                                                    const bundleQuantity = ticket.bundle_quantity || 1;
-                                                    
-                                                    // Obtener disponibilidad y estado en tiempo real
-                                                    const availabilityStatus = getAvailabilityStatus(ticket);
-                                                    const realAvailable = availabilityStatus.realAvailable;
-                                                    const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
-                                                    const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
-                                                    
-                                                    return (
-                                                        <div
-                                                            key={ticket.id}
-                                                            className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-                                                        >
-                                                            <div className="flex justify-between items-start mb-2 sm:mb-3">
-                                                                <div className="min-w-0 flex-1 mr-2">
-                                                                    <div className="flex items-center space-x-2 mb-1">
-                                                                        <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                                        {/* NUEVO: Indicador de disponibilidad en tiempo real */}
-                                                                        {isRefreshingAvailability && (
-                                                                            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                    <div className="flex flex-col space-y-1 mt-1">
-                                                                        <div className="flex items-center space-x-2">
-
-                                                                        </div>
-                                                                        
-
-                                                                        
-                                                                        {/* Mostrar advertencia cuando queda poco stock */}
-                                                                        {realAvailable <= 5 && realAvailable > 0 && (
-                                                                            <p className="text-red-600 text-xs font-medium">
-                                                                                ¡Solo quedan {realAvailable} disponibles!
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-right flex-shrink-0">
-                                                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                        {formatPrice(ticket.price)}
-                                                                    </p>
-                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center space-x-2 sm:space-x-3">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => handleQuantityChange(ticket.id, -1)}
-                                                                        disabled={selectedQuantity === 0}
-                                                                        className="w-8 h-8 p-0"
-                                                                    >
-                                                                        <Minus className="w-4 h-4" />
-                                                                    </Button>
-                                                                    <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                        disabled={selectedQuantity >= maxAllowed}
-                                                                        className="w-8 h-8 p-0"
-                                                                        title={
-                                                                            selectedQuantity >= maxAllowed 
-                                                                                ? `Límite alcanzado (${maxAllowed})` 
-                                                                                : `Agregar (máx. ${maxAllowed})`
-                                                                        }
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
-                                                                {selectedQuantity > 0 && (
-                                                                    <div className="text-sm text-foreground/60 mt-1">
-                                                                        {isBundle ? (
-                                                                            <div>
-                                                                                <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
-                                                                                <div className="text-blue-600">
-                                                                                    = {selectedQuantity * bundleQuantity} entradas
-                                                                                </div>
+                                                    {currentTicketTypes
+                                                        .filter(ticket => !ticket.is_hidden && ticket.available > 0)
+                                                        .map((ticket) => {
+                                                            const selectedQuantity = selectedTickets[ticket.id] || 0;
+                                                            const isBundle = ticket.is_bundle || false;
+                                                            const bundleQuantity = ticket.bundle_quantity || 1;
+                                                            
+                                                            const availabilityStatus = getAvailabilityStatus(ticket);
+                                                            const realAvailable = availabilityStatus.realAvailable;
+                                                            const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
+                                                            const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                            
+                                                            return (
+                                                                <div
+                                                                    key={ticket.id}
+                                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2 sm:mb-3">
+                                                                        <div className="min-w-0 flex-1 mr-2">
+                                                                            <div className="flex items-center space-x-2 mb-1">
+                                                                                <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                                {/* NUEVO: Indicador de disponibilidad en tiempo real */}
+                                                                                {isRefreshingAvailability && (
+                                                                                    <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                                                                                )}
                                                                             </div>
-                                                                        ) : (
-                                                                            <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
+                                                                            <div className="flex flex-col space-y-1 mt-1">
+                                                                                <div className="flex items-center space-x-2">
+
+                                                                                </div>
+                                                                            
+
+                                                                            
+                                                                                {/* Mostrar advertencia cuando queda poco stock */}
+                                                                                {realAvailable <= 5 && realAvailable > 0 && (
+                                                                                    <p className="text-red-600 text-xs font-medium">
+                                                                                        ¡Solo quedan {realAvailable} disponibles!
+                                                                                    </p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right flex-shrink-0">
+                                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                                                                {formatPrice(ticket.price)}
+                                                                            </p>
+                                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center space-x-2 sm:space-x-3">
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() => handleQuantityChange(ticket.id, -1)}
+                                                                                disabled={selectedQuantity === 0}
+                                                                                className="w-8 h-8 p-0"
+                                                                            >
+                                                                                <Minus className="w-4 h-4" />
+                                                                            </Button>
+                                                                            <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() => handleQuantityChange(ticket.id, 1)}
+                                                                                disabled={selectedQuantity >= maxAllowed}
+                                                                                className="w-8 h-8 p-0"
+                                                                                title={
+                                                                                    selectedQuantity >= maxAllowed 
+                                                                                        ? `Límite alcanzado (${maxAllowed})` 
+                                                                                        : `Agregar (máx. ${maxAllowed})`
+                                                                                }
+                                                                            >
+                                                                                <Plus className="w-4 h-4" />
+                                                                            </Button>
+                                                                        </div>
+                                                                        {selectedQuantity > 0 && (
+                                                                            <div className="text-sm text-foreground/60 mt-1">
+                                                                                {isBundle ? (
+                                                                                    <div>
+                                                                                        <div>{selectedQuantity} lote{selectedQuantity > 1 ? 's' : ''} seleccionado{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                                        <div className="text-blue-600">
+                                                                                            = {selectedQuantity * bundleQuantity} entradas
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div>{selectedQuantity} entrada{selectedQuantity > 1 ? 's' : ''}</div>
+                                                                                )}
+                                                                            </div>
                                                                         )}
                                                                     </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                        </>
-                                    ) : selectedFunction && currentTicketTypes.length === 0 ? (
-                                        <div className="text-center py-6 sm:py-8">
-                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">No hay entradas disponibles para esta función</p>
-                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
-                                                Agotado
-                                            </Badge>
-                                        </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </>
+                                            ) : (
+                                                <div className="text-center py-6 sm:py-8">
+                                                    {selectedFunction.status === 'sold_out' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Las entradas para esta función están agotadas
+                                                            </p>
+                                                            <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                                Agotado
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'upcoming' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Las entradas para esta función estarán disponibles próximamente
+                                                            </p>
+                                                            <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                                Próximamente
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'finished' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ya ha finalizado
+                                                            </p>
+                                                            <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                                Finalizada
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'cancelled' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ha sido cancelada
+                                                            </p>
+                                                            <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                                Cancelada
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'reprogrammed' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ha sido reprogramada
+                                                            </p>
+                                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                                Reprogramada
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'inactive' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función no está disponible
+                                                            </p>
+                                                            <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                                No disponible
+                                                            </Badge>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                No hay entradas disponibles para esta función
+                                                            </p>
+                                                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
+                                                                Sin disponibilidad
+                                                            </Badge>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )
+                                        ) : (
+                                            // El estado NO permite mostrar tickets (CANCELLED, FINISHED, UPCOMING, INACTIVE)
+                                            <div className="text-center py-6 sm:py-8">
+                                                {selectedFunction.status === 'cancelled' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función ha sido cancelada
+                                                        </p>
+                                                        <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                            Cancelada
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'finished' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función ya ha finalizado
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            Finalizada
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'upcoming' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Las entradas para esta función estarán disponibles próximamente
+                                                        </p>
+                                                        <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                            Próximamente
+                                                        </Badge>
+                                                    </>
+                                                ) : selectedFunction.status === 'inactive' ? (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función no está disponible en este momento
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            No disponible
+                                                        </Badge>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                            Esta función no está disponible
+                                                        </p>
+                                                        <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                            No disponible
+                                                        </Badge>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )
                                     ) : (
                                         <div className="text-center py-6 sm:py-8">
                                             <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">

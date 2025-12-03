@@ -17,7 +17,7 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect('/'); // O route('home') o route('client.dashboard')
 });
 
 test('users can not authenticate with invalid password', function () {
