@@ -9,8 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
+interface EventFunctionWithStatus extends EventFunction {
+    status: string;
+    status_label: string;
+    status_color: string;
+}
+
 interface EventWithFunctions extends Event {
-    functions: EventFunction[];
+    functions: EventFunctionWithStatus[];
 }
 
 interface FunctionsPageProps {
@@ -19,7 +25,7 @@ interface FunctionsPageProps {
 
 export default function FunctionsPage({ event }: FunctionsPageProps) {
     const { flash } = usePage().props as any;
-    const [functionToDelete, setFunctionToDelete] = useState<EventFunction | null>(null);
+    const [functionToDelete, setFunctionToDelete] = useState<EventFunctionWithStatus | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingVisibility, setIsTogglingVisibility] = useState<number | null>(null);
 
@@ -68,7 +74,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
         });
     };
 
-    const handleToggleVisibility = (func: EventFunction) => {
+    const handleToggleVisibility = (func: EventFunctionWithStatus) => {
         setIsTogglingVisibility(func.id);
         
         router.patch(route('organizer.events.functions.update', { event: event.id, function: func.id }), {
@@ -77,6 +83,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
             description: func.description,
             start_time: func.start_time,
             end_time: func.end_time,
+            status: func.status, // Mantener el estado actual
         }, {
             preserveScroll: true,
             onStart: () => {
@@ -112,6 +119,26 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
         };
     };
 
+    // Función para obtener badge de estado
+    const getStatusBadge = (func: EventFunctionWithStatus) => {
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500',
+            'blue': 'bg-blue-500',
+            'red': 'bg-red-500',
+            'gray': 'bg-gray-500',
+            'yellow': 'bg-yellow-500',
+            'orange': 'bg-orange-500',
+        };
+
+        const badgeColor = colorMap[func.status_color] || 'bg-gray-500';
+
+        return (
+            <Badge className={`${badgeColor} text-white border-0`}>
+                {func.status_label}
+            </Badge>
+        );
+    };
+
     return (
         <>
             <EventManagementLayout event={event} activeTab="functions">
@@ -139,12 +166,9 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                         {event.functions.map((func) => (
                                             <li key={func.id} className="p-4 flex items-center justify-between hover:bg-muted/50">
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 flex-wrap">
                                                         <h3 className="font-semibold text-foreground">{func.name}</h3>
-                                                        <Badge variant={func.is_active ? 'default' : 'secondary'}     className={func.is_active ? "" : "bg-gray-300 text-gray-600"}
->
-                                                            {func.is_active ? 'Activa' : 'Inactiva'}
-                                                        </Badge>
+                                                        {getStatusBadge(func)}
                                                     </div>
                                                     <p className="text-sm text-muted-foreground mt-1">{func.description}</p>
                                                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
@@ -164,7 +188,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         size="icon"
                                                         onClick={() => handleToggleVisibility(func)}
                                                         disabled={isTogglingVisibility === func.id}
-                                                        title={func.is_active ? 'Desactivar función' : 'Activar función'}
+                                                        title={func.is_active ? 'Ocultar función' : 'Mostrar función'}
                                                         className={func.is_active ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-gray-300 text-gray-600 hover:bg-gray-400"}
                                                     >
                                                         {func.is_active ? (

@@ -12,7 +12,8 @@ import {
     Clock,
     AlertTriangle,
     Download,
-    Star
+    Star,
+    EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +43,9 @@ interface AdminEvent extends Event {
     city: string;
     province: string;
     status: string;
+    status_label: string;
+    status_color: string;
+    is_active: boolean;
     tickets_sold: number;
     total_tickets: number;
     revenue: number;
@@ -52,12 +56,21 @@ interface AdminEvent extends Event {
 
 interface EventStats {
     total: number;
-    active: number;
-    inactive: number;
+    on_sale: number;
+    upcoming: number;
+    sold_out: number;
     finished: number;
+    inactive: number;
+    cancelled: number;
+    reprogrammed: number;
     draft: number;
     totalTicketsSold: number;
     totalRevenue: number;
+}
+
+interface EventStatus {
+    value: string;
+    label: string;
 }
 
 interface PageProps {
@@ -66,11 +79,12 @@ interface PageProps {
     filters: EventFilters;
     categories: string[];
     cities: string[];
+    statuses: EventStatus[];
     [key: string]: any;
 }
 
 export default function Events({ auth }: any) {
-    const { events, stats, filters, categories, cities } = usePage<PageProps>().props;
+    const { events, stats, filters, categories, cities, statuses } = usePage<PageProps>().props;
 
     // Estados para filtros locales
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
@@ -180,8 +194,8 @@ export default function Events({ auth }: any) {
             variant: "primary",
         },
         {
-            title: "Eventos Activos",
-            value: stats.active,
+            title: "En Venta",
+            value: stats.on_sale,
             icon: CheckCircle,
             variant: "success",
         },
@@ -200,7 +214,7 @@ export default function Events({ auth }: any) {
         },
     ];
 
-    // Configuración de filtros
+    // Configuración de filtros - Actualizada con los estados del enum
     const filterConfig: FilterConfig = {
         searchPlaceholder: "Buscar eventos...",
         showStatusFilter: true,
@@ -208,9 +222,7 @@ export default function Events({ auth }: any) {
         showCityFilter: true,
         statusOptions: [
             { value: "all", label: "Todos los estados" },
-            { value: "active", label: "Activos" },
-            { value: "inactive", label: "Inactivos" },
-            { value: "finished", label: "Finalizados" },
+            ...statuses.map(status => ({ value: status.value, label: status.label })),
             { value: "draft", label: "Borradores" },
         ],
         categoryOptions: categories.map(category => ({ value: category, label: category })),
@@ -251,29 +263,58 @@ export default function Events({ auth }: any) {
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        const statusConfig = {
-            active: { label: "Activo", color: "bg-green-500 hover:bg-green-600" },
-            inactive: { label: "Inactivo", color: "bg-yellow-500 hover:bg-yellow-600" },
-            finished: { label: "Finalizado", color: "bg-gray-500 hover:bg-gray-600" },
-            draft: { label: "Borrador", color: "bg-red-500 hover:bg-red-600" }
+    // Función actualizada para usar el enum de estados
+    const getEventStatusBadge = (status: string, statusLabel: string, statusColor: string, isActive: boolean) => {
+        // Mapeo de colores del enum a clases de Tailwind
+        const colorMap: Record<string, string> = {
+            'green': 'bg-green-500 hover:bg-green-600',
+            'blue': 'bg-blue-500 hover:bg-blue-600',
+            'red': 'bg-red-500 hover:bg-red-600',
+            'gray': 'bg-gray-500 hover:bg-gray-600',
+            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
+            'orange': 'bg-orange-500 hover:bg-orange-600',
         };
-        
-        const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+
+        const badgeColor = colorMap[statusColor] || 'bg-gray-500 hover:bg-gray-600';
         
         return (
-            <Badge className={`${config.color} text-white border-0`}>
-                {config.label}
-            </Badge>
+            <div className="flex items-center gap-2">
+                <Badge className={`${badgeColor} text-white border-0`}>
+                    {statusLabel}
+                </Badge>
+                {!isActive && (
+                    <Badge className="bg-gray-400 hover:bg-gray-500 text-white border-0 text-xs">
+                        <EyeOff className="w-3 h-3 mr-1" />
+                        Oculto
+                    </Badge>
+                )}
+            </div>
         );
     };
 
-    const getStatusIcon = (status: string) => {
+    // Función actualizada para iconos de estado
+    const getStatusIcon = (status: string, statusColor: string) => {
+        const iconColorMap: Record<string, string> = {
+            'green': 'text-green-500',
+            'blue': 'text-blue-500',
+            'red': 'text-red-500',
+            'gray': 'text-gray-500',
+            'yellow': 'text-yellow-500',
+            'orange': 'text-orange-500',
+        };
+
+        const iconColor = iconColorMap[statusColor] || 'text-gray-500';
+
         switch (status) {
-            case "active": return <CheckCircle className="w-4 h-4 text-green-500" />;
-            case "inactive": return <Clock className="w-4 h-4 text-yellow-500" />;
-            case "finished": return <XCircle className="w-4 h-4 text-gray-500" />;
-            default: return <AlertTriangle className="w-4 h-4 text-red-500" />;
+            case "on_sale": return <CheckCircle className={`w-4 h-4 ${iconColor}`} />;
+            case "upcoming": return <Clock className={`w-4 h-4 ${iconColor}`} />;
+            case "sold_out": return <AlertTriangle className={`w-4 h-4 ${iconColor}`} />;
+            case "finished": return <XCircle className={`w-4 h-4 ${iconColor}`} />;
+            case "inactive": return <EyeOff className={`w-4 h-4 ${iconColor}`} />;
+            case "cancelled": return <XCircle className={`w-4 h-4 ${iconColor}`} />;
+            case "reprogrammed": return <Clock className={`w-4 h-4 ${iconColor}`} />;
+            case "draft": return <AlertTriangle className={`w-4 h-4 ${iconColor}`} />;
+            default: return <AlertTriangle className={`w-4 h-4 ${iconColor}`} />;
         }
     };
 
@@ -313,6 +354,15 @@ export default function Events({ auth }: any) {
                             <CardTitle className="text-black">
                                 Eventos ({events.total})
                             </CardTitle>
+                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <span>En venta: {stats.on_sale}</span>
+                                <span>•</span>
+                                <span>Próximos: {stats.upcoming}</span>
+                                <span>•</span>
+                                <span>Agotados: {stats.sold_out}</span>
+                                <span>•</span>
+                                <span>Finalizados: {stats.finished}</span>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6">
@@ -321,7 +371,7 @@ export default function Events({ auth }: any) {
                                 <div key={event.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                     <div className="flex items-center space-x-6">
                                         {/* Event Image */}
-                                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                                             {event.image_url ? (
                                                 <img 
                                                     src={event.image_url}
@@ -336,16 +386,22 @@ export default function Events({ auth }: any) {
                                             <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${event.image_url ? 'hidden' : ''}`}>
                                                 <Calendar className="w-8 h-8 text-gray-600" />
                                             </div>
+                                            {!event.is_active && (
+                                                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                                    <EyeOff className="w-6 h-6 text-white" />
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Event Info */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between mb-2">
-                                                <div>
+                                                <div className="flex-1">
                                                     <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
                                                         <span>{event.name}</span>
                                                         {event.featured && (
                                                             <Badge className="bg-secondary text-white border-0 text-xs">
+                                                                <Star className="w-3 h-3 mr-1" />
                                                                 Destacado
                                                             </Badge>
                                                         )}
@@ -355,8 +411,13 @@ export default function Events({ auth }: any) {
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
-                                                    {getStatusIcon(event.status)}
-                                                    {getStatusBadge(event.status)}
+                                                    {getStatusIcon(event.status, event.status_color)}
+                                                    {getEventStatusBadge(
+                                                        event.status,
+                                                        event.status_label,
+                                                        event.status_color,
+                                                        event.is_active
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -364,7 +425,7 @@ export default function Events({ auth }: any) {
                                                 <div className="flex items-center text-gray-700 text-sm">
                                                     <Calendar className="w-4 h-4 mr-2 text-primary" />
                                                     <span>
-                                                        {formatDateTime(event.date, event.time)}
+                                                        {event.date && event.time ? formatDateTime(event.date, event.time) : 'Sin fecha'}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center text-gray-700 text-sm">
@@ -382,19 +443,27 @@ export default function Events({ auth }: any) {
                                             </div>
 
                                             {/* Progress Bar */}
-                                            <div className="mb-3">
-                                                <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                                    <span>Progreso de ventas</span>
-                                                    <span>{event.total_tickets > 0 ? Math.round((event.tickets_sold / event.total_tickets) * 100) : 0}%</span>
+                                            {event.total_tickets > 0 && (
+                                                <div className="mb-3">
+                                                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                                        <span>Progreso de ventas</span>
+                                                        <span>{Math.round((event.tickets_sold / event.total_tickets) * 100)}%</span>
+                                                    </div>
+                                                    <Progress 
+                                                        value={(event.tickets_sold / event.total_tickets) * 100} 
+                                                        className="h-2" 
+                                                    />
                                                 </div>
-                                                <Progress value={event.total_tickets > 0 ? (event.tickets_sold / event.total_tickets) * 100 : 0} className="h-2" />
-                                            </div>
+                                            )}
 
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4 text-xs text-gray-500">
                                                     <span>Rango: ${event.price_range} ARS</span>
+                                                    <span>•</span>
                                                     <span>Categoría: {event.category}</span>
+                                                    <span>•</span>
                                                     <span>Funciones: {event.functions_count}</span>
+                                                    <span>•</span>
                                                     <span>Creado: {formatRelativeTime(event.created_at)}</span>
                                                 </div>
 
@@ -406,7 +475,6 @@ export default function Events({ auth }: any) {
                                                             Ver
                                                         </Button>
                                                     </Link>
-                                                    
 
                                                     <Button 
                                                         onClick={() => handleToggleFeatured(event.id)}
@@ -414,10 +482,11 @@ export default function Events({ auth }: any) {
                                                         size="sm"
                                                         className={event.featured 
                                                             ? "bg-secondary hover:bg-secondary/50 text-white" 
-                                                            : "border-gray-200 text-gray-400 hover:text-secondary"
+                                                            : "border-gray-200 text-gray-400 hover:text-secondary hover:border-secondary"
                                                         }
+                                                        title={event.featured ? "Quitar de destacados" : "Marcar como destacado"}
                                                     >
-                                                        <Star className="w-4 h-4" />
+                                                        <Star className={`w-4 h-4 ${event.featured ? 'fill-current' : ''}`} />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -439,7 +508,7 @@ export default function Events({ auth }: any) {
                             )}
                         </div>
 
-                        {/* Pagination - Actualizada para usar la función handlePagination */}
+                        {/* Pagination */}
                         {events.data.length > 0 && (
                             <div className="mt-6 flex justify-center">
                                 <div className="flex items-center space-x-2">
