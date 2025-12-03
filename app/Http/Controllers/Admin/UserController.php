@@ -243,7 +243,7 @@ class UserController extends Controller
         $userData = [
             'id' => $user->id,
             'firstName' => $user->person->name,
-            'lastName' => $user->person->last_name,
+            'lastName' => $user->person->last_name ?? '',
             'email' => $user->email,
             'phone' => $user->person->phone ?? '',
             'dni' => $user->person->dni,

@@ -68,10 +68,10 @@ class ScannerController extends Controller
             $ownerDni = '';
             
             if ($ticket->assistant && $ticket->assistant->person) {
-                $ownerName = $ticket->assistant->person->name . ' ' . $ticket->assistant->person->last_name;
+                $ownerName = $ticket->assistant->person->name . ' ' . ($ticket->assistant->person->last_name ?? '');
                 $ownerDni = $ticket->assistant->person->dni ?? '';
             } elseif ($ticket->client && $ticket->client->person) {
-                $ownerName = $ticket->client->person->name . ' ' . $ticket->client->person->last_name;
+                $ownerName = $ticket->client->person->name . ' ' . ($ticket->client->person->last_name ?? '');
                 $ownerDni = $ticket->client->person->dni ?? '';
             }
 

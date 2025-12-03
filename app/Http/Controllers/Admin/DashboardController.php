@@ -194,7 +194,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->person->name ?? $user->email,
-                    'last_name' => $user->person->last_name,
+                    'last_name' => $user->person->last_name ?? '',
                     'email' => $user->email,
                     'role' => $user->role->value,
                     'joined' => $user->created_at->toDateString(),
