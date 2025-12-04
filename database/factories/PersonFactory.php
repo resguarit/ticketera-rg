@@ -17,11 +17,11 @@ class PersonFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name,
-            'last_name' => $this->faker->lastName,
-            'dni' => $this->faker->unique()->numerify('########'),
-            'phone' => $this->faker->phoneNumber,
-            'address' => $this->faker->address,
+            'name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'dni' => fake()->unique()->numerify('########'), // Genera un DNI de 8 números
+            'phone' => fake()->phoneNumber(),
+            'address' => fake()->address(),
         ];
     }
 }
