@@ -2,6 +2,8 @@
 
 use App\Models\User;
 use App\Models\Person;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Event;
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
@@ -11,9 +13,9 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post('/register', [
-        'name' => 'Test',           // ← Usar 'name' según RegisteredUserController
-        'last_name' => 'User',      // ← Usar 'last_name'
-        'dni' => '12345678',        // ← Usar 'dni' (nullable)
+        'name' => 'Test',
+        'last_name' => 'User',
+        'dni' => '12345678',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -59,12 +61,13 @@ test('email must be unique during registration', function () {
 });
 
 test('dni must be unique during registration', function () {
-    $existingUser = User::factory()->create();
+    // Crear persona con DNI específico
+    $existingPerson = Person::factory()->create(['dni' => '11111111']);
     
     $response = $this->post('/register', [
         'name' => 'Test',
         'last_name' => 'User',
-        'dni' => $existingUser->person->dni, // Mismo DNI
+        'dni' => '11111111', // Mismo DNI
         'email' => 'newuser@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -180,7 +183,7 @@ test('registered event is fired', function () {
 
 test('transaction rolls back on person creation failure', function () {
     // Simular error forzando DNI duplicado en transacción
-    $existingPerson = Person::factory()->create(['dni' => '12345678']);
+    Person::factory()->create(['dni' => '12345678']);
     
     $response = $this->post('/register', [
         'name' => 'Test',
@@ -197,24 +200,6 @@ test('transaction rolls back on person creation failure', function () {
     
     $this->assertGuest();
 });
-
-test('email is converted to lowercase', function () {
-    $this->post('/register', [
-        'name' => 'Test',
-        'last_name' => 'User',
-        'dni' => '12345678',
-        'email' => 'TEST@EXAMPLE.COM',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    // Buscar con el email original (mayúsculas)
-    $user = User::where('email', 'TEST@EXAMPLE.COM')->first();
-    
-    expect($user)->not->toBeNull();
-    // El email se guarda tal cual se envió
-    expect($user->email)->toBe('TEST@EXAMPLE.COM');
-})->skip('Email lowercase conversion not implemented');
 
 test('user is automatically logged in after registration', function () {
     $this->post('/register', [
@@ -252,7 +237,7 @@ test('person and user are linked correctly', function () {
 
 test('name has max length validation', function () {
     $response = $this->post('/register', [
-        'name' => str_repeat('a', 256), // Más de 255 caracteres
+        'name' => str_repeat('a', 256),
         'last_name' => 'User',
         'dni' => '12345678',
         'email' => 'test@example.com',
@@ -280,7 +265,7 @@ test('dni has max length validation', function () {
     $response = $this->post('/register', [
         'name' => 'Test',
         'last_name' => 'User',
-        'dni' => str_repeat('1', 21), // Más de 20 caracteres
+        'dni' => str_repeat('1', 21),
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -308,7 +293,7 @@ test('password must meet minimum requirements', function () {
         'last_name' => 'User',
         'dni' => '12345678',
         'email' => 'test@example.com',
-        'password' => '123', // Muy corta
+        'password' => '123',
         'password_confirmation' => '123',
     ]);
 

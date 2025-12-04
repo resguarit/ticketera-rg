@@ -2,21 +2,24 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
+use App\Models\Person;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\Person; // Importar Modelo
-use App\Enums\UserRole; // Importar Enum
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
+    protected $model = User::class;
+
     /**
      * The current password being used by the factory.
      */
-    protected static ?string $password;
+    protected static ?string $password = null;
 
     /**
      * Define the model's default state.
@@ -25,12 +28,17 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        // Crear Person primero
+        $person = Person::factory()->create();
+
         return [
+            'person_id' => $person->id,
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'role' => 'client',
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => UserRole::CLIENT,
+            'password_changed_at' => now(),
         ];
     }
 
@@ -41,6 +49,36 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::ADMIN,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an organizer.
+     */
+    public function organizer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::ORGANIZER,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has not changed password yet.
+     */
+    public function passwordNotChanged(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'password_changed_at' => null,
         ]);
     }
 }
