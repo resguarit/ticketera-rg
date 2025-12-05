@@ -347,7 +347,7 @@ export default function EventsIndex({
                 <div className="flex justify-between items-center mb-4">
                     <p className="text-sm text-gray-600">
                         {events.length === 0 
-                            ? "No se encontraron eventos"
+                            ? ""
                             : `${events.length} evento${events.length !== 1 ? 's' : ''} encontrado${events.length !== 1 ? 's' : ''}`
                         }
                     </p>
@@ -380,7 +380,7 @@ export default function EventsIndex({
                                 </Button>
                             ) : (
                                 <Link href={route('organizer.events.create')}>
-                                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    <Button className="bg-primary hover:bg-primary-hover text-white">
                                         <Plus className="w-4 h-4 mr-2" />
                                         Crear tu primer evento
                                     </Button>

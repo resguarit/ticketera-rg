@@ -183,7 +183,7 @@ export function AppSidebar() {
             case 'admin':
                 return {
                     title: 'Panel Admin',
-                    logoUrl: undefined // Mantiene el logo de Laravel
+                    logoUrl: '/images/logo_sin_texto.png'
                 };
             case 'organizer':
                 return {
@@ -192,8 +192,8 @@ export function AppSidebar() {
                 };
             default:
                 return {
-                    title: 'Laravel Starter Kit',
-                    logoUrl: undefined
+                    title: 'RG Entradas',
+                    logoUrl: '/images/logo_sin_texto.png'
                 };
         }
     };
