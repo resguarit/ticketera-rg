@@ -74,7 +74,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                         )}
                         <div>
                             <h3 className="font-semibold text-lg leading-tight">{event.name}</h3>
-                            <p className="text-indigo-100 text-sm">By {event.organizer.name}</p>
+                            <p className="text-white text-sm">By {event.organizer.name}</p>
                         </div>
                     </div>
                     {event.featured && (
