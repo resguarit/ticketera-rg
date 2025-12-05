@@ -68,24 +68,6 @@ class SettingsController extends Controller
         return $keyMappings[$group][$key] ?? $group . '_' . $key;
     }
 
-    public function backupDatabase()
-    {
-        try {
-            Artisan::call('backup:run');
-
-            return response()->json([
-                'message' => 'Backup de base de datos iniciado correctamente',
-                'success' => true,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al iniciar el backup: ' . $e->getMessage(),
-                'success' => false,
-            ], 500);
-        }
-    }
-
     private function getGeneralSettings(): array
     {
         return [
