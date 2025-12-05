@@ -25,6 +25,7 @@ import {
 import { Mail, KeyRound } from 'lucide-react';
 
 import { Event, EventFunction, Organizer } from '@/types';
+import CheckoutTimer from '@/components/checkout/checkout-timer';
 
 // Tipos de datos que llegan del backend
 interface SelectedTicket {
@@ -950,6 +951,16 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
                 </DialogContent>
             </Dialog>
             {/* --- FIN NUEVO --- */}
+
+            {/* Timer Component */}
+            <div className="hidden">
+                <CheckoutTimer 
+  lockExpiration={lockExpiration} 
+  sessionId={sessionId} 
+  eventId={eventId} // ← AGREGAR ESTO
+  onExpire={() => setExpired(true)} 
+/>
+            </div>
         </>
     );
 }

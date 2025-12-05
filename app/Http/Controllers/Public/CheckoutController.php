@@ -468,36 +468,57 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function releaseLocks(Request $request): JsonResponse
+    public function releaseLocks(Request $request): RedirectResponse
     {
         $sessionId = $request->session()->get('checkout_session_id');
+        $eventId = $request->input('event_id'); // Recibir desde el request
 
         if (!$sessionId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'session_id es requerido'
-            ], 400);
+            // Si no hay eventId, redirigir a home con mensaje
+            if (!$eventId) {
+                return redirect()->route('home')
+                    ->with('error', 'Sesión expirada');
+            }
+            
+            return redirect()->route('event.detail', ['event' => $eventId])
+                ->with('warning', 'Sesión expirada');
         }
 
         try {
             $this->ticketLockService->releaseTickets($sessionId);
+            
+            // Limpiar sesión
+            $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Locks liberados exitosamente',
-                'session_id' => $sessionId
-            ]);
+            // Si no hay eventId en el request, intentar obtenerlo del sessionStorage o redirigir a home
+            if (!$eventId) {
+                Log::warning('EventId no proporcionado en releaseLocks', [
+                    'session_id' => substr($sessionId, -8)
+                ]);
+                
+                return redirect()->route('home')
+                    ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
+            }
+
+            // Redirigir al detalle del evento
+            return redirect()->route('event.detail', ['event' => $eventId])
+                ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
 
         } catch (\Exception $e) {
-            Log::error('Error liberando locks vía API', [
+            Log::error('Error liberando locks', [
                 'session_id' => $sessionId,
+                'event_id' => $eventId,
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Error liberando locks: ' . $e->getMessage()
-            ], 500);
+            // Fallback seguro
+            if (!$eventId) {
+                return redirect()->route('home')
+                    ->with('error', 'Ha ocurrido un error. Por favor, intenta nuevamente.');
+            }
+
+            return redirect()->route('event.detail', ['event' => $eventId])
+                ->with('error', 'Ha ocurrido un error. Por favor, intenta nuevamente.');
         }
     }
 }
