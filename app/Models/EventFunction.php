@@ -71,13 +71,14 @@ class EventFunction extends Model
             return;
         }
 
-        // 1. Si la función ya finalizó (end_time pasó o start_time pasó si no hay end_time)
+        // 1. Si la función ya finalizó (end_time pasó o start_time + 2 horas pasó si no hay end_time)
         if ($this->end_time && $this->end_time->isPast()) {
             $this->updateStatusIfChanged(EventFunctionStatus::FINISHED);
             return;
         }
 
-        if (!$this->end_time && $this->start_time->isPast()) {
+        // Si no hay fecha de fin, damos 2 horas de margen para seguir vendiendo
+        if (!$this->end_time && $this->start_time->copy()->addHours(2)->isPast()) {
             $this->updateStatusIfChanged(EventFunctionStatus::FINISHED);
             return;
         }

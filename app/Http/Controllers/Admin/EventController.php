@@ -140,6 +140,17 @@ class EventController extends Controller
         // Paginación
         $events = $query->paginate(10)->withQueryString();
 
+        // Actualizar estado de las funciones
+        foreach ($events as $event) {
+            foreach ($event->functions as $function) {
+                try {
+                    $function->updateStatus();
+                } catch (\Exception $e) {
+                    Log::error("Error updating function status for function {$function->id}: " . $e->getMessage());
+                }
+            }
+        }
+
         // Procesar datos para el frontend
         $eventsData = $events->getCollection()->map(function ($event) {
             $firstFunction = $event->functions->first();
@@ -204,13 +215,6 @@ class EventController extends Controller
             'value' => $status->value,
             'label' => $status->label(),
         ]);
-
-        // Actualizar estado de las funciones (nuevo código)
-        foreach ($events as $event) {
-            foreach ($event->functions as $function) {
-                $function->updateStatus();
-            }
-        }
 
         return Inertia::render('admin/events', [
             'events' => $events,
