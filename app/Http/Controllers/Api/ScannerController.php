@@ -182,24 +182,51 @@ class ScannerController extends Controller
             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
             ->where('ticket_types.event_function_id', $functionId)
             ->where('issued_tickets.updated_at', '>', $since)
+            ->with(['assistant.person', 'client.person', 'ticketType'])
             ->select([
+                'issued_tickets.id',
                 'issued_tickets.unique_code',
                 'issued_tickets.status',
+                'issued_tickets.ticket_type_id',
+                'issued_tickets.assistant_id',
+                'issued_tickets.client_id',
+                'issued_tickets.bundle_reference',
                 'issued_tickets.validated_at',
-                'issued_tickets.updated_at'
+                'issued_tickets.updated_at',
+                'ticket_types.sector_id',
+                'ticket_types.name as ticket_name',
+                'ticket_types.is_bundle',
+                'ticket_types.bundle_quantity'
             ])
             ->get();
 
         $mappedUpdates = $updates->map(function ($ticket) {
+            $ownerName = 'Desconocido';
+            $ownerDni = '';
+            
+            if ($ticket->assistant && $ticket->assistant->person) {
+                $ownerName = $ticket->assistant->person->name . ' ' . $ticket->assistant->person->last_name;
+                $ownerDni = $ticket->assistant->person->dni ?? '';
+            } elseif ($ticket->client && $ticket->client->person) {
+                $ownerName = $ticket->client->person->name . ' ' . $ticket->client->person->last_name;
+                $ownerDni = $ticket->client->person->dni ?? '';
+            }
+
             return [
                 'c' => $ticket->unique_code,       
-                's' => $ticket->status->value,
-                'va' => $ticket->validated_at ? $ticket->validated_at->toIso8601String() : null,
+                's' => $ticket->status->value,     
+                'sec' => $ticket->sector_id,       
+                'n' => $ownerName,                 
+                'd' => $ownerDni,                  
+                't' => $ticket->ticket_name,       
+                'b' => $ticket->is_bundle ? $ticket->bundle_quantity : 1, 
+                'br' => $ticket->bundle_reference, 
+                'va' => $ticket->validated_at ? $ticket->validated_at->toIso8601String() : null, 
             ];
         });
 
         return response()->json([
-            'timestamp' => now()->toIso8601String(), // La app guardará esto como su nuevo "since"
+            'timestamp' => now()->toIso8601String(),
             'updates' => $mappedUpdates
         ]);
     }
