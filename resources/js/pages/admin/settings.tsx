@@ -61,18 +61,6 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
         }
     };
 
-    const handleBackupDatabase = async () => {
-        if (!confirm('¿Está seguro de que desea realizar un backup de la base de datos?')) return;
-
-        try {
-            const { data } = await axios.post(route('admin.settings.backup'));
-            alert(data.message || 'Backup iniciado correctamente');
-        } catch (error: any) {
-            console.error('Error:', error);
-            alert('Error al iniciar el backup: ' + (error.response?.data?.message || error.message));
-        }
-    };
-
     const renderReadOnlyField = (
         label: string,
         value: any,
@@ -218,17 +206,6 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             <p className="text-gray-600 text-lg">
                                 Administra la información general de la plataforma
                             </p>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <Button 
-                                variant="outline" 
-                                className="border-gray-300 text-black hover:bg-gray-50"
-                                onClick={handleBackupDatabase}
-                            >
-                                <Database className="w-4 h-4 mr-2" />
-                                Backup
-                            </Button>
                         </div>
                     </div>
 

@@ -162,7 +162,7 @@ class TicketTypeController extends Controller
         $stagesCount = $validated['stages_count'];
         $stageNames = $validated['stage_names'] ?? [];
         $basePrice = $validated['price'];
-        $priceIncrement = $validated['price_increment'] ?? 0.1;
+        $priceIncrement = $validated['price_increment'] ?? 0;
         
         // Generar un grupo único para estas tandas
         $stageGroup = $validated['stage_group_name'] ?? ($validated['sector_id'] . '-' . time());
@@ -170,7 +170,8 @@ class TicketTypeController extends Controller
         for ($i = 0; $i < $stagesCount; $i++) {
             $stageData = $validated;
             $stageData['name'] = $stageNames[$i] ?? "Tanda " . ($i + 1);
-            $stageData['price'] = $basePrice * (1 + ($priceIncrement * $i));
+            // CORREGIDO: Dividir por 100 para convertir porcentaje a decimal
+            $stageData['price'] = $basePrice * (1 + ($priceIncrement / 100 * $i));
             $stageData['is_hidden'] = $i > 0; // Primera visible, resto ocultas
             
             // AGREGAR campos de tanda
@@ -180,7 +181,7 @@ class TicketTypeController extends Controller
             TicketType::create($stageData);
         }
 
-        return redirect()->route('organizer.events.show', $event)
+        return redirect()->route('organizer.events.tickets', $event)
             ->with('success', 'Tandas creadas exitosamente.');
     }
 
@@ -213,7 +214,7 @@ class TicketTypeController extends Controller
             $message = "Tipo de entrada creado exitosamente. ⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterCreation}/{$sector->capacity}.";
         }
 
-        // Remover campos específicos de tandas antes de crear
+        // Remover campos específicos de tandas antes de criar
         unset($validated['create_stages'], $validated['stages_count'], $validated['price_increment']);
         
         TicketType::create($validated);
