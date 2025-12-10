@@ -153,11 +153,12 @@
             font-size: 8px;
             color: #666;
         }
-        
+
         .qr-code-text {
             font-family: 'Courier New', monospace;
             font-size: 10px;
             color: #000;
+            margin-top: 5px;
         }
         
         /* Footer */
@@ -177,18 +178,6 @@
         <div class="ticket-header">
             <!-- Top: Banner (izquierda) y Logo (derecha) -->
             <div class="header-top">
-                <!-- Banner del evento (izquierda) -->
-                <div class="event-banner">
-                    @if($event->banner_url)
-                        <img src="{{ $event->banner_url }}" alt="{{ $event->name }}">
-                    @elseif($event->image_url)
-                        <img src="{{ $event->image_url }}" alt="{{ $event->name }}">
-                    @else
-                        <div style="padding: 20px; text-align: center; color: #666; font-size: 10px;">
-                            {{ $event->name }}
-                        </div>
-                    @endif
-                </div>
                 
                 <!-- Logo RG (derecha) -->
                 <div class="logo-rg">
@@ -200,7 +189,7 @@
             <div class="event-info-bottom">
                 <div class="event-title">{{ $event->name }}</div>
                 <div class="event-date-time">
-                    {{ $function->start_time ? $function->start_time->format('D d M, Y – H:i') . 'hs' : 'Fecha por confirmar' }}
+                    {{ $function->start_time ? $function->start_time->locale('es')->translatedFormat('D d M Y - H:i') . 'hs' : 'Fecha por confirmar' }}
                 </div>
                 <div class="event-location">
                     {{ $event->venue->name }}, {{ $event->venue->ciudad ? $event->venue->ciudad->name : '' }}{{ $event->venue->ciudad && $event->venue->ciudad->provincia ? ', '.$event->venue->ciudad->provincia->name : '' }}
@@ -238,6 +227,7 @@
                 
                 <div class="ticket-info-right">
                     <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Código QR">
+                    <div class="qr-code-text">{{ $ticket->unique_code }}</div>
                 </div>
             </div>
         </div>

@@ -8,6 +8,8 @@ import Header from '@/components/header';
 import { Head, Link } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import ModalQR from '@/components/qr-code-modal';
 
 // Definir la interfaz TicketType
 interface TicketType {
@@ -23,8 +25,8 @@ interface TicketType {
     ticketType: string;
     quantity: number;
     total: number;
-    status: 'confirmed' | 'pending' | 'cancelled';
-    qrCode?: string;
+    status: 'confirmed' | 'pending' | 'cancelled' | 'used';
+    qrCode: string;
     orderId?: number;
 }
 
@@ -42,6 +44,7 @@ interface TicketProps {
 
 export default function MyTickets({ tickets, stats }: TicketProps) {
     const { auth } = usePage<SharedData>().props;
+    const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -76,6 +79,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                 return "Desconocido";
         }
     };
+
 
     const upcomingTickets = tickets.upcoming;
     const pastTickets = tickets.past;
@@ -118,7 +122,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
     return (
         <>
             <Head title="Mis Tickets" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary">
                 <Header />
 
@@ -133,15 +137,15 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                     {/* Tickets Tabs */}
                     <Tabs defaultValue="upcoming" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 shadow-sm h-9 sm:h-10 lg:h-11">
-                            <TabsTrigger 
-                                value="upcoming" 
+                            <TabsTrigger
+                                value="upcoming"
                                 className="data-[state=active]:bg-primary data-[state=active]:text-white text-foreground text-xs sm:text-sm lg:text-base"
                             >
                                 <span className="hidden sm:inline">Próximos ({upcomingTickets.length})</span>
                                 <span className="sm:hidden">Próximos</span>
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="past" 
+                            <TabsTrigger
+                                value="past"
                                 className="data-[state=active]:bg-primary data-[state=active]:text-white text-foreground text-xs sm:text-sm lg:text-base"
                             >
                                 <span className="hidden sm:inline">Pasados ({pastTickets.length})</span>
@@ -178,7 +182,7 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>
-                                                <div className="flex-1 p-3 sm:p-4 lg:p-6">
+                                                <div className="flex-1 p-3 sm:p-4 lg:p-6 w-full">
                                                     <div className="flex items-start justify-between mb-2 sm:mb-3">
                                                         <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg line-clamp-2 pr-2">{ticket.eventTitle}</h4>
                                                         <Badge className={`${getStatusColor(ticket.status)} text-white border-0 text-xs flex-shrink-0`}>
@@ -201,38 +205,31 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="min-w-0">
+                                                    <div className="flex items-center justify-between mt-auto">
+                                                        <div className="min-w-0 mr-2">
                                                             <div className="text-foreground font-semibold text-xs sm:text-sm lg:text-base">
                                                                 {ticket.quantity}x {ticket.ticketType}
                                                             </div>
                                                             <div className="text-foreground/60 text-xs sm:text-sm">{formatPriceWithCurrency(ticket.total)}</div>
                                                         </div>
-                                                        <div className="flex space-x-1 sm:space-x-2 flex-shrink-0">
+                                                        <div className="flex gap-2 sm:gap-3 flex-shrink-0">
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
+                                                                onClick={() => setSelectedQrCode(ticket.qrCode)}
+                                                                className="border-gray-300 text-foreground hover:bg-gray-50 p-0 h-10 w-10 sm:h-12 sm:w-12 aspect-square flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                                                                 title="Ver QR"
                                                             >
-                                                                <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                                <QrCode className="w-5 h-5 sm:w-6 sm:h-6" />
                                                             </Button>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
+                                                                className="border-gray-300 text-foreground hover:bg-gray-50 p-0 h-10 w-10 sm:h-12 sm:w-12 aspect-square flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                                                                 onClick={() => handleDownloadTicket(ticket.id)}
                                                                 title="Descargar ticket individual"
                                                             >
-                                                                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="border-gray-300 text-foreground hover:bg-gray-50 p-1 sm:p-2 h-7 w-7 sm:h-8 sm:w-8"
-                                                                title="Compartir"
-                                                            >
-                                                                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                                <Download className="w-5 h-5 sm:w-6 sm:h-6" />
                                                             </Button>
                                                         </div>
                                                     </div>
@@ -258,9 +255,8 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                                     {pastTickets.map((ticket) => (
                                         <Card
                                             key={ticket.id}
-                                            className={`bg-white border-gray-200 shadow-md hover:shadow-lg transition-shadow rounded-lg sm:rounded-xl ${
-                                                ticket.status === 'used' ? 'opacity-60' : 'opacity-75'
-                                            }`}
+                                            className={`bg-white border-gray-200 shadow-md hover:shadow-lg transition-shadow rounded-lg sm:rounded-xl ${ticket.status === 'used' ? 'opacity-60' : 'opacity-75'
+                                                }`}
                                         >
                                             <CardContent className="p-3 sm:p-4 lg:p-6">
                                                 <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6">
@@ -300,6 +296,12 @@ export default function MyTickets({ tickets, stats }: TicketProps) {
                             )}
                         </TabsContent>
                     </Tabs>
+
+                    <ModalQR
+                        open={!!selectedQrCode}
+                        onClose={() => setSelectedQrCode(null)}
+                        value={selectedQrCode || ''}
+                    />
                 </div>
             </div>
         </>
