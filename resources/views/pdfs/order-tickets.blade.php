@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tickets - Orden {{ 'TM-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</title>
+    <title>Tickets - Orden {{ $order->transaction_id ?? $order->id }}</title>
     <style>
         * {
             margin: 0;
@@ -202,7 +202,7 @@
 <body>
     <div class="page-header">
         <div class="order-title">Tickets de tu Compra</div>
-        <div class="order-subtitle">Orden: TM-{{ date('Y') }}-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</div>
+        <div class="order-subtitle">Orden: {{ $order->transaction_id ?? $order->id }}</div>
         <div class="order-subtitle">Cliente: {{ $person->name }} {{ $person->last_name }}</div>
     </div>
 
@@ -221,33 +221,18 @@
             <div class="ticket-container">
                 <!-- Header con banner, info del evento y logo -->
                 <div class="ticket-header">
-                    <!-- Banner del evento (izquierda) -->
-                    <div class="event-banner">
-                        @if($event->image_url)
-                            <img src="{{ $event->image_url }}" alt="{{ $event->name }}">
-                        @else
-                            Banner del Evento
-                        @endif
-                    </div>
                     
                     <!-- Información del evento (centro) -->
                     <div class="event-info-header">
                         <div class="event-title">{{ $event->name }}</div>
                         <div class="event-date-time">
-                            {{ $function->start_time ? $function->start_time->format('D d M, Y - H:i') . 'hs' : 'Fecha por confirmar' }}
+                            {{ $function->start_time ? $function->start_time->locale('es')->translatedFormat('D d M Y - H:i') . 'hs' : 'Fecha por confirmar' }}
                         </div>
                         <div class="event-location">
                             {{ $event->venue->name }}, {{ $event->venue->ciudad ? $event->venue->ciudad->name : '' }}, {{ $event->venue->ciudad && $event->venue->ciudad->provincia ? $event->venue->ciudad->provincia->name : '' }}
                         </div>
                     </div>
                     
-                    <!-- Logo RG (derecha) -->
-                    <div class="logo-container">
-                        <div class="logo-rg">
-                            RG<br>
-                            <small style="font-size: 8px;">RG ENTRADAS</small>
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- Body con detalles del ticket -->
