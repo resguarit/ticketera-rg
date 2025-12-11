@@ -45,6 +45,7 @@ interface CheckoutConfirmProps {
   eventId: number
   sessionId: string
   lockExpiration: string
+  ambient: string;
 }
 
 export interface BillingInfo {
@@ -77,7 +78,7 @@ export interface Agreements {
   marketing: boolean
 }
 
-export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExpiration }: CheckoutConfirmProps) {
+export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExpiration, ambient }: CheckoutConfirmProps) {
   const { auth } = usePage<SharedData>().props
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -88,9 +89,19 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
 
   useEffect(() => {
     if (!decidirSandboxRef.current) {
-      const urlSandbox = "https://developers-ventasonline.payway.com.ar/api/v2"
-      decidirSandboxRef.current = new (window as any).Decidir(urlSandbox)
-      decidirSandboxRef.current.setPublishableKey("2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y")
+      let url = ""
+      let key = ""
+
+      if (ambient === 'test') {
+        url = "https://developers-ventasonline.payway.com.ar/api/v2"
+        key = "2GdQYEHoXH5NXn8nbtniE1Jqo0F3fC8y"
+      } else {
+        url = "https://live.decidir.com/api/v2"
+        key = "9960377671874d4fb71d0a8448642730"
+      }
+
+      decidirSandboxRef.current = new (window as any).Decidir(url)
+      decidirSandboxRef.current.setPublishableKey(key)
     }
   }, [])
 
@@ -242,10 +253,10 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
           <CheckoutTimer lockExpiration={lockExpiration} sessionId={sessionId} onExpire={() => setExpired(true)} />
 
           <div className="mb-6">
-              <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al Evento
-              </Button>
+            <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver al Evento
+            </Button>
           </div>
 
           <div className="mb-8">
@@ -253,17 +264,15 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
               {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
-                      step <= currentStep ? "bg-primary text-white" : "bg-gray-300 text-gray-600"
-                    }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${step <= currentStep ? "bg-primary text-white" : "bg-gray-300 text-gray-600"
+                      }`}
                   >
                     {step < currentStep ? <Check className="w-5 h-5" /> : step}
                   </div>
                   {step < 3 && (
                     <div
-                      className={`w-16 h-1 mx-2 transition-all duration-300 ${
-                        step < currentStep ? "bg-primary" : "bg-gray-300"
-                      }`}
+                      className={`w-16 h-1 mx-2 transition-all duration-300 ${step < currentStep ? "bg-primary" : "bg-gray-300"
+                        }`}
                     />
                   )}
                 </div>

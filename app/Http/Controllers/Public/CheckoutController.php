@@ -70,7 +70,7 @@ class CheckoutController extends Controller
         $selectedTicketIds = $decoded['tickets'];
 
         $selectedFunction = null;
-        
+
         if ($functionId) {
             $selectedFunction = $event->functions->firstWhere('id', $functionId);
         } else {
@@ -82,7 +82,7 @@ class CheckoutController extends Controller
             return redirect()->route('event.detail', $event->id)
                 ->with('error', 'Función no encontrada');
         }
-        
+
         $selectedTickets = [];
         $ticketRequests = [];
 
@@ -90,7 +90,7 @@ class CheckoutController extends Controller
             foreach ($selectedTicketIds as $ticketId => $quantity) {
                 if ($quantity > 0) {
                     $ticketType = $selectedFunction->ticketTypes->firstWhere('id', $ticketId);
-                    
+
                     if ($ticketType) {
                         $ticketRequests[] = [
                             'id' => $ticketType->id,
@@ -114,28 +114,28 @@ class CheckoutController extends Controller
         // NUEVO: Intentar bloquear los tickets
         if (!empty($ticketRequests)) {
             $lockResult = $this->ticketLockService->lockTickets($ticketRequests, $sessionId);
-            
+
             if (!$lockResult['success']) {
                 // Redirigir con errores de disponibilidad
-                $errorMessages = array_map(function($failure) {
+                $errorMessages = array_map(function ($failure) {
                     return "Error con {$failure['message']}";
                 }, $lockResult['failures']);
-                
+
                 return redirect()->route('event.detail', $event->id)
                     ->withErrors(['tickets' => $errorMessages])
                     ->with('error', 'Algunos tickets ya no están disponibles. Por favor, revisa tu selección.');
             }
-            
+
             // Guardar información de bloqueo en sesión
             $request->session()->put('locked_tickets', $lockResult['locked_tickets']);
         }
 
         $cuotas_map = $event->cuotas
-                ->where('habilitada', true)
-                ->groupBy('bin')
-                ->map(function ($items) {
-                    return $items->pluck('cantidad_cuotas')->unique()->sort()->values();
-                });
+            ->where('habilitada', true)
+            ->groupBy('bin')
+            ->map(function ($items) {
+                return $items->pluck('cantidad_cuotas')->unique()->sort()->values();
+            });
 
         // Preparar datos del evento para el checkout
         $eventData = [
@@ -146,7 +146,7 @@ class CheckoutController extends Controller
             'time' => $selectedFunction->start_time?->format('H:i') ?? '',
             'location' => $event->venue->name,
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'selectedTickets' => $selectedTickets,
@@ -161,13 +161,14 @@ class CheckoutController extends Controller
             'eventData' => $eventData,
             'eventId' => $event->id,
             'sessionId' => $sessionId, // NUEVO: Pasar session ID al frontend
-            'lockExpiration' => now()->addMinutes(TicketLockService::LOCK_DURATION)->toISOString() // NUEVO
+            'lockExpiration' => now()->addMinutes(TicketLockService::LOCK_DURATION)->toISOString(),
+            'ambient' => env('PAYWAY_ENV'),
         ]);
     }
 
     private function getPersistentLockId(): string
     {
-        if (!session()->has('checkout_session_id')){
+        if (!session()->has('checkout_session_id')) {
             $newLockId = (string) Str::uuid();
             session(['checkout_session_id' => $newLockId]);
             Log::info('Generado nuevo checkout_session_id', ['lock_id' => $newLockId]);
@@ -179,7 +180,7 @@ class CheckoutController extends Controller
     {
         $sessionId = $request->session()->get('checkout_session_id');
         $lockedTickets = $request->session()->get('locked_tickets', []);
-        
+
         if (empty($sessionId) || empty($lockedTickets)) {
             return $this->redirectToError([
                 'title' => 'Sesión Expirada',
@@ -194,10 +195,10 @@ class CheckoutController extends Controller
         }
 
         $lockVerification = $this->ticketLockService->verifyLocks($lockedTickets, $sessionId);
-        
+
         if (!$lockVerification['all_valid']) {
             $this->ticketLockService->releaseTickets($sessionId);
-            
+
             return $this->redirectToError([
                 'title' => 'Tickets No Disponibles',
                 'message' => 'Los tickets que seleccionaste ya no están disponibles. Tu reserva ha expirado.',
@@ -211,7 +212,7 @@ class CheckoutController extends Controller
         }
 
         try {
-            
+
             $validated = $request->validate([
                 'event_id' => 'required|exists:events,id',
                 'function_id' => 'required|exists:event_functions,id',
@@ -233,7 +234,6 @@ class CheckoutController extends Controller
                 'agreements.privacy' => 'required|boolean|accepted',
 
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
 
             Log::error('Error de validación en checkout', [
@@ -241,7 +241,7 @@ class CheckoutController extends Controller
                 'failed_rules' => $e->validator->failed(),
                 'input_keys' => array_keys($request->all())
             ]);
-            
+
             return redirect()->back()->withInput()->withErrors($e->errors());
         }
 
@@ -272,10 +272,9 @@ class CheckoutController extends Controller
 
                 return redirect()->to($signedUrl)
                     ->with('success', '¡Compra realizada exitosamente!');
-
             } else {
 
-                 return $this->redirectToError([
+                return $this->redirectToError([
                     'title' => 'Error en el Pago',
                     'message' => 'No pudimos procesar tu pago. La orden ha sido cancelada.',
                     'errorCode' => 'PAYMENT_FAILED',
@@ -286,14 +285,13 @@ class CheckoutController extends Controller
                     'timestamp' => now()->format('d/m/Y H:i')
                 ]);
             }
-
         } catch (\Exception $e) {
             try {
                 $this->ticketLockService->releaseTickets($sessionId);
             } catch (\Exception $releaseError) {
                 Log::error('Error liberando locks en catch', ['error' => $releaseError->getMessage()]);
             }
-            
+
             Log::error('Error general en checkout', [
                 'message' => $e->getMessage(),
                 'session_id' => $sessionId ?? 'unknown',
@@ -330,7 +328,7 @@ class CheckoutController extends Controller
     public function error(Request $request): Response | RedirectResponse
     {
         $encodedData = $request->query('data');
-        
+
         if (!$encodedData) {
             return redirect()->route('home')
                 ->with('error', 'Error desconocido');
@@ -338,7 +336,7 @@ class CheckoutController extends Controller
 
         try {
             $errorData = json_decode(base64_decode($encodedData), true);
-            
+
             if (!$errorData) {
                 throw new \Exception('Datos de error inválidos');
             }
@@ -346,7 +344,6 @@ class CheckoutController extends Controller
             return Inertia::render('public/checkouterror', [
                 'errorData' => $errorData
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error mostrando página de error', [
                 'message' => $e->getMessage(),
@@ -363,7 +360,7 @@ class CheckoutController extends Controller
 
         $orderKey = $request->query('order');
         $accountCreated = $request->query('account_created', false);
-        
+
         if (!$orderKey) {
             Log::error('Order ID no encontrado en success page');
             return redirect()->route('home')
@@ -371,17 +368,17 @@ class CheckoutController extends Controller
         }
 
         try {
-            
+
             // ACTUALIZADO: Cargar la orden con ciudad y provincia
             $order = Order::with([
                 'items.ticketType.eventFunction.event.venue.ciudad.provincia',
                 'client.person'
             ])
-            ->where(function($q) use ($orderKey) {
-                $q->where('transaction_id', $orderKey)
-                  ->orWhere('id', $orderKey);
-            })
-            ->firstOrFail();
+                ->where(function ($q) use ($orderKey) {
+                    $q->where('transaction_id', $orderKey)
+                        ->orWhere('id', $orderKey);
+                })
+                ->firstOrFail();
 
             // Si hay usuario logueado, asegurar que sea el dueño de la orden
             if (Auth::check() && $order->client_id !== Auth::id()) {
@@ -408,7 +405,7 @@ class CheckoutController extends Controller
                     'location' => $event->venue->name,
                     // ACTUALIZADO: usar la nueva estructura
                     'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+                    'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
                         $event->venue->ciudad->provincia->name : null,
                     'full_address' => $event->venue->getFullAddressAttribute(),
                     'function' => [
@@ -417,20 +414,20 @@ class CheckoutController extends Controller
                         'description' => $eventFunction->description,
                     ],
                 ],
-                'tickets' => $orderSummary['grouped_tickets']->map(function($ticket) {
+                'tickets' => $orderSummary['grouped_tickets']->map(function ($ticket) {
                     $ticketData = [
                         'type' => $ticket['ticket_type_name'],
                         'quantity' => $ticket['quantity'],
                         'price' => $ticket['unit_price'],
                     ];
-                    
+
                     // Agregar información de bundle si aplica
                     if (isset($ticket['is_bundle']) && $ticket['is_bundle']) {
                         $ticketData['is_bundle'] = true;
                         $ticketData['bundle_quantity'] = $ticket['bundle_quantity'];
                         $ticketData['total_individual_tickets'] = $ticket['quantity'] * $ticket['bundle_quantity'];
                     }
-                    
+
                     return $ticketData;
                 })->toArray(),
                 'total' => $order->total_amount,
@@ -441,7 +438,6 @@ class CheckoutController extends Controller
                 'purchaseData' => $purchaseData,
                 'accountCreated' => (bool) $accountCreated
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error en success page', [
                 'order_id' => $orderKey,
@@ -459,7 +455,7 @@ class CheckoutController extends Controller
     public function checkEmail(string $email): JsonResponse
     {
         $email = urldecode($email);
-        
+
         $exists = User::where('email', $email)->exists();
 
         return response()->json([
@@ -490,6 +486,9 @@ class CheckoutController extends Controller
             // Limpiar sesión
             $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
+            // Limpiar sesión
+            $request->session()->forget(['checkout_session_id', 'locked_tickets']);
+
             // Si no hay eventId en el request, intentar obtenerlo del sessionStorage o redirigir a home
             if (!$eventId) {
                 Log::warning('EventId no proporcionado en releaseLocks', [
@@ -504,6 +503,13 @@ class CheckoutController extends Controller
             return redirect()->route('event.detail', ['event' => $eventId])
                 ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
 
+                return redirect()->route('home')
+                    ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
+            }
+
+            // Redirigir al detalle del evento
+            return redirect()->route('event.detail', ['event' => $eventId])
+                ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
         } catch (\Exception $e) {
             Log::error('Error liberando locks', [
                 'session_id' => $sessionId,
