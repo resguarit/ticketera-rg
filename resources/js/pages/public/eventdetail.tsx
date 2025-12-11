@@ -882,7 +882,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                         <div className="min-w-0 flex-1 mr-2">
                                                                             <div className="flex items-center space-x-2 mb-1">
-                                                                                <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
+                                                                                <h4 className="font-semibold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
                                                                                 {/* NUEVO: Indicador de disponibilidad en tiempo real */}
                                                                                 {isRefreshingAvailability && (
                                                                                     <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />

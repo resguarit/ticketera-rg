@@ -225,33 +225,6 @@ export default function AdminDashboard({
         }
     };
 
-    const getSystemStatusIcon = (status: string) => {
-        switch (status) {
-            case 'operational': return <CheckCircle className="w-5 h-5 text-green-500" />;
-            case 'slow': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-            case 'down': return <XCircle className="w-5 h-5 text-red-500" />;
-            default: return <CheckCircle className="w-5 h-5 text-green-500" />;
-        }
-    };
-
-    const getSystemStatusColor = (status: string) => {
-        switch (status) {
-            case 'operational': return 'bg-green-50 border-green-200';
-            case 'slow': return 'bg-yellow-50 border-yellow-200';
-            case 'down': return 'bg-red-50 border-red-200';
-            default: return 'bg-green-50 border-green-200';
-        }
-    };
-
-    const getSystemStatusBadge = (status: string) => {
-        switch (status) {
-            case 'operational': return 'bg-green-500';
-            case 'slow': return 'bg-yellow-500';
-            case 'down': return 'bg-red-500';
-            default: return 'bg-green-500';
-        }
-    };
-
     return (
         <>
             <Head title="Dashboard - Panel de Administración" />
@@ -261,10 +234,10 @@ export default function AdminDashboard({
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Panel de Administración
                             </h1>
-                            <p className="text-gray-600 text-lg">
+                            <p className="text-gray-600 text-sm md:text-base lg:text-lg">
                                 Bienvenido, {getUserDisplayName(auth.user)} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
@@ -397,13 +370,13 @@ export default function AdminDashboard({
                                         </Link>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-6">
+                                <CardContent className="p-4 sm:p-6">
                                     <div className="space-y-3">
                                         {recentUsers.length > 0 ? recentUsers.map((user) => (
-                                            <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                            <div key={user.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-semibold text-sm tracking-tight">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-semibold text-xs sm:text-sm tracking-tight">
                                                             {user.name.charAt(0).toUpperCase()}{user.last_name.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
