@@ -475,16 +475,13 @@ class CheckoutController extends Controller
                 return redirect()->route('home')
                     ->with('error', 'Sesión expirada');
             }
-            
+
             return redirect()->route('event.detail', ['event' => $eventId])
                 ->with('warning', 'Sesión expirada');
         }
 
         try {
             $this->ticketLockService->releaseTickets($sessionId);
-            
-            // Limpiar sesión
-            $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
             // Limpiar sesión
             $request->session()->forget(['checkout_session_id', 'locked_tickets']);
@@ -494,14 +491,6 @@ class CheckoutController extends Controller
                 Log::warning('EventId no proporcionado en releaseLocks', [
                     'session_id' => substr($sessionId, -8)
                 ]);
-                
-                return redirect()->route('home')
-                    ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
-            }
-
-            // Redirigir al detalle del evento
-            return redirect()->route('event.detail', ['event' => $eventId])
-                ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
 
                 return redirect()->route('home')
                     ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
