@@ -27,43 +27,43 @@ const paymentMethods = [
   {
     id: "visa_debito",
     name: "Visa Débito",
-    icon: CreditCard,
+    logo: "/images/medios-pago/visa.svg",
     color: "from-blue-500 to-blue-600",
   },
   {
     id: "visa_credito",
     name: "Visa Crédito",
-    icon: CreditCard,
+    logo: "/images/medios-pago/visa.svg",
     color: "from-blue-600 to-blue-700",
   },
   {
     id: "mastercard_debito",
     name: "Mastercard Débito",
-    icon: CreditCard,
+    logo: "/images/medios-pago/mastercard.svg",
     color: "from-orange-500 to-red-500",
   },
   {
     id: "mastercard_credito",
     name: "Mastercard Crédito",
-    icon: CreditCard,
+    logo: "/images/medios-pago/mastercard.svg",
     color: "from-red-500 to-red-600",
   },
   {
     id: "amex",
     name: "American Express",
-    icon: CreditCard,
+    logo: "/images/medios-pago/american-express.svg",
     color: "from-cyan-500 to-blue-500",
   },
   {
     id: "visa_prepaga",
     name: "Visa Prepaga",
-    icon: CreditCard,
+    logo: "/images/medios-pago/visa.svg",
     color: "from-blue-400 to-blue-500",
   },
   {
     id: "mastercard_prepaga",
     name: "Mastercard Prepaga",
-    icon: CreditCard,
+    logo: "/images/medios-pago/mastercard.svg",
     color: "from-orange-400 to-red-400",
   },
 ]
@@ -266,12 +266,15 @@ export default function PaymentInfoStep({
                     ? "border-primary bg-primary/5"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
+                onClick={() => !disabled && handleInputChange("paymentMethodId", method.id)}
               >
                 <RadioGroupItem value={method.id} id={method.id} disabled={disabled} />
-                <div
-                  className={`w-10 h-10 bg-gradient-to-r ${method.color} rounded-lg flex items-center justify-center flex-shrink-0`}
-                >
-                  <method.icon className="w-5 h-5 text-white" />
+                <div className="w-14 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
+                  <img 
+                    src={method.logo} 
+                    alt={method.name}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <Label htmlFor={method.id} className="text-foreground font-medium cursor-pointer flex-1">
                   {method.name}
