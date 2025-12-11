@@ -285,7 +285,7 @@ export default function PaymentInfoStep({
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="space-y-2">
               <Label htmlFor="cardName" className="text-foreground">
-                Nombre en la Tarjeta *
+                Nombre del Titular <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="cardName"
@@ -302,7 +302,7 @@ export default function PaymentInfoStep({
 
             <div className="space-y-2">
               <Label htmlFor="cardNumber" className="text-foreground">
-                Número de Tarjeta *
+                Número de Tarjeta <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="cardNumber"
@@ -321,7 +321,7 @@ export default function PaymentInfoStep({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="expiryDate" className="text-foreground">
-                  Fecha de Vencimiento *
+                  Fecha de Vencimiento <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="expiryDate"
@@ -338,7 +338,7 @@ export default function PaymentInfoStep({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cvv" className="text-foreground">
-                  CVV *
+                  CVV <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
