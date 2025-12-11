@@ -10,6 +10,7 @@ use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
 use App\Http\Controllers\Organizer\AssistantController;
 use App\Http\Controllers\Organizer\AttendeeInvitationController;
 use App\Http\Controllers\Organizer\OrganizerUserController;
+use App\Http\Controllers\User\TicketController;
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -17,7 +18,7 @@ use function Pest\Laravel\get;
 Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/dashboard', OrganizerDashboardController::class)->name('dashboard');
 
-    Route::prefix('events')->name('events.')->group(function () { 
+    Route::prefix('events')->name('events.')->group(function () {
         Route::get('/', [EventController::class, 'index'])->name('index');
         Route::get('/create', [EventController::class, 'create'])->name('create');
         Route::post('/', [EventController::class, 'store'])->name('store');
@@ -27,7 +28,7 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::get('/manage/{event}', [EventController::class, 'manage'])->name('manage');
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
         Route::get('/attendees/{event}', [AssistantController::class, 'index'])->name('attendees');
-        
+
         // Rutas para gestión de asistentes
         Route::prefix('{event}/attendees')->name('attendees.')->group(function () {
             Route::get('/invite', [AttendeeInvitationController::class, 'create'])->name('invite');
@@ -75,11 +76,14 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::delete('/{user}', [OrganizerUserController::class, 'destroy'])->name('destroy');
         Route::put('/{user}', [OrganizerUserController::class, 'update'])->name('update');
         Route::get('/{user}/edit', [OrganizerUserController::class, 'edit'])->name('edit');
-
     });
 
     //Ruta de guia de ayuda para organizadores
     Route::get('/help-guide', [OrganizerDashboardController::class, 'helpGuide'])->name('helpGuide');
-    
 
+    Route::get('/events/{event}/tickets', [TicketController::class, 'index'])
+        ->name('events.tickets.index');
+
+    Route::post('/events/{event}/tickets/{ticket}/toggle', [TicketController::class, 'toggleStatus'])
+        ->name('events.tickets.toggle');
 });
