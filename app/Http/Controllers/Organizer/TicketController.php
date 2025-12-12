@@ -49,12 +49,14 @@ class TicketController extends Controller
                     ->orWhereHas('client.person', function ($p) use ($search) {
                         $p->where('name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('dni', 'like', "%{$search}%");
+                            ->orWhere('dni', 'like', "%{$search}%")
+                            ->orWhereRaw("CONCAT(name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                     })
                     ->orWhereHas('assistant.person', function ($p) use ($search) {
                         $p->where('name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('dni', 'like', "%{$search}%");
+                            ->orWhere('dni', 'like', "%{$search}%")
+                            ->orWhereRaw("CONCAT(name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                     });
             });
         }
