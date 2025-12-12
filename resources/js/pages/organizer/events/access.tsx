@@ -159,7 +159,7 @@ export default function EventAccess({
             <div className="space-y-6">
 
                 {/* --- BARRA SUPERIOR DE CONTROL --- */}
-                <Card className="border-l-4 border-l-blue-600 shadow-sm">
+                <Card className="shadow-sm">
                     <CardHeader className="pb-3">
                         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
 
