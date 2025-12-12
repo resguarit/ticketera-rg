@@ -91,7 +91,7 @@ export function FilterBar({
     Object.values(customFilterValues).some(value => value !== 'all');
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+<div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {/* Búsqueda */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
