@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
@@ -42,10 +43,6 @@ class TicketController extends Controller
             });
         }
 
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
-        }
-
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('unique_code', 'like', "%{$search}%")
@@ -60,6 +57,16 @@ class TicketController extends Controller
                             ->orWhere('dni', 'like', "%{$search}%");
                     });
             });
+        }
+
+        $statsQuery = clone $query;
+        $stats = $statsQuery->select(
+            DB::raw("COUNT(CASE WHEN status = 'used' THEN 1 END) as entered"),
+            DB::raw("COUNT(CASE WHEN status = 'available' THEN 1 END) as pending")
+        )->first();
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
         }
 
         $tickets = $query->orderBy('updated_at', 'desc')
@@ -83,11 +90,8 @@ class TicketController extends Controller
                 'is_bundle' => $ticket->isFromBundle(),
                 'bundle_reference' => $ticket->bundle_reference,
                 'device_used' => $ticket->device_used,
-
                 'validated_at' => $ticket->validated_at?->isoFormat('D MMM HH:mm'),
-
                 'last_scan_result' => $lastScan?->result,
-
                 'scan_history' => $ticket->scanLogs->map(function ($log) {
                     return [
                         'result' => $log->result,
@@ -112,6 +116,10 @@ class TicketController extends Controller
             'tickets' => $tickets,
             'functions' => $functions,
             'filters' => $request->all(['search', 'status', 'function_id']),
+            'stats' => [ // Enviamos las stats al front
+                'entered' => (int) $stats->entered,
+                'pending' => (int) $stats->pending,
+            ]
         ]);
     }
 

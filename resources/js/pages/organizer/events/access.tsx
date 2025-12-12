@@ -64,13 +64,18 @@ interface EventAccessProps {
         status?: string;
         function_id?: string;
     };
+    stats: {
+        entered: number;
+        pending: number;
+    };
 }
 
 export default function EventAccess({
     event,
     tickets,
     functions,
-    filters
+    filters,
+    stats
 }: EventAccessProps) {
 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -117,7 +122,7 @@ export default function EventAccess({
     };
 
     const handleRefresh = () => {
-        router.reload({ only: ['tickets'] });
+        router.reload({ only: ['tickets', 'stats'] }); // Recargamos tickets Y stats
     };
 
     const handleToggleStatus = (ticket: TicketForControl) => {
@@ -156,16 +161,36 @@ export default function EventAccess({
                 {/* --- BARRA SUPERIOR DE CONTROL --- */}
                 <Card className="border-l-4 border-l-blue-600 shadow-sm">
                     <CardHeader className="pb-3">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <CardTitle className="text-xl flex items-center gap-2">
-                                    <Monitor className="w-5 h-5 text-blue-600" />
-                                    Control de Accesos
-                                </CardTitle>
-                                <CardDescription>
-                                    Gestión operativa en tiempo real para puertas y validación manual.
-                                </CardDescription>
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+
+                            {/* Título y Descripción + Stats Vertical Divider */}
+                            <div className="flex flex-col md:flex-row md:items-center gap-6">
+                                <div>
+                                    <CardTitle className="text-xl flex items-center gap-2">
+                                        <Monitor className="w-5 h-5 text-blue-600" />
+                                        Control de Accesos
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Gestión operativa en tiempo real para puertas.
+                                    </CardDescription>
+                                </div>
+
+                                {/* --- NUEVO: BARRA VERTICAL Y STATS --- */}
+                                <div className="hidden md:block h-10 w-px bg-gray-200 mx-2"></div>
+
+                                <div className="flex gap-6 text-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Ingresaron</span>
+                                        <span className="text-2xl font-bold text-gray-800">{stats.entered}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Faltan</span>
+                                        <span className="text-2xl font-bold text-gray-500">{stats.pending}</span>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Botón Actualizar */}
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={handleRefresh} title="Recargar datos">
                                     <RefreshCw className="w-4 h-4 mr-2" />
