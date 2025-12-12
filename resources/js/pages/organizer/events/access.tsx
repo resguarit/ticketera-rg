@@ -12,6 +12,7 @@ import {
     Search, QrCode, CheckCircle, History, RefreshCw,
     Smartphone, AlertTriangle, Monitor, RotateCcw, Ticket
 } from 'lucide-react';
+import ModalQR from '@/components/qr-code-modal';
 import { PaginatedResponse } from '@/types/ui/ui';
 import { Event, EventRelations } from '@/types/models/event';
 
@@ -90,6 +91,8 @@ export default function EventAccess({
         ticket: null,
     });
 
+    const [qrCodeForModal, setQrCodeForModal] = useState<string | null>(null);
+
     const applyFilters = (newParams: any) => {
         const params = {
             search: searchQuery,
@@ -138,6 +141,12 @@ export default function EventAccess({
     const openHistory = (ticket: TicketForControl) => {
         setHistoryModal({ isOpen: true, ticket });
     };
+
+    const openQr = (ticket: TicketForControl) => {
+        setQrCodeForModal(ticket.unique_code);
+    };
+
+
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -326,6 +335,14 @@ export default function EventAccess({
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        title="Ver QR"
+                                                        onClick={() => openQr(ticket)}
+                                                    >
+                                                        <QrCode className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => openHistory(ticket)}
                                                         title="Ver historial de escaneos"
                                                     >
@@ -448,6 +465,12 @@ export default function EventAccess({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <ModalQR
+                open={!!qrCodeForModal}
+                onClose={() => setQrCodeForModal(null)}
+                value={qrCodeForModal || ''}
+            />
         </EventManagementLayout>
     );
 }
