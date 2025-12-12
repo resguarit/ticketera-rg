@@ -9,14 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-    Search, QrCode, CheckCircle, XCircle, History, RefreshCw,
+    Search, QrCode, CheckCircle, History, RefreshCw,
     Smartphone, AlertTriangle, Monitor, RotateCcw, Ticket
 } from 'lucide-react';
 import { PaginatedResponse } from '@/types/ui/ui';
 import { Event, EventRelations } from '@/types/models/event';
-
-
-// --- TIPOS ---
 
 interface ScanLog {
     result: string;
@@ -43,21 +40,22 @@ interface TicketForControl {
 interface EventFunctionSimple {
     id: number;
     name: string;
-    start_time: string;
+    start_time_formatted: string;
 }
 
-interface EventFunctionDetail extends EventFunctionSimple { // Compatible con el layout
+interface EventFunctionDetail extends EventFunctionSimple {
     date: string;
     time: string;
     formatted_date: string;
     day_name: string;
+    start_time: string;
 }
 
 interface EventWithDetails extends Event, EventRelations {
     functions: EventFunctionDetail[];
 }
 
-interface EventTicketsProps {
+interface EventAccessProps {
     event: EventWithDetails;
     tickets: PaginatedResponse<TicketForControl>;
     functions: EventFunctionSimple[];
@@ -68,19 +66,17 @@ interface EventTicketsProps {
     };
 }
 
-export default function EventTickets({
+export default function EventAccess({
     event,
     tickets,
     functions,
     filters
-}: EventTicketsProps) {
+}: EventAccessProps) {
 
-    // --- ESTADOS ---
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [functionFilter, setFunctionFilter] = useState(filters.function_id || 'all');
 
-    // Estado para el modal de historial
     const [historyModal, setHistoryModal] = useState<{
         isOpen: boolean;
         ticket: TicketForControl | null;
@@ -89,7 +85,6 @@ export default function EventTickets({
         ticket: null,
     });
 
-    // --- FILTROS Y BÚSQUEDA ---
     const applyFilters = (newParams: any) => {
         const params = {
             search: searchQuery,
@@ -98,13 +93,12 @@ export default function EventTickets({
             ...newParams,
         };
 
-        // Limpiar undefined
         Object.keys(params).forEach(key => {
             if (params[key] === undefined || params[key] === '') delete params[key];
         });
 
         router.get(
-            route('organizer.events.tickets', event.id),
+            route('organizer.events.access', event.id),
             params,
             { preserveState: true, preserveScroll: true, replace: true }
         );
@@ -126,12 +120,11 @@ export default function EventTickets({
         router.reload({ only: ['tickets'] });
     };
 
-    // --- ACCIONES DE TICKET ---
     const handleToggleStatus = (ticket: TicketForControl) => {
         const newStatus = ticket.status === 'available' ? 'used' : 'available';
 
         router.post(
-            route('organizer.events.tickets.toggle', { event: event.id, ticket: ticket.id }),
+            route('organizer.events.access.toggle', { event: event.id, ticket: ticket.id }),
             { status: newStatus },
             { preserveScroll: true }
         );
@@ -141,7 +134,6 @@ export default function EventTickets({
         setHistoryModal({ isOpen: true, ticket });
     };
 
-    // --- RENDERIZADO DE ESTADO ---
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'used':
@@ -156,7 +148,7 @@ export default function EventTickets({
     };
 
     return (
-        <EventManagementLayout event={event} activeTab="tickets">
+        <EventManagementLayout event={event} activeTab="access">
             <Head title={`Control de Accesos - ${event.name}`} />
 
             <div className="space-y-6">
@@ -224,7 +216,7 @@ export default function EventTickets({
                                         <SelectItem value="all">Todas las funciones</SelectItem>
                                         {functions.map(f => (
                                             <SelectItem key={f.id} value={f.id.toString()}>
-                                                {f.name} ({new Date(f.start_time).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})
+                                                {f.name} ({f.start_time_formatted})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -410,7 +402,7 @@ export default function EventTickets({
                                                         'Intento Fallido'}
                                             </p>
                                             <span className="text-xs text-gray-500">
-                                                {new Date(log.scanned_at).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                {log.scanned_at}
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-600 mt-1">

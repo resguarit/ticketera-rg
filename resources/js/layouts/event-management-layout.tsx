@@ -59,9 +59,9 @@ export default function EventManagementLayout({
         },
         {
             name: 'Gestion de Entradas',
-            id: 'ticket-management',
+            id: 'access',
             icon: QrCode,
-            href: route('organizer.events.tickets.index', event.id)
+            href: route('organizer.events.access', event.id)
         }
     ];
 

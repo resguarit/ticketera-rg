@@ -6,11 +6,12 @@ use App\Http\Controllers\Organizer\VenueController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Organizer\EventController;
 use App\Http\Controllers\Organizer\TicketTypeController;
-use App\Http\Controllers\Organizer\EventFunctionController; // <-- ADD THIS
+use App\Http\Controllers\Organizer\EventFunctionController;
 use App\Http\Controllers\Organizer\AssistantController;
 use App\Http\Controllers\Organizer\AttendeeInvitationController;
 use App\Http\Controllers\Organizer\OrganizerUserController;
 use App\Http\Controllers\User\TicketController;
+use App\Http\Controllers\Organizer\TicketController as OrganizerTicketController;
 use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\get;
@@ -81,9 +82,9 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
     //Ruta de guia de ayuda para organizadores
     Route::get('/help-guide', [OrganizerDashboardController::class, 'helpGuide'])->name('helpGuide');
 
-    Route::get('/events/{event}/tickets', [TicketController::class, 'index'])
-        ->name('events.tickets.index');
+    Route::get('/events/{event}/access', [OrganizerTicketController::class, 'index'])
+        ->name('events.access');
 
-    Route::post('/events/{event}/tickets/{ticket}/toggle', [TicketController::class, 'toggleStatus'])
-        ->name('events.tickets.toggle');
+    Route::post('/events/{event}/access/{ticket}/toggle', [OrganizerTicketController::class, 'toggleStatus'])
+        ->name('events.access.toggle');
 });

@@ -15,4 +15,8 @@ class ScanLog extends Model
         'scanned_code',
         'scanned_at',
     ];
+
+    protected $casts = [
+        'scanned_at' => 'datetime',
+    ];
 }
