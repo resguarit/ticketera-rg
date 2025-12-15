@@ -69,4 +69,9 @@ class IssuedTicket extends Model
 
         return static::where('bundle_reference', $this->bundle_reference)->get();
     }
+
+    public function scanLogs()
+    {
+        return $this->hasMany(ScanLog::class);
+    }
 }

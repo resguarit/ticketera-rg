@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye } from 'lucide-react';
+import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -9,9 +9,9 @@ import { Toaster } from 'sonner';
 
 
 interface EventFunctionDetail extends EventFunction {
-    date: string;       
-    time: string;       
-    formatted_date: string; 
+    date: string;
+    time: string;
+    formatted_date: string;
     day_name: string;
 }
 
@@ -25,44 +25,50 @@ interface EventManagementLayoutProps {
     children: React.ReactNode;
 }
 
-export default function EventManagementLayout({ 
-    event, 
-    activeTab = 'overview', 
-    children 
+export default function EventManagementLayout({
+    event,
+    activeTab = 'overview',
+    children
 }: EventManagementLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigationItems = [
-        { 
-            name: 'Resumen', 
-            id: 'overview', 
-            icon: BarChart3, 
-            href: route('organizer.events.manage', event.id) 
+        {
+            name: 'Resumen',
+            id: 'overview',
+            icon: BarChart3,
+            href: route('organizer.events.manage', event.id)
         },
-        { 
-            name: 'Funciones', 
-            id: 'functions', 
-            icon: Calendar, 
+        {
+            name: 'Funciones',
+            id: 'functions',
+            icon: Calendar,
             href: route('organizer.events.functions', event.id)
         },
-        { 
-            name: 'Entradas', 
-            id: 'tickets', 
-            icon: Ticket, 
+        {
+            name: 'Tipos de Entradas',
+            id: 'tickets',
+            icon: Ticket,
             href: route('organizer.events.tickets', event.id)
         },
-        { 
-            name: 'Asistentes', 
-            id: 'attendees', 
-            icon: Users, 
+        {
+            name: 'Asistentes',
+            id: 'attendees',
+            icon: Users,
             href: route('organizer.events.attendees', event.id)
         },
+        {
+            name: 'Gestion de Entradas',
+            id: 'access',
+            icon: QrCode,
+            href: route('organizer.events.access', event.id)
+        }
     ];
 
     return (
         <>
             <Head title={`Gestión - ${event.name}`} />
-            <Toaster 
+            <Toaster
                 position="top-right"
                 richColors
                 expand={true}
@@ -82,22 +88,22 @@ export default function EventManagementLayout({
                         <div className="flex items-center justify-between h-20">
                             {/* Sección izquierda: Back button + Info del evento */}
                             <div className="flex items-center space-x-6">
-                                <Link 
+                                <Link
                                     href={route('organizer.events.index')}
                                     className="group"
                                 >
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
                                     >
                                         <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 transition-transform" />
                                         Volver a eventos
                                     </Button>
                                 </Link>
-                                
+
                                 <div className="border-l border-gray-300 h-8"></div>
-                                
+
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0">
                                         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
@@ -124,11 +130,11 @@ export default function EventManagementLayout({
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Sección derecha: Acciones */}
                             <div className="flex items-center space-x-3">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     size="sm"
                                     className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                                     onClick={() => window.open(route('event.detail', event.id), '_blank')}
@@ -150,7 +156,7 @@ export default function EventManagementLayout({
                                 {navigationItems.map((item) => {
                                     const Icon = item.icon;
                                     const isActive = activeTab === item.id;
-                                    
+
                                     return (
                                         <Link
                                             key={item.id}
