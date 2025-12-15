@@ -285,9 +285,9 @@ export default function Index({ auth }: any) {
                 {/* Organizers Content */}
                 <div className="space-y-4">
                     {organizers.data.map((organizer) => (
-                        <div key={organizer.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
-                            <div className="flex items-center space-x-6">
-                                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                        <div key={organizer.id} className="p-2 md:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                            <div className="flex items-center space-x-4 sm:space-x-6">
+                                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                                     {organizer.image_url ? (
                                         <img 
                                             src={organizer.image_url}
@@ -311,6 +311,7 @@ export default function Index({ auth }: any) {
                                                 <span>{organizer.name}</span>
                                             </h3>
                                             <p className="text-gray-600 text-sm flex items-center space-x-4">
+                                                <div className='grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-3 mb-3'>
                                                 <span className="flex items-center space-x-1">
                                                     <Users className="w-4 h-4" />
                                                     <span>{organizer.referring}</span>
@@ -319,11 +320,12 @@ export default function Index({ auth }: any) {
                                                     <Mail className="w-4 h-4" />
                                                     <span>{organizer.email}</span>
                                                 </span>
+                                                </div>
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-3 mb-3">
                                         <div className="flex items-center text-gray-600 text-sm">
                                             <Calendar className="w-4 h-4 mr-2 text-primary" />
                                             <span>Registro: {formatDate(organizer.created_at)}</span>
