@@ -100,7 +100,6 @@ export default function Index({ auth }: any) {
     }, [searchTerm, sortBy, filters.page]); // REMOVIDO selectedStatus de las dependencias
 
     // Aplicar filtros automáticamente cuando cambien los selectores (excepto en la primera carga)
-    // CORREGIDO: Solo escuchar cambios en sortBy
     useEffect(() => {
         if (isInitialLoad.current) {
             isInitialLoad.current = false;
@@ -108,7 +107,7 @@ export default function Index({ auth }: any) {
         }
         
         applyFilters(true); // Resetear página cuando cambian los filtros
-    }, [sortBy]); // REMOVIDO selectedStatus
+    }, [sortBy, applyFilters]); // Agregar applyFilters a las dependencias
 
     // Para la búsqueda, aplicar con debounce
     useEffect(() => {
@@ -137,7 +136,7 @@ export default function Index({ auth }: any) {
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchTerm]);
+    }, [searchTerm, applyFilters]); // Agregar applyFilters a las dependencias
 
     // Limpiar timeout al desmontar
     useEffect(() => {
