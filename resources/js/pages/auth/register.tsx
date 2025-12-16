@@ -1,5 +1,5 @@
-import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { LoaderCircle, ChevronLeft } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
@@ -36,6 +36,17 @@ export default function Register() {
     };
 
     return (
+        <>
+            <div className="fixed top-4 left-4 z-50 md:hidden">
+            <Link href={route('home')}>
+                    <button 
+                        className="flex items-center px-2 py-1 justify-center text-primary"
+                    >
+                        <ChevronLeft className="w-5 h-5 mr-1" />
+                        Inicio
+                    </button>
+            </Link>
+        </div>
         <AuthLayout title="Crear una cuenta" description="Ingresa tus datos a continuación para crear tu cuenta">
             <Head title="Registrarse" />
             <form className="flex flex-col gap-3" onSubmit={submit}>
@@ -155,5 +166,6 @@ export default function Register() {
                 </div>
             </form>
         </AuthLayout>
+        </>
     );
 }

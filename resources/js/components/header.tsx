@@ -34,7 +34,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
                             />
                         <h1 className="text-lg sm:text-xl font-bold text-white">
-                            <span className="hidden sm:inline">RG <span className="font-medium">ENTRADAS</span></span>
+                            <span className="hidden sm:inline"> <span className="font-medium">ENTRADAS</span></span>
                             <span className="sm:hidden font-medium">RG ENTRADAS</span>
                         </h1>
                     </Link>

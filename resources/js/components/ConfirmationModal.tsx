@@ -49,19 +49,19 @@ export default function ConfirmationModal({
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div 
-                    className="bg-white rounded-md shadow-xl max-w-md w-full p-6"
+                    className="bg-white rounded-md shadow-xl max-w-md w-full p-4 sm:p-6"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
                     <div className="flex items-center w-full text-center ">
-                        <h3 className="w-full text-2xl text-center font-semibold text-gray-900">
+                        <h3 className="w-full text-xl sm:text-2xl text-center font-semibold text-gray-900">
                             Confirmar {accionTitulo}
                         </h3>
                     </div>
 
                     {/* Content */}
-                    <div className="px-6 space-y-4">
-                        <p className="text-gray-700 text-lg text-center mt-4">
+                    <div className="px-6 space-y-2 sm:space-y-4">
+                        <p className="text-gray-700 text-base sm:text-lg text-center mt-4">
                             ¿Estás seguro de que deseas {accion} {pronombre} {entidad}
                             {nombreElemento !== undefined ? ':' : '?'}
                         </p>
