@@ -299,11 +299,11 @@ export default function Users({ auth }: any) {
                     <CardContent className="p-6">
                         <div className="space-y-4">
                             {users.data.map((user) => (
-                                <div key={user.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                <div key={user.id} className="p-2 md:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4 flex-1">
-                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <User className="w-6 h-6 text-white" />
+                                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <User className="w-4 h-4 lg:w-6 lg:h-6 text-white" />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2">
@@ -311,7 +311,7 @@ export default function Users({ auth }: any) {
                                                     {getStatusBadge(user.status)}
                                                 </div>
                                                 <p className="text-sm text-gray-600">{user.email}</p>
-                                                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                                                <div className="flex flex-col lg:flex-row items-start lg:items-center space-x-4 mt-1 text-xs text-gray-500">
                                                     <span>DNI: {user.dni}</span>
                                                     <span>Tel: {user.phone}</span>
                                                     <span>Compras: {user.total_purchases}</span>
@@ -321,7 +321,7 @@ export default function Users({ auth }: any) {
                                         </div>
                                         
                                         {/* Actions */}
-                                        <div className="flex items-center space-x-2">
+                                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
                                             <Button 
                                                 onClick={() => handleToggleStatus(user.id)}
                                                 variant="outline" 
@@ -329,7 +329,9 @@ export default function Users({ auth }: any) {
                                                 className="border-gray-300 text-black hover:bg-gray-50"
                                             >
                                                 {getStatusIcon(user.status)}
-                                                {user.status === 'active' ? 'Desactivar' : 'Activar'}
+                                                <span className="hidden lg:inline">
+                                                    {user.status === 'active' ? 'Desactivar' : 'Activar'}
+                                                </span>
                                             </Button>
                                             <Button 
                                                 onClick={() => handleViewUser(user)}
@@ -337,17 +339,10 @@ export default function Users({ auth }: any) {
                                                 size="sm" 
                                                 className="border-gray-300 text-black hover:bg-gray-50"
                                             >
-                                                <Eye className="w-4 h-4 mr-1" />
-                                                Ver
-                                            </Button>
-                                            <Button 
-                                                onClick={() => router.visit(route('admin.users.edit', user.id))}
-                                                variant="outline" 
-                                                size="sm" 
-                                                className="border-gray-300 text-black hover:bg-gray-50"
-                                            >
-                                                <Edit className="w-4 h-4 mr-1" />
-                                                Editar
+                                                <Eye className="w-4 h-4 lg:mr-1" />
+                                                <span className="hidden lg:inline">
+                                                    Ver
+                                                </span>
                                             </Button>
                                             <Button 
                                                 onClick={() => {
@@ -358,7 +353,10 @@ export default function Users({ auth }: any) {
                                                 size="sm" 
                                                 className="border-red-300 text-red-600 hover:bg-red-50"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-4 h-4 lg:mr-2" />
+                                                <span className="hidden lg:inline">
+                                                    Eliminar
+                                                </span>
                                             </Button>
                                         </div>
                                     </div>

@@ -148,7 +148,7 @@ export default function CreateCategoryModal({ isOpen, onClose }: CreateCategoryM
                                     </>
                                 ) : (
                                     <>
-                                        <Plus className="w-4 h-4 mr-2" />
+                                        <Plus className="w-4 h-4" />
                                         Crear Categoría
                                     </>
                                 )}

@@ -1,7 +1,6 @@
-import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { LoaderCircle, ChevronLeft } from 'lucide-react';
 import { FormEventHandler } from 'react';
-
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,17 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
+        <>
+        <div className="fixed top-4 left-4 z-50 md:hidden">
+                <Link href={route('home')}>
+                    <button 
+                        className="flex items-center px-2 py-1 justify-center text-primary"
+                    >
+                        <ChevronLeft className="w-5 h-5 mr-1" />
+                        Inicio
+                    </button>
+                </Link>
+            </div>
         <AuthLayout title="Iniciar sesión en tu cuenta" description="Ingresa tu email y contraseña a continuación para iniciar sesión">
             <Head title="Iniciar sesión" />
 
@@ -106,5 +116,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
         </AuthLayout>
+        </>
     );
 }

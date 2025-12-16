@@ -57,7 +57,7 @@ export function FaqCategoryModal({ isOpen, onClose, category, icons }: Props) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[525px] bg-white">
+            <DialogContent className="max-w-[95vw] sm:max-w-[525px] bg-white max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{category ? 'Editar Categoría' : 'Crear Categoría'}</DialogTitle>
                 </DialogHeader>
@@ -70,21 +70,21 @@ export function FaqCategoryModal({ isOpen, onClose, category, icons }: Props) {
                         </div>
                         <div>
                             <Label>Icono</Label>
-                            <div className="grid grid-cols-8 gap-2 p-2 border rounded-md bg-gray-50 mt-1">
+                            <div className="grid grid-cols-6 md:grid-cols-8 gap-2 p-2 border rounded-md bg-gray-50 mt-1">
                                 {icons.map(iconName => (
                                     <button
                                         type="button"
                                         key={iconName}
                                         onClick={() => setData('icon', iconName)}
-                                        className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors ${data.icon === iconName ? 'bg-secondary text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                                        className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md transition-colors ${data.icon === iconName ? 'bg-secondary text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
                                     >
-                                        <DynamicIcon name={iconName} className="w-5 h-5" />
+                                        <DynamicIcon name={iconName} className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
                                 ))}
                             </div>
                             {errors.icon && <p className="text-sm text-red-600 mt-1">{errors.icon}</p>}
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
                             <div className="flex-1">
                                 <Label htmlFor="color">Color</Label>
                                 <Input id="color" type="color" value={data.color} onChange={e => setData('color', e.target.value)} className="mt-1 w-full h-10" />
@@ -97,9 +97,9 @@ export function FaqCategoryModal({ isOpen, onClose, category, icons }: Props) {
                             </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" disabled={processing}>{processing ? 'Guardando...' : 'Guardar'}</Button>
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
+                        <Button type="submit" disabled={processing} className="w-full sm:w-auto">{processing ? 'Guardando...' : 'Guardar'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

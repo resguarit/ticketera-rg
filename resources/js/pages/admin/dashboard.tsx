@@ -7,6 +7,7 @@ import {
     DollarSign, 
     TrendingUp, 
     Eye,
+    EyeOff,
     Settings,
     Shield,
     AlertTriangle,
@@ -60,6 +61,7 @@ interface RecentEvent extends Event {
     tickets_sold: number;
     total_tickets: number;
     revenue: number;
+    banner_url: string | null;
 }
 
 interface RecentUser {
@@ -225,33 +227,6 @@ export default function AdminDashboard({
         }
     };
 
-    const getSystemStatusIcon = (status: string) => {
-        switch (status) {
-            case 'operational': return <CheckCircle className="w-5 h-5 text-green-500" />;
-            case 'slow': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-            case 'down': return <XCircle className="w-5 h-5 text-red-500" />;
-            default: return <CheckCircle className="w-5 h-5 text-green-500" />;
-        }
-    };
-
-    const getSystemStatusColor = (status: string) => {
-        switch (status) {
-            case 'operational': return 'bg-green-50 border-green-200';
-            case 'slow': return 'bg-yellow-50 border-yellow-200';
-            case 'down': return 'bg-red-50 border-red-200';
-            default: return 'bg-green-50 border-green-200';
-        }
-    };
-
-    const getSystemStatusBadge = (status: string) => {
-        switch (status) {
-            case 'operational': return 'bg-green-500';
-            case 'slow': return 'bg-yellow-500';
-            case 'down': return 'bg-red-500';
-            default: return 'bg-green-500';
-        }
-    };
-
     return (
         <>
             <Head title="Dashboard - Panel de Administración" />
@@ -261,10 +236,10 @@ export default function AdminDashboard({
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Panel de Administración
                             </h1>
-                            <p className="text-gray-600 text-lg">
+                            <p className="text-gray-600 text-sm md:text-base lg:text-lg">
                                 Bienvenido, {getUserDisplayName(auth.user)} • {currentTime.toLocaleDateString('es-ES', { 
                                     weekday: 'long', 
                                     year: 'numeric', 
@@ -339,38 +314,66 @@ export default function AdminDashboard({
                                 <CardContent className="p-6">
                                     <div className="space-y-4">
                                         {recentEvents.length > 0 ? recentEvents.map((event) => (
-                                            <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center space-x-3 mb-2">
-                                                        <h4 className="text-black font-semibold">{event.name}</h4>
-                                                        {getEventStatusBadge(
-                                                            event.status, 
-                                                            event.status_label, 
-                                                            event.status_color,
-                                                            event.is_active
+                                            <div key={event.id} className="pl-0 py-0 pr-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                                <div className="flex items-center space-x-4">
+                                                    {/* Event Image */}
+                                                    <div className="h-48 sm:h-40 w-24 rounded-lg rounded-r-none overflow-hidden flex-shrink-0 border border-gray-200 relative">
+                                                        {event.banner_url ? (
+                                                            <img 
+                                                                src={event.banner_url}
+                                                                alt={event.name} 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${event.banner_url ? 'hidden' : ''}`}>
+                                                            <Calendar className="w-8 h-8 text-gray-600" />
+                                                        </div>
+                                                        {!event.is_active && (
+                                                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                                                <EyeOff className="w-6 h-6 text-white" />
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-600 text-sm mb-2">
-                                                        Por: {event.organizer} • {formatDate(event.date)}
-                                                    </p>
-                                                    <div className="flex items-center space-x-4 text-sm">
-                                                        <span className="text-gray-700">
-                                                            Tickets: {event.tickets_sold}/{event.total_tickets}
-                                                        </span>
-                                                        <span className="text-green-600 font-medium">
-                                                            {formatCurrency(event.revenue)}
-                                                        </span>
+
+                                                    {/* Event Info */}
+                                                    <div className="flex-1 min-w-0 py-4">
+                                                        <div className="flex flex-col ietms-start md:flex-row md:items-center space-x-3 mb-2">
+                                                            <h4 className="text-black font-semibold">{event.name}</h4>
+                                                            {getEventStatusBadge(
+                                                                event.status, 
+                                                                event.status_label, 
+                                                                event.status_color,
+                                                                event.is_active
+                                                            )}
+                                                        </div>
+                                                        <p className="text-gray-600 text-sm mb-2">
+                                                            Por: {event.organizer} • {formatDate(event.date)}
+                                                        </p>
+                                                        <div className="flex items-center space-x-4 text-sm mb-2">
+                                                            <span className="text-gray-700">
+                                                                Tickets: {event.tickets_sold}/{event.total_tickets}
+                                                            </span>
+                                                            <span className="text-green-600 font-medium">
+                                                                {formatCurrency(event.revenue)}
+                                                            </span>
+                                                        </div>
+                                                        <Progress 
+                                                            value={event.total_tickets > 0 ? (event.tickets_sold / event.total_tickets) * 100 : 0} 
+                                                            className="h-2"
+                                                        />
                                                     </div>
-                                                    <Progress 
-                                                        value={event.total_tickets > 0 ? (event.tickets_sold / event.total_tickets) * 100 : 0} 
-                                                        className="mt-2 h-2"
-                                                    />
+
+                                                    {/* Action Button */}
+                                                    <Link href={`/admin/events/${event.id}`} className="cursor-pointer pr-2">
+                                                        <Button variant="outline" className="flex items-center">
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                    </Link>
                                                 </div>
-                                                <Link href={`/admin/events/${event.id}`} className="cursor-pointer">
-                                                    <Button variant="outline" className="flex items-center">
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                </Link>
                                             </div>
                                         )) : (
                                             <div className="text-center py-8">
@@ -397,13 +400,13 @@ export default function AdminDashboard({
                                         </Link>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-6">
+                                <CardContent className="p-4 sm:p-6">
                                     <div className="space-y-3">
                                         {recentUsers.length > 0 ? recentUsers.map((user) => (
-                                            <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                            <div key={user.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-semibold text-sm tracking-tight">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-chart-4 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-semibold text-xs sm:text-sm tracking-tight">
                                                             {user.name.charAt(0).toUpperCase()}{user.last_name.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>

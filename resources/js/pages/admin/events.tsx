@@ -368,10 +368,10 @@ export default function Events({ auth }: any) {
                     <CardContent className="p-6">
                         <div className="space-y-4">
                             {events.data.map((event) => (
-                                <div key={event.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
-                                    <div className="flex items-center space-x-6">
+                                <div key={event.id} className="pl-0 py-0 pr-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                                    <div className="flex items-center space-x-4">
                                         {/* Event Image */}
-                                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
+                                        <div className="h-64 md:h-52 md:w-24 w-24  rounded-lg rounded-r-none overflow-hidden flex-shrink-0 border border-gray-200 relative">
                                             {event.image_url ? (
                                                 <img 
                                                     src={event.image_url}
@@ -394,8 +394,8 @@ export default function Events({ auth }: any) {
                                         </div>
 
                                         {/* Event Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between mb-2">
+                                        <div className="flex-1 min-w-0 ">
+                                            <div className="flex items-start justify-between mb-1">
                                                 <div className="flex-1">
                                                     <h3 className="text-lg font-semibold text-black mb-1 flex items-center space-x-2">
                                                         <span>{event.name}</span>
@@ -421,22 +421,22 @@ export default function Events({ auth }: any) {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-                                                <div className="flex items-center text-gray-700 text-sm">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0  mb-2">
+                                                <div className="flex items-center text-gray-700 text-xs sm:text-sm">
                                                     <Calendar className="w-4 h-4 mr-2 text-primary" />
                                                     <span>
                                                         {event.date && event.time ? formatDateTime(event.date, event.time) : 'Sin fecha'}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center text-gray-700 text-sm">
-                                                    <MapPin className="w-4 h-4 mr-2 text-primary" />
-                                                    <span>{event.location}, {event.city}</span>
+                                                <div className="flex items-center text-gray-700 text-xs sm:text-sm">
+                                                    <MapPin className="w-4 h-4 mr-2 text-primary " />
+                                                    <span className='truncate'>{event.location}, {event.city}</span>
                                                 </div>
-                                                <div className="flex items-center text-gray-700 text-sm">
+                                                <div className="flex items-center text-gray-700 text-xs sm:text-sm">
                                                     <Users className="w-4 h-4 mr-2 text-primary" />
                                                     <span>{event.tickets_sold}/{event.total_tickets} tickets</span>
                                                 </div>
-                                                <div className="flex items-center text-gray-700 text-sm">
+                                                <div className="flex items-center text-gray-700 text-xs sm:text-sm">
                                                     <DollarSign className="w-4 h-4 mr-2 text-primary" />
                                                     <span>{formatCurrency(event.revenue)}</span>
                                                 </div>
@@ -457,13 +457,9 @@ export default function Events({ auth }: any) {
                                             )}
 
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                <div className="flex flex-col items-start space-y-0 sm:space-y-1 text-xs text-gray-500">
                                                     <span>Rango: ${event.price_range} ARS</span>
-                                                    <span>•</span>
-                                                    <span>Categoría: {event.category}</span>
-                                                    <span>•</span>
                                                     <span>Funciones: {event.functions_count}</span>
-                                                    <span>•</span>
                                                     <span>Creado: {formatRelativeTime(event.created_at)}</span>
                                                 </div>
 

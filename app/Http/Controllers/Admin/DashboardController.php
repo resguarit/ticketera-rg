@@ -166,6 +166,7 @@ class DashboardController extends Controller
                     'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
                     'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
                         $event->venue->ciudad->provincia->name : null,
+                    'banner_url' => $event->image_url,
                 ];
             })->toArray();
     }

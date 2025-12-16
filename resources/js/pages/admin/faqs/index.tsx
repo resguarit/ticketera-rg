@@ -106,17 +106,18 @@ export default function FaqsIndex() {
                         <Card key={category.id} className="bg-white shadow-lg border-gray-200">
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle className="flex items-center gap-3">
-                                    <div style={{ backgroundColor: category.color || '#ccc' }} className="w-8 h-8 rounded-lg flex items-center justify-center">
+                                    <div style={{ backgroundColor: category.color || '#ccc' }} className="w-8 h-8 rounded-sm flex items-center justify-center">
                                         <DynamicIcon name={category.icon || 'HelpCircle'} className="w-5 h-5 text-white" />
                                     </div>
                                     {category.title}
                                 </CardTitle>
                                 <div className="flex items-center gap-2">
                                     <Button variant="outline" size="sm" onClick={() => openEditCategoryModal(category)}>
-                                        <Edit className="h-4 w-4 mr-2" /> Editar Categoría
+                                        <Edit className="h-4 w-4 lg:mr-2" /> 
+                                        <span className='hidden lg:inline'>Editar Categoría</span>
                                     </Button>
                                     <Button variant="destructive" size="sm" onClick={() => {setIsConfirmModalCategoryOpen(true); setFaqCategoryToDelete(category)}}>
-                                        <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                                        <Trash2 className="h-4 w-4 lg:mr-2" /> <span className='hidden lg:inline'>Eliminar</span>
                                     </Button>
                                 </div>
                             </CardHeader>

@@ -233,20 +233,7 @@ export default function UserDetailsModal({ isOpen, onClose, user, onUserUpdated 
                 </div>
 
                 {/* Footer con Acciones */}
-                <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-                    <div className="flex space-x-3">
-                        <Link href={route('admin.users.edit', user.id)}>
-                            <Button variant="outline" size="sm">
-                                <Edit className="w-4 h-4 mr-2" />
-                                Editar Usuario
-                            </Button>
-                        </Link>
-                        <Link href={route('admin.users.show', user.id)}>
-                            <Button variant="outline" size="sm">
-                                Ver Detalles Completos
-                            </Button>
-                        </Link>
-                    </div>
+                <div className="flex items-center justify-end p-6 border-t border-gray-200 bg-gray-50">
                     <div className="flex space-x-3">
                         <Button
                             onClick={handleDeleteUser}
