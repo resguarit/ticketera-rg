@@ -199,7 +199,7 @@ export default function Reports({ auth }: any) {
                     {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Reportes y Analíticas
                             </h1>
                             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
