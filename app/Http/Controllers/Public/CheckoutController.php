@@ -178,10 +178,21 @@ class CheckoutController extends Controller
 
     public function processPayment(Request $request): RedirectResponse
     {
+        Log::info('=== INICIO processPayment ===', [
+            'has_session_id' => $request->session()->has('checkout_session_id'),
+            'has_locked_tickets' => $request->session()->has('locked_tickets'),
+            'event_id' => $request->input('event_id'),
+        ]);
+
         $sessionId = $request->session()->get('checkout_session_id');
         $lockedTickets = $request->session()->get('locked_tickets', []);
 
         if (empty($sessionId) || empty($lockedTickets)) {
+            Log::error('Sesión o locks faltantes', [
+                'has_session_id' => !empty($sessionId),
+                'has_locked_tickets' => !empty($lockedTickets),
+            ]);
+            
             return $this->redirectToError([
                 'title' => 'Sesión Expirada',
                 'message' => 'Tu sesión de compra ha expirado. Por favor, inicia el proceso nuevamente.',
@@ -194,9 +205,13 @@ class CheckoutController extends Controller
             ]);
         }
 
+        Log::info('Verificando locks', ['locked_tickets_count' => count($lockedTickets)]);
+
         $lockVerification = $this->ticketLockService->verifyLocks($lockedTickets, $sessionId);
 
         if (!$lockVerification['all_valid']) {
+            Log::warning('Locks inválidos', ['verification' => $lockVerification]);
+            
             $this->ticketLockService->releaseTickets($sessionId);
 
             return $this->redirectToError([
@@ -212,6 +227,9 @@ class CheckoutController extends Controller
         }
 
         try {
+            Log::info('Iniciando validación de request', [
+                'request_keys' => array_keys($request->all())
+            ]);
 
             $validated = $request->validate([
                 'event_id' => 'required|exists:events,id',
@@ -232,22 +250,32 @@ class CheckoutController extends Controller
                 'agreements' => 'required|array',
                 'agreements.terms' => 'required|boolean|accepted',
                 'agreements.privacy' => 'required|boolean|accepted',
-
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
 
+            Log::info('Validación exitosa, procesando checkout');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Error de validación en checkout', [
                 'errors' => $e->errors(),
                 'failed_rules' => $e->validator->failed(),
-                'input_keys' => array_keys($request->all())
+                'input_keys' => array_keys($request->all()),
+                'billing_info' => $request->input('billing_info'),
+                'payment_info' => $request->input('payment_info'),
             ]);
 
             return redirect()->back()->withInput()->withErrors($e->errors());
         }
 
         try {
-
             $this->ticketLockService->releaseTickets($sessionId);
+
+            Log::info('Creando CheckoutData', [
+                'bin_received' => $validated['bin'] ?? 'null',
+                'bin_length' => isset($validated['bin']) ? strlen($validated['bin']) : 0,
+                'has_token' => !empty($validated['token']),
+                'payment_method' => $validated['payment_info']['method'],
+                'installments' => $validated['payment_info']['installments'],
+            ]);
 
             $checkoutData = new CheckoutData(
                 eventId: $validated['event_id'],
@@ -257,13 +285,21 @@ class CheckoutController extends Controller
                 installments: $validated['payment_info']['installments'],
                 billingInfo: $validated['billing_info'] ?? null,
                 paymentToken: $validated['token'],
-                bin: $validated['bin'],
+                bin: $validated['bin'] ?? null,
             );
+
+            Log::info('Procesando pago con CheckoutService');
 
             $checkoutResult = $this->checkoutService->processOrderPayment($checkoutData);
 
-            if ($checkoutResult->success) {
+            Log::info('Resultado del checkout', [
+                'success' => $checkoutResult->success,
+                'order_id' => $checkoutResult->order?->id,
+                'payment_error_message' => $checkoutResult->paymentResult?->errorMessage,
+                'checkout_message' => $checkoutResult->message ?? 'Sin mensaje',
+            ]);
 
+            if ($checkoutResult->success) {
                 $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
                 $redirectParams = ['order' => $checkoutResult->order->transaction_id ?? $checkoutResult->order->id];
@@ -273,10 +309,15 @@ class CheckoutController extends Controller
                 return redirect()->to($signedUrl)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
+                Log::warning('Pago fallido', [
+                    'checkout_message' => $checkoutResult->message ?? 'Sin mensaje',
+                    'payment_error_message' => $checkoutResult->paymentResult?->errorMessage,
+                    'payment_result_full' => $checkoutResult->paymentResult,
+                ]);
 
                 return $this->redirectToError([
                     'title' => 'Error en el Pago',
-                    'message' => 'No pudimos procesar tu pago. La orden ha sido cancelada.',
+                    'message' => $checkoutResult->message ?? 'No pudimos procesar tu pago. La orden ha sido cancelada.',
                     'errorCode' => 'PAYMENT_FAILED',
                     'canRetry' => true,
                     'retryUrl' => route('event.detail', $validated['event_id']),
@@ -296,7 +337,8 @@ class CheckoutController extends Controller
                 'message' => $e->getMessage(),
                 'session_id' => $sessionId ?? 'unknown',
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return $this->redirectToError([
