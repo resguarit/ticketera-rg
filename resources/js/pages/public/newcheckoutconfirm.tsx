@@ -59,6 +59,7 @@ export interface BillingInfo {
   city: string
   postalCode: string
   country: string
+  discountCode: string
 }
 
 export interface PaymentInfo {
@@ -103,6 +104,12 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
       decidirSandboxRef.current = new (window as any).Decidir(url)
       decidirSandboxRef.current.setPublishableKey(key)
     }
+
+    const savedCode = sessionStorage.getItem('referral_code');
+    if (savedCode) {
+      console.log("Aplicando codigo de vendedor: ", savedCode);
+      setBillingInfo((prev) => ({ ...prev, discountCode: savedCode }));
+    }
   }, [])
 
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
@@ -116,6 +123,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     city: "",
     postalCode: "",
     country: "Argentina",
+    discountCode: "",
   })
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
