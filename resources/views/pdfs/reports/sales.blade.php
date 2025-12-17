@@ -6,214 +6,118 @@
     <title>{{ $title }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DejaVu Sans', 'Helvetica', sans-serif; font-size: 11px; color: #000; line-height: 1.5; margin: 30px; }
         
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-        }
+        .header-table { width: 100%; border-bottom: 2px solid #000; margin-bottom: 30px; padding-bottom: 10px; }
+        .header-title { font-size: 20px; text-transform: uppercase; font-weight: bold; }
+        .header-meta { text-align: right; font-size: 10px; color: #444; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
         
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .table-formal th { background-color: #000; color: #fff; text-transform: uppercase; font-size: 10px; font-weight: bold; border-bottom: none; }
+        .table-formal tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { font-size: 14px; opacity: 0.9; }
-        
-        .stats-grid {
-            display: flex;
-            margin-bottom: 30px;
-            gap: 15px;
-        }
-        
-        .stat-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .stat-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .chart-section {
-            margin: 30px 0;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 5px;
-        }
-        
-        .monthly-data {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .month-item {
-            flex: 1;
-            background: white;
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-            min-width: 120px;
-        }
-        
-        .month-name {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .month-revenue {
-            font-size: 14px;
-            color: #28a745;
-            margin-bottom: 3px;
-        }
-        
-        .month-tickets {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .top-events {
-            margin-top: 30px;
-        }
-        
-        .event-item {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .event-info h4 {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 3px;
-        }
-        
-        .event-info p {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .event-stats {
-            text-align: right;
-        }
-        
-        .event-revenue {
-            font-size: 14px;
-            font-weight: bold;
-            color: #28a745;
-        }
-        
-        .event-tickets {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
+        .kpi-table { margin-bottom: 40px; border: 1px solid #000; }
+        .kpi-table td { width: 25%; padding: 15px 10px; text-align: center; border-right: 1px solid #000; border-bottom: none; }
+        .kpi-table td:last-child { border-right: none; }
+        .kpi-label { display: block; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
+        .kpi-value { font-size: 16px; font-weight: bold; color: #000; }
+
+        .section-title { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p>Período: {{ $period }} | {{ $startDate }} - {{ $endDate }}</p>
-        <p>Generado el {{ $generatedAt }}</p>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td style="border:none; vertical-align: bottom;">
+                <div class="header-title">{{ $title }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">RG ENTRADAS - REPORTE DE VENTAS</div>
+            </td>
+            <td style="border:none; vertical-align: bottom;" class="header-meta">
+                <strong>Período:</strong> {{ $startDate }} - {{ $endDate }}<br>
+                <strong>Generado:</strong> {{ $generatedAt }}
+            </td>
+        </tr>
+    </table>
 
-    <!-- Estadísticas Principales -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</div>
-            <div class="stat-label">Ingresos Totales</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ number_format($salesData['totalTickets']) }}</div>
-            <div class="stat-label">Tickets Vendidos</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ number_format($salesData['totalOrders']) }}</div>
-            <div class="stat-label">Órdenes Procesadas</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</div>
-            <div class="stat-label">Precio Promedio</div>
-        </div>
-    </div>
+    <table class="kpi-table">
+        <tr>
+            <td>
+                <span class="kpi-label">Ingresos Totales</span>
+                <span class="kpi-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Tickets</span>
+                <span class="kpi-value">{{ number_format($salesData['totalTickets']) }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Órdenes</span>
+                <span class="kpi-value">{{ number_format($salesData['totalOrders']) }}</span>
+            </td>
+            <td style="background-color: #eee;">
+                <span class="kpi-label">Ticket Promedio</span>
+                <span class="kpi-value">${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</span>
+            </td>
+        </tr>
+    </table>
 
-    <!-- Datos Mensuales -->
-    <div class="chart-section">
-        <h3 class="section-title">Evolución Mensual</h3>
-        <div class="monthly-data">
+    <div class="section-title">Desglose Mensual</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Mes</th>
+                <th class="text-right">Tickets Vendidos</th>
+                <th class="text-right">Ingresos</th>
+                <th class="text-right">Promedio por Ticket</th>
+            </tr>
+        </thead>
+        <tbody>
             @foreach($monthlyData as $month)
-                <div class="month-item">
-                    <div class="month-name">{{ $month['month'] }}</div>
-                    <div class="month-revenue">${{ number_format($month['revenue'], 0, ',', '.') }}</div>
-                    <div class="month-tickets">{{ $month['tickets'] }} tickets</div>
-                </div>
+                @php $avg = $month['tickets'] > 0 ? $month['revenue'] / $month['tickets'] : 0; @endphp
+                <tr>
+                    <td class="font-bold">{{ $month['month'] }}</td>
+                    <td class="text-right">{{ number_format($month['tickets']) }}</td>
+                    <td class="text-right font-bold">${{ number_format($month['revenue'], 2, ',', '.') }}</td>
+                    <td class="text-right" style="color: #555;">${{ number_format($avg, 2, ',', '.') }}</td>
+                </tr>
             @endforeach
-        </div>
-    </div>
+        </tbody>
+    </table>
 
-    <!-- Top Eventos -->
-    <div class="top-events">
-        <h3 class="section-title">Eventos con Mayores Ingresos</h3>
-        @foreach($topEvents as $event)
-            <div class="event-item">
-                <div class="event-info">
-                    <h4>{{ $event['name'] }}</h4>
-                    <p>{{ $event['category'] }} • {{ $event['venue'] ?? 'Sin venue' }} • {{ $event['city'] ?? 'Sin ciudad' }}</p>
-                </div>
-                <div class="event-stats">
-                    <div class="event-revenue">${{ number_format($event['revenue'], 2, ',', '.') }}</div>
-                    <div class="event-tickets">{{ $event['ticketsSold'] }} tickets</div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <br>
 
-    <!-- Footer -->
+    <div class="section-title">Ranking de Ingresos por Evento</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Detalle (Lugar / Categoría)</th>
+                <th class="text-right">Volumen (Tickets)</th>
+                <th class="text-right">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($topEvents as $event)
+                <tr>
+                    <td class="font-bold">{{ $event['name'] }}</td>
+                    <td style="font-size: 10px; color: #555;">
+                        {{ $event['venue'] ?? '-' }} • {{ $event['category'] }}
+                    </td>
+                    <td class="text-right">{{ number_format($event['ticketsSold']) }}</td>
+                    <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
     <div class="footer">
-        <p>RG ENTRADAS - Sistema de Gestión de Eventos | Reporte generado automáticamente</p>
-        <p>Este reporte contiene información confidencial de la plataforma</p>
+        CONFIDENCIAL | Documento Comercial | Página 1
     </div>
 </body>
 </html>

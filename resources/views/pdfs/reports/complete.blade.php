@@ -6,167 +6,142 @@
     <title>{{ $title }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DejaVu Sans', 'Helvetica', sans-serif; font-size: 11px; color: #000; line-height: 1.5; margin: 30px; }
         
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-        }
+        .header-table { width: 100%; border-bottom: 2px solid #000; margin-bottom: 30px; padding-bottom: 10px; }
+        .header-title { font-size: 20px; text-transform: uppercase; font-weight: bold; }
+        .header-meta { text-align: right; font-size: 10px; color: #444; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
         
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        .table-formal th { background-color: #000; color: #fff; text-transform: uppercase; font-size: 10px; font-weight: bold; border-bottom: none; }
+        .table-formal tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .header h1 { font-size: 32px; margin-bottom: 8px; }
-        .header p { font-size: 16px; opacity: 0.9; }
+        .kpi-table { margin-bottom: 40px; border: 1px solid #000; }
+        .kpi-table td { width: 25%; padding: 15px 10px; text-align: center; border-right: 1px solid #000; border-bottom: none; }
+        .kpi-table td:last-child { border-right: none; }
+        .kpi-label { display: block; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
+        .kpi-value { font-size: 16px; font-weight: bold; color: #000; }
+
+        .section-title { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+
+        .page-break { page-break-after: always; }
         
-        .section {
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 5px;
-        }
-        
-        .stats-overview {
-            display: flex;
-            margin-bottom: 30px;
-            gap: 15px;
-        }
-        
-        .stat-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 2px solid #ddd;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
-        
-        .page-break {
-            page-break-before: always;
-        }
+        /* Lista de detalles para resumen */
+        .detail-list { width: 100%; border: 1px solid #ddd; }
+        .detail-list td { border: none; border-bottom: 1px solid #eee; padding: 10px; }
+        .detail-list tr:last-child td { border-bottom: none; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p>Período: {{ $period }} | {{ $startDate }} - {{ $endDate }}</p>
-        <p>Generado el {{ $generatedAt }}</p>
-    </div>
 
-    <!-- Resumen Ejecutivo -->
-    <div class="section">
-        <h2 class="section-title">Resumen Ejecutivo</h2>
-        <div class="stats-overview">
-            <div class="stat-card">
-                <div class="stat-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</div>
-                <div class="stat-label">Ingresos Totales</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ number_format($salesData['totalTickets']) }}</div>
-                <div class="stat-label">Tickets Vendidos</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ $eventsData['totalEvents'] }}</div>
-                <div class="stat-label">Total Eventos</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ number_format($userStats['totalUsers']) }}</div>
-                <div class="stat-label">Total Usuarios</div>
-            </div>
-        </div>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td style="border:none; vertical-align: bottom;">
+                <div class="header-title">{{ $title }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">RG ENTRADAS - INFORME INTEGRAL</div>
+            </td>
+            <td style="border:none; vertical-align: bottom;" class="header-meta">
+                <strong>Período:</strong> {{ $startDate }} - {{ $endDate }}<br>
+                <strong>Generado:</strong> {{ $generatedAt }}
+            </td>
+        </tr>
+    </table>
 
+    <div class="section-title">Resumen Ejecutivo</div>
+    <table class="kpi-table">
+        <tr>
+            <td>
+                <span class="kpi-label">Ingresos Totales</span>
+                <span class="kpi-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Total Tickets</span>
+                <span class="kpi-value">{{ number_format($salesData['totalTickets']) }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Eventos</span>
+                <span class="kpi-value">{{ $eventsData['totalEvents'] }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Base de Usuarios</span>
+                <span class="kpi-value">{{ number_format($userStats['totalUsers']) }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="detail-list">
+        <tr>
+            <td><strong>Precio Promedio por Ticket:</strong></td>
+            <td class="text-right">${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td><strong>Órdenes Procesadas:</strong></td>
+            <td class="text-right">{{ number_format($salesData['totalOrders']) }}</td>
+        </tr>
+        <tr>
+            <td><strong>Usuarios Activos (Período):</strong></td>
+            <td class="text-right">{{ number_format($userStats['activeUsers']) }}</td>
+        </tr>
+        <tr>
+            <td><strong>Gasto Promedio por Usuario:</strong></td>
+            <td class="text-right">${{ number_format($userStats['avgOrderValue'], 2, ',', '.') }}</td>
+        </tr>
+    </table>
+
+    <div class="footer">CONFIDENCIAL | Informe Integral | Página 1</div>
     <div class="page-break"></div>
 
-    <!-- Análisis de Ventas -->
-    <div class="section">
-        <h2 class="section-title">Análisis de Ventas</h2>
-        <p><strong>Ingresos Totales:</strong> ${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</p>
-        <p><strong>Tickets Vendidos:</strong> {{ number_format($salesData['totalTickets']) }}</p>
-        <p><strong>Precio Promedio por Ticket:</strong> ${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</p>
-        <p><strong>Órdenes Procesadas:</strong> {{ number_format($salesData['totalOrders']) }}</p>
-    </div>
+    <div style="margin-top: 30px;"></div> <div class="section-title">Top 15 Eventos (Ranking Financiero)</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th style="width: 5%">#</th>
+                <th>Evento</th>
+                <th>Venue</th>
+                <th class="text-right">Tickets</th>
+                <th class="text-right">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(array_slice($topEvents, 0, 15) as $index => $event)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td class="font-bold">{{ $event['name'] }}</td>
+                    <td style="font-size:10px;">{{ $event['venue'] ?? '-' }}</td>
+                    <td class="text-right">{{ number_format($event['ticketsSold']) }}</td>
+                    <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-    <!-- Top Eventos -->
-    <div class="section">
-        <h2 class="section-title">Top 10 Eventos por Ingresos</h2>
-        @foreach(array_slice($topEvents, 0, 10) as $index => $event)
-            <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                <strong>{{ $index + 1 }}. {{ $event['name'] }}</strong><br>
-                <span style="color: #666; font-size: 11px;">
-                    {{ $event['category'] }} • {{ $event['venue'] ?? 'Sin venue' }} • 
-                    ${{ number_format($event['revenue'], 2, ',', '.') }} • 
-                    {{ $event['ticketsSold'] }} tickets
-                </span>
-            </div>
-        @endforeach
-    </div>
+    <div class="section-title" style="margin-top: 30px;">Rendimiento por Categoría</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Categoría</th>
+                <th class="text-right">Eventos</th>
+                <th class="text-right">Ingresos Totales</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($categoryStats as $category)
+                <tr>
+                    <td>{{ $category['name'] }}</td>
+                    <td class="text-right">{{ $category['eventsCount'] }}</td>
+                    <td class="text-right font-bold">${{ number_format($category['revenue'], 2, ',', '.') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-    <div class="page-break"></div>
+    <div class="footer">CONFIDENCIAL | Informe Integral | Página 2</div>
 
-    <!-- Análisis por Categorías -->
-    <div class="section">
-        <h2 class="section-title">Análisis por Categorías</h2>
-        @foreach($categoryStats as $category)
-            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <span><strong>{{ $category['name'] }}</strong></span>
-                <span style="color: #666;">
-                    ${{ number_format($category['revenue'], 2, ',', '.') }} • 
-                    {{ $category['eventsCount'] }} eventos
-                </span>
-            </div>
-        @endforeach
-    </div>
-
-    <!-- Análisis de Usuarios -->
-    <div class="section">
-        <h2 class="section-title">Análisis de Usuarios</h2>
-        <p><strong>Total de Usuarios:</strong> {{ number_format($userStats['totalUsers']) }}</p>
-        <p><strong>Nuevos Usuarios (período):</strong> {{ number_format($userStats['newUsers']) }}</p>
-        <p><strong>Usuarios Activos:</strong> {{ number_format($userStats['activeUsers']) }}</p>
-        <p><strong>Gasto Promedio por Orden:</strong> ${{ number_format($userStats['avgOrderValue'], 2, ',', '.') }}</p>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <p>RG ENTRADAS - Sistema de Gestión de Eventos | Reporte Completo de la Plataforma</p>
-        <p>Este documento contiene información confidencial y es solo para uso interno administrativo</p>
-    </div>
 </body>
 </html>
