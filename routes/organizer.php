@@ -10,6 +10,7 @@ use App\Http\Controllers\Organizer\EventFunctionController;
 use App\Http\Controllers\Organizer\AssistantController;
 use App\Http\Controllers\Organizer\AttendeeInvitationController;
 use App\Http\Controllers\Organizer\OrganizerUserController;
+use App\Http\Controllers\Organizer\PromoterController;
 use App\Http\Controllers\User\TicketController;
 use App\Http\Controllers\Organizer\TicketController as OrganizerTicketController;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,10 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
             Route::patch('/order/{order}/resend-purchase', [AssistantController::class, 'resendPurchase'])->name('resendPurchase');
         });
+
+        // Rutas para vendedores
+        Route::get('{event}/promoters', [PromoterController::class, 'index'])->name('promoters.index');
+        Route::post('{event}/promoters', [PromoterController::class, 'store'])->name('promoters.store');
     });
 
     // Rutas para usuarios del organizador
