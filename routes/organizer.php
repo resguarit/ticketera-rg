@@ -73,6 +73,8 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         Route::post('{event}/promoters', [PromoterController::class, 'store'])->name('promoters.store');
         Route::delete('{event}/promoters/{promoter}', [PromoterController::class, 'destroy'])->name('promoters.destroy');
         Route::delete('{event}/promoters/{promoter}/codes/{code}', [PromoterController::class, 'destroyCode'])->name('promoters.codes.destroy');
+        Route::patch('{event}/promoters/{promoter}/restore', [PromoterController::class, 'restore'])->name('promoters.restore');
+        Route::patch('{event}/promoters/{promoter}/codes/{code}/restore', [PromoterController::class, 'restoreCode'])->name('promoters.codes.restore');
     });
 
     // Rutas para usuarios del organizador

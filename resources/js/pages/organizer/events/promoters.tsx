@@ -9,24 +9,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Users, Plus, Copy, DollarSign, TrendingUp, StickyNote, Check, Trash2, X } from 'lucide-react';
+import { Users, Plus, Copy, DollarSign, TrendingUp, StickyNote, Trash2, X, Archive, RotateCcw } from 'lucide-react';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import { toast } from 'sonner';
-
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+// Importamos el nuevo modal
+import ArchivedPromotersModal from '@/components/organizers/modals/ArchivedPromotersModal';
 
 interface CodeDetail {
     id: number;
     code: string;
+    is_deleted: boolean; // Nuevo campo
     sales_count: number;
     revenue: number;
     link: string;
@@ -47,12 +40,13 @@ interface Promoter {
 interface Props {
     event: any;
     promoters: Promoter[];
+    archived_promoters: Promoter[]; // Prop nueva del back
 }
 
-export default function PromotersIndex({ event, promoters }: Props) {
+export default function PromotersIndex({ event, promoters, archived_promoters }: Props) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isArchivedOpen, setIsArchivedOpen] = useState(false); // Estado para modal archivados
 
-    // Estados para controlar los diálogos de eliminación
     const [promoterToDelete, setPromoterToDelete] = useState<Promoter | null>(null);
     const [codeToDelete, setCodeToDelete] = useState<{ promoterId: number, codeId: number } | null>(null);
 
@@ -111,12 +105,14 @@ export default function PromotersIndex({ event, promoters }: Props) {
 
     const handleDeleteCode = () => {
         if (!codeToDelete) return;
-        router.delete(route('organizer.events.promoters.codes.destroy', {
-            event: event.id,
-            promoter: codeToDelete.promoterId,
-            code: codeToDelete.codeId
-        }), {
-            onSuccess: () => setCodeToDelete(null),
+        router.delete(route('organizer.events.promoters.codes.destroy', { event: event.id, promoter: codeToDelete.promoterId, code: codeToDelete.codeId }), {
+            onSuccess: () => setCodeToDelete(null), preserveScroll: true,
+        });
+    };
+
+    // Función para restaurar código individual
+    const handleRestoreCode = (promoterId: number, codeId: number) => {
+        router.patch(route('organizer.events.promoters.codes.restore', { event: event.id, promoter: promoterId, code: codeId }), {}, {
             preserveScroll: true,
         });
     };
@@ -128,110 +124,117 @@ export default function PromotersIndex({ event, promoters }: Props) {
         <EventManagementLayout event={event} activeTab="promoters">
             <Head title={`Vendedores - ${event.name}`} />
 
+            {/* HEADER CON BOTONES */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <Users className="h-6 w-6 text-gray-600" /> Gestion de vendedores
                     </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Gestiona embajadores, asigna códigos y monitorea comisiones.
-                    </p>
+                    <p className="text-muted-foreground text-sm">Gestiona embajadores, asigna códigos y monitorea comisiones.</p>
                 </div>
 
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                            <Plus className="w-4 h-4 mr-2" /> Nuevo Vendedor
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                        <DialogHeader>
-                            <DialogTitle>Crear Vendedor</DialogTitle>
-                            <DialogDescription>Genera un código de tracking para un nuevo vendedor.</DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-                            <div className="space-y-3">
-                                <div className="space-y-1">
-                                    <Label htmlFor="name">Nombre Completo</Label>
-                                    <Input
-                                        id="name"
-                                        value={data.name}
-                                        onChange={e => setData('name', e.target.value)}
-                                        placeholder="Ej: Juan Pérez"
-                                        required
-                                    />
-                                    {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
-                                </div>
+                <div className="flex gap-2">
+                    {/* BOTÓN VER ARCHIVADOS */}
+                    <Button variant="outline" onClick={() => setIsArchivedOpen(true)} className="gap-2">
+                        <Archive className="w-4 h-4 text-gray-500" />
+                        Archivados ({archived_promoters.length})
+                    </Button>
 
-                                <div className="grid grid-cols-2 gap-4">
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="bg-blue-600 hover:bg-blue-700">
+                                <Plus className="w-4 h-4 mr-2" /> Nuevo Vendedor
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[500px]">
+                            <DialogHeader>
+                                <DialogTitle>Crear Vendedor</DialogTitle>
+                                <DialogDescription>Genera un código de tracking para un nuevo vendedor.</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                                <div className="space-y-3">
                                     <div className="space-y-1">
-                                        <Label htmlFor="email">Email</Label>
+                                        <Label htmlFor="name">Nombre Completo</Label>
                                         <Input
-                                            id="email"
-                                            type="email"
-                                            value={data.email}
-                                            onChange={e => setData('email', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="phone">Teléfono</Label>
-                                        <Input
-                                            id="phone"
-                                            value={data.phone}
-                                            onChange={e => setData('phone', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label htmlFor="notes">Notas Internas</Label>
-                                    <Textarea
-                                        id="notes"
-                                        value={data.notes}
-                                        onChange={e => setData('notes', e.target.value)}
-                                        placeholder="Ej: Alias CBU, detalles de comisión..."
-                                        className="resize-none h-20"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="border-t pt-4 bg-gray-50 -mx-6 px-6 pb-2 rounded-b-lg">
-                                <h4 className="text-sm font-medium mb-3 text-blue-700">Configuración del Código</h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="code">Código (Referencia)</Label>
-                                        <Input
-                                            id="code"
-                                            value={data.code}
-                                            onChange={e => setData('code', e.target.value.toUpperCase())}
-                                            placeholder="JUAN10"
-                                            className="font-mono uppercase tracking-widest border-blue-200 focus-visible:ring-blue-500"
+                                            id="name"
+                                            value={data.name}
+                                            onChange={e => setData('name', e.target.value)}
+                                            placeholder="Ej: Juan Pérez"
                                             required
                                         />
-                                        {errors.code && <p className="text-red-500 text-xs">{errors.code}</p>}
+                                        {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
                                     </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={data.email}
+                                                onChange={e => setData('email', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="phone">Teléfono</Label>
+                                            <Input
+                                                id="phone"
+                                                value={data.phone}
+                                                onChange={e => setData('phone', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-1">
-                                        <Label htmlFor="value">Descuento (%)</Label>
-                                        <Input
-                                            type="number"
-                                            id="value"
-                                            value={0} // FORZADO A 0 VISUALMENTE
-                                            disabled // BLOQUEADO
-                                            className="bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        <Label htmlFor="notes">Notas Internas</Label>
+                                        <Textarea
+                                            id="notes"
+                                            value={data.notes}
+                                            onChange={e => setData('notes', e.target.value)}
+                                            placeholder="Ej: Alias CBU, detalles de comisión..."
+                                            className="resize-none h-20"
                                         />
-                                        <p className="text-[10px] text-gray-500">Descuento deshabilitado (Solo Tracking).</p>
                                     </div>
                                 </div>
-                            </div>
 
-                            <DialogFooter>
-                                <Button type="submit" disabled={processing} className="w-full">
-                                    {processing ? 'Guardando...' : 'Crear Vendedor'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                                <div className="border-t pt-4 bg-gray-50 -mx-6 px-6 pb-2 rounded-b-lg">
+                                    <h4 className="text-sm font-medium mb-3 text-blue-700">Configuración del Código</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="code">Código (Referencia)</Label>
+                                            <Input
+                                                id="code"
+                                                value={data.code}
+                                                onChange={e => setData('code', e.target.value.toUpperCase())}
+                                                placeholder="JUAN10"
+                                                className="font-mono uppercase tracking-widest border-blue-200 focus-visible:ring-blue-500"
+                                                required
+                                            />
+                                            {errors.code && <p className="text-red-500 text-xs">{errors.code}</p>}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="value">Descuento (%)</Label>
+                                            <Input
+                                                type="number"
+                                                id="value"
+                                                value={0} // FORZADO A 0 VISUALMENTE
+                                                disabled // BLOQUEADO
+                                                className="bg-gray-100 text-gray-500 cursor-not-allowed"
+                                            />
+                                            <p className="text-[10px] text-gray-500">Descuento deshabilitado (Solo Tracking).</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <DialogFooter>
+                                    <Button type="submit" disabled={processing} className="w-full">
+                                        {processing ? 'Guardando...' : 'Crear Vendedor'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -294,39 +297,51 @@ export default function PromotersIndex({ event, promoters }: Props) {
                                         <TableCell>
                                             <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
                                                 {promoter.codes.map((codeDetail, idx) => (
-                                                    <div key={idx} className="flex flex-col gap-1 p-2 rounded bg-white border border-gray-100 shadow-sm hover:border-blue-100 transition-colors group/code relative">
+                                                    <div key={idx} className={`flex flex-col gap-1 p-2 rounded border transition-colors group/code relative ${codeDetail.is_deleted ? 'bg-red-50 border-red-100 opacity-80' : 'bg-white border-gray-100 hover:border-blue-100 shadow-sm'}`}>
                                                         <div className="flex items-center justify-between">
-                                                            <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 uppercase tracking-wide bg-gray-100 text-gray-700 border-gray-200">
-                                                                {codeDetail.code}
-                                                            </Badge>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="secondary" className={`font-mono text-xs px-2 py-0.5 uppercase tracking-wide ${codeDetail.is_deleted ? 'bg-red-100 text-red-700 line-through' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                                                                    {codeDetail.code}
+                                                                </Badge>
+                                                                {codeDetail.is_deleted && <span className="text-[10px] text-red-600 font-bold uppercase">Inactivo</span>}
+                                                            </div>
+
                                                             <div className="flex items-center gap-2">
                                                                 <div className="text-xs text-gray-500 font-medium">
                                                                     {codeDetail.sales_count} ventas • {formatCurrency(codeDetail.revenue)}
                                                                 </div>
-
-                                                                <button
-                                                                    onClick={() => setCodeToDelete({ promoterId: promoter.id, codeId: codeDetail.id })}
-                                                                    className="text-gray-300 hover:text-red-500 transition-colors p-0.5 opacity-0 group-hover/code:opacity-100"
-                                                                    title="Eliminar este código"
-                                                                >
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
+                                                                {/* Acciones por Código: Eliminar o Restaurar */}
+                                                                {codeDetail.is_deleted ? (
+                                                                    <button
+                                                                        onClick={() => handleRestoreCode(promoter.id, codeDetail.id)}
+                                                                        className="text-orange-400 hover:text-orange-600 transition-colors p-0.5"
+                                                                        title="Reactivar código"
+                                                                    >
+                                                                        <RotateCcw className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => setCodeToDelete({ promoterId: promoter.id, codeId: codeDetail.id })}
+                                                                        className="text-gray-300 hover:text-red-500 transition-colors p-0.5 opacity-0 group-hover/code:opacity-100"
+                                                                        title="Desactivar código"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <code className="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-1 rounded flex-1 truncate select-all border border-gray-100">
-                                                                {codeDetail.link}
-                                                            </code>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                                                                onClick={() => copyToClipboard(codeDetail.link)}
-                                                                title="Copiar enlace"
-                                                            >
-                                                                <Copy className="w-3 h-3" />
-                                                            </Button>
-                                                        </div>
+
+                                                        {/* Solo mostrar link y botón de copia si NO está borrado */}
+                                                        {!codeDetail.is_deleted && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <code className="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-1 rounded flex-1 truncate select-all border border-gray-100">
+                                                                    {codeDetail.link}
+                                                                </code>
+                                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => copyToClipboard(codeDetail.link)}>
+                                                                    <Copy className="w-3 h-3" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -357,21 +372,16 @@ export default function PromotersIndex({ event, promoters }: Props) {
             </Card>
 
 
+            {/* MODALES DE ELIMINACION */}
             <AlertDialog open={!!promoterToDelete} onOpenChange={(open) => !open && setPromoterToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar a {promoterToDelete?.name}?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción eliminará al vendedor y <b>desactivará todos sus códigos de descuento</b> ({promoterToDelete?.codes.map(c => c.code).join(', ')}).
-                            <br /><br />
-                            Las ventas históricas y el dinero recaudado <b>se mantendrán en los reportes</b>, pero los enlaces dejarán de funcionar.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>¿Archivar a {promoterToDelete?.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>Esto desactivará todos sus códigos de descuento. Sus estadísticas históricas se mantendrán.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeletePromoter} className="bg-red-600 hover:bg-red-700">
-                            Eliminar Vendedor
-                        </AlertDialogAction>
+                        <AlertDialogAction onClick={handleDeletePromoter} className="bg-red-600 hover:bg-red-700">Archivar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -379,19 +389,24 @@ export default function PromotersIndex({ event, promoters }: Props) {
             <AlertDialog open={!!codeToDelete} onOpenChange={(open) => !open && setCodeToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar código?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            El código dejará de funcionar para nuevas compras. El historial de ventas de este código se mantendrá.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>¿Desactivar código?</AlertDialogTitle>
+                        <AlertDialogDescription>El enlace dejará de funcionar para nuevas compras.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteCode} className="bg-red-600 hover:bg-red-700">
-                            Eliminar Código
-                        </AlertDialogAction>
+                        <AlertDialogAction onClick={handleDeleteCode} className="bg-red-600 hover:bg-red-700">Desactivar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* NUEVO MODAL DE ARCHIVADOS */}
+            <ArchivedPromotersModal
+                isOpen={isArchivedOpen}
+                onClose={setIsArchivedOpen}
+                event={event}
+                archivedPromoters={archived_promoters}
+            />
+
         </EventManagementLayout >
     );
 }
