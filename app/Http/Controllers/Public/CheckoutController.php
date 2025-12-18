@@ -223,6 +223,7 @@ class CheckoutController extends Controller
                 'billing_info.phone' => 'required|string|max:20',
                 'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
                 'billing_info.documentNumber' => 'required|string|max:20',
+                'billing_info.discountCode' => 'nullable|string',
                 'payment_info' => 'required|array',
                 'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
                 'payment_info.installments' => 'required|integer|min:1',
