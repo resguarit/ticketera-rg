@@ -71,6 +71,8 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
         // Rutas para vendedores
         Route::get('{event}/promoters', [PromoterController::class, 'index'])->name('promoters.index');
         Route::post('{event}/promoters', [PromoterController::class, 'store'])->name('promoters.store');
+        Route::delete('{event}/promoters/{promoter}', [PromoterController::class, 'destroy'])->name('promoters.destroy');
+        Route::delete('{event}/promoters/{promoter}/codes/{code}', [PromoterController::class, 'destroyCode'])->name('promoters.codes.destroy');
     });
 
     // Rutas para usuarios del organizador

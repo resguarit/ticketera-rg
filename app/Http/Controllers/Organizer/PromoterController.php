@@ -43,6 +43,7 @@ class PromoterController extends Controller
                             ->first();
 
                         return [
+                            'id' => $code->id,
                             'code' => $code->code,
                             'sales_count' => (int) ($stats->count ?? 0),
                             'revenue' => (float) ($stats->total ?? 0),
@@ -118,5 +119,47 @@ class PromoterController extends Controller
         });
 
         return back()->with('success', 'Vendedor y codigo asignados correctamente.');
+    }
+
+    public function destroy(Event $event, Promoter $promoter)
+    {
+        if ($event->organizer_id !== Auth::user()->organizer_id) {
+            abort(403);
+        }
+
+        if ($promoter->organizer_id !== $event->organizer_id) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($promoter, $event) {
+            // 1. Soft Delete de los códigos asociados a ESTE evento
+            $promoter->discountCodes()
+                ->where('event_id', $event->id)
+                ->delete();
+
+            // 2. Soft Delete del Promotor 
+            // NOTA: Solo eliminamos al promotor si queremos que desaparezca GLOBALMENTE del organizador.
+            // Si el promotor se comparte entre eventos, quizás solo quieras borrar los códigos de este evento.
+            // Asumiremos por tu requerimiento ("eliminar el vendedor") que se borra la entidad.
+            $promoter->delete();
+        });
+
+        return back()->with('success', 'Vendedor y sus códigos eliminados correctamente.');
+    }
+
+    public function destroyCode(Event $event, Promoter $promoter, DiscountCode $code)
+    {
+        if ($event->organizer_id !== Auth::user()->organizer_id) {
+            abort(403);
+        }
+
+        // Verificar que el código pertenezca al promotor y al evento
+        if ($code->promoter_id !== $promoter->id || $code->event_id !== $event->id) {
+            abort(403);
+        }
+
+        $code->delete();
+
+        return back()->with('success', 'Código eliminado correctamente.');
     }
 }

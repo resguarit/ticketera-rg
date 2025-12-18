@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,11 +9,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Users, Plus, Copy, DollarSign, TrendingUp, StickyNote, Check } from 'lucide-react'; // Agregue Check para feedback
+import { Users, Plus, Copy, DollarSign, TrendingUp, StickyNote, Check, Trash2, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import { toast } from 'sonner';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 interface CodeDetail {
+    id: number;
     code: string;
     sales_count: number;
     revenue: number;
@@ -39,6 +51,10 @@ interface Props {
 
 export default function PromotersIndex({ event, promoters }: Props) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    // Estados para controlar los diálogos de eliminación
+    const [promoterToDelete, setPromoterToDelete] = useState<Promoter | null>(null);
+    const [codeToDelete, setCodeToDelete] = useState<{ promoterId: number, codeId: number } | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -83,6 +99,26 @@ export default function PromotersIndex({ event, promoters }: Props) {
             }
             document.body.removeChild(textArea);
         }
+    };
+
+    const handleDeletePromoter = () => {
+        if (!promoterToDelete) return;
+        router.delete(route('organizer.events.promoters.destroy', { event: event.id, promoter: promoterToDelete.id }), {
+            onSuccess: () => setPromoterToDelete(null),
+            preserveScroll: true,
+        });
+    };
+
+    const handleDeleteCode = () => {
+        if (!codeToDelete) return;
+        router.delete(route('organizer.events.promoters.codes.destroy', {
+            event: event.id,
+            promoter: codeToDelete.promoterId,
+            code: codeToDelete.codeId
+        }), {
+            onSuccess: () => setCodeToDelete(null),
+            preserveScroll: true,
+        });
     };
 
     const totalSales = promoters.reduce((acc, p) => acc + p.total_sales, 0);
@@ -232,18 +268,19 @@ export default function PromotersIndex({ event, promoters }: Props) {
                                 <TableHead>Códigos y Enlaces</TableHead>
                                 <TableHead className="text-right">Total Ventas</TableHead>
                                 <TableHead className="text-right">Total ($)</TableHead>
+                                <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {promoters.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
+                                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                                         No hay vendedores asignados a este evento.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 promoters.map((promoter) => (
-                                    <TableRow key={promoter.id} className="align-top">
+                                    <TableRow key={promoter.id} className="align-top group">
                                         <TableCell>
                                             <div className="font-medium text-base">{promoter.name}</div>
                                             <div className="text-xs text-muted-foreground">{promoter.email || promoter.phone || '-'}</div>
@@ -255,16 +292,25 @@ export default function PromotersIndex({ event, promoters }: Props) {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {/* AQUÍ ESTA EL SCROLL MÁGICO: max-h-[160px] permite ver aprox 2 items completos y scroll si hay más */}
                                             <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
                                                 {promoter.codes.map((codeDetail, idx) => (
-                                                    <div key={idx} className="flex flex-col gap-1 p-2 rounded bg-white border border-gray-100 shadow-sm hover:border-blue-100 transition-colors">
+                                                    <div key={idx} className="flex flex-col gap-1 p-2 rounded bg-white border border-gray-100 shadow-sm hover:border-blue-100 transition-colors group/code relative">
                                                         <div className="flex items-center justify-between">
                                                             <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 uppercase tracking-wide bg-gray-100 text-gray-700 border-gray-200">
                                                                 {codeDetail.code}
                                                             </Badge>
-                                                            <div className="text-xs text-gray-500 font-medium">
-                                                                {codeDetail.sales_count} ventas • {formatCurrency(codeDetail.revenue)}
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-xs text-gray-500 font-medium">
+                                                                    {codeDetail.sales_count} ventas • {formatCurrency(codeDetail.revenue)}
+                                                                </div>
+
+                                                                <button
+                                                                    onClick={() => setCodeToDelete({ promoterId: promoter.id, codeId: codeDetail.id })}
+                                                                    className="text-gray-300 hover:text-red-500 transition-colors p-0.5 opacity-0 group-hover/code:opacity-100"
+                                                                    title="Eliminar este código"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
@@ -291,6 +337,17 @@ export default function PromotersIndex({ event, promoters }: Props) {
                                         <TableCell className="text-right font-bold text-lg text-green-700 pt-4 align-top">
                                             {formatCurrency(promoter.total_revenue)}
                                         </TableCell>
+                                        <TableCell className="pt-4 align-top text-right">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-gray-300 hover:text-red-600 hover:bg-red-50"
+                                                onClick={() => setPromoterToDelete(promoter)}
+                                                title="Eliminar vendedor"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}
@@ -298,6 +355,43 @@ export default function PromotersIndex({ event, promoters }: Props) {
                     </Table>
                 </CardContent>
             </Card>
-        </EventManagementLayout>
+
+
+            <AlertDialog open={!!promoterToDelete} onOpenChange={(open) => !open && setPromoterToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar a {promoterToDelete?.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción eliminará al vendedor y <b>desactivará todos sus códigos de descuento</b> ({promoterToDelete?.codes.map(c => c.code).join(', ')}).
+                            <br /><br />
+                            Las ventas históricas y el dinero recaudado <b>se mantendrán en los reportes</b>, pero los enlaces dejarán de funcionar.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeletePromoter} className="bg-red-600 hover:bg-red-700">
+                            Eliminar Vendedor
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!codeToDelete} onOpenChange={(open) => !open && setCodeToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar código?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            El código dejará de funcionar para nuevas compras. El historial de ventas de este código se mantendrá.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteCode} className="bg-red-600 hover:bg-red-700">
+                            Eliminar Código
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </EventManagementLayout >
     );
 }
