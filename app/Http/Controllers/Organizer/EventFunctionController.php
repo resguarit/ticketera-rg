@@ -28,7 +28,7 @@ class EventFunctionController extends Controller
     public function index(Event $event): Response
     {
         $this->authorize('view', $event);
-        
+
         $event->load(['functions' => function ($query) {
             $query->orderBy('start_time', 'asc');
         }]);
@@ -76,20 +76,18 @@ class EventFunctionController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $event->functions()->create($validated);
-            
+
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función creada exitosamente.');
-                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error creating function: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al crear la función: ' . $e->getMessage()])
-                        ->withInput();
+                ->withInput();
         }
     }
 
@@ -142,20 +140,18 @@ class EventFunctionController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $function->update($validated);
-            
+
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función actualizada exitosamente.');
-                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error updating function: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al actualizar la función: ' . $e->getMessage()])
-                        ->withInput();
+                ->withInput();
         }
     }
 
@@ -173,18 +169,16 @@ class EventFunctionController extends Controller
             }
 
             DB::beginTransaction();
-            
+
             $function->delete();
-            
+
             DB::commit();
 
             return redirect()->route('organizer.events.functions', $event->id)
                 ->with('success', 'Función eliminada exitosamente.');
-                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error deleting function: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al eliminar la función: ' . $e->getMessage()]);
         }
     }
@@ -202,22 +196,20 @@ class EventFunctionController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $function->update([
                 'status' => $validated['status']
             ]);
-            
+
             DB::commit();
 
             $statusEnum = EventFunctionStatus::from($validated['status']);
 
             return redirect()->back()
                 ->with('success', "Estado actualizado a: {$statusEnum->label()}");
-                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error updating function status: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al actualizar el estado: ' . $e->getMessage()]);
         }
     }
@@ -231,22 +223,20 @@ class EventFunctionController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $function->update([
                 'is_active' => !$function->is_active
             ]);
-            
+
             DB::commit();
 
             return redirect()->back()
-                ->with('success', $function->is_active 
-                    ? 'Función activada correctamente' 
+                ->with('success', $function->is_active
+                    ? 'Función activada correctamente'
                     : 'Función desactivada correctamente');
-                
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error toggling function active state: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al cambiar el estado: ' . $e->getMessage()]);
         }
     }

@@ -264,7 +264,7 @@ export default function PromotersIndex({ event, promoters, archived_promoters }:
             {/* Listado */}
             <Card>
                 <CardContent className="p-0">
-                    <Table>
+                    <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow className="bg-gray-50/50">
                                 <TableHead className="w-[25%]">Vendedor</TableHead>

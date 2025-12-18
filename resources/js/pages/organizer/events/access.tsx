@@ -52,7 +52,8 @@ interface EventFunctionDetail extends EventFunctionSimple {
     start_time: string;
 }
 
-interface EventWithDetails extends Event, EventRelations {
+
+interface EventWithDetails extends Event, Omit<EventRelations, 'functions'> {
     functions: EventFunctionDetail[];
 }
 
@@ -162,7 +163,7 @@ export default function EventAccess({
     };
 
     return (
-        <EventManagementLayout event={event} activeTab="access">
+        <EventManagementLayout event={event as any} activeTab="access">
             <Head title={`Control de Accesos - ${event.name}`} />
 
             <div className="space-y-6">
@@ -384,7 +385,7 @@ export default function EventAccess({
                     {/* Paginación simple */}
                     {tickets.links && tickets.data.length > 0 && (
                         <div className="p-4 border-t flex justify-center">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center flex-wrap justify-center gap-2">
                                 {tickets.links.map((link, i) => (
                                     <Link
                                         key={i}

@@ -168,11 +168,6 @@ class PaywayController extends Controller
                 // Ignorar
             }
 
-            Log::error('Payway Tokenization Failed', [
-                'message' => $e->getMessage(),
-                'data' => $e->getData()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -235,10 +230,6 @@ class PaywayController extends Controller
             $paymentId = $responseData['id'];
             $status = $responseData['status'];
 
-            Log::info('Payway Payment Processed', [
-                'payment_id' => $paymentId,
-                'status' => $status
-            ]);
 
             return response()->json([
                 'success' => true,
@@ -250,10 +241,6 @@ class PaywayController extends Controller
             ]);
 
         } catch (SdkException $e) {
-            Log::error('Payway Payment Failed', [
-                'message' => $e->getMessage(),
-                'data' => $e->getData()
-            ]);
 
             return response()->json([
                 'success' => false,

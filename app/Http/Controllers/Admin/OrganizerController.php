@@ -42,7 +42,7 @@ class OrganizerController extends Controller
             ->withCount('events')
             ->when($request->input('search'), function (Builder $query, $search) {
                 $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             })
             // Manejar el caso de ordenamiento
             ->when($request->input('sort_by') && $request->input('sort_by') !== 'all', function (Builder $query) use ($request) {
@@ -73,16 +73,16 @@ class OrganizerController extends Controller
         if ($request->hasFile('logo_url')) {
             $file = $request->file('logo_url');
             $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            
+
             // Guardar en storage/app/public/organizers/
             $path = $file->storeAs('organizers', $filename, 'public');
-            
+
             // Guardar la ruta completa en la base de datos
             $validated['logo_url'] = $path;
         }
 
         Organizer::create($validated);
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador creado correctamente.');
     }
@@ -90,11 +90,11 @@ class OrganizerController extends Controller
     public function show(int $organizerId): Response
     {
         $organizer = Organizer::with([
-            'events.category', 
+            'events.category',
             'events.venue.ciudad.provincia', // Cargar venue con city y province
             'users.person'
         ])->findOrFail($organizerId);
-        
+
         return Inertia::render('admin/organizers/show', [
             'organizer' => $organizer,
         ]);
@@ -121,15 +121,15 @@ class OrganizerController extends Controller
 
             $file = $request->file('logo_url');
             $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            
+
             // Guardar en storage/app/public/organizers/
             $path = $file->storeAs('organizers', $filename, 'public');
-            
+
             $validated['logo_url'] = $path;
         }
 
         $organizer->update($validated);
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador actualizado correctamente.');
     }
@@ -137,14 +137,14 @@ class OrganizerController extends Controller
     public function destroy(int $organizerId): RedirectResponse
     {
         $organizer = Organizer::findOrFail($organizerId);
-        
+
         // Eliminar el logo si existe
         if ($organizer->logo_url && Storage::disk('public')->exists($organizer->logo_url)) {
             Storage::disk('public')->delete($organizer->logo_url);
         }
-        
+
         $organizer->delete();
-        
+
         return redirect()->route('admin.organizers.index')
             ->with('success', 'Organizador eliminado correctamente.');
     }
@@ -200,7 +200,6 @@ class OrganizerController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Error creando usuario de organizador', ['error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'No se pudo crear el usuario, intenta nuevamente.');
         }
 
@@ -232,10 +231,10 @@ class OrganizerController extends Controller
             ->whereNull('organizer_id')
             ->when($query, function ($q) use ($query) {
                 $q->where('email', 'like', "%{$query}%")
-                  ->orWhereHas('person', function ($p) use ($query) {
-                      $p->where('name', 'like', "%{$query}%")
-                        ->orWhere('last_name', 'like', "%{$query}%");
-                  });
+                    ->orWhereHas('person', function ($p) use ($query) {
+                        $p->where('name', 'like', "%{$query}%")
+                            ->orWhere('last_name', 'like', "%{$query}%");
+                    });
             })
             ->limit(10)
             ->get()

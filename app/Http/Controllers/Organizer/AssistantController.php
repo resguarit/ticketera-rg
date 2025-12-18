@@ -87,7 +87,7 @@ class AssistantController extends Controller
             ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
             ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-            ->join('discount_codes', 'orders.discount_code_id', '=', 'discount_codes.id')
+            ->leftJoin('discount_codes', 'orders.discount_code_id', '=', 'discount_codes.id')
             ->where('event_functions.event_id', $event->id)
             // No filtramos por status 'completed' para poder mostrar cancelados
             ->select(

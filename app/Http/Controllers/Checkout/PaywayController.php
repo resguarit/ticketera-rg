@@ -21,7 +21,6 @@ class PaywayController extends Controller
             'public_key' => env('PAYWAY_PUBLIC_KEY'),
             'private_key' => env('PAYWAY_PRIVATE_KEY')
         ];
-        Log::info('Using Payway keys: ' . json_encode($keys_data));
         $connector = new Connector($keys_data, 'test');
         $id = rand(1, 1000000);
         $usuario = User::find(1);
@@ -70,7 +69,6 @@ class PaywayController extends Controller
                     'status_details' => $response->getStatusDetails(),
                 ], 400);
             }
-
         } catch (SdkException $e) {
             Log::error('Payway SDK Exception: ' . $e->getMessage(), ['code' => $e->getCode(), 'data' => $e->getData()]);
             return response()->json(['error' => 'Payment processing error', 'message' => $e->getMessage(), 'details' => $e->getData()], 500);
@@ -78,7 +76,7 @@ class PaywayController extends Controller
     }
 
     public function CheckStatus()
-    {   
+    {
         $keys_data = [
             'public_key' => env('PAYWAY_PUBLIC_KEY'),
             'private_key' => env('PAYWAY_PRIVATE_KEY')
@@ -89,7 +87,7 @@ class PaywayController extends Controller
         $response = [
             'name' => $status->getName(),
             'version' => $status->getVersion(),
-            'build_time' => $status->getBuildTime(),    
+            'build_time' => $status->getBuildTime(),
         ];
 
         return response()->json($response);

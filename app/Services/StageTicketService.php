@@ -14,7 +14,7 @@ class StageTicketService
         if (!$ticketType->isStaged() || $ticketType->is_hidden) {
             return false;
         }
-        
+
         // Verificar si se agotó
         if ($ticketType->quantity_available > 0) {
             return false;
@@ -23,46 +23,22 @@ class StageTicketService
         try {
             // Ocultar la tanda actual
             $ticketType->update(['is_hidden' => true]);
-            
-            Log::info("Tanda agotada y ocultada", [
-                'ticket_type_id' => $ticketType->id,
-                'name' => $ticketType->name,
-                'stage_group' => $ticketType->stage_group,
-                'stage_order' => $ticketType->stage_order,
-            ]);
 
             // Buscar la siguiente tanda en el grupo
             $nextStage = $ticketType->getNextStage();
 
             if ($nextStage) {
                 $nextStage->update(['is_hidden' => false]);
-                
-                Log::info("Siguiente tanda activada", [
-                    'ticket_type_id' => $nextStage->id,
-                    'name' => $nextStage->name,
-                    'stage_group' => $nextStage->stage_group,
-                    'stage_order' => $nextStage->stage_order,
-                ]);
-                
+
                 return true;
             }
 
-            Log::info("No hay más tandas para activar en el grupo", [
-                'stage_group' => $ticketType->stage_group,
-            ]);
-
             return false;
-
         } catch (\Exception $e) {
-            Log::error("Error al activar siguiente tanda", [
-                'error' => $e->getMessage(),
-                'ticket_type_id' => $ticketType->id,
-            ]);
-            
             return false;
         }
     }
-    
+
     public function getStageStatus(string $stageGroup, int $functionId): array
     {
         $stages = TicketType::inStageGroup($stageGroup, $functionId)->get();
@@ -78,11 +54,11 @@ class StageTicketService
             ];
         })->toArray();
     }
-    
+
     public function manuallyActivateStage(int $ticketTypeId): bool
     {
         $ticketType = TicketType::findOrFail($ticketTypeId);
-        
+
         if (!$ticketType->isStaged()) {
             return false;
         }

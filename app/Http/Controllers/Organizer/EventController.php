@@ -14,16 +14,14 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class EventController extends Controller 
+class EventController extends Controller
 {
-    public function __construct(private RevenueService $revenueService)
-    {
-    }
+    public function __construct(private RevenueService $revenueService) {}
 
     public function index(Request $request): Response
     {
         $organizer = Auth::user()->organizer;
-        
+
         // Obtener filtros del request
         $filters = [
             'search' => $request->get('search', ''),
@@ -61,7 +59,7 @@ class EventController extends Controller
 
         // Aplicar filtro por estado usando el enum
         if ($filters['status'] !== 'all') {
-            $query->whereHas('functions', function($q) use ($filters) {
+            $query->whereHas('functions', function ($q) use ($filters) {
                 $q->where('status', $filters['status']);
             });
         }
@@ -76,21 +74,21 @@ class EventController extends Controller
         }
 
         $events = $query->get()
-            ->map(function($event) {
+            ->map(function ($event) {
                 // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
                 foreach ($event->functions as $function) {
                     $function->updateStatus();
                 }
-                
+
                 // Calcular precios mínimo y máximo
                 $functions = $event->functions->load('ticketTypes');
-                $allPrices = $functions->flatMap(function($function) {
+                $allPrices = $functions->flatMap(function ($function) {
                     return $function->ticketTypes->pluck('price');
                 })->filter();
-                
+
                 $minPrice = $allPrices->min() ?? 0;
                 $maxPrice = $allPrices->max() ?? 0;
-                
+
                 // Próxima función activa
                 $nextFunction = $event->functions
                     ->where('is_active', true)
@@ -121,7 +119,7 @@ class EventController extends Controller
                     'status_label' => $statusInfo['label'],
                     'status_color' => $statusInfo['color'],
                     'is_active' => $statusInfo['is_active'],
-                    'functions' => $event->functions->map(function($function) {
+                    'functions' => $event->functions->map(function ($function) {
                         return [
                             'id' => $function->id,
                             'name' => $function->name,
@@ -145,7 +143,7 @@ class EventController extends Controller
         $categories = \App\Models\Category::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         $venues = \App\Models\Venue::select('id', 'name', 'address')
             ->orderBy('name')
             ->get();
@@ -168,12 +166,12 @@ class EventController extends Controller
     public function create(): Response
     {
         $organizer = Auth::user()->organizer;
-        
+
         // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')
             ->orderBy('name')
             ->get();
-            
+
         // Get venues for select
         $venues = \App\Models\Venue::select('id', 'name', 'address')
             ->orderBy('name')
@@ -214,7 +212,7 @@ class EventController extends Controller
             DB::beginTransaction();
 
             $organizer = Auth::user()->organizer;
-            
+
             // Handle banner upload
             $bannerPath = null;
             if ($request->hasFile('banner_url')) {
@@ -257,10 +255,9 @@ class EventController extends Controller
 
             return redirect()->route('organizer.events.index')
                 ->with('success', 'Evento creado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             // Delete uploaded files if they exist
             if (isset($bannerPath)) {
                 Storage::disk('public')->delete($bannerPath);
@@ -268,7 +265,7 @@ class EventController extends Controller
             if (isset($heroBannerPath)) {
                 Storage::disk('public')->delete($heroBannerPath);
             }
-            
+
             return back()->withErrors(['error' => 'Error al crear el evento: ' . $e->getMessage()]);
         }
     }
@@ -290,7 +287,7 @@ class EventController extends Controller
 
         // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
-            
+
         // Get venues for select
         $venues = \App\Models\Venue::select('id', 'name', 'address')->orderBy('name')->get();
 
@@ -320,7 +317,7 @@ class EventController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             // Preservar las rutas existentes por defecto
             $bannerPath = $event->banner_url;
             $heroBannerPath = $event->hero_banner_url;
@@ -355,14 +352,11 @@ class EventController extends Controller
 
             return redirect()->route('organizer.events.index')
                 ->with('success', 'Evento actualizado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollback();
-            
-            \Log::error('Error updating event: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al actualizar el evento: ' . $e->getMessage()])
-                        ->withInput();
+                ->withInput();
         }
     }
 
@@ -382,7 +376,7 @@ class EventController extends Controller
     {
         // Verificar que el evento pertenezca al organizador autenticado
         $organizer = Auth::user()->organizer;
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');
         }
@@ -398,13 +392,13 @@ class EventController extends Controller
         // Calcular estadísticas del evento
         $totalEntradasVendidas = 0;
         $totalTicketsEmitidos = 0;
-        
+
         foreach ($event->functions as $function) {
             foreach ($function->ticketTypes as $ticketType) {
                 $vendidos = (int) $ticketType->quantity_sold;
-                
+
                 $totalEntradasVendidas += $vendidos;
-                
+
                 if ($ticketType->is_bundle) {
                     $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
                 } else {
@@ -428,22 +422,22 @@ class EventController extends Controller
             'total_revenue' => $event->getRevenue(),
             'entradas_vendidas' => $totalEntradasVendidas,
             'tickets_emitidos' => $totalTicketsEmitidos,
-            'functions' => $event->functions->map(function($function) {
+            'functions' => $event->functions->map(function ($function) {
                 $entradasVendidasFunc = 0;
                 $ticketsEmitidosFunc = 0;
-                
+
                 foreach ($function->ticketTypes as $ticketType) {
                     $vendidos = (int) $ticketType->quantity_sold;
-                    
+
                     $entradasVendidasFunc += $vendidos;
-                    
+
                     if ($ticketType->is_bundle) {
                         $ticketsEmitidosFunc += $vendidos * ($ticketType->bundle_quantity ?? 1);
                     } else {
                         $ticketsEmitidosFunc += $vendidos;
                     }
                 }
-                
+
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -474,16 +468,16 @@ class EventController extends Controller
     {
         // Verificar que el evento pertenezca al organizador autenticado
         $organizer = Auth::user()->organizer;
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');
         }
 
         // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
         $event->load([
-            'category', 
-            'venue', 
-            'organizer', 
+            'category',
+            'venue',
+            'organizer',
             'functions.ticketTypes.sector'
         ]);
 
@@ -504,11 +498,11 @@ class EventController extends Controller
             'organizer' => $event->organizer,
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
-            'functions' => $event->functions->map(function($function) {
+            'functions' => $event->functions->map(function ($function) {
                 $ticketTypes = $function->ticketTypes;
                 $totalLotes = (int) $ticketTypes->sum('quantity');
                 $lotesVendidos = (int) $ticketTypes->sum('quantity_sold');
-                $entradasEmitidas = (int) $ticketTypes->sum(function($ticketType) {
+                $entradasEmitidas = (int) $ticketTypes->sum(function ($ticketType) {
                     $sold = (int) $ticketType->quantity_sold;
                     return $ticketType->is_bundle ? $sold * ($ticketType->bundle_quantity ?? 1) : $sold;
                 });
@@ -547,16 +541,16 @@ class EventController extends Controller
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],
-                    'ticketTypes' => $function->ticketTypes->map(function($ticketType) {
+                    'ticketTypes' => $function->ticketTypes->map(function ($ticketType) {
                         $actualSoldTickets = (int) $ticketType->quantity_sold;
                         $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
                         $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
                         $totalIncome = $ticketType->getRevenue();
-                        
+
                         if ($totalIncome === null) {
                             $totalIncome = 0.0;
                         }
-                        
+
                         return [
                             'id' => $ticketType->id,
                             'name' => $ticketType->name,
@@ -572,8 +566,8 @@ class EventController extends Controller
                             'is_hidden' => (bool) $ticketType->is_hidden,
                             'is_bundle' => (bool) ($ticketType->is_bundle ?? false),
                             'bundle_quantity' => (int) ($ticketType->bundle_quantity ?? 1),
-                            'tickets_issued' => $ticketType->is_bundle 
-                                ? $actualSoldTickets * ($ticketType->bundle_quantity ?? 1) 
+                            'tickets_issued' => $ticketType->is_bundle
+                                ? $actualSoldTickets * ($ticketType->bundle_quantity ?? 1)
                                 : $actualSoldTickets,
                             'max_purchase_quantity' => (int) ($ticketType->max_purchase_quantity ?? 10),
                             'event_function_id' => $ticketType->event_function_id,
@@ -599,7 +593,7 @@ class EventController extends Controller
     {
         // Verificar que el evento pertenezca al organizador autenticado
         $organizer = Auth::user()->organizer;
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');
         }
@@ -620,7 +614,7 @@ class EventController extends Controller
             'name' => $event->name,
             'description' => $event->description,
             'image_url' => $event->image_url,
-            'functions' => $event->functions->map(function($function) {
+            'functions' => $event->functions->map(function ($function) {
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -667,14 +661,14 @@ class EventController extends Controller
 
         $primaryFunction = $event->functions
             ->filter(fn($f) => $f->is_active)
-            ->sortBy(function($function) use ($priorityOrder) {
+            ->sortBy(function ($function) use ($priorityOrder) {
                 return $priorityOrder[$function->status->value] ?? 999;
             })
             ->first();
 
         if (!$primaryFunction) {
             $primaryFunction = $event->functions
-                ->sortBy(function($function) use ($priorityOrder) {
+                ->sortBy(function ($function) use ($priorityOrder) {
                     return $priorityOrder[$function->status->value] ?? 999;
                 })
                 ->first();
