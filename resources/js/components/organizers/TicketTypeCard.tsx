@@ -26,7 +26,7 @@ interface TicketTypeCardProps {
   functionsWithTicket?: number[];
 }
 
-export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggleVisibility, onEdit, onDuplicateAll, onDelete, allFunctions, functionsWithTicket }) => {
+export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggleVisibility, onEdit, onDuplicateAll, onDelete, allFunctions = [], functionsWithTicket = [] }) => {
   const handleButtonClick = () => {
     if (onToggleVisibility) {
       onToggleVisibility(ticket.id);
@@ -63,7 +63,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
 
   const isBundle = ticket.is_bundle || false;
   const bundleQuantity = ticket.bundle_quantity || 1;
-  
+
   // Para mostrar información de lotes vs entradas emitidas
   const lotesDisponibles = ticket.quantity_available || 0;
   const lotesVendidos = ticket.quantity_sold || 0;
@@ -73,7 +73,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
   const isStaged = ticket.stage_group && ticket.stage_number;
 
   return (
-    <Card className="w-80 hover:shadow-md transition-shadow relative">
+    <Card className="w-full md:w-80 hover:shadow-md transition-shadow relative">
       <CardHeader className='pt-2 flex-grow'>
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -110,7 +110,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             )}
           </span>
           {/* Submenú de tres puntitos */}
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="absolute top-0.5 -right-0.5">
                 <MoreVertical className="w-5 h-5" />
@@ -129,7 +129,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
           </DropdownMenu>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           {/* Información de lotes (para bundles) o entradas (para individuales) */}
@@ -153,7 +153,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             <span className="text-muted-foreground">Progreso:</span>
             <span className="font-medium">{ticket.sold_percentage}%</span>
           </div>
-          
+
           {/* NUEVA SECCIÓN: Mostrar entradas emitidas si es bundle */}
           {isBundle && (
             <>
@@ -174,7 +174,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
               </div>
             </>
           )}
-          
+
           <div className="flex justify-between col-span-2 pt-2 border-t border-gray-200">
             <span className="text-muted-foreground text-xs">Máx. por compra:</span>
             <span className="font-medium text-xs text-gray-700">
@@ -187,9 +187,9 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             </span>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         <div className="text-center">
           <div className="text-sm text-muted-foreground">Ingresos generados</div>
           <div className="text-lg font-bold text-green-600">
@@ -204,17 +204,17 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             <span>{lotesVendidos}/{ticket.quantity}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300" 
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(ticket.sold_percentage ?? 0, 100)}%` }}
             />
           </div>
         </div>
       </CardContent>
-      
+
       <CardFooter className="flex gap-2">
-        <Button 
-          variant={ticket.is_hidden ? 'destructive' : 'outline'} 
+        <Button
+          variant={ticket.is_hidden ? 'destructive' : 'outline'}
           className="flex-1"
           onClick={handleButtonClick}
         >
@@ -230,7 +230,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             </>
           )}
         </Button>
-        <Button 
+        <Button
           variant="destructive"
           size="sm"
           onClick={handleDelete}
