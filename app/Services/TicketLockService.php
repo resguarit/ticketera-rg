@@ -11,7 +11,7 @@ use Carbon\Carbon;
 class TicketLockService
 {
     const LOCK_DURATION = 10; // 10 minutos
-    
+
     const CACHE_PREFIX = 'ticket_lock:';
 
     /**
@@ -19,11 +19,6 @@ class TicketLockService
      */
     public function lockTickets(array $ticketRequests, string $sessionId): array
     {
-        Log::info('Iniciando bloqueo de tickets', [
-            'session_id' => substr($sessionId, -8),
-            'base_session_id' => substr(explode('_', $sessionId)[0], -8),
-            'ticket_requests' => count($ticketRequests)
-        ]);
 
         $lockedTickets = [];
         $failures = [];
@@ -31,22 +26,16 @@ class TicketLockService
         foreach ($ticketRequests as $request) {
             $ticketTypeId = $request['id'];
             $quantity = $request['quantity'];
-            
+
             try {
                 $result = $this->lockTicketType($ticketTypeId, $quantity, $sessionId);
-                
+
                 if ($result['success']) {
                     $lockedTickets[] = [
                         'ticket_type_id' => $ticketTypeId,
                         'quantity' => $quantity,
                         'lock_key' => $result['lock_key']
                     ];
-                    
-                    Log::info('Ticket bloqueado exitosamente', [
-                        'ticket_type_id' => $ticketTypeId,
-                        'quantity' => $quantity,
-                        'session_id' => substr($sessionId, -8)
-                    ]);
                 } else {
                     $failures[] = [
                         'ticket_type_id' => $ticketTypeId,
@@ -54,22 +43,8 @@ class TicketLockService
                         'available' => $result['available'],
                         'message' => $result['message']
                     ];
-                    
-                    Log::warning('Fallo al bloquear ticket', [
-                        'ticket_type_id' => $ticketTypeId,
-                        'requested' => $quantity,
-                        'available' => $result['available'] ?? 0,
-                        'session_id' => substr($sessionId, -8)
-                    ]);
                 }
             } catch (\Exception $e) {
-                Log::error('Error bloqueando tickets', [
-                    'ticket_type_id' => $ticketTypeId,
-                    'quantity' => $quantity,
-                    'session_id' => substr($sessionId, -8),
-                    'error' => $e->getMessage()
-                ]);
-                
                 $failures[] = [
                     'ticket_type_id' => $ticketTypeId,
                     'message' => 'Error interno al bloquear tickets'
@@ -83,13 +58,6 @@ class TicketLockService
             'failures' => $failures
         ];
 
-        Log::info('Resultado del bloqueo de tickets', [
-            'session_id' => substr($sessionId, -8),
-            'success' => $result['success'],
-            'locked_count' => count($lockedTickets),
-            'failures_count' => count($failures)
-        ]);
-
         return $result;
     }
 
@@ -100,11 +68,11 @@ class TicketLockService
     {
         $lockKey = $this->getLockKey($ticketTypeId);
         $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
-        
+
         // Usar lock atómico para evitar condiciones de carrera
         return Cache::lock($lockKey . ':atomic', 10)->block(5, function () use ($ticketTypeId, $quantity, $sessionId, $lockKey, $sessionKey) {
             $ticketType = TicketType::find($ticketTypeId);
-            
+
             if (!$ticketType) {
                 return [
                     'success' => false,
@@ -114,10 +82,10 @@ class TicketLockService
 
             // Obtener locks existentes
             $existingLocks = Cache::get($lockKey, []);
-            
+
             // Limpiar locks expirados
             $existingLocks = $this->cleanExpiredLocks($existingLocks);
-            
+
             // Calcular tickets bloqueados por otras sesiones
             $lockedByOthers = 0;
             foreach ($existingLocks as $lock) {
@@ -125,10 +93,10 @@ class TicketLockService
                     $lockedByOthers += $lock['quantity'];
                 }
             }
-            
+
             // Verificar disponibilidad
             $available = $ticketType->quantity - $ticketType->quantity_sold - $lockedByOthers;
-            
+
             if ($available < $quantity) {
                 return [
                     'success' => false,
@@ -136,7 +104,7 @@ class TicketLockService
                     'message' => "Solo quedan {$available} tickets disponibles"
                 ];
             }
-            
+
             // Crear o actualizar el lock para esta sesión
             $lockData = [
                 'session_id' => $sessionId,
@@ -144,19 +112,19 @@ class TicketLockService
                 'locked_at' => now()->toISOString(),
                 'expires_at' => now()->addMinutes(self::LOCK_DURATION)->toISOString()
             ];
-            
+
             // Eliminar lock previo de esta sesión si existe
             $existingLocks = array_filter($existingLocks, function ($lock) use ($sessionId) {
                 return $lock['session_id'] !== $sessionId;
             });
-            
+
             // Agregar nuevo lock
             $existingLocks[] = $lockData;
-            
+
             // Guardar en cache
             Cache::put($lockKey, $existingLocks, now()->addMinutes(self::LOCK_DURATION + 5));
             Cache::put($sessionKey, $lockData, now()->addMinutes(self::LOCK_DURATION + 5));
-            
+
             return [
                 'success' => true,
                 'lock_key' => $lockKey,
@@ -170,11 +138,6 @@ class TicketLockService
      */
     public function releaseTickets(string $sessionId, ?array $ticketTypeIds = null): void
     {
-        Log::info('Iniciando liberación de tickets', [
-            'session_id' => substr($sessionId, -8),
-            'ticket_type_ids' => $ticketTypeIds
-        ]);
-
         try {
             if ($ticketTypeIds) {
                 // Liberar tipos específicos
@@ -185,18 +148,7 @@ class TicketLockService
                 // Liberar todos los tickets de la sesión
                 $this->releaseAllSessionTickets($sessionId);
             }
-
-            Log::info('Liberación de tickets completada', [
-                'session_id' => substr($sessionId, -8)
-            ]);
-
         } catch (\Exception $e) {
-            Log::error('Error liberando tickets', [
-                'session_id' => $sessionId,
-                'ticket_type_ids' => $ticketTypeIds,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e; // Re-lanzar la excepción para que el controlador la maneje
         }
     }
@@ -206,9 +158,6 @@ class TicketLockService
      */
     protected function releaseAllSessionTickets(string $sessionId): void
     {
-        Log::info('Liberando todos los tickets de sesión', [
-            'session_id' => substr($sessionId, -8)
-        ]);
 
         // Estrategia mejorada: iterar sobre todos los TicketTypes y verificar locks
         $allTicketTypes = TicketType::pluck('id');
@@ -216,22 +165,12 @@ class TicketLockService
 
         foreach ($allTicketTypes as $ticketTypeId) {
             $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
-            
-            if (Cache::has($sessionKey)) {
-                Log::info('Encontrado lock para liberar', [
-                    'ticket_type_id' => $ticketTypeId,
-                    'session_id' => substr($sessionId, -8)
-                ]);
 
+            if (Cache::has($sessionKey)) {
                 $this->releaseTicketType($ticketTypeId, $sessionId);
                 $releasedCount++;
             }
         }
-
-        Log::info('Liberación de sesión completada', [
-            'session_id' => substr($sessionId, -8),
-            'released_count' => $releasedCount
-        ]);
     }
 
     /**
@@ -241,66 +180,38 @@ class TicketLockService
     {
         $lockKey = $this->getLockKey($ticketTypeId);
         $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
-        
-        Log::info('Liberando ticket type específico', [
-            'ticket_type_id' => $ticketTypeId,
-            'session_id' => substr($sessionId, -8),
-            'lock_key' => $lockKey,
-            'session_key' => $sessionKey
-        ]);
+
 
         try {
             Cache::lock($lockKey . ':atomic', 10)->block(5, function () use ($lockKey, $sessionKey, $sessionId, $ticketTypeId) {
                 // Verificar si existe el lock de sesión
                 $sessionLock = Cache::get($sessionKey);
                 if (!$sessionLock) {
-                    Log::warning('No se encontró lock de sesión para liberar', [
-                        'session_key' => $sessionKey,
-                        'ticket_type_id' => $ticketTypeId
-                    ]);
                     return;
                 }
 
                 $existingLocks = Cache::get($lockKey, []);
                 $originalCount = count($existingLocks);
-                
+
                 // Filtrar locks de esta sesión
                 $updatedLocks = array_filter($existingLocks, function ($lock) use ($sessionId) {
                     return $lock['session_id'] !== $sessionId;
                 });
-                
+
                 $updatedLocks = array_values($updatedLocks); // Reindexar array
                 $removedCount = $originalCount - count($updatedLocks);
-                
+
                 // Actualizar cache
                 if (empty($updatedLocks)) {
                     Cache::forget($lockKey);
-                    Log::info('Eliminada clave principal por estar vacía', ['lock_key' => $lockKey]);
                 } else {
                     Cache::put($lockKey, $updatedLocks, now()->addMinutes(self::LOCK_DURATION + 5));
-                    Log::info('Actualizada clave principal', [
-                        'lock_key' => $lockKey,
-                        'remaining_locks' => count($updatedLocks)
-                    ]);
                 }
-                
+
                 // Eliminar clave de sesión
                 Cache::forget($sessionKey);
-                
-                Log::info('Lock liberado exitosamente', [
-                    'ticket_type_id' => $ticketTypeId,
-                    'session_id' => substr($sessionId, -8),
-                    'removed_count' => $removedCount,
-                    'remaining_locks' => count($updatedLocks)
-                ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error liberando ticket type', [
-                'ticket_type_id' => $ticketTypeId,
-                'session_id' => substr($sessionId, -8),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e;
         }
     }
@@ -312,20 +223,20 @@ class TicketLockService
     {
         $validLocks = [];
         $invalidLocks = [];
-        
+
         foreach ($lockedTickets as $lockedTicket) {
             $ticketTypeId = $lockedTicket['ticket_type_id'];
             $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
-            
+
             $lockData = Cache::get($sessionKey);
-            
+
             if ($lockData && Carbon::parse($lockData['expires_at'])->isFuture()) {
                 $validLocks[] = $lockedTicket;
             } else {
                 $invalidLocks[] = $lockedTicket;
             }
         }
-        
+
         return [
             'valid' => $validLocks,
             'invalid' => $invalidLocks,
@@ -339,7 +250,7 @@ class TicketLockService
     protected function cleanExpiredLocks(array $locks): array
     {
         $now = now();
-        
+
         return array_filter($locks, function ($lock) use ($now) {
             return Carbon::parse($lock['expires_at'])->isFuture();
         });
@@ -369,7 +280,7 @@ class TicketLockService
         if (preg_match('/ticket:(\d+):session:/', $key, $matches)) {
             return (int) $matches[1];
         }
-        
+
         return null;
     }
 
@@ -380,10 +291,10 @@ class TicketLockService
     {
         $lockKey = $this->getLockKey($ticketTypeId);
         $locks = Cache::get($lockKey, []);
-        
+
         // Limpiar locks expirados
         $activeLocks = $this->cleanExpiredLocks($locks);
-        
+
         // Actualizar cache si había locks expirados
         if (count($activeLocks) !== count($locks)) {
             if (empty($activeLocks)) {
@@ -392,7 +303,7 @@ class TicketLockService
                 Cache::put($lockKey, $activeLocks, now()->addMinutes(self::LOCK_DURATION + 5));
             }
         }
-        
+
         // Sumar todas las cantidades bloqueadas activas
         return array_sum(array_column($activeLocks, 'quantity'));
     }
@@ -404,16 +315,16 @@ class TicketLockService
     {
         $sessionKey = $this->getSessionKey($ticketTypeId, $sessionId);
         $lockData = Cache::get($sessionKey);
-        
+
         if (!$lockData) {
             return 0;
         }
-        
+
         // Verificar si el lock no ha expirado
         if (Carbon::parse($lockData['expires_at'])->isFuture()) {
             return $lockData['quantity'];
         }
-        
+
         // Si el lock expiró, limpiarlo
         Cache::forget($sessionKey);
         return 0;
@@ -425,7 +336,7 @@ class TicketLockService
     public function getAvailability(int $ticketTypeId): array
     {
         $ticketType = TicketType::find($ticketTypeId);
-        
+
         if (!$ticketType) {
             return [
                 'available' => 0,
@@ -437,7 +348,7 @@ class TicketLockService
 
         $totalLocked = $this->getLockedQuantity($ticketTypeId);
         $available = $ticketType->quantity - $ticketType->quantity_sold - $totalLocked;
-        
+
         return [
             'available' => max(0, $available),
             'locked' => $totalLocked,
@@ -455,9 +366,9 @@ class TicketLockService
         $locks = Cache::get($lockKey, []);
         $allLocks = $locks; // Guardamos todos antes de limpiar
         $locks = $this->cleanExpiredLocks($locks);
-        
+
         $ticketType = TicketType::find($ticketTypeId);
-        
+
         return [
             'ticket_type_id' => $ticketTypeId,
             'ticket_type_name' => $ticketType ? $ticketType->name : 'No encontrado',
@@ -479,23 +390,9 @@ class TicketLockService
      */
     public function releaseAllSessionLocks(string $baseSessionId): void
     {
-        Log::info('Liberando todos los locks de sesión base', [
-            'base_session_id' => substr($baseSessionId, -8)
-        ]);
-
         try {
             $this->releaseSessionLocksByPattern($baseSessionId);
-            
-            Log::info('Liberación de locks de sesión base completada', [
-                'base_session_id' => substr($baseSessionId, -8)
-            ]);
-            
         } catch (\Exception $e) {
-            Log::error('Error liberando locks de sesión base', [
-                'base_session_id' => substr($baseSessionId, -8),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e;
         }
     }
@@ -512,14 +409,14 @@ class TicketLockService
         foreach ($allTicketTypes as $ticketTypeId) {
             $lockKey = $this->getLockKey($ticketTypeId);
             $locks = Cache::get($lockKey, []);
-            
+
             if (empty($locks)) {
                 continue;
             }
 
             // Filtrar locks que pertenezcan a esta sesión base
             $originalCount = count($locks);
-            
+
             $updatedLocks = array_filter($locks, function ($lock) use ($baseSessionId) {
                 // Verificar si el session_id del lock comienza con el baseSessionId
                 return !str_starts_with($lock['session_id'], $baseSessionId);
@@ -528,12 +425,6 @@ class TicketLockService
             if (count($updatedLocks) !== $originalCount) {
                 $removedCount = $originalCount - count($updatedLocks);
                 $releasedCount += $removedCount;
-                
-                Log::info('Locks encontrados y liberados para ticket type', [
-                    'ticket_type_id' => $ticketTypeId,
-                    'base_session_id' => substr($baseSessionId, -8),
-                    'removed_count' => $removedCount
-                ]);
 
                 // Actualizar cache
                 if (empty($updatedLocks)) {
@@ -543,10 +434,5 @@ class TicketLockService
                 }
             }
         }
-
-        Log::info('Liberación por patrón completada', [
-            'base_session_id' => substr($baseSessionId, -8),
-            'total_released' => $releasedCount
-        ]);
     }
 }

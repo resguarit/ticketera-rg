@@ -41,11 +41,6 @@ class CheckoutService
                     ->first();
 
                 if (!$validInstallments) {
-                    Log::warning('Cuotas no válidas o no habilitadas', [
-                        'event_id' => $checkoutData->eventId,
-                        'bin' => $checkoutData->bin,
-                        'requested_installments' => $requestedInstallments,
-                    ]);
 
                     return new CheckoutResult(
                         success: false,
@@ -57,20 +52,20 @@ class CheckoutService
             }
 
             $orderData = [
-                    'event_id' => $checkoutData->eventId,
-                    'function_id' => $checkoutData->functionId,
-                    'selected_tickets' => $checkoutData->selected_tickets,
-                    'payment_method' => $paymentMethodId,
-                    'cuotas' => $requestedInstallments,
-                    'cuota_id' => $validInstallments ? $validInstallments->id : null,
-                    'billing_info' => $checkoutData->billingInfo,
-                    'tax' => $eventTax,
-                ];
+                'event_id' => $checkoutData->eventId,
+                'function_id' => $checkoutData->functionId,
+                'selected_tickets' => $checkoutData->selected_tickets,
+                'payment_method' => $paymentMethodId,
+                'cuotas' => $requestedInstallments,
+                'cuota_id' => $validInstallments ? $validInstallments->id : null,
+                'billing_info' => $checkoutData->billingInfo,
+                'tax' => $eventTax,
+            ];
 
             $orderResult = $this->orderService->createOrder($orderData);
             $order = $orderResult['order'];
 
-            
+
             $paymentData = new PaymentContext(
                 amount: $order->total_amount,
                 currency: 'ARS',
@@ -100,7 +95,6 @@ class CheckoutService
                 order: $order,
                 paymentResult: $paymentResult
             );
-
         } catch (\Exception $e) {
             throw $e;
         }

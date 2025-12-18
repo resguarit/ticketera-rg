@@ -30,16 +30,16 @@ class TicketTypeController extends Controller
             $ticketTypes = TicketType::where('event_function_id', $function->id)
                 ->where('sector_id', $sector->id)
                 ->get();
-            
+
             // Calcular entradas ya asignadas (considerando bundles)
             $usedCapacity = $ticketTypes->sum(function ($ticketType) {
-                return $ticketType->is_bundle 
+                return $ticketType->is_bundle
                     ? $ticketType->quantity * $ticketType->bundle_quantity
                     : $ticketType->quantity;
             });
-            
+
             $availableCapacity = $sector->capacity - $usedCapacity;
-            
+
             return [
                 'id' => $sector->id,
                 'name' => $sector->name,
@@ -144,13 +144,11 @@ class TicketTypeController extends Controller
             $result = $this->createSingleTicketType($validated, $event, $function);
             DB::commit();
             return $result;
-
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error creating ticket type: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al crear la entrada: ' . $e->getMessage()])
-                        ->withInput();
+                ->withInput();
         }
     }
 
@@ -163,7 +161,7 @@ class TicketTypeController extends Controller
         $stageNames = $validated['stage_names'] ?? [];
         $basePrice = $validated['price'];
         $priceIncrement = $validated['price_increment'] ?? 0;
-        
+
         // Generar un grupo único para estas tandas
         $stageGroup = $validated['stage_group_name'] ?? ($validated['sector_id'] . '-' . time());
 
@@ -173,11 +171,11 @@ class TicketTypeController extends Controller
             // CORREGIDO: Dividir por 100 para convertir porcentaje a decimal
             $stageData['price'] = $basePrice * (1 + ($priceIncrement / 100 * $i));
             $stageData['is_hidden'] = $i > 0; // Primera visible, resto ocultas
-            
+
             // AGREGAR campos de tanda
             $stageData['stage_group'] = $stageGroup;
             $stageData['stage_order'] = $i + 1; // 1, 2, 3, ...
-            
+
             TicketType::create($stageData);
         }
 
@@ -195,20 +193,20 @@ class TicketTypeController extends Controller
         $isBundle = $validated['is_bundle'] ?? false;
         $bundleQuantity = $validated['bundle_quantity'] ?? 1;
         $realQuantity = $isBundle ? $validated['quantity'] * $bundleQuantity : $validated['quantity'];
-        
+
         // Calcular capacidad ya utilizada
         $usedCapacity = TicketType::where('event_function_id', $function->id)
             ->where('sector_id', $sector->id)
             ->get()
             ->sum(function ($ticketType) {
-                return $ticketType->is_bundle 
+                return $ticketType->is_bundle
                     ? $ticketType->quantity * $ticketType->bundle_quantity
                     : $ticketType->quantity;
             });
-        
+
         $totalAfterCreation = $usedCapacity + $realQuantity;
         $message = 'Tipo de entrada creado exitosamente.';
-        
+
         if ($totalAfterCreation > $sector->capacity) {
             $excess = $totalAfterCreation - $sector->capacity;
             $message = "Tipo de entrada creado exitosamente. ⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterCreation}/{$sector->capacity}.";
@@ -216,7 +214,7 @@ class TicketTypeController extends Controller
 
         // Remover campos específicos de tandas antes de criar
         unset($validated['create_stages'], $validated['stages_count'], $validated['price_increment']);
-        
+
         TicketType::create($validated);
 
         return redirect()->route('organizer.events.tickets', $event->id)
@@ -229,7 +227,7 @@ class TicketTypeController extends Controller
     public function edit(Event $event, EventFunction $function, TicketType $ticketType): Response
     {
         $event->load('venue.sectors');
-        
+
         // Calcular disponibilidad por sector para esta función (excluyendo el ticket actual)
         $sectorsWithAvailability = $event->venue->sectors->map(function ($sector) use ($function, $ticketType) {
             // Obtener todos los ticket types de esta función para este sector (excepto el actual)
@@ -237,30 +235,30 @@ class TicketTypeController extends Controller
                 ->where('sector_id', $sector->id)
                 ->where('id', '!=', $ticketType->id) // Excluir el ticket actual
                 ->get();
-            
+
             // Calcular entradas ya asignadas por otros tipos (considerando bundles)
             $usedByOthers = $otherTicketTypes->sum(function ($tt) {
-                return $tt->is_bundle 
+                return $tt->is_bundle
                     ? $tt->quantity * $tt->bundle_quantity
                     : $tt->quantity;
             });
-            
+
             // Calcular entradas vendidas del ticket actual
-            $currentTicketSold = $ticketType->is_bundle 
+            $currentTicketSold = $ticketType->is_bundle
                 ? $ticketType->quantity_sold * $ticketType->bundle_quantity
                 : $ticketType->quantity_sold;
-                
+
             // Calcular entradas configuradas originalmente del ticket actual
-            $currentTicketOriginal = $ticketType->is_bundle 
+            $currentTicketOriginal = $ticketType->is_bundle
                 ? $ticketType->quantity * $ticketType->bundle_quantity
                 : $ticketType->quantity;
-            
+
             // Disponibilidad actual considerando solo otros tipos + ventas del actual
             $availableCapacity = $sector->capacity - $usedByOthers - $currentTicketSold;
-            
+
             // Disponibilidad si no hubiera ninguna configuración previa de este ticket
             $originalAvailableCapacity = $sector->capacity - $usedByOthers;
-            
+
             return [
                 'id' => $sector->id,
                 'name' => $sector->name,
@@ -347,11 +345,11 @@ class TicketTypeController extends Controller
                 'required_if:is_bundle,true',
                 function ($attribute, $value, $fail) use ($request, $ticketType) {
                     $isBundle = $request->boolean('is_bundle');
-                    
+
                     if ($ticketType->quantity_sold > 0 && $ticketType->is_bundle !== $isBundle) {
                         $fail("No se puede cambiar el tipo de entrada (individual/lote) cuando ya hay ventas registradas.");
                     }
-                    
+
                     if ($ticketType->quantity_sold > 0 && $isBundle && $ticketType->bundle_quantity !== $value) {
                         $fail("No se puede cambiar la cantidad del lote cuando ya hay ventas registradas.");
                     }
@@ -380,21 +378,21 @@ class TicketTypeController extends Controller
             $isBundle = $validated['is_bundle'] ?? false;
             $bundleQuantity = $validated['bundle_quantity'] ?? 1;
             $realQuantity = $isBundle ? $validated['quantity'] * $bundleQuantity : $validated['quantity'];
-            
+
             // Calcular capacidad ya utilizada (excluyendo el ticket que se está actualizando)
             $usedCapacity = TicketType::where('event_function_id', $function->id)
                 ->where('sector_id', $sector->id)
                 ->where('id', '!=', $ticketType->id)
                 ->get()
                 ->sum(function ($tt) {
-                    return $tt->is_bundle 
+                    return $tt->is_bundle
                         ? $tt->quantity * $tt->bundle_quantity
                         : $tt->quantity;
                 });
-            
+
             $totalAfterUpdate = $usedCapacity + $realQuantity;
             $message = 'Tipo de entrada actualizado exitosamente.';
-            
+
             if ($totalAfterUpdate > $sector->capacity) {
                 $excess = $totalAfterUpdate - $sector->capacity;
                 $message = "Tipo de entrada actualizado exitosamente. ⚠️ ATENCIÓN: Has superado la capacidad del sector '{$sector->name}' por {$excess} entradas. Total asignado: {$totalAfterUpdate}/{$sector->capacity}.";
@@ -406,13 +404,11 @@ class TicketTypeController extends Controller
 
             return redirect()->route('organizer.events.tickets', $event->id)
                 ->with($totalAfterUpdate > $sector->capacity ? 'warning' : 'success', $message);
-
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error updating ticket type: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Error al actualizar la entrada: ' . $e->getMessage()])
-                        ->withInput();
+                ->withInput();
         }
     }
 
@@ -498,11 +494,9 @@ class TicketTypeController extends Controller
 
             return redirect()->route('organizer.events.tickets', $event->id)
                 ->with('success', 'Tipo de entrada eliminado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error deleting ticket type: ' . $e->getMessage());
-            
+
             return redirect()->route('organizer.events.tickets', $event->id)
                 ->with('error', 'Error al eliminar la entrada: ' . $e->getMessage());
         }

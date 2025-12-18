@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'dni' => 'nullable|string|max:20|unique:person',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -64,10 +64,7 @@ class RegisteredUserController extends Controller
             Auth::login($user);
 
             return redirect()->intended();
-
         } catch (\Exception $e) {
-            // Log registration failure
-            Log::error('Registration failed: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Registration failed.']);
         }
     }
@@ -81,7 +78,7 @@ class RegisteredUserController extends Controller
             $validated = $request->validate([
                 'firstName' => 'required|string|max:255',
                 'lastName' => 'required|string|max:255',
-                'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+                'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
                 'phone' => 'required|string|max:20',
                 'documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
@@ -92,7 +89,7 @@ class RegisteredUserController extends Controller
 
             // Verificar si ya existe una persona con ese DNI
             $existingPerson = Person::where('dni', $validated['documentNumber'])->first();
-            
+
             if ($existingPerson) {
                 DB::rollBack();
                 return response()->json([
@@ -129,23 +126,16 @@ class RegisteredUserController extends Controller
                 'message' => 'Cuenta creada exitosamente',
                 'user' => $user
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error de validación',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Error en registro desde checkout', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return response()->json([
                 'success' => false,
