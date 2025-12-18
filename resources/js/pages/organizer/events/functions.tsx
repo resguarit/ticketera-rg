@@ -36,7 +36,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                 description: 'La operación se completó correctamente'
             });
         }
-        
+
         if (flash.error) {
             toast.error('Error en la operación', {
                 description: flash.error
@@ -48,7 +48,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
         if (!functionToDelete) return;
 
         setIsDeleting(true);
-        
+
         router.delete(route('organizer.events.functions.destroy', { event: event.id, function: functionToDelete.id }), {
             preserveScroll: true,
             onStart: () => {
@@ -76,7 +76,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
 
     const handleToggleVisibility = (func: EventFunctionWithStatus) => {
         setIsTogglingVisibility(func.id);
-        
+
         router.patch(route('organizer.events.functions.update', { event: event.id, function: func.id }), {
             is_active: !func.is_active,
             name: func.name,
@@ -87,8 +87,8 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
         }, {
             preserveScroll: true,
             onStart: () => {
-                toast.loading(func.is_active ? 'Desactivando función...' : 'Activando función...', { 
-                    id: `toggle-function-${func.id}` 
+                toast.loading(func.is_active ? 'Desactivando función...' : 'Activando función...', {
+                    id: `toggle-function-${func.id}`
                 });
             },
             onSuccess: () => {
@@ -109,7 +109,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
             }
         });
     };
-    
+
     const formatDateTime = (dateTime?: string | null) => {
         if (!dateTime) return { date: '-', time: '-' };
         const date = new Date(dateTime);
@@ -160,18 +160,18 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                             </Link>
                         </CardHeader>
                         <CardContent>
-                            <div className="border rounded-lg">
+                            <div className="border rounded-lg overflow-x-auto">
                                 {event.functions.length > 0 ? (
-                                    <ul className="divide-y">
+                                    <ul className="divide-y min-w-[600px]">
                                         {event.functions.map((func) => (
-                                            <li key={func.id} className="p-4 flex items-center justify-between hover:bg-muted/50">
-                                                <div className="flex-1">
+                                            <li key={func.id} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-muted/50 gap-4">
+                                                <div className="flex-1 w-full">
                                                     <div className="flex items-center gap-3 flex-wrap">
                                                         <h3 className="font-semibold text-foreground">{func.name}</h3>
                                                         {getStatusBadge(func)}
                                                     </div>
                                                     <p className="text-sm text-muted-foreground mt-1">{func.description}</p>
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2 flex-wrap">
                                                         <div className="flex items-center gap-1.5">
                                                             <Calendar className="w-4 h-4" />
                                                             <span>{formatDateTime(func.start_time).date}</span>
@@ -182,8 +182,8 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Button 
+                                                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                                                    <Button
                                                         variant={func.is_active ? "default" : "secondary"}
                                                         size="icon"
                                                         onClick={() => handleToggleVisibility(func)}
@@ -202,8 +202,8 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Button 
-                                                        variant="destructive" 
+                                                    <Button
+                                                        variant="destructive"
                                                         size="icon"
                                                         onClick={() => setFunctionToDelete(func)}
                                                     >
@@ -227,7 +227,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                     </Card>
                 </div>
             </EventManagementLayout>
-            
+
             {/* Modal de confirmación para eliminar función */}
             <ConfirmationModal
                 isOpen={!!functionToDelete}

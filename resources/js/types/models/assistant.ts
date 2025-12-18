@@ -37,6 +37,7 @@ export interface InvitedAttendee {
     tickets_count: number;
     tickets_used: number;
     tickets: AttendeeTicket[];
+    is_cancelled?: boolean;
 }
 
 // Tipo para compradores agrupados por order_id
