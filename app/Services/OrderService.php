@@ -32,7 +32,6 @@ class OrderService
 
             if (!empty($orderData['billing_info']['discountCode'])) {
                 $codeStr = $orderData['billing_info']['discountCode'];
-                Log::info('Procesando código referido: ' . $codeStr);
 
                 $discountCode = DiscountCode::where('code', $codeStr)
                     ->where('event_id', $orderData['event_id'])
@@ -40,7 +39,6 @@ class OrderService
 
                 if ($discountCode) {
                     $discountCodeId = $discountCode->id;
-                    Log::info('Referido asociado ID: ' . $discountCodeId);
                 }
             }
 
@@ -126,14 +124,7 @@ class OrderService
         foreach ($ticketTypes as $ticketType) {
             // Solo verificar si es parte de un sistema de tandas y está visible
             if ($ticketType->stage_group && !$ticketType->is_hidden) {
-                $activated = $stageService->checkAndActivateNextStage($ticketType);
-
-                if ($activated) {
-                    Log::info("Tanda activada automáticamente después de compra", [
-                        'agotada' => $ticketType->name,
-                        'function_id' => $ticketType->event_function_id
-                    ]);
-                }
+                $stageService->checkAndActivateNextStage($ticketType);
             }
         }
     }
@@ -289,8 +280,6 @@ class OrderService
                 ];
 
                 $orderDetails[] = $ticketDetail;
-            } else {
-                Log::error("TicketType no encontrado", ['ticket_id' => $ticket['id']]);
             }
         }
 
@@ -376,35 +365,4 @@ class OrderService
             throw $e;
         }
     }
-
-    /*
-    public function processPayment(Order $order, array $paymentData): bool
-    {
-        try {
-            
-            $paymentSuccessful = true;
-            
-            if ($paymentSuccessful) {
-                $order->update([ 'status' => OrderStatus::PAID ]);
-
-                $order->items()->update(['status' => IssuedTicketStatus::AVAILABLE]);
-
-                return true;
-            } else {
-                Log::warning('Pago falló, cancelando orden');
-                $this->cancelOrder($order);
-                return false;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error procesando pago', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            $this->cancelOrder($order);
-            return false;
-        }
-    }*/
 }
