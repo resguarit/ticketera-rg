@@ -106,7 +106,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                         </Badge>
                                     )}
                                 </div>
-                                <p className="text-gray-600 mb-4 max-w-3xl">{event.description}</p>
+                                <p className="text-gray-600 mb-4 max-w-3xl line-clamp-3 md:line-clamp-none">{event.description}</p>
 
                                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">

@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { User, Lock, Shield, Monitor, HelpCircle, Bell, CreditCard, MapPin, Mail, Phone, Calendar, Save, Camera, Eye, EyeOff, BadgeCheck  } from 'lucide-react';
+import { User, Lock, HelpCircle, Mail, Phone, MapPin, Save, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { toast, Toaster } from 'sonner';
 
 const sidebarItems = [
     {
@@ -25,24 +23,6 @@ const sidebarItems = [
         id: "security",
         label: "Contraseña y Seguridad",
         icon: Lock,
-        color: "bg-foreground",
-    },
-    {
-        id: "privacy",
-        label: "Privacidad",
-        icon: Shield,
-        color: "bg-foreground",
-    },
-    {
-        id: "notifications",
-        label: "Notificaciones",
-        icon: Bell,
-        color: "bg-foreground",
-    },
-    {
-        id: "payment",
-        label: "Métodos de Pago",
-        icon: CreditCard,
         color: "bg-foreground",
     },
     {
@@ -81,14 +61,7 @@ export default function MyAccount() {
         twoFactorEnabled: false,
     });
 
-    const [notificationSettings, setNotificationSettings] = useState({
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        eventReminders: true,
-        promotionalEmails: false,
-        securityAlerts: true,
-    });
+
 
     // Si el usuario no está autenticado, redirigir
     if (!auth.user) {
@@ -117,30 +90,32 @@ export default function MyAccount() {
     const handleSavePersonalInfo = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        
+
         try {
             await router.patch(route('profile.update'), personalInfo, {
                 onSuccess: () => {
-                    alert('Información personal actualizada correctamente');
+                    toast.success('Información personal actualizada correctamente');
                 },
                 onError: (errors) => {
                     console.error('Errores:', errors);
+                    toast.error('Error al actualizar la información');
                 },
                 onFinish: () => setIsLoading(false)
             });
         } catch (error) {
             console.error('Error:', error);
             setIsLoading(false);
+            toast.error('Ocurrió un error inesperado');
         }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (securityInfo.newPassword !== securityInfo.confirmPassword) {
-            alert("Las contraseñas no coinciden");
+            toast.error("Las contraseñas no coinciden");
             return;
         }
-        
+
         try {
             await router.put(route('password.update'), {
                 current_password: securityInfo.currentPassword,
@@ -154,50 +129,25 @@ export default function MyAccount() {
                         confirmPassword: "",
                         twoFactorEnabled: securityInfo.twoFactorEnabled,
                     });
-                    alert("Contraseña actualizada exitosamente");
+                    toast.success("Contraseña actualizada exitosamente");
                 },
                 onError: (errors) => {
                     console.error('Errores:', errors);
-                    alert('Error al actualizar la contraseña');
+                    toast.error('Error al actualizar la contraseña');
                 }
             });
         } catch (error) {
             console.error('Error:', error);
+            toast.error('Ocurrió un error inesperado');
         }
     };
 
-    const handleSaveNotifications = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        
-        try {
-            // Por ahora solo simular, ya que no hay ruta para notificaciones en settings
-            setTimeout(() => {
-                alert('Preferencias de notificaciones guardadas (simulado)');
-                setIsLoading(false);
-            }, 1000);
-            
-            // Cuando quieras agregar la funcionalidad real, descomenta esto:
-            // await router.put(route('profile.notifications'), notificationSettings, {
-            //     onSuccess: () => {
-            //         alert('Preferencias de notificaciones actualizadas');
-            //     },
-            //     onError: (errors) => {
-            //         console.error('Errores:', errors);
-            //         alert('Error al actualizar las preferencias');
-            //     },
-            //     onFinish: () => setIsLoading(false)
-            // });
-        } catch (error) {
-            console.error('Error:', error);
-            setIsLoading(false);
-        }
-    };
+
 
     return (
         <>
             <Head title="Mi Cuenta" />
-            
+
             <div className="min-h-screen bg-primary">
                 <Header />
 
@@ -213,65 +163,61 @@ export default function MyAccount() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col">
-                                    <h3 className="text-lg lg:text-xl font-bold text-foreground">{auth.user.person.name}</h3>
-                                    <p className="text-foreground/60 text-xs lg:text-sm">{auth.user.email}</p>
+                                        <h3 className="text-lg lg:text-xl font-bold text-foreground">{auth.user.person.name}</h3>
+                                        <p className="text-foreground/60 text-xs lg:text-sm">{auth.user.email}</p>
                                     </div>
                                 </CardHeader>
-<CardContent className="p-0">
-    {/* Desktop Navigation - Vertical */}
-    <nav className="hidden lg:block space-y-1">
-        {sidebarItems.map((item) => (
-            <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${
-                    activeTab === item.id
-                        ? "bg-primary text-white hover:bg-secondary"
-                        : "text-foreground/80 hover:bg-secondary"
-                }`}
-            >
-                <div
-                    className={`w-8 h-8 rounded-lg bg-primary hover:bg-secondary flex items-center justify-center`}
-                >
-                    <item.icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-medium">{item.label}</span>
-            </button>
-        ))}
-    </nav>
+                                <CardContent className="p-0">
+                                    {/* Desktop Navigation - Vertical */}
+                                    <nav className="hidden lg:block space-y-1">
+                                        {sidebarItems.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => setActiveTab(item.id)}
+                                                className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-200 ${activeTab === item.id
+                                                    ? "bg-primary text-white hover:bg-secondary"
+                                                    : "text-foreground/80 hover:bg-secondary"
+                                                    }`}
+                                            >
+                                                <div
+                                                    className={`w-8 h-8 rounded-lg bg-primary hover:bg-secondary flex items-center justify-center`}
+                                                >
+                                                    <item.icon className="w-4 h-4 text-white" />
+                                                </div>
+                                                <span className="font-medium">{item.label}</span>
+                                            </button>
+                                        ))}
+                                    </nav>
 
-    {/* Mobile Navigation - Horizontal Tabs */}
-    <div className="lg:hidden">
-        <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex space-x-1 p-2 min-w-max">
-                {sidebarItems.map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id)}
-                        className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 ${
-                            activeTab === item.id
-                                ? "bg-primary text-white shadow-sm"
-                                : "text-foreground/70 hover:bg-gray-50 hover:text-foreground"
-                        }`}
-                    >
-                        <div
-                            className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                                activeTab === item.id ? "bg-white/20" : "bg-foreground/10"
-                            }`}
-                        >
-                            <item.icon className={`w-3 h-3 ${
-                                activeTab === item.id ? "text-white" : "text-foreground/70"
-                            }`} />
-                        </div>
-                        <span className="text-xs font-medium truncate max-w-16">
-                            {item.label.split(' ')[0]}
-                        </span>
-                    </button>
-                ))}
-            </div>
-        </div>
-    </div>
-</CardContent>
+                                    {/* Mobile Navigation - Horizontal Tabs */}
+                                    <div className="lg:hidden">
+                                        <div className="overflow-x-auto scrollbar-hide">
+                                            <div className="flex space-x-1 p-2 min-w-max">
+                                                {sidebarItems.map((item) => (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => setActiveTab(item.id)}
+                                                        className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 ${activeTab === item.id
+                                                            ? "bg-primary text-white shadow-sm"
+                                                            : "text-foreground/70 hover:bg-gray-50 hover:text-foreground"
+                                                            }`}
+                                                    >
+                                                        <div
+                                                            className={`w-6 h-6 rounded-md flex items-center justify-center ${activeTab === item.id ? "bg-white/20" : "bg-foreground/10"
+                                                                }`}
+                                                        >
+                                                            <item.icon className={`w-3 h-3 ${activeTab === item.id ? "text-white" : "text-foreground/70"
+                                                                }`} />
+                                                        </div>
+                                                        <span className="text-xs font-medium truncate max-w-16">
+                                                            {item.label.split(' ')[0]}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
                             </Card>
                         </div>
 
@@ -363,49 +309,8 @@ export default function MyAccount() {
                                                     </div>
 
                                                     <div className="space-y-1">
-                                                        <Label htmlFor="birthDate" className="text-xs lg:text-sm text-foreground font-medium">
-                                                            Fecha de Nacimiento
-                                                        </Label>
-                                                        <div className="relative">
-                                                            <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 lg:w-5 lg:h-5 w-4 h-4" />
-                                                            <Input
-                                                                id="birthDate"
-                                                                type="date"
-                                                                value={personalInfo.birthDate}
-                                                                onChange={(e) =>
-                                                                    setPersonalInfo((prev) => ({ ...prev, birthDate: e.target.value }))
-                                                                }
-                                                                className="lg:pl-10 pl-6 bg-white border-gray-300 text-foreground text-sm lg:text-base  h-fit py-1"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2 lg:gap-6 mb-2">
-                                                    <div className="space-y-1">
-                                                        <Label htmlFor="documentType" className="text-xs lg:text-sm text-foreground font-medium">
-                                                            Tipo de Documento
-                                                        </Label>
-                                                        <Select
-                                                            value={personalInfo.documentType}
-                                                            onValueChange={(value) =>
-                                                                setPersonalInfo((prev) => ({ ...prev, documentType: value }))
-                                                            }
-                                                        >
-                                                            <SelectTrigger className="bg-white border-gray-300 text-foreground text-sm lg:text-base lg:px-3 px-2 h-fit py-1">
-                                                                <SelectValue placeholder="Selecciona tipo" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="DNI">DNI</SelectItem>
-                                                                <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                                                                <SelectItem value="Cedula">Cédula</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-
-                                                    <div className="space-y-1">
                                                         <Label htmlFor="documentNumber" className="text-xs lg:text-sm text-foreground font-medium">
-                                                            Número de Documento 
+                                                            Número de Documento
                                                         </Label>
                                                         <Input
                                                             id="documentNumber"
@@ -413,7 +318,6 @@ export default function MyAccount() {
                                                             onChange={(e) => setPersonalInfo((prev) => ({ ...prev, documentNumber: e.target.value }))}
                                                             className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
                                                             placeholder="12345678"
-                                                            required
                                                         />
                                                         <p className="text-foreground/60 text-xs lg:text-sm">Número sin puntos ni espacios</p>
                                                     </div>
@@ -434,36 +338,6 @@ export default function MyAccount() {
                                                         />
                                                     </div>
                                                     <p className="text-foreground/60 text-xs lg:text-sm">Dirección completa (opcional)</p>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2 lg:gap-6">
-                                                    <div className="space-y-1">
-                                                        <Label htmlFor="city" className="text-xs lg:text-sm text-foreground font-medium">
-                                                            Ciudad
-                                                        </Label>
-                                                        <Input
-                                                            id="city"
-                                                            value={personalInfo.city}
-                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, city: e.target.value }))
-                                                            }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
-                                                            placeholder="Buenos Aires"
-                                                        />
-                                                    </div>
-
-                                                    <div className="space-y-1">
-                                                        <Label htmlFor="postalCode" className="text-xs lg:text-sm text-foreground font-medium">
-                                                            Código Postal
-                                                        </Label>
-                                                        <Input
-                                                            id="postalCode"
-                                                            value={personalInfo.postalCode}
-                                                            onChange={(e) => setPersonalInfo((prev) => ({ ...prev, postalCode: e.target.value }))
-                                                            }
-                                                            className="bg-white border-gray-300 text-foreground placeholder:text-gray-400 text-sm lg:text-base lg:px-3 px-2 h-fit py-1"
-                                                            placeholder="1000"
-                                                        />
-                                                    </div>
                                                 </div>
 
                                                 <div className="flex justify-end">
@@ -586,115 +460,8 @@ export default function MyAccount() {
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
-                                            <CardHeader>
-                                                <CardTitle className="text-lg lg:text-xl font-bold text-foreground flex items-center space-x-3">
-                                                    <Shield className="lg:w-6 lg:h-6 w-5 h-5 text-primary" />
-                                                    <span>Autenticación de Dos Factores</span>
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-foreground font-medium text-sm lg:text-base">Activar 2FA</p>
-                                                        <p className="text-foreground/60 text-xs lg:text-sm">
-                                                            Agrega una capa extra de seguridad a tu cuenta
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={securityInfo.twoFactorEnabled}
-                                                        onCheckedChange={(checked: boolean) =>
-                                                            setSecurityInfo((prev) => ({ ...prev, twoFactorEnabled: checked }))
-                                                        }
-                                                    />
-                                                </div>
-                                            </CardContent>
-                                        </Card>
                                     </div>
                                 </TabsContent>
-
-                                {/* Notifications */}
-                                <TabsContent value="notifications">
-                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
-                                        <CardHeader>
-                                            <CardTitle className="text-lg lg:text-2xl font-bold text-foreground flex items-center space-x-3">
-                                                <div className="lg:w-10 lg:h-10 h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                                                    <Bell className="lg:w-5 lg:h-5 h-4 w-4 text-white" />
-                                                </div>
-                                                <span>Preferencias de Notificaciones</span>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4 lg:space-y-6">
-                                            {[
-                                                {
-                                                    key: "emailNotifications",
-                                                    title: "Notificaciones por Email",
-                                                    description: "Recibe actualizaciones importantes por correo electrónico",
-                                                },
-                                                {
-                                                    key: "smsNotifications",
-                                                    title: "Notificaciones por SMS",
-                                                    description: "Recibe alertas importantes por mensaje de texto",
-                                                },
-                                                {
-                                                    key: "pushNotifications",
-                                                    title: "Notificaciones Push",
-                                                    description: "Recibe notificaciones en tiempo real en tu dispositivo",
-                                                },
-                                                {
-                                                    key: "eventReminders",
-                                                    title: "Recordatorios de Eventos",
-                                                    description: "Te recordaremos sobre tus próximos eventos",
-                                                },
-                                                {
-                                                    key: "promotionalEmails",
-                                                    title: "Emails Promocionales",
-                                                    description: "Recibe ofertas especiales y descuentos",
-                                                },
-                                                {
-                                                    key: "securityAlerts",
-                                                    title: "Alertas de Seguridad",
-                                                    description: "Notificaciones sobre actividad sospechosa en tu cuenta",
-                                                },
-                                            ].map((setting) => (
-                                                <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                                    <div>
-                                                        <p className="text-foreground font-medium">{setting.title}</p>
-                                                        <p className="text-foreground/60 text-sm">{setting.description}</p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
-                                                        onCheckedChange={(checked: boolean) =>
-                                                            setNotificationSettings((prev) => ({ ...prev, [setting.key]: checked }))
-                                                        }
-                                                    />
-                                                </div>
-                                            ))}
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                {/* Other tabs placeholder */}
-                                <TabsContent value="privacy">
-                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
-                                        <CardContent className="p-12 text-center">
-                                            <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-foreground mb-2">Configuración de Privacidad</h3>
-                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                <TabsContent value="payment">
-                                    <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
-                                        <CardContent className="p-12 text-center">
-                                            <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold text-foreground mb-2">Métodos de Pago</h3>
-                                            <p className="text-foreground/60">Esta sección estará disponible próximamente</p>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
 
                                 <TabsContent value="help">
                                     <Card className="bg-white border-gray-200 rounded-none lg:rounded-md shadow-lg">
@@ -715,6 +482,7 @@ export default function MyAccount() {
                     </div>
                 </div>
             </div>
+            <Toaster position="top-right" richColors />
         </>
     );
 }
