@@ -54,18 +54,6 @@ const paymentMethods = [
     logo: "/images/medios-pago/american-express.svg",
     color: "from-cyan-500 to-blue-500",
   },
-  {
-    id: "visa_prepaga",
-    name: "Visa Prepaga",
-    logo: "/images/medios-pago/visa.svg",
-    color: "from-blue-400 to-blue-500",
-  },
-  {
-    id: "mastercard_prepaga",
-    name: "Mastercard Prepaga",
-    logo: "/images/medios-pago/mastercard.svg",
-    color: "from-orange-400 to-red-400",
-  },
 ]
 
 export default function PaymentInfoStep({
@@ -261,17 +249,16 @@ export default function PaymentInfoStep({
             {paymentMethods.map((method) => (
               <div
                 key={method.id}
-                className={`flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border-2 transition-all cursor-pointer ${
-                  paymentInfo.paymentMethodId === method.id
-                    ? "border-primary bg-primary/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
+                className={`flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border-2 transition-all cursor-pointer ${paymentInfo.paymentMethodId === method.id
+                  ? "border-primary bg-primary/5"
+                  : "border-gray-200 hover:border-gray-300"
+                  }`}
                 onClick={() => !disabled && handleInputChange("paymentMethodId", method.id)}
               >
                 <RadioGroupItem value={method.id} id={method.id} disabled={disabled} />
                 <div className="w-14 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
-                  <img 
-                    src={method.logo} 
+                  <img
+                    src={method.logo}
                     alt={method.name}
                     className="w-full h-full object-contain"
                   />
@@ -294,9 +281,8 @@ export default function PaymentInfoStep({
                 id="cardName"
                 value={paymentInfo.cardName}
                 onChange={(e) => handleInputChange("cardName", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.cardName ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.cardName ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="Nombre como aparece en la tarjeta"
                 disabled={disabled}
               />
@@ -311,9 +297,8 @@ export default function PaymentInfoStep({
                 id="cardNumber"
                 value={paymentInfo.cardNumber}
                 onChange={(e) => handleInputChange("cardNumber", formatCardNumber(e.target.value))}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.cardNumber ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.cardNumber ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="1234 5678 9012 3456"
                 maxLength={19}
                 disabled={disabled}
@@ -330,9 +315,8 @@ export default function PaymentInfoStep({
                   id="expiryDate"
                   value={paymentInfo.expiryDate}
                   onChange={(e) => handleInputChange("expiryDate", formatCreditCardExpiry(e.target.value))}
-                  className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                    errors.expiryDate ? "border-red-500 focus-visible:ring-red-500" : ""
-                  }`}
+                  className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.expiryDate ? "border-red-500 focus-visible:ring-red-500" : ""
+                    }`}
                   placeholder="MM/AA"
                   maxLength={5}
                   disabled={disabled}
@@ -349,9 +333,8 @@ export default function PaymentInfoStep({
                     type={showCVV ? "text" : "password"}
                     value={paymentInfo.cvv}
                     onChange={(e) => handleInputChange("cvv", e.target.value.replace(/\D/g, ""))}
-                    className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 pr-10 ${
-                      errors.cvv ? "border-red-500 focus-visible:ring-red-500" : ""
-                    }`}
+                    className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 pr-10 ${errors.cvv ? "border-red-500 focus-visible:ring-red-500" : ""
+                      }`}
                     placeholder="123"
                     maxLength={4}
                     disabled={disabled}

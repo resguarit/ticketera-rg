@@ -20,7 +20,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $user->load('person');
-        
+
         return Inertia::render('user/myaccount', [
             'user' => [
                 'id' => $user->id,
@@ -43,13 +43,13 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        
+
         $validated = $request->validate([
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'documentNumber' => 'required|string|max:20',
+            'documentNumber' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
         ]);
 
@@ -76,7 +76,7 @@ class ProfileController extends Controller
     public function updatePassword(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        
+
         $validated = $request->validate([
             'current_password' => 'required|current_password',
             'password' => ['required', 'confirmed', Password::defaults()],
@@ -88,26 +88,6 @@ class ProfileController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Contraseña actualizada correctamente');
-    }
-
-    /**
-     * Actualizar configuración de notificaciones
-     */
-    public function updateNotifications(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'emailNotifications' => 'boolean',
-            'smsNotifications' => 'boolean',
-            'pushNotifications' => 'boolean',
-            'eventReminders' => 'boolean',
-            'promotionalEmails' => 'boolean',
-            'securityAlerts' => 'boolean',
-        ]);
-
-        // Por ahora guardamos en la sesión, después puedes crear una tabla user_preferences
-        session(['notification_preferences' => $validated]);
-
-        return redirect()->back()->with('success', 'Preferencias de notificaciones actualizadas');
     }
 
     /**
