@@ -78,8 +78,12 @@
 
     <table class="detail-list">
         <tr>
-            <td><strong>Precio Promedio por Ticket:</strong></td>
-            <td class="text-right">${{ number_format($salesData['avgTicketPrice'] ?? 0, 2, ',', '.') }}</td>
+            <td><strong>Ingreso Neto (Sin Cargo por Servicio):</strong></td>
+            <td class="text-right">${{ number_format($salesData['netRevenue'] ?? 0, 2, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td><strong>Total Ingresos por Cargo de Servicio:</strong></td>
+            <td class="text-right">${{ number_format($salesData['totalServiceFees'] ?? 0, 2, ',', '.') }}</td>
         </tr>
         <tr>
             <td><strong>Órdenes Procesadas:</strong></td>
