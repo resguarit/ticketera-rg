@@ -371,15 +371,42 @@ class ReportPDFService
             return Category::all()
                 ->map(function ($category) use ($startDate) {
                     try {
-                        $categoryRevenue = DB::table('issued_tickets')
+                        // Obtener todas las órdenes únicas relacionadas con esta categoría
+                        $categoryOrders = DB::table('orders')
+                            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                             ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
                             ->join('events', 'event_functions.event_id', '=', 'events.id')
-                            ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
                             ->where('events.category_id', $category->id)
                             ->where('orders.status', OrderStatus::PAID)
                             ->where('orders.created_at', '>=', $startDate)
-                            ->sum('ticket_types.price') ?? 0;
+                            ->select('orders.id', 'orders.total_amount')
+                            ->distinct()
+                            ->get();
+
+                        // Calcular revenue proporcional con cargo de servicio incluido
+                        $categoryRevenue = 0;
+                        foreach ($categoryOrders as $order) {
+                            // Contar tickets de esta categoría en esta orden
+                            $categoryTicketsInOrder = DB::table('issued_tickets')
+                                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                                ->where('issued_tickets.order_id', $order->id)
+                                ->where('events.category_id', $category->id)
+                                ->count();
+
+                            // Contar total de tickets en esta orden
+                            $totalTicketsInOrder = DB::table('issued_tickets')
+                                ->where('order_id', $order->id)
+                                ->count();
+
+                            // Calcular proporción del total_amount
+                            if ($totalTicketsInOrder > 0) {
+                                $proportion = $categoryTicketsInOrder / $totalTicketsInOrder;
+                                $categoryRevenue += $order->total_amount * $proportion;
+                            }
+                        }
 
                         $eventsCount = Event::where('category_id', $category->id)
                             ->where('created_at', '>=', $startDate)
@@ -428,15 +455,42 @@ class ReportPDFService
                         ->count();
 
                     if ($eventsCount > 0) {
-                        $revenue = DB::table('issued_tickets')
+                        // Obtener todas las órdenes únicas relacionadas con este venue
+                        $venueOrders = DB::table('orders')
+                            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                             ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
                             ->join('events', 'event_functions.event_id', '=', 'events.id')
-                            ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
                             ->where('events.venue_id', $venue->id)
                             ->where('orders.status', OrderStatus::PAID)
                             ->where('orders.created_at', '>=', $startDate)
-                            ->sum('ticket_types.price') ?? 0;
+                            ->select('orders.id', 'orders.total_amount')
+                            ->distinct()
+                            ->get();
+
+                        // Calcular revenue proporcional con cargo de servicio incluido
+                        $revenue = 0;
+                        foreach ($venueOrders as $order) {
+                            // Contar tickets de este venue en esta orden
+                            $venueTicketsInOrder = DB::table('issued_tickets')
+                                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                                ->where('issued_tickets.order_id', $order->id)
+                                ->where('events.venue_id', $venue->id)
+                                ->count();
+
+                            // Contar total de tickets en esta orden
+                            $totalTicketsInOrder = DB::table('issued_tickets')
+                                ->where('order_id', $order->id)
+                                ->count();
+
+                            // Calcular proporción del total_amount
+                            if ($totalTicketsInOrder > 0) {
+                                $proportion = $venueTicketsInOrder / $totalTicketsInOrder;
+                                $revenue += $order->total_amount * $proportion;
+                            }
+                        }
 
                         $venueStats[] = [
                             'name' => $venue->name ?? 'Sin nombre',

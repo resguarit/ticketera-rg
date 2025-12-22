@@ -73,7 +73,7 @@
             <tr>
                 <th>Evento</th>
                 <th>Detalle (Lugar / Categoría)</th>
-                <th class="text-right">Tickets</th>
+                <th class="text-right">Tickets Vendidos</th>
                 <th class="text-right">Ingresos</th>
             </tr>
         </thead>
