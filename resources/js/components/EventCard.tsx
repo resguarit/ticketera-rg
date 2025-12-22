@@ -64,9 +64,9 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                         </div>
                         
                         {/* Contenido derecha */}
-                        <div className="flex-1 p-3 flex flex-col justify-between">
+                        <div className="flex-1 p-3 flex flex-col justify-between overflow-hidden">
                             {/* Top section */}
-                            <div>
+                            <div className="overflow-hidden flex-1">
                                 <div className="flex items-center gap-1 mb-1">
                                     <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
                                     <span className="text-xs text-gray-500 uppercase truncate">
@@ -74,13 +74,14 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                                     </span>
                                 </div>
                                 
-                                <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 mb-2">
+                                {/* Título con altura máxima exacta para 2 líneas */}
+                                <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 max-h-[2.5rem] overflow-hidden">
                                     {event.name}
                                 </h3>
                             </div>
                             
                             {/* Bottom section - Fecha y hora */}
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 flex-shrink-0">
                                 <div className="flex items-center gap-1">
                                     <span className="text-2xl font-bold text-black leading-none">{day}</span>
                                     <div className="leading-none">
@@ -126,10 +127,10 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                         </div>
                     </div>
 
-                    {/* Bottom section with white background - flex para distribuir contenido */}
-                    <div className="p-4 bg-white flex-1 flex flex-col justify-between">
-                        <div>
-                            {/* Location - altura fija */}
+                    {/* Bottom section with white background */}
+                    <div className="p-4 bg-white flex-1 flex flex-col justify-between overflow-hidden">
+                        <div className="overflow-hidden flex-1">
+                            {/* Location */}
                             <div className="flex items-center gap-2 mb-3 h-6">
                                 <MapPin className="w-4 h-4 text-gray-600 flex-shrink-0" />
                                 <span className="text-gray-600 text-sm font-medium uppercase truncate">
@@ -137,14 +138,14 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                                 </span>
                             </div>
 
-                            {/* Event title - altura fija con line-clamp */}
-                            <h2 className="text-black text-xl font-bold mb-4 leading-tight tracking-wide uppercase line-clamp-2 min-h-[3.5rem]">
+                            {/* Event title - altura máxima exacta para 2 líneas */}
+                            <h2 className="text-black text-xl font-bold mb-4 leading-tight tracking-wide uppercase line-clamp-2 max-h-[3rem] overflow-hidden">
                                 {event.name}
                             </h2>
                         </div>
 
                         {/* Date and time - siempre al final */}
-                        <div className="flex gap-6 mt-auto">
+                        <div className="flex gap-6 mt-auto flex-shrink-0">
                             <div className="text-center">
                                 <div className="flex gap-[2px] flex-row items-center">
                                     <div className="text-4xl font-bold text-black">{day}</div>
