@@ -37,7 +37,7 @@ interface Stat {
     total_organizers: number;
     active_organizers: number;
     total_events: number;
-    total_revenue: number;
+    organizers_with_active_events: number;
 }
 
 interface OrganizerIndex extends Organizer {
@@ -182,10 +182,10 @@ export default function Index({ auth }: any) {
             variant: "info"
         },
         {
-            title: "Ingresos Totales",
-            value: stats.total_revenue,
-            format: "currency",
-            icon: DollarSign,
+            title: "Con Eventos Activos",
+            value: stats.organizers_with_active_events,
+            format: "number",
+            icon: CheckCircle,
             variant: "warning"
         }
     ];
