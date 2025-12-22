@@ -48,9 +48,17 @@
 
     <table class="kpi-table">
         <tr>
-            <td>
+            <td style="background-color: #eee;">
                 <span class="kpi-label">Ingresos Totales</span>
                 <span class="kpi-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Ingresos Netos</span>
+                <span class="kpi-value">${{ number_format($salesData['netRevenue'], 2, ',', '.') }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Ingresos Cargo por Servicio</span>
+                <span class="kpi-value">${{ number_format($salesData['totalServiceFees'], 2, ',', '.') }}</span>
             </td>
             <td>
                 <span class="kpi-label">Tickets</span>
@@ -59,10 +67,6 @@
             <td>
                 <span class="kpi-label">Órdenes</span>
                 <span class="kpi-value">{{ number_format($salesData['totalOrders']) }}</span>
-            </td>
-            <td style="background-color: #eee;">
-                <span class="kpi-label">Ticket Promedio</span>
-                <span class="kpi-value">${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</span>
             </td>
         </tr>
     </table>
@@ -73,18 +77,19 @@
             <tr>
                 <th>Mes</th>
                 <th class="text-right">Tickets Vendidos</th>
-                <th class="text-right">Ingresos</th>
-                <th class="text-right">Promedio por Ticket</th>
+                <th class="text-right">Ingresos Totales</th>
+                <th class="text-right">Ingresos Netos</th>
+                <th class="text-right">Ingresos Cargo por Servicio</th>
             </tr>
         </thead>
         <tbody>
             @foreach($monthlyData as $month)
-                @php $avg = $month['tickets'] > 0 ? $month['revenue'] / $month['tickets'] : 0; @endphp
                 <tr>
                     <td class="font-bold">{{ $month['month'] }}</td>
                     <td class="text-right">{{ number_format($month['tickets']) }}</td>
                     <td class="text-right font-bold">${{ number_format($month['revenue'], 2, ',', '.') }}</td>
-                    <td class="text-right" style="color: #555;">${{ number_format($avg, 2, ',', '.') }}</td>
+                    <td class="text-right" style="color: #555;">${{ number_format($month['netRevenue'], 2, ',', '.') }}</td>
+                    <td class="text-right" style="color: #555;">${{ number_format($month['serviceFees'], 2, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -109,7 +114,7 @@
                     <td style="font-size: 10px; color: #555;">
                         {{ $event['venue'] ?? '-' }} • {{ $event['category'] }}
                     </td>
-                    <td class="text-right">{{ number_format($event['ticketsSold']) }}</td>
+                    <td class="text-center">{{ number_format($event['ticketsSold']) }}</td>
                     <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
                 </tr>
             @endforeach

@@ -165,13 +165,29 @@ class ReportPDFService
             ->where('created_at', '>=', $startDate)
             ->count();
 
-        $avgTicketPrice = $totalTickets > 0 ? $totalRevenue / $totalTickets : 0;
+        $orders = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->get();
+
+        // Ingresos brutos (total_amount = subtotal - descuento + service_fee)
+        $totalRevenue = $orders->sum('total_amount');
+
+        $netRevenue = $orders->sum(function($order) {
+            $discount = $order->subtotal * ($order->discount ?? 0);
+            return $order->subtotal - $discount;
+        });
+            
+            $totalServiceFees = $orders->sum('service_fee');
+
+
+
 
         return [
             'totalRevenue' => $totalRevenue,
+            'netRevenue' => $netRevenue,
+            'totalServiceFees' => $totalServiceFees,
             'totalTickets' => $totalTickets,
             'totalOrders' => $totalOrders,
-            'avgTicketPrice' => $avgTicketPrice,
             'avgOrderValue' => $totalOrders > 0 ? $totalRevenue / $totalOrders : 0,
         ];
     }
@@ -182,12 +198,19 @@ class ReportPDFService
         $current = $startDate->copy()->startOfMonth();
         
         while ($current <= Carbon::now()->endOfMonth()) {
-            $monthRevenue = Order::where('status', OrderStatus::PAID)
+            $monthOrders = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
                     $current->copy()->endOfMonth()
                 ])
-                ->sum('total_amount');
+                ->get();
+
+            $monthRevenue = $monthOrders->sum('total_amount');
+            
+            $monthNetRevenue = $monthOrders->sum(function($order) {
+                $discount = $order->subtotal * ($order->discount ?? 0);
+                return $order->subtotal - $discount;
+            });
 
             $monthTickets = IssuedTicket::whereHas('order', function($query) use ($current) {
                 $query->where('status', OrderStatus::PAID)
@@ -197,18 +220,15 @@ class ReportPDFService
                       ]);
             })->count();
 
-            $monthOrders = Order::where('status', OrderStatus::PAID)
-                ->whereBetween('created_at', [
-                    $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
-                ])
-                ->count();
+            $monthServiceFees = $monthOrders->sum('service_fee');
 
             $months[] = [
                 'month' => $current->locale('es')->format('F Y'),
                 'revenue' => $monthRevenue,
+                'netRevenue' => $monthNetRevenue,
+                'serviceFees' => $monthServiceFees,
                 'tickets' => $monthTickets,
-                'orders' => $monthOrders,
+                'orders' => $monthOrders->count(),
             ];
 
             $current->addMonth();
@@ -231,18 +251,44 @@ class ReportPDFService
             })
             ->whereNotNull('orders.id')
             ->groupBy('events.id')
-            ->orderByRaw('SUM(ticket_types.price) DESC')
+            ->orderByRaw('SUM(orders.total_amount) DESC')
             ->limit($limit)
             ->get()
             ->map(function ($event) use ($startDate) {
-                $revenue = DB::table('issued_tickets')
+                // Obtener todas las órdenes del evento
+                $eventOrders = DB::table('orders')
+                    ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
                     ->where('event_functions.event_id', $event->id)
                     ->where('orders.status', OrderStatus::PAID)
                     ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
+                    ->select('orders.id', 'orders.total_amount', 'orders.subtotal', 'orders.discount')
+                    ->distinct()
+                    ->get();
+
+                // Calcular proporción del revenue de cada orden que corresponde a este evento
+                $totalRevenue = 0;
+                foreach ($eventOrders as $order) {
+                    // Contar tickets de este evento en esta orden
+                    $eventTicketsInOrder = DB::table('issued_tickets')
+                        ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                        ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                        ->where('issued_tickets.order_id', $order->id)
+                        ->where('event_functions.event_id', $event->id)
+                        ->count();
+
+                    // Contar total de tickets en esta orden
+                    $totalTicketsInOrder = DB::table('issued_tickets')
+                        ->where('order_id', $order->id)
+                        ->count();
+
+                    // Calcular proporción del total_amount
+                    if ($totalTicketsInOrder > 0) {
+                        $proportion = $eventTicketsInOrder / $totalTicketsInOrder;
+                        $totalRevenue += $order->total_amount * $proportion;
+                    }
+                }
 
                 $ticketsSold = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
@@ -258,10 +304,12 @@ class ReportPDFService
                     'category' => $event->category->name ?? 'Sin categoría',
                     'venue' => $event->venue->name,
                     'city' => $event->venue->ciudad->name ?? 'Sin ciudad',
-                    'revenue' => $revenue,
+                    'revenue' => $totalRevenue,
                     'ticketsSold' => $ticketsSold,
                 ];
             })
+            ->sortByDesc('revenue')
+            ->values()
             ->toArray();
     }
 
