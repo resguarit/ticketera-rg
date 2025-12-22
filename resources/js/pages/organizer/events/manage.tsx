@@ -137,8 +137,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                     </div>
 
                     {/* Estadísticas rápidas */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                        <Card className="p-6 bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                        <Card className="p-3 py-4 bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -148,7 +148,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                             </div>
                         </Card>
 
-                        <Card className="p-6 bg-gradient-to-br from-white to-green-50 shadow-sm hover:shadow-md transition-shadow">
+                        <Card className="p-3 py-4 bg-gradient-to-br from-white to-green-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -158,7 +158,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                             </div>
                         </Card>
 
-                        <Card className="p-6 bg-gradient-to-br from-white to-red-50 shadow-sm hover:shadow-md transition-shadow">
+                        <Card className="p-3 py-4 bg-gradient-to-br from-white to-red-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -169,7 +169,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                             </div>
                         </Card>
 
-                        <Card className="p-6 bg-gradient-to-br from-white to-purple-50 shadow-sm hover:shadow-md transition-shadow">
+                        <Card className="p-3 py-4 bg-gradient-to-br from-white to-purple-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
@@ -180,7 +180,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                             </div>
                         </Card>
 
-                        <Card className="p-6 bg-gradient-to-br from-white to-yellow-50 shadow-sm hover:shadow-md transition-shadow">
+                        <Card className="p-3 py-4 bg-gradient-to-br from-white to-yellow-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
