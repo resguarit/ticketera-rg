@@ -36,6 +36,10 @@ interface ReportsProps {
     salesData: {
         totalRevenue: number;
         monthlyRevenue: number;
+        netRevenue: number; // NUEVO
+        monthlyNetRevenue: number; // NUEVO
+        totalServiceFees: number; // NUEVO
+        monthlyServiceFees: number; // NUEVO
         totalTickets: number;
         monthlyTickets: number;
         averageTicketPrice: number;
@@ -256,6 +260,7 @@ export default function Reports({ auth }: any) {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                        {/* Card 1: Ingresos Totales (con service fee) */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
@@ -264,15 +269,20 @@ export default function Reports({ auth }: any) {
                                         <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.totalRevenue)}</p>
                                         <div className="flex items-center mt-2">
                                             {salesData.growthRate >= 0 ? (
-                                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1 flex-shrink-0" />
+                                                <>
+                                                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm text-chart-2 font-medium truncate">
+                                                        +{salesData.growthRate}% vs período anterior
+                                                    </span>
+                                                </>
                                             ) : (
-                                                <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
+                                                <>
+                                                    <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm text-red-500 font-medium truncate">
+                                                        {salesData.growthRate}% vs período anterior
+                                                    </span>
+                                                </>
                                             )}
-                                            <span className={`text-xs sm:text-sm font-medium ${
-                                                salesData.growthRate >= 0 ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                                {salesData.growthRate >= 0 ? '+' : ''}{salesData.growthRate}%
-                                            </span>
                                         </div>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
@@ -282,6 +292,25 @@ export default function Reports({ auth }: any) {
                             </CardContent>
                         </Card>
 
+                        {/* Card 2: NUEVA - Ingreso Neto (sin service fee) */}
+                        <Card className="bg-white border-gray-200 shadow-lg">
+                            <CardContent className="p-4 sm:p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Ingreso Neto</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.netRevenue)}</p>
+                                        <p className="text-xs text-gray-500 mt-2 truncate">
+                                            Sin cargo de servicio
+                                        </p>
+                                    </div>
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                                        <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Card 3: Tickets Vendidos */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
@@ -290,7 +319,9 @@ export default function Reports({ auth }: any) {
                                         <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalTickets)}</p>
                                         <div className="flex items-center mt-2">
                                             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-2 text-xs sm:text-sm font-medium">+22%</span>
+                                            <span className="text-xs sm:text-sm text-gray-600 truncate">
+                                                {formatNumber(salesData.monthlyTickets)} este mes
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-2 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
@@ -300,34 +331,16 @@ export default function Reports({ auth }: any) {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-4 sm:p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Precio Promedio</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.averageTicketPrice)}</p>
-                                        <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-3 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-3 text-xs sm:text-sm font-medium">+8%</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-3 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
+                        {/* Card 4: Tasa de Conversión */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Tasa de Conversión</p>
                                         <p className="text-lg sm:text-2xl font-bold text-black">{salesData.conversionRate}%</p>
-                                        <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-4 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-4 text-xs sm:text-sm font-medium">+3.2%</span>
-                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2 truncate">
+                                            De órdenes iniciadas a pagadas
+                                        </p>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-4 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
                                         <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />

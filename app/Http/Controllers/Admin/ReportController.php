@@ -140,6 +140,28 @@ class ReportController extends Controller
             ->where('created_at', '>=', Carbon::now()->startOfMonth())
             ->sum('total_amount');
 
+        // Calcular ingreso neto (subtotal - descuentos, sin service_fee)
+        $netRevenue = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->get()
+            ->sum(function($order) {
+                // subtotal - descuento = ingreso neto
+                $discount = $order->subtotal * ($order->discount ?? 0);
+                return $order->subtotal - $discount;
+            });
+
+        $monthlyNetRevenue = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', Carbon::now()->startOfMonth())
+            ->get()
+            ->sum(function($order) {
+                $discount = $order->subtotal * ($order->discount ?? 0);
+                return $order->subtotal - $discount;
+            });
+
+        // Calcular total de service fees
+        $totalServiceFees = $totalRevenue - $netRevenue;
+        $monthlyServiceFees = $monthlyRevenue - $monthlyNetRevenue;
+
         $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
                   ->where('created_at', '>=', $startDate);
@@ -178,6 +200,10 @@ class ReportController extends Controller
         return [
             'totalRevenue' => $totalRevenue,
             'monthlyRevenue' => $monthlyRevenue,
+            'netRevenue' => $netRevenue, // NUEVO
+            'monthlyNetRevenue' => $monthlyNetRevenue, // NUEVO
+            'totalServiceFees' => $totalServiceFees, // NUEVO
+            'monthlyServiceFees' => $monthlyServiceFees, // NUEVO
             'totalTickets' => $totalTickets,
             'monthlyTickets' => $monthlyTickets,
             'averageTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
