@@ -152,24 +152,10 @@ class ReportPDFService
     // Métodos privados para obtener datos
     private function getSalesData(Carbon $startDate): array
     {
-        $totalRevenue = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->sum('total_amount');
-
-        $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
-            $query->where('status', OrderStatus::PAID)
-                  ->where('created_at', '>=', $startDate);
-        })->count();
-
-        $totalOrders = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->count();
-
         $orders = Order::where('status', OrderStatus::PAID)
             ->where('created_at', '>=', $startDate)
             ->get();
 
-        // Ingresos brutos (total_amount = subtotal - descuento + service_fee)
         $totalRevenue = $orders->sum('total_amount');
 
         $netRevenue = $orders->sum(function($order) {
@@ -177,10 +163,14 @@ class ReportPDFService
             return $order->subtotal - $discount;
         });
             
-            $totalServiceFees = $orders->sum('service_fee');
+        $totalServiceFees = $orders->sum('service_fee');
 
+        $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
+            $query->where('status', OrderStatus::PAID)
+                  ->where('created_at', '>=', $startDate);
+        })->count();
 
-
+        $totalOrders = $orders->count();
 
         return [
             'totalRevenue' => $totalRevenue,
@@ -189,6 +179,7 @@ class ReportPDFService
             'totalTickets' => $totalTickets,
             'totalOrders' => $totalOrders,
             'avgOrderValue' => $totalOrders > 0 ? $totalRevenue / $totalOrders : 0,
+            'avgTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0, // ✅ AGREGAR
         ];
     }
 
@@ -628,12 +619,14 @@ class ReportPDFService
                 ])
                 ->count();
 
-            $firstOrders = Order::where('status', OrderStatus::PAID)
+            // ✅ USAR DB::table directo
+            $firstOrders = DB::table('orders')
+                ->where('status', OrderStatus::PAID->value)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
                     $current->copy()->endOfMonth()
                 ])
-                ->whereRaw('(SELECT COUNT(*) FROM orders o2 WHERE o2.client_id = orders.client_id AND o2.status = "PAID" AND o2.created_at < orders.created_at) = 0')
+                ->whereRaw('(SELECT COUNT(*) FROM orders o2 WHERE o2.client_id = orders.client_id AND o2.status = ? AND o2.created_at < orders.created_at) = 0', [OrderStatus::PAID->value])
                 ->count();
 
             $trends[] = [
@@ -650,34 +643,46 @@ class ReportPDFService
 
     private function getTopBuyers(Carbon $startDate): array
     {
-        return User::with('person')
-            ->where('role', UserRole::CLIENT)
-            ->whereHas('orders', function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            })
-            ->withCount(['orders' => function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            }])
-            ->withSum(['orders' => function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            }], 'total_amount')
-            ->orderBy('orders_sum_total_amount', 'desc')
-            ->limit(15)
-            ->get()
-            ->map(function($user) {
+        try {
+            $topBuyers = DB::table('orders')
+                ->join('users', 'orders.client_id', '=', 'users.id')
+                ->leftJoin('people', 'users.person_id', '=', 'people.id')
+                ->where('orders.status', OrderStatus::PAID->value)
+                ->where('orders.created_at', '>=', $startDate)
+                ->whereNull('users.deleted_at')
+                ->where('users.role', UserRole::CLIENT->value)
+                ->select([
+                    'users.id',
+                    'users.email',
+                    'users.created_at as registration_date',
+                    DB::raw("COALESCE(CONCAT(people.name, ' ', people.last_name), 'Sin nombre') as full_name"),
+                    DB::raw('COUNT(DISTINCT orders.id) as total_orders'),
+                    DB::raw('SUM(orders.total_amount) as total_spent')
+                ])
+                ->groupBy('users.id', 'users.email', 'users.created_at', 'people.name', 'people.last_name')
+                ->orderBy('total_spent', 'desc')
+                ->limit(15)
+                ->get();
+
+            return $topBuyers->map(function($buyer) {
+                $avgOrder = $buyer->total_orders > 0 
+                    ? ($buyer->total_spent / $buyer->total_orders) 
+                    : 0;
+
                 return [
-                    'name' => $user->person ? $user->person->name . ' ' . $user->person->last_name : 'Sin nombre',
-                    'email' => $user->email,
-                    'total_orders' => $user->orders_count,
-                    'total_spent' => $user->orders_sum_total_amount ?? 0,
-                    'avg_order' => $user->orders_count > 0 ? ($user->orders_sum_total_amount / $user->orders_count) : 0,
-                    'registration_date' => $user->created_at->format('d/m/Y'),
+                    'name' => $buyer->full_name,
+                    'email' => $buyer->email,
+                    'total_orders' => (int) $buyer->total_orders,
+                    'total_spent' => (float) $buyer->total_spent,
+                    'avg_order' => round($avgOrder, 2),
+                    'registration_date' => Carbon::parse($buyer->registration_date)->format('d/m/Y'),
                 ];
-            })
-            ->toArray();
+            })->toArray();
+
+        } catch (\Exception $e) {
+            \Log::error("Error en getTopBuyers (Service): " . $e->getMessage());
+            return [];
+        }
     }
 
     private function getPeriodName(string $timeRange): string

@@ -26,16 +26,17 @@
 
         .section-title { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
         .font-bold { font-weight: bold; }
 
         .page-break { page-break-after: always; }
         
-        /* Lista de detalles para resumen */
         .detail-list { width: 100%; border: 1px solid #ddd; }
         .detail-list td { border: none; border-bottom: 1px solid #eee; padding: 10px; }
         .detail-list tr:last-child td { border-bottom: none; }
 
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; }
+        .footer { text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; margin-top: 40px; }
+        .empty-state { color: #999; padding: 20px; text-align: center; font-style: italic; }
     </style>
 </head>
 <body>
@@ -58,19 +59,19 @@
         <tr>
             <td>
                 <span class="kpi-label">Ingresos Totales</span>
-                <span class="kpi-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</span>
+                <span class="kpi-value">${{ number_format($salesData['totalRevenue'] ?? 0, 2, ',', '.') }}</span>
             </td>
             <td>
                 <span class="kpi-label">Total Tickets</span>
-                <span class="kpi-value">{{ number_format($salesData['totalTickets']) }}</span>
+                <span class="kpi-value">{{ number_format($salesData['totalTickets'] ?? 0) }}</span>
             </td>
             <td>
                 <span class="kpi-label">Eventos</span>
-                <span class="kpi-value">{{ $eventsData['totalEvents'] }}</span>
+                <span class="kpi-value">{{ $eventsData['totalEvents'] ?? 0 }}</span>
             </td>
             <td>
                 <span class="kpi-label">Base de Usuarios</span>
-                <span class="kpi-value">{{ number_format($userStats['totalUsers']) }}</span>
+                <span class="kpi-value">{{ number_format($userStats['totalUsers'] ?? 0) }}</span>
             </td>
         </tr>
     </table>
@@ -78,26 +79,27 @@
     <table class="detail-list">
         <tr>
             <td><strong>Precio Promedio por Ticket:</strong></td>
-            <td class="text-right">${{ number_format($salesData['avgTicketPrice'], 2, ',', '.') }}</td>
+            <td class="text-right">${{ number_format($salesData['avgTicketPrice'] ?? 0, 2, ',', '.') }}</td>
         </tr>
         <tr>
             <td><strong>Órdenes Procesadas:</strong></td>
-            <td class="text-right">{{ number_format($salesData['totalOrders']) }}</td>
+            <td class="text-right">{{ number_format($salesData['totalOrders'] ?? 0) }}</td>
         </tr>
         <tr>
             <td><strong>Usuarios Activos (Período):</strong></td>
-            <td class="text-right">{{ number_format($userStats['activeUsers']) }}</td>
+            <td class="text-right">{{ number_format($userStats['activeUsers'] ?? 0) }}</td>
         </tr>
         <tr>
             <td><strong>Gasto Promedio por Usuario:</strong></td>
-            <td class="text-right">${{ number_format($userStats['avgOrderValue'], 2, ',', '.') }}</td>
+            <td class="text-right">${{ number_format($userStats['avgOrderValue'] ?? 0, 2, ',', '.') }}</td>
         </tr>
     </table>
 
     <div class="footer">CONFIDENCIAL | Informe Integral | Página 1</div>
     <div class="page-break"></div>
 
-    <div style="margin-top: 30px;"></div> <div class="section-title">Top 15 Eventos (Ranking Financiero)</div>
+    <div style="margin-top: 30px;"></div> 
+    <div class="section-title">Top 15 Eventos (Ranking Financiero)</div>
     <table class="table-formal">
         <thead>
             <tr>
@@ -109,15 +111,21 @@
             </tr>
         </thead>
         <tbody>
-            @foreach(array_slice($topEvents, 0, 15) as $index => $event)
+            @if(!empty($topEvents) && count($topEvents) > 0)
+                @foreach(array_slice($topEvents, 0, 15) as $index => $event)
+                    <tr>
+                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td class="font-bold">{{ $event['name'] }}</td>
+                        <td style="font-size:10px;">{{ $event['venue'] ?? '-' }}</td>
+                        <td class="text-right">{{ number_format($event['ticketsSold'] ?? 0) }}</td>
+                        <td class="text-right font-bold">${{ number_format($event['revenue'] ?? 0, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            @else
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td class="font-bold">{{ $event['name'] }}</td>
-                    <td style="font-size:10px;">{{ $event['venue'] ?? '-' }}</td>
-                    <td class="text-right">{{ number_format($event['ticketsSold']) }}</td>
-                    <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
+                    <td colspan="5" class="empty-state">No hay eventos con ventas en este período</td>
                 </tr>
-            @endforeach
+            @endif
         </tbody>
     </table>
 
@@ -131,13 +139,19 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($categoryStats as $category)
+            @if(!empty($categoryStats) && count($categoryStats) > 0)
+                @foreach($categoryStats as $category)
+                    <tr>
+                        <td>{{ $category['name'] ?? 'Sin nombre' }}</td>
+                        <td class="text-right">{{ $category['eventsCount'] ?? 0 }}</td>
+                        <td class="text-right font-bold">${{ number_format($category['revenue'] ?? 0, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            @else
                 <tr>
-                    <td>{{ $category['name'] }}</td>
-                    <td class="text-right">{{ $category['eventsCount'] }}</td>
-                    <td class="text-right font-bold">${{ number_format($category['revenue'], 2, ',', '.') }}</td>
+                    <td colspan="3" class="empty-state">No hay datos de categorías en este período</td>
                 </tr>
-            @endforeach
+            @endif
         </tbody>
     </table>
 
