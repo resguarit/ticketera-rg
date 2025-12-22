@@ -315,115 +315,152 @@ class ReportPDFService
 
     private function getEventsAnalytics(Carbon $startDate): array
     {
-        $totalEvents = Event::where('created_at', '>=', $startDate)->count();
-        $activeEvents = Event::whereHas('functions', function($query) {
-            $query->where('start_time', '>', Carbon::now())
-                  ->where('is_active', true);
-        })->count();
+        try {
+            $totalEvents = Event::where('created_at', '>=', $startDate)->count();
+            
+            $activeEvents = Event::whereHas('functions', function($query) {
+                $query->where('start_time', '>', Carbon::now())
+                      ->where('is_active', true);
+            })->count();
 
-        $completedEvents = Event::whereHas('functions', function($query) {
-            $query->where('start_time', '<', Carbon::now());
-        })->count();
+            $completedEvents = Event::whereHas('functions', function($query) {
+                $query->where('end_time', '<', Carbon::now());
+            })->count();
 
-        // Calcular promedio de tickets por evento
-        $eventsWithTickets = Event::where('created_at', '>=', $startDate)
-            ->withCount(['tickets' => function($query) use ($startDate) {
-                $query->whereHas('order', function($q) use ($startDate) {
-                    $q->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-                });
-            }])
-            ->get();
+            // Calcular promedio de tickets por evento de forma segura
+            $totalTickets = DB::table('issued_tickets')
+                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                ->where('events.created_at', '>=', $startDate)
+                ->where('orders.status', OrderStatus::PAID)
+                ->where('orders.created_at', '>=', $startDate)
+                ->count();
 
-        $avgTicketsPerEvent = $eventsWithTickets->count() > 0 
-            ? $eventsWithTickets->avg('tickets_count') 
-            : 0;
+            $eventsWithSales = Event::where('created_at', '>=', $startDate)
+                ->whereHas('functions.ticketTypes.issuedTickets.order', function($query) use ($startDate) {
+                    $query->where('status', OrderStatus::PAID)
+                          ->where('created_at', '>=', $startDate);
+                })
+                ->count();
 
-        return [
-            'totalEvents' => $totalEvents,
-            'activeEvents' => $activeEvents,
-            'completedEvents' => $completedEvents,
-            'avgTicketsPerEvent' => round($avgTicketsPerEvent),
-        ];
+            $avgTicketsPerEvent = $eventsWithSales > 0 ? round($totalTickets / $eventsWithSales) : 0;
+
+            return [
+                'totalEvents' => $totalEvents,
+                'activeEvents' => $activeEvents,
+                'completedEvents' => $completedEvents,
+                'avgTicketsPerEvent' => $avgTicketsPerEvent,
+            ];
+        } catch (\Exception $e) {
+            \Log::error("Error en getEventsAnalytics: " . $e->getMessage());
+            
+            return [
+                'totalEvents' => 0,
+                'activeEvents' => 0,
+                'completedEvents' => 0,
+                'avgTicketsPerEvent' => 0,
+            ];
+        }
     }
 
     private function getCategoryStats(Carbon $startDate): array
     {
-        return Category::with(['events'])
-            ->get()
-            ->map(function ($category) use ($startDate) {
-                $categoryRevenue = DB::table('issued_tickets')
-                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('events', 'event_functions.event_id', '=', 'events.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
-                    ->where('events.category_id', $category->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
+        try {
+            return Category::all()
+                ->map(function ($category) use ($startDate) {
+                    try {
+                        $categoryRevenue = DB::table('issued_tickets')
+                            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                            ->join('events', 'event_functions.event_id', '=', 'events.id')
+                            ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                            ->where('events.category_id', $category->id)
+                            ->where('orders.status', OrderStatus::PAID)
+                            ->where('orders.created_at', '>=', $startDate)
+                            ->sum('ticket_types.price') ?? 0;
 
-                $eventsCount = Event::where('category_id', $category->id)
-                    ->where('created_at', '>=', $startDate)
-                    ->count();
+                        $eventsCount = Event::where('category_id', $category->id)
+                            ->where('created_at', '>=', $startDate)
+                            ->count();
 
-                return [
-                    'name' => $category->name,
-                    'revenue' => $categoryRevenue,
-                    'eventsCount' => $eventsCount,
-                ];
-            })
-            ->filter(function($item) {
-                return $item['revenue'] > 0 || $item['eventsCount'] > 0;
-            })
-            ->sortByDesc('revenue')
-            ->values()
-            ->toArray();
+                        return [
+                            'name' => $category->name ?? 'Sin nombre',
+                            'revenue' => $categoryRevenue,
+                            'eventsCount' => $eventsCount,
+                        ];
+                    } catch (\Exception $e) {
+                        \Log::warning("Error procesando categoría {$category->id}: " . $e->getMessage());
+                        return null;
+                    }
+                })
+                ->filter(function($item) {
+                    return $item !== null && ($item['revenue'] > 0 || $item['eventsCount'] > 0);
+                })
+                ->sortByDesc('revenue')
+                ->values()
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error("Error en getCategoryStats: " . $e->getMessage());
+            return [];
+        }
     }
 
     private function getVenueStats(Carbon $startDate): array
     {
-        $venues = DB::table('venues')
-            ->select([
-                'venues.id',
-                'venues.name',
-                'ciudades.name as city'
-            ])
-            ->leftJoin('ciudades', 'venues.ciudad_id', '=', 'ciudades.id')
-            ->get();
+        try {
+            $venues = DB::table('venues')
+                ->select([
+                    'venues.id',
+                    'venues.name',
+                    'ciudades.name as city'
+                ])
+                ->leftJoin('ciudades', 'venues.ciudad_id', '=', 'ciudades.id')
+                ->get();
 
-        $venueStats = [];
+            $venueStats = [];
 
-        foreach ($venues as $venue) {
-            $eventsCount = Event::where('venue_id', $venue->id)
-                ->where('created_at', '>=', $startDate)
-                ->count();
+            foreach ($venues as $venue) {
+                try {
+                    $eventsCount = Event::where('venue_id', $venue->id)
+                        ->where('created_at', '>=', $startDate)
+                        ->count();
 
-            if ($eventsCount > 0) {
-                $revenue = DB::table('issued_tickets')
-                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('events', 'event_functions.event_id', '=', 'events.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
-                    ->where('events.venue_id', $venue->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
+                    if ($eventsCount > 0) {
+                        $revenue = DB::table('issued_tickets')
+                            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                            ->join('events', 'event_functions.event_id', '=', 'events.id')
+                            ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                            ->where('events.venue_id', $venue->id)
+                            ->where('orders.status', OrderStatus::PAID)
+                            ->where('orders.created_at', '>=', $startDate)
+                            ->sum('ticket_types.price') ?? 0;
 
-                $venueStats[] = [
-                    'name' => $venue->name,
-                    'city' => $venue->city ?? 'Sin ciudad',
-                    'events_count' => $eventsCount,
-                    'total_revenue' => $revenue ?? 0,
-                ];
+                        $venueStats[] = [
+                            'name' => $venue->name ?? 'Sin nombre',
+                            'city' => $venue->city ?? 'Sin ciudad',
+                            'events_count' => $eventsCount,
+                            'total_revenue' => $revenue,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Error procesando venue {$venue->id}: " . $e->getMessage());
+                    continue;
+                }
             }
+
+            // Ordenar por revenue y limitar a 10
+            usort($venueStats, function($a, $b) {
+                return $b['total_revenue'] <=> $a['total_revenue'];
+            });
+
+            return array_slice($venueStats, 0, 10);
+        } catch (\Exception $e) {
+            \Log::error("Error en getVenueStats: " . $e->getMessage());
+            return [];
         }
-
-        // Ordenar por revenue y limitar a 10
-        usort($venueStats, function($a, $b) {
-            return $b['total_revenue'] <=> $a['total_revenue'];
-        });
-
-        return array_slice($venueStats, 0, 10);
     }
 
     private function getFinancialAnalytics(Carbon $startDate): array
