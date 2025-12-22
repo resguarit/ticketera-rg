@@ -32,7 +32,6 @@ interface UserStats {
     pending: number;
     new_this_month: number;
     total_orders: number;
-    total_revenue: number;
 }
 
 interface PaginatedUsers {
@@ -189,11 +188,10 @@ export default function Users({ auth }: any) {
             variant: "warning",
         },
         {
-            title: "Ingresos Generados",
-            value: stats.total_revenue,
+            title: "Total de Pedidos",
+            value: stats.total_orders,
             icon: ShoppingCart,
             variant: "info",
-            format: "currency",
         },
     ];
 
