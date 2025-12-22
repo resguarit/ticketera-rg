@@ -61,9 +61,9 @@
                 <span class="kpi-value">{{ $eventsData['completedEvents'] }}</span>
             </td>
             <td>
-                <span class="kpi-label">Promedio Tickets</span>
-                <span class="kpi-value">{{ $eventsData['avgTicketsPerEvent'] }}</span>
-            </td>
+    <span class="kpi-label">Tickets Vendidos</span>
+    <span class="kpi-value">{{ number_format($eventsData['totalTicketsSold']) }}</span>
+</td>
         </tr>
     </table>
 

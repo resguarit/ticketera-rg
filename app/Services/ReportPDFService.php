@@ -327,8 +327,8 @@ class ReportPDFService
                 $query->where('end_time', '<', Carbon::now());
             })->count();
 
-            // Calcular promedio de tickets por evento de forma segura
-            $totalTickets = DB::table('issued_tickets')
+            // Total de tickets vendidos
+            $totalTicketsSold = DB::table('issued_tickets')
                 ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                 ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
                 ->join('events', 'event_functions.event_id', '=', 'events.id')
@@ -338,20 +338,11 @@ class ReportPDFService
                 ->where('orders.created_at', '>=', $startDate)
                 ->count();
 
-            $eventsWithSales = Event::where('created_at', '>=', $startDate)
-                ->whereHas('functions.ticketTypes.issuedTickets.order', function($query) use ($startDate) {
-                    $query->where('status', OrderStatus::PAID)
-                          ->where('created_at', '>=', $startDate);
-                })
-                ->count();
-
-            $avgTicketsPerEvent = $eventsWithSales > 0 ? round($totalTickets / $eventsWithSales) : 0;
-
             return [
                 'totalEvents' => $totalEvents,
                 'activeEvents' => $activeEvents,
                 'completedEvents' => $completedEvents,
-                'avgTicketsPerEvent' => $avgTicketsPerEvent,
+                'totalTicketsSold' => $totalTicketsSold,
             ];
         } catch (\Exception $e) {
             \Log::error("Error en getEventsAnalytics: " . $e->getMessage());
@@ -360,7 +351,7 @@ class ReportPDFService
                 'totalEvents' => 0,
                 'activeEvents' => 0,
                 'completedEvents' => 0,
-                'avgTicketsPerEvent' => 0,
+                'totalTicketsSold' => 0,
             ];
         }
     }
