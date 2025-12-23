@@ -113,6 +113,7 @@ interface EventData {
     functions: EventFunction[];
     created_at: string;
     updated_at: string;
+    total_issued_tickets: number; // Agregar esta línea
 }
 
 interface PageProps {
@@ -134,6 +135,7 @@ export default function Show({ auth }: any) {
     );
 
     const totalRevenue = event.total_revenue;
+    const netRevenue = event.net_revenue;
     const salesProgress = calculateSalesPercentage(soldTickets, totalTickets);
 
     // Determinar estado del evento basado en prioridad de funciones
@@ -681,9 +683,16 @@ export default function Show({ auth }: any) {
 
                         {/* Tab: Tickets */}
                         <TabsContent value="tickets">
-                            <Card className="bg-white border-gray-200">
-                                <CardHeader>
-                                    <CardTitle className="text-black">Tipos de Tickets</CardTitle>
+                            <Card className="bg-white border-gray-200 gap-2">
+                                <CardHeader className='pb-2'>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-black">Tipos de Tickets</CardTitle>
+                                            <p className="text-sm text-gray-600 mt-4">
+                                                Total de tickets emitidos: <span className="font-semibold text-black">{event.total_issued_tickets.toLocaleString('es-AR')}</span>
+                                            </p>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     {event.functions.some(func => func.ticket_types.length > 0) ? (
@@ -765,14 +774,14 @@ export default function Show({ auth }: any) {
                                                     <p className="text-sm text-gray-600">Tickets Vendidos</p>
                                                 </div>
                                                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                                    <p className="text-2xl font-bold text-blue-600">${totalRevenue.toLocaleString()}</p>
+                                                <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</p>
                                                     <p className="text-sm text-gray-600">Ingresos Totales</p>
                                                 </div>
                                             </div>
                                             
                                             <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                                <p className="text-2xl font-bold text-purple-600">{Math.round(salesProgress)}%</p>
-                                                <p className="text-sm text-gray-600">Progreso de Ventas</p>
+                                                <p className="text-2xl font-bold text-purple-600">{formatCurrency(netRevenue)}</p>
+                                                <p className="text-sm text-gray-600">Ingresos Netos</p>
                                             </div>
                                         </div>
                                     </CardContent>

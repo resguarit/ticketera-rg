@@ -258,6 +258,11 @@ class EventController extends Controller
             return $order->subtotal - $discount;
         });
 
+        // Calcular tickets emitidos totales (incluyendo los de lotes)
+        $totalIssuedTickets = IssuedTicket::whereHas('ticketType.eventFunction', function ($q) use ($event) {
+            $q->where('event_id', $event->id);
+        })->count();
+
         // Datos procesados para el detalle
         $eventData = [
             'id' => $event->id,
@@ -320,6 +325,7 @@ class EventController extends Controller
             }),
             'created_at' => $event->created_at->format('Y-m-d'),
             'updated_at' => $event->updated_at->format('Y-m-d H:i:s'),
+            'total_issued_tickets' => $totalIssuedTickets,
         ];
 
         // Actualizar estado de las funciones (nuevo código)
