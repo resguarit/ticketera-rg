@@ -191,11 +191,11 @@ export default function PaymentInfoStep({
     document.body.appendChild(phantomForm)
 
     const handleTokenResponse = (status: number, response: any) => {
-      console.log("[v0] Tokenization response:", { status, response })
+      console.log("Tokenization response:", { status, response })
       document.body.removeChild(phantomForm)
 
       if (status !== 200 && status !== 201) {
-        console.error("[v0] Error en tokenización:", response)
+        console.error("Error en tokenización:", response)
         setIsTokenizing(false)
 
         if (response?.error?.type === "invalid_request_error") {
