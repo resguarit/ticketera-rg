@@ -15,6 +15,7 @@ use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use App\Enums\OrderStatus;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
@@ -242,6 +243,21 @@ class EventController extends Controller
             'functions.ticketTypes'
         ])->findOrFail($eventId);
 
+        // Calcular ingresos totales y netos
+        $totalRevenue = $event->getRevenue();
+        
+        // Calcular ingreso neto (sin cargo por servicio)
+        $orders = Order::where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction', function ($q) use ($event) {
+                $q->where('event_id', $event->id);
+            })
+            ->get();
+
+        $netRevenue = $orders->sum(function($order) {
+            $discount = $order->subtotal * ($order->discount ?? 0);
+            return $order->subtotal - $discount;
+        });
+
         // Datos procesados para el detalle
         $eventData = [
             'id' => $event->id,
@@ -250,7 +266,9 @@ class EventController extends Controller
             'image_url' => $event->image_url,
             'hero_image_url' => $event->hero_image_url,
             'featured' => $event->featured,
-            'total_revenue' => $event->getRevenue(),
+            'total_revenue' => $totalRevenue,
+            'net_revenue' => $netRevenue,
+            'service_fee' => $totalRevenue - $netRevenue,
             'organizer' => [
                 'id' => $event->organizer->id,
                 'name' => $event->organizer->name,

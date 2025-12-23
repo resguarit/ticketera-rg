@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/currencyHelpers';
-import { calculateTotalRevenue, calculateSalesPercentage } from '@/lib/ticketHelpers';
+import { calculateSalesPercentage } from '@/lib/ticketHelpers';
 import { getVenueCompleteAddress } from '@/lib/venueHelpers';
 import { 
     ArrowLeft,
@@ -90,6 +90,8 @@ interface EventData {
     hero_image_url: string;
     featured: boolean;
     total_revenue: number;
+    net_revenue: number;  // Agregar
+    service_fee: number;   // Agregar
     organizer: {
         id: number;
         name: string;
@@ -342,7 +344,7 @@ export default function Show({ auth }: any) {
                     </div>
 
                     {/* Estado y estadísticas rápidas */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-8">
                         {/* Estado */}
                         <Card className="bg-white border-gray-200">
                             <CardContent className="p-4">
@@ -391,16 +393,17 @@ export default function Show({ auth }: any) {
                             </CardContent>
                         </Card>
 
-                        {/* Progreso de ventas */}
+                        {/* Ingreso Neto */}
                         <Card className="bg-white border-gray-200">
                             <CardContent className="p-4">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-4 rounded-lg flex items-center justify-center">
-                                        <TrendingUp className="w-5 h-5 text-white" />
+                                        <DollarSign className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-600">Progreso</p>
-                                        <p className="font-semibold text-black">{Math.round(salesProgress)}%</p>
+                                        <p className="text-sm text-gray-600">Ingreso Neto</p>
+                                        <p className="font-semibold text-black">{formatCurrency(event.net_revenue)}</p>
+                                        <p className="text-xs text-gray-500">Cargo: {formatCurrency(event.service_fee)}</p>
                                     </div>
                                 </div>
                             </CardContent>
