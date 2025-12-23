@@ -13,14 +13,16 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Event, Category } from '@/types/models';
 import EventCard from '@/components/EventCard';
+import { cn } from '@/lib/utils';
 
 // Definir los tipos de datos que llegan del backend
 interface EventDetail extends Event {
+    slug: string;
     date: string;
     time?: string;
     location: string;
     city?: string;
-    province?: string; 
+    province?: string;
     category: string;
     price?: number;
     status?: {
@@ -28,6 +30,15 @@ interface EventDetail extends Event {
         label: string;
         color: string;
     };
+    image_url?: string;
+    hero_image_url?: string;
+}
+
+interface Banner {
+    id: number;
+    image_url: string;
+    mobile_image_url?: string;
+    title: string | null;
 }
 
 interface City {
@@ -38,6 +49,7 @@ interface City {
 
 interface HomeProps {
     featuredEvents: EventDetail[];
+    banners: Banner[];
     events: EventDetail[];
     categories: Category[];
     cities: City[];
@@ -50,35 +62,57 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-
-
-export default function Home({ featuredEvents, events, categories, cities }: HomeProps) {
+export default function Home({ featuredEvents, banners = [], events, categories, cities }: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
     const [sortBy, setSortBy] = useState("date");
     const [currentSlide, setCurrentSlide] = useState(0);
 
+    // Combinar eventos destacados y banners para el carousel
+    const slides = [
+        ...featuredEvents
+            .filter(event => event.hero_image_url || event.image_url) // Solo mostrar si tiene alguna imagen
+            .map(event => ({
+                type: 'event',
+                id: `event-${event.id}`,
+                data: event,
+                image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
+                mobile_image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
+                title: event.name,
+                link: route('event.detail', event.id)
+            })),
+        ...banners.map(banner => ({
+            type: 'banner',
+            id: `banner-${banner.id}`,
+            data: banner,
+            image_url: banner.image_url,
+            mobile_image_url: banner.mobile_image_url || banner.image_url,
+            title: banner.title || "Promoción",
+            link: null
+        }))
+    ];
+
     // Auto-rotate del carousel cada 5 segundos
     useEffect(() => {
-        if (featuredEvents.length > 1) {
+        if (slides.length > 1) {
             const interval = setInterval(() => {
-                setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+                setCurrentSlide((prev) => (prev + 1) % slides.length);
             }, 5000);
             return () => clearInterval(interval);
         }
-    }, [featuredEvents.length]);
+    }, [slides.length]);
 
     // Función para ir al slide anterior
     const goToPreviousSlide = () => {
-        setCurrentSlide((prev) => 
-            prev === 0 ? featuredEvents.length - 1 : prev - 1
+        setCurrentSlide((prev) =>
+            prev === 0 ? slides.length - 1 : prev - 1
         );
     };
 
     // Función para ir al slide siguiente
     const goToNextSlide = () => {
-        setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
     };
 
     // Filtrar y ordenar eventos
@@ -118,21 +152,38 @@ export default function Home({ featuredEvents, events, categories, cities }: Hom
         <>
             <Head title="Home" />
             <Header className="" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
-                {/* Hero Banner - Eventos destacados con hero banners */}
+                {/* Hero Banner - Eventos destacados con hero banners y Banners Admin */}
                 <section className="relative h-[160px] sm:h-[200px] lg:h-[300px] overflow-hidden">
-                    {featuredEvents.length > 0 ? (
+                    {slides.length > 0 ? (
                         <>
                             <div className="absolute inset-0 bg-black/20 z-10"></div>
-                            <img
-                                src={featuredEvents[currentSlide]?.hero_image_url || featuredEvents[currentSlide]?.image_url || "/placeholder.svg?height=400&width=800"}
-                                alt={featuredEvents[currentSlide]?.name || "Evento"}
-                                className="w-full h-full object-cover"
-                            />
+
+                            {slides[currentSlide].type === 'event' ? (
+                                <Link href={slides[currentSlide].link || '#'}>
+                                    <picture>
+                                        <source media="(max-width: 640px)" srcSet={slides[currentSlide].mobile_image_url} />
+                                        <img
+                                            src={slides[currentSlide].image_url}
+                                            alt={slides[currentSlide].title}
+                                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                        />
+                                    </picture>
+                                </Link>
+                            ) : (
+                                <picture>
+                                    <source media="(max-width: 640px)" srcSet={slides[currentSlide].mobile_image_url} />
+                                    <img
+                                        src={slides[currentSlide].image_url}
+                                        alt={slides[currentSlide].title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </picture>
+                            )}
 
                             {/* Flechas de navegación - solo mostrar si hay más de 1 imagen */}
-                            {featuredEvents.length > 1 && (
+                            {slides.length > 1 && (
                                 <>
                                     {/* Flecha izquierda */}
                                     <button
@@ -153,14 +204,13 @@ export default function Home({ featuredEvents, events, categories, cities }: Hom
                             )}
 
                             {/* Slide indicators - solo indicadores visuales, no clickeables */}
-                            {featuredEvents.length > 1 && (
+                            {slides.length > 1 && (
                                 <div className="absolute bottom-2 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex space-x-1 sm:space-x-2">
-                                    {featuredEvents.map((_, index) => (
+                                    {slides.map((_, index) => (
                                         <div
                                             key={index}
-                                            className={`w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
-                                                index === currentSlide ? "bg-white" : "bg-white/40"
-                                            }`}
+                                            className={`w-1.5 h-1.5 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${index === currentSlide ? "bg-white" : "bg-white/40"
+                                                }`}
                                         />
                                     ))}
                                 </div>
@@ -193,7 +243,7 @@ export default function Home({ featuredEvents, events, categories, cities }: Hom
                                                 className="pl-8 bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8"
                                             />
                                         </div>
-                                        
+
                                         <Select value={sortBy} onValueChange={setSortBy}>
                                             <SelectTrigger className="bg-white border-gray-100 border text-gray-400 placeholder:text-gray-500 shadow-md text-xs h-8">
                                                 <ArrowUpDown className="w-3.5 h-3.5 mr-1" />
@@ -266,7 +316,7 @@ export default function Home({ featuredEvents, events, categories, cities }: Hom
                                     </Select>
                                 </div>
                             </div>
-                        </div>              
+                        </div>
                     </div>
                 </section>
 
@@ -286,7 +336,7 @@ export default function Home({ featuredEvents, events, categories, cities }: Hom
                     )}
                 </section>
             </div>
-            
+
             <Footer />
         </>
     );
