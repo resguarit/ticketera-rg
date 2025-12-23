@@ -23,13 +23,13 @@ interface AccountVerificationModalProps {
   onSuccess: () => void
 }
 
-type VerificationStep = "checking" | "login" | "register"
+type VerificationStep = "checking" | "login" | "register" | "forgot_password" | "forgot_password_success"
 
-export default function AccountVerificationModal({ 
-  isOpen, 
-  onClose, 
-  billingInfo, 
-  onSuccess 
+export default function AccountVerificationModal({
+  isOpen,
+  onClose,
+  billingInfo,
+  onSuccess
 }: AccountVerificationModalProps) {
   const [step, setStep] = useState<VerificationStep>("checking")
   const [password, setPassword] = useState("")
@@ -94,7 +94,24 @@ export default function AccountVerificationModal({
       }
     } catch (err) {
       setError("Error al verificar el email. Por favor intenta de nuevo.")
-      console.error("Error checking email:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await axios.post(route('password.email'), {
+        email: billingInfo.email,
+      })
+
+      setStep("forgot_password_success")
+
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error al enviar el enlace.")
     } finally {
       setIsLoading(false)
     }
@@ -210,6 +227,8 @@ export default function AccountVerificationModal({
             {step === "checking" && "Verificaremos si ya tienes una cuenta asociada a este email."}
             {step === "login" && "Ya tienes una cuenta. Ingresa tu contraseña para continuar."}
             {step === "register" && "Crea una contraseña para tu nueva cuenta y continuar con la compra."}
+            {step === "forgot_password" && "Restablecer Contraseña"}
+            {step === "forgot_password_success" && "Enlace Enviado"}
           </DialogDescription>
         </DialogHeader>
 
@@ -241,6 +260,44 @@ export default function AccountVerificationModal({
                 {fieldErrors.password && (
                   <p className="text-xs text-red-500">{fieldErrors.password[0]}</p>
                 )}
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setStep("forgot_password")}
+                  className="text-sm text-primary hover:underline focus:outline-none"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === "forgot_password" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Te enviaremos un enlace a <strong>{billingInfo.email}</strong> para que puedas restablecer tu contraseña.
+              </p>
+            </div>
+          )}
+
+          {step === "forgot_password_success" && (
+            <div className="space-y-4">
+              <div className="rounded-full bg-green-100 p-3 w-12 h-12 mx-auto flex items-center justify-center">
+                <Mail className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-foreground mb-2">
+                  Hemos enviado un enlace de recuperación a:
+                </p>
+                <p className="font-semibold text-foreground mb-4">
+                  {billingInfo.email}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Por favor revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
+                </p>
+                <p className="text-sm font-medium text-primary mt-4 bg-primary/10 p-3 rounded-md">
+                  Una vez restablecida, vuelve a esta ventana para iniciar sesión y finalizar tu compra.
+                </p>
               </div>
             </div>
           )}
@@ -329,6 +386,36 @@ export default function AccountVerificationModal({
                   Crear Cuenta y Continuar
                 </>
               )}
+            </Button>
+          )}
+
+          {step === "forgot_password" && (
+            <div className="flex flex-col space-y-2 w-full">
+              <Button onClick={handleForgotPassword} className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar enlace de restablecimiento"
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setStep("login")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                Volver
+              </Button>
+            </div>
+          )}
+
+          {step === "forgot_password_success" && (
+            <Button onClick={() => setStep("login")} className="w-full">
+              <KeyRound className="mr-2 h-4 w-4" />
+              Volver a Iniciar Sesión
             </Button>
           )}
         </DialogFooter>
