@@ -271,14 +271,14 @@ export default function Reports({ auth }: any) {
                                             {salesData.growthRate >= 0 ? (
                                                 <>
                                                     <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
-                                                    <span className="text-xs sm:text-sm text-chart-2 font-medium truncate">
+                                                    <span className="text-xs sm:text-sm text-chart-2 font-medium">
                                                         +{salesData.growthRate}% vs período anterior
                                                     </span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
-                                                    <span className="text-xs sm:text-sm text-red-500 font-medium truncate">
+                                                    <span className="text-xs sm:text-sm text-red-500 font-medium">
                                                         {salesData.growthRate}% vs período anterior
                                                     </span>
                                                 </>
@@ -297,9 +297,9 @@ export default function Reports({ auth }: any) {
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Ingreso Neto</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium">Ingreso Neto</p>
                                         <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.netRevenue)}</p>
-                                        <p className="text-xs text-gray-500 mt-2 truncate">
+                                        <p className="text-xs text-gray-500 mt-2">
                                             Sin cargo de servicio
                                         </p>
                                     </div>
@@ -315,11 +315,11 @@ export default function Reports({ auth }: any) {
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Tickets Vendidos</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Tickets Vendidos</p>
                                         <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalTickets)}</p>
                                         <div className="flex items-center mt-2">
                                             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
-                                            <span className="text-xs sm:text-sm text-gray-600 truncate">
+                                            <span className="text-xs sm:text-sm text-gray-600 ">
                                                 {formatNumber(salesData.monthlyTickets)} este mes
                                             </span>
                                         </div>
@@ -336,9 +336,9 @@ export default function Reports({ auth }: any) {
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Tasa de Conversión</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Tasa de Conversión</p>
                                         <p className="text-lg sm:text-2xl font-bold text-black">{salesData.conversionRate}%</p>
-                                        <p className="text-xs text-gray-500 mt-2 truncate">
+                                        <p className="text-xs text-gray-500 mt-2 ">
                                             De órdenes iniciadas a pagadas
                                         </p>
                                     </div>
