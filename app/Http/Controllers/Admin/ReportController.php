@@ -88,7 +88,7 @@ class ReportController extends Controller
         $totalUsers = User::where('role', UserRole::CLIENT)->count();
 
         return response()->json([
-            'today_sales' => $todaySales,
+            'today_sales' => (float) $todaySales,
             'today_tickets' => $todayTickets,
             'active_events' => $activeEvents,
             'total_users' => $totalUsers,
@@ -198,15 +198,15 @@ class ReportController extends Controller
             round(($totalOrdersPaid / $totalOrdersStarted) * 100, 1) : 0;
 
         return [
-            'totalRevenue' => $totalRevenue,
-            'monthlyRevenue' => $monthlyRevenue,
-            'netRevenue' => $netRevenue, // NUEVO
-            'monthlyNetRevenue' => $monthlyNetRevenue, // NUEVO
-            'totalServiceFees' => $totalServiceFees, // NUEVO
-            'monthlyServiceFees' => $monthlyServiceFees, // NUEVO
+            'totalRevenue' => (float) $totalRevenue,
+            'monthlyRevenue' => (float) $monthlyRevenue,
+            'netRevenue' => (float) $netRevenue,
+            'monthlyNetRevenue' => (float) $monthlyNetRevenue,
+            'totalServiceFees' => (float) $totalServiceFees,
+            'monthlyServiceFees' => (float) $monthlyServiceFees,
             'totalTickets' => $totalTickets,
             'monthlyTickets' => $monthlyTickets,
-            'averageTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
+            'averageTicketPrice' => (float) ($totalTickets > 0 ? $totalRevenue / $totalTickets : 0),
             'conversionRate' => $conversionRate,
             'growthRate' => round($growthRate, 1),
         ];

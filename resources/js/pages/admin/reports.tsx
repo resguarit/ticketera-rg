@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 
 interface RealTimeStats {
     today_sales: number;
@@ -78,10 +79,6 @@ interface ReportsProps {
     timeRange: string;
     [key: string]: any;
 }
-
-const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('es-AR').format(num);
-};
 
 export default function Reports({ auth }: any) {
     const { salesData, topEvents, monthlyData, categoryData, userDemographics, timeRange } = usePage<ReportsProps>().props;
@@ -183,13 +180,6 @@ export default function Reports({ auth }: any) {
         );
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS'
-        }).format(amount);
-    };
-
     const getMaxRevenue = () => {
         if (monthlyData.length === 0) return 1;
         return Math.max(...monthlyData.map(m => m.revenue));
@@ -242,14 +232,14 @@ export default function Reports({ auth }: any) {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 mb-6 sm:mb-8">
                         {/* Card 1: Ingresos Totales (con service fee) */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Ingresos Totales</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.totalRevenue)}</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Ingresos Totales</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black ">{formatCurrency(salesData.totalRevenue)}</p>
                                         <div className="flex items-center mt-2">
                                             {salesData.growthRate >= 0 ? (
                                                 <>
@@ -281,7 +271,7 @@ export default function Reports({ auth }: any) {
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-gray-600 text-xs sm:text-sm font-medium">Ingreso Neto</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.netRevenue)}</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatCurrency(salesData.netRevenue)}</p>
                                         <p className="text-xs text-gray-500 mt-2">
                                             Sin cargo de servicio
                                         </p>
@@ -340,7 +330,7 @@ export default function Reports({ auth }: any) {
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-center">
                                     <div>
                                         <p className="text-blue-100 text-xs sm:text-sm">Ventas Hoy</p>
-                                        <p className="text-lg sm:text-2xl font-bold truncate">{formatCurrency(realTimeStats.today_sales)}</p>
+                                        <p className="text-lg sm:text-2xl font-bold">{formatCurrency(realTimeStats.today_sales)}</p>
                                     </div>
                                     <div>
                                         <p className="text-blue-100 text-xs sm:text-sm">Tickets Hoy</p>

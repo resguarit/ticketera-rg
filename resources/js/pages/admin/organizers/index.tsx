@@ -341,7 +341,10 @@ export default function Index({ auth }: any) {
                                             <span>Teléfono: {organizer.phone}</span>
                                             <span>ID: #{organizer.id}</span>
                                         </div>
-
+                                        <div className='flex items-center space-x-2'>
+                                            <Link href={route('admin.organizers.show', organizer.id)} >
+                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50" >Ver perfil</Button>
+                                            </Link>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
@@ -349,13 +352,6 @@ export default function Index({ auth }: any) {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent className="w-56 bg-white border-gray-300">
-                                                <DropdownMenuItem 
-                                                    className="text-gray-700 hover:bg-gray-50"
-                                                    onClick={() => router.get(route('admin.organizers.show', organizer.id))}
-                                                >
-                                                    <Eye className="w-4 h-4 mr-2" />
-                                                    Ver perfil
-                                                </DropdownMenuItem>
                                                 <DropdownMenuItem 
                                                     className="text-gray-700 hover:bg-gray-50"
                                                     onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
@@ -376,6 +372,7 @@ export default function Index({ auth }: any) {
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
