@@ -4,13 +4,13 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type User } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { 
-    BookOpen, 
-    Folder, 
-    LayoutGrid, 
-    Calendar, 
-    Users, 
-    Settings, 
+import {
+    BookOpen,
+    Folder,
+    LayoutGrid,
+    Calendar,
+    Users,
+    Settings,
     BarChart3,
     Shield,
     Building,
@@ -42,6 +42,11 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     title: 'Usuarios',
                     href: '/admin/users',
                     icon: Users,
+                },
+                {
+                    title: 'Banners',
+                    href: '/admin/banners',
+                    icon: LayoutGrid,
                 },
                 {
                     title: 'Organizadores',
@@ -79,7 +84,7 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     icon: Settings,
                 }
             ];
-        
+
         case 'organizer':
             return [
                 {
@@ -98,7 +103,7 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     icon: Users,
                 }
             ];
-        
+
         default: // client o usuario normal
             return [
                 {
@@ -148,7 +153,7 @@ const getFooterNavItemsByRole = (userRole: string): NavItem[] => {
                     icon: BookOpen,
                 },
             ];
-        
+
         default: // admin, client o usuario normal
             return [
                 {
@@ -164,16 +169,16 @@ export function AppSidebar() {
     // Obtener los datos del usuario autenticado
     const page = usePage();
     const auth = (page.props as any).auth as { user: User | null };
-    
+
     // Determinar el rol del usuario (por defecto 'client' si no está autenticado)
     const userRole = auth.user?.role || 'client';
-    
+
     // Obtener elementos de navegación según el rol
     const mainNavItems = getNavItemsByRole(userRole);
-    
+
     // Obtener elementos de navegación del footer según el rol
     const footerNavItems = getFooterNavItemsByRole(userRole);
-    
+
     // Obtener URL del dashboard según el rol
     const dashboardUrl = getDashboardUrl(userRole);
 
