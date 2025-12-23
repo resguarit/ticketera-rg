@@ -633,7 +633,7 @@ export default function Reports({ auth }: any) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 <Button 
                                     variant="outline" 
                                     className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
@@ -654,6 +654,15 @@ export default function Reports({ auth }: any) {
                                     <span className="text-xs sm:text-sm">Reporte de Eventos</span>
                                 </Button>
                                 
+                                <Button 
+                                    variant="outline" 
+                                    className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
+                                    onClick={() => handleDownloadReport('users')}
+                                    disabled={isGenerating}
+                                >
+                                    <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                                    <span className="text-xs sm:text-sm">Reporte de Usuarios</span>
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
