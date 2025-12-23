@@ -203,7 +203,7 @@ export default function Reports({ auth }: any) {
                     {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
                         <div>
-                            <h1 className="text-2xl md:text-3xl lg:text-4xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Reportes y Analíticas
                             </h1>
                             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
@@ -236,24 +236,6 @@ export default function Reports({ auth }: any) {
                             >
                                 <RefreshCw className="w-4 h-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Actualizar</span>
-                            </Button>
-                            
-                            <Button 
-                                className="bg-primary text-white hover:bg-primary-hover w-full sm:w-auto"
-                                onClick={() => handleDownloadReport('complete')}
-                                disabled={isGenerating}
-                            >
-                                {isGenerating ? (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span className="hidden sm:inline">Generando...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <Download className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Exportar Reporte</span>
-                                    </div>
-                                )}
                             </Button>
                         </div>
                     </div>
@@ -633,7 +615,7 @@ export default function Reports({ auth }: any) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                 <Button 
                                     variant="outline" 
                                     className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
@@ -662,6 +644,16 @@ export default function Reports({ auth }: any) {
                                 >
                                     <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                                     <span className="text-xs sm:text-sm">Reporte de Usuarios</span>
+                                </Button>
+                                
+                                <Button 
+                                    variant="outline" 
+                                    className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
+                                    onClick={() => handleDownloadReport('complete')}
+                                    disabled={isGenerating}
+                                >
+                                    <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                                    <span className="text-xs sm:text-sm">Reporte Completo</span>
                                 </Button>
                             </div>
                         </CardContent>
