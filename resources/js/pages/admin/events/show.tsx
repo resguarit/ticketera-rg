@@ -344,10 +344,10 @@ export default function Show({ auth }: any) {
                     </div>
 
                     {/* Estado y estadísticas rápidas */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-8">
                         {/* Estado */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-10 h-10 ${status.color} rounded-lg flex items-center justify-center`}>
                                         <StatusIcon className="w-5 h-5 text-white" />
@@ -364,8 +364,8 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Tickets vendidos */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-2 rounded-lg flex items-center justify-center">
                                         <Users className="w-5 h-5 text-white" />
@@ -379,8 +379,8 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Ingresos */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-3 rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-5 h-5 text-white" />
@@ -394,8 +394,8 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Ingreso Neto */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-4 rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-5 h-5 text-white" />
@@ -410,8 +410,8 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Funciones */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                                         <Calendar className="w-5 h-5 text-white" />
@@ -549,7 +549,7 @@ export default function Show({ auth }: any) {
                                                         <p className="text-sm text-gray-600">Disponibles</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-2xl font-bold text-purple-600">${totalRevenue.toLocaleString()}</p>
+                                                        <p className="text-2xl font-bold text-purple-600">{formatCurrency(totalRevenue)}</p>
                                                         <p className="text-sm text-gray-600">Ingresos</p>
                                                     </div>
                                                 </div>
