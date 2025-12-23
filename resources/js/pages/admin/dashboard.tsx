@@ -43,7 +43,7 @@ import { formatCurrency } from '@/lib/currencyHelpers';
 // Interfaces para TypeScript
 interface DashboardStat {
     title: string;
-    value: string;
+    value: number; // Cambiar de string a number
     change: string;
     changeType: 'positive' | 'negative';
     description: string;
@@ -107,6 +107,7 @@ const getStatIcon = (title: string) => {
         case 'Total Clientes': return Users;
         case 'Eventos Activos': return Calendar;
         case 'Ingresos Totales': return DollarSign;
+        case 'Ingreso Neto': return DollarSign;
         case 'Tickets Vendidos': return Ticket;
         default: return Activity;
     }
@@ -118,16 +119,19 @@ const getStatColor = (title: string) => {
         case 'Total Clientes': return 'bg-primary';
         case 'Eventos Activos': return 'bg-chart-2';
         case 'Ingresos Totales': return 'bg-chart-3';
-        case 'Tickets Vendidos': return 'bg-chart-4';
+        case 'Ingreso Neto': return 'bg-chart-4';
+        case 'Tickets Vendidos': return 'bg-chart-5';
         default: return 'bg-gray-500';
     }
 };
 
 const formatStat = (stat: DashboardStat) => {
-    if (stat.title === 'Ingresos Totales') {
-        return formatCurrency(stat.value as unknown as number);
+    // Formatear valores monetarios
+    if (stat.title === 'Ingresos Totales' || stat.title === 'Ingreso Neto') {
+        return formatCurrency(stat.value);
     }
-    return stat.value;
+    // Formatear números con separadores de miles
+    return stat.value.toLocaleString('es-AR');
 }
 
 export default function AdminDashboard({ 

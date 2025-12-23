@@ -131,35 +131,35 @@ class DashboardController extends Controller
         return [
             [
                 'title' => 'Total Clientes',
-                'value' => number_format($totalUsers),
+                'value' => $totalUsers,
                 'change' => ($userGrowth >= 0 ? '+' : '') . $userGrowth . '%',
                 'changeType' => $userGrowth >= 0 ? 'positive' : 'negative',
                 'description' => 'Clientes registrados en el periodo'
             ],
             [
                 'title' => 'Eventos Activos',
-                'value' => number_format($activeEvents),
+                'value' => $activeEvents,
                 'change' => '+' . $newEventsThisPeriod,
                 'changeType' => 'positive',
                 'description' => 'Eventos activos y programados'
             ],
             [
                 'title' => 'Ingresos Totales',
-                'value' => number_format($totalRevenue, 2),
+                'value' => $totalRevenue,
                 'change' => ($revenueGrowth >= 0 ? '+' : '') . $revenueGrowth . '%',
                 'changeType' => $revenueGrowth >= 0 ? 'positive' : 'negative',
                 'description' => 'Ingresos en el periodo'
             ],
             [
                 'title' => 'Ingreso Neto',
-                'value' => number_format($netRevenue, 2),
+                'value' => $netRevenue,
                 'change' => ($netRevenueGrowth >= 0 ? '+' : '') . $netRevenueGrowth . '%',
                 'changeType' => $netRevenueGrowth >= 0 ? 'positive' : 'negative',
-                'description' => 'Solo Cargo por Servicio: ' . number_format($totalServiceFees, 2)
+                'description' => 'Solo Cargo por Servicio: $' . number_format($totalServiceFees, 2, ',', '.') . ' ARS'
             ],
             [
                 'title' => 'Tickets Vendidos',
-                'value' => number_format($ticketsSold),
+                'value' => $ticketsSold,
                 'change' => '+' . $ticketsSold,
                 'changeType' => 'positive',
                 'description' => 'Tickets vendidos en el periodo'

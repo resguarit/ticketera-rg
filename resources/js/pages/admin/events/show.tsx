@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { formatNumber } from '@/lib/currencyHelpers';
+import { formatCurrency } from '@/lib/currencyHelpers';
 import { calculateTotalRevenue, calculateSalesPercentage } from '@/lib/ticketHelpers';
 import { getVenueCompleteAddress } from '@/lib/venueHelpers';
 import { 
@@ -385,7 +385,7 @@ export default function Show({ auth }: any) {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Ingresos</p>
-                                        <p className="font-semibold text-black">{formatNumber(totalRevenue)}</p>
+                                        <p className="font-semibold text-black">{formatCurrency(totalRevenue)}</p>
                                     </div>
                                 </div>
                             </CardContent>
