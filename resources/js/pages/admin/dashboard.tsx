@@ -265,14 +265,14 @@ export default function AdminDashboard({
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-8">
                         {dashboardStats.map((stat, index) => {
                             const IconComponent = getStatIcon(stat.title);
                             const colorClass = getStatColor(stat.title);
                             
                             return (
-                                <Card key={index} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                                    <CardContent className="p-6">
+                                <Card key={index} className="bg-white py-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                                    <CardContent className="p-3 ">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className={`w-12 h-12 ${colorClass} rounded-lg flex items-center justify-center`}>
                                                 <IconComponent className="w-6 h-6 text-white" />

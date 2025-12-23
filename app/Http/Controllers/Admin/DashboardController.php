@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\IssuedTicket;
 use App\Services\RevenueService;
 use App\Enums\EventFunctionStatus;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -97,6 +98,34 @@ class DashboardController extends Controller
             ? round((($totalRevenue - $previousRevenue) / $previousRevenue) * 100)
             : 0;
 
+        // Calcular ingreso neto (sin cargo por servicio)
+        $orders = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->get();
+
+        $netRevenue = $orders->sum(function($order) {
+            $discount = $order->subtotal * ($order->discount ?? 0);
+            return $order->subtotal - $discount;
+        });
+
+        
+        // Calcular ingreso neto del período anterior para el crecimiento
+        $previousOrders = Order::where('status', \App\Enums\OrderStatus::PAID)
+            ->where('created_at', '<', $startDate)
+            ->where('created_at', '>=', $startDate->copy()->subDays($startDate->diffInDays(Carbon::now())))
+            ->get();
+
+        $previousNetRevenue = $previousOrders->sum(function($order) {
+            $discount = $order->subtotal * ($order->discount ?? 0);
+            return $order->subtotal - $discount;
+        });
+
+        $netRevenueGrowth = $previousNetRevenue > 0 
+            ? round((($netRevenue - $previousNetRevenue) / $previousNetRevenue) * 100)
+            : 0;
+
+        $totalServiceFees = $totalRevenue - $netRevenue;
+
         $ticketsSold = $this->revenueService->ticketsSold($startDate);
 
         return [
@@ -120,6 +149,13 @@ class DashboardController extends Controller
                 'change' => ($revenueGrowth >= 0 ? '+' : '') . $revenueGrowth . '%',
                 'changeType' => $revenueGrowth >= 0 ? 'positive' : 'negative',
                 'description' => 'Ingresos en el periodo'
+            ],
+            [
+                'title' => 'Ingreso Neto',
+                'value' => number_format($netRevenue, 2),
+                'change' => ($netRevenueGrowth >= 0 ? '+' : '') . $netRevenueGrowth . '%',
+                'changeType' => $netRevenueGrowth >= 0 ? 'positive' : 'negative',
+                'description' => 'Solo Cargo por Servicio: ' . number_format($totalServiceFees, 2)
             ],
             [
                 'title' => 'Tickets Vendidos',
