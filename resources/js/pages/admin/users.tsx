@@ -22,7 +22,7 @@ interface UserData {
     created_at: string;
     last_login: string;
     total_purchases: number;
-    total_spent: string;
+    total_spent: number;  // Cambiar de string a number
     last_purchase: string | null;
 }
 
@@ -313,7 +313,7 @@ export default function Users({ auth }: any) {
                                                     <span>DNI: {user.dni}</span>
                                                     <span>Tel: {user.phone}</span>
                                                     <span>Compras: {user.total_purchases}</span>
-                                                    <span>Gastado: ${user.total_spent}</span>
+                                                    <span>Gastado: {formatCurrency(user.total_spent)}</span>
                                                 </div>
                                             </div>
                                         </div>

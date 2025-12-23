@@ -110,7 +110,8 @@ class UserController extends Controller
                 'created_at' => $user->created_at->format('Y-m-d'),
                 'last_login' => $user->updated_at->format('Y-m-d'),
                 'total_purchases' => $user->paid_orders_count ?? 0,
-                'total_spent' => $user->paid_orders_sum ?? 0,
+                'total_spent' => (float) ($user->paid_orders_sum ?? 0),                
+                \Log::debug('User ID: ' . $user->id . ' - Paid Orders Sum: ' . ($user->paid_orders_sum ?? 0)),
                 'last_purchase' => $lastOrder ? $lastOrder->created_at->format('Y-m-d') : null,
             ];
         });
