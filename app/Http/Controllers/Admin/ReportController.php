@@ -59,7 +59,6 @@ class ReportController extends Controller
             'sales' => $this->reportPDFService->generateSalesReport($startDate, $timeRange),
             'events' => $this->reportPDFService->generateEventsReport($startDate, $timeRange),
             'financial' => $this->reportPDFService->generateFinancialReport($startDate, $timeRange),
-            'users' => $this->reportPDFService->generateUsersReport($startDate, $timeRange),
             'complete' => $this->reportPDFService->generateCompleteReport($startDate, $timeRange),
             default => abort(404, 'Tipo de reporte no encontrado'),
         };

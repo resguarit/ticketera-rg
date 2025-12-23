@@ -90,30 +90,6 @@ class ReportPDFService
         return $pdf->download('reporte-financiero-' . date('Y-m-d') . '.pdf');
     }
 
-    public function generateUsersReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
-    {
-        $userStats = $this->getUserStats($startDate);
-        $registrationTrends = $this->getRegistrationTrends($startDate);
-        $topBuyers = $this->getTopBuyers($startDate);
-        
-        $data = [
-            'title' => 'Reporte de Usuarios',
-            'period' => $this->getPeriodName($timeRange),
-            'startDate' => $startDate->format('d/m/Y'),
-            'endDate' => Carbon::now()->format('d/m/Y'),
-            'generatedAt' => Carbon::now()->format('d/m/Y H:i'),
-            'userStats' => $userStats,
-            'registrationTrends' => $registrationTrends,
-            'topBuyers' => $topBuyers,
-        ];
-
-        $pdf = Pdf::loadView('pdfs.reports.users', $data)
-            ->setPaper('a4', 'portrait')
-            ->setOptions(['defaultFont' => 'DejaVu Sans']);
-
-        return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
-    }
-
     public function generateCompleteReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
     {
         // Obtener todos los datos
@@ -179,7 +155,7 @@ class ReportPDFService
             'totalTickets' => $totalTickets,
             'totalOrders' => $totalOrders,
             'avgOrderValue' => $totalOrders > 0 ? $totalRevenue / $totalOrders : 0,
-            'avgTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0, // ✅ AGREGAR
+            'avgTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
         ];
     }
 
@@ -246,7 +222,6 @@ class ReportPDFService
             ->limit($limit)
             ->get()
             ->map(function ($event) use ($startDate) {
-                // Obtener todas las órdenes del evento
                 $eventOrders = DB::table('orders')
                     ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
@@ -258,10 +233,8 @@ class ReportPDFService
                     ->distinct()
                     ->get();
 
-                // Calcular proporción del revenue de cada orden que corresponde a este evento
                 $totalRevenue = 0;
                 foreach ($eventOrders as $order) {
-                    // Contar tickets de este evento en esta orden
                     $eventTicketsInOrder = DB::table('issued_tickets')
                         ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                         ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -269,12 +242,10 @@ class ReportPDFService
                         ->where('event_functions.event_id', $event->id)
                         ->count();
 
-                    // Contar total de tickets en esta orden
                     $totalTicketsInOrder = DB::table('issued_tickets')
                         ->where('order_id', $order->id)
                         ->count();
 
-                    // Calcular proporción del total_amount
                     if ($totalTicketsInOrder > 0) {
                         $proportion = $eventTicketsInOrder / $totalTicketsInOrder;
                         $totalRevenue += $order->total_amount * $proportion;
@@ -318,7 +289,6 @@ class ReportPDFService
                 $query->where('end_time', '<', Carbon::now());
             })->count();
 
-            // Total de tickets vendidos
             $totalTicketsSold = DB::table('issued_tickets')
                 ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                 ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -353,7 +323,6 @@ class ReportPDFService
             return Category::all()
                 ->map(function ($category) use ($startDate) {
                     try {
-                        // Obtener todas las órdenes únicas relacionadas con esta categoría
                         $categoryOrders = DB::table('orders')
                             ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
@@ -366,10 +335,8 @@ class ReportPDFService
                             ->distinct()
                             ->get();
 
-                        // Calcular revenue proporcional con cargo de servicio incluido
                         $categoryRevenue = 0;
                         foreach ($categoryOrders as $order) {
-                            // Contar tickets de esta categoría en esta orden
                             $categoryTicketsInOrder = DB::table('issued_tickets')
                                 ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                                 ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -378,12 +345,10 @@ class ReportPDFService
                                 ->where('events.category_id', $category->id)
                                 ->count();
 
-                            // Contar total de tickets en esta orden
                             $totalTicketsInOrder = DB::table('issued_tickets')
                                 ->where('order_id', $order->id)
                                 ->count();
 
-                            // Calcular proporción del total_amount
                             if ($totalTicketsInOrder > 0) {
                                 $proportion = $categoryTicketsInOrder / $totalTicketsInOrder;
                                 $categoryRevenue += $order->total_amount * $proportion;
@@ -437,7 +402,6 @@ class ReportPDFService
                         ->count();
 
                     if ($eventsCount > 0) {
-                        // Obtener todas las órdenes únicas relacionadas con este venue
                         $venueOrders = DB::table('orders')
                             ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
@@ -450,10 +414,8 @@ class ReportPDFService
                             ->distinct()
                             ->get();
 
-                        // Calcular revenue proporcional con cargo de servicio incluido
                         $revenue = 0;
                         foreach ($venueOrders as $order) {
-                            // Contar tickets de este venue en esta orden
                             $venueTicketsInOrder = DB::table('issued_tickets')
                                 ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                                 ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -462,12 +424,10 @@ class ReportPDFService
                                 ->where('events.venue_id', $venue->id)
                                 ->count();
 
-                            // Contar total de tickets en esta orden
                             $totalTicketsInOrder = DB::table('issued_tickets')
                                 ->where('order_id', $order->id)
                                 ->count();
 
-                            // Calcular proporción del total_amount
                             if ($totalTicketsInOrder > 0) {
                                 $proportion = $venueTicketsInOrder / $totalTicketsInOrder;
                                 $revenue += $order->total_amount * $proportion;
@@ -487,7 +447,6 @@ class ReportPDFService
                 }
             }
 
-            // Ordenar por revenue y limitar a 10
             usort($venueStats, function($a, $b) {
                 return $b['total_revenue'] <=> $a['total_revenue'];
             });
@@ -560,7 +519,6 @@ class ReportPDFService
             }
         }
 
-        // Ordenar por revenue y limitar a 10
         usort($organizerStats, function($a, $b) {
             return $b['total_revenue'] <=> $a['total_revenue'];
         });
@@ -594,95 +552,11 @@ class ReportPDFService
             ->whereNotNull('email_verified_at')
             ->count();
 
-        $avgOrderValue = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->avg('total_amount') ?? 0;
-
         return [
             'totalUsers' => $totalUsers,
             'newUsers' => $newUsers,
             'activeUsers' => $activeUsers,
-            'avgOrderValue' => $avgOrderValue,
         ];
-    }
-
-    private function getRegistrationTrends(Carbon $startDate): array
-    {
-        $trends = [];
-        $current = $startDate->copy()->startOfMonth();
-        
-        while ($current <= Carbon::now()->endOfMonth()) {
-            $registrations = User::where('role', UserRole::CLIENT)
-                ->whereBetween('created_at', [
-                    $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
-                ])
-                ->count();
-
-            // ✅ USAR DB::table directo
-            $firstOrders = DB::table('orders')
-                ->where('status', OrderStatus::PAID->value)
-                ->whereBetween('created_at', [
-                    $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
-                ])
-                ->whereRaw('(SELECT COUNT(*) FROM orders o2 WHERE o2.client_id = orders.client_id AND o2.status = ? AND o2.created_at < orders.created_at) = 0', [OrderStatus::PAID->value])
-                ->count();
-
-            $trends[] = [
-                'month' => $current->locale('es')->format('F Y'),
-                'registrations' => $registrations,
-                'orders' => $firstOrders,
-            ];
-
-            $current->addMonth();
-        }
-
-        return $trends;
-    }
-
-    private function getTopBuyers(Carbon $startDate): array
-    {
-        try {
-            $topBuyers = DB::table('orders')
-                ->join('users', 'orders.client_id', '=', 'users.id')
-                ->leftJoin('people', 'users.person_id', '=', 'people.id')
-                ->where('orders.status', OrderStatus::PAID->value)
-                ->where('orders.created_at', '>=', $startDate)
-                ->whereNull('users.deleted_at')
-                ->where('users.role', UserRole::CLIENT->value)
-                ->select([
-                    'users.id',
-                    'users.email',
-                    'users.created_at as registration_date',
-                    DB::raw("COALESCE(CONCAT(people.name, ' ', people.last_name), 'Sin nombre') as full_name"),
-                    DB::raw('COUNT(DISTINCT orders.id) as total_orders'),
-                    DB::raw('SUM(orders.total_amount) as total_spent')
-                ])
-                ->groupBy('users.id', 'users.email', 'users.created_at', 'people.name', 'people.last_name')
-                ->orderBy('total_spent', 'desc')
-                ->limit(15)
-                ->get();
-
-            return $topBuyers->map(function($buyer) {
-                $avgOrder = $buyer->total_orders > 0 
-                    ? ($buyer->total_spent / $buyer->total_orders) 
-                    : 0;
-
-                return [
-                    'name' => $buyer->full_name,
-                    'email' => $buyer->email,
-                    'total_orders' => (int) $buyer->total_orders,
-                    'total_spent' => (float) $buyer->total_spent,
-                    'avg_order' => round($avgOrder, 2),
-                    'registration_date' => Carbon::parse($buyer->registration_date)->format('d/m/Y'),
-                ];
-            })->toArray();
-
-        } catch (\Exception $e) {
-            \Log::error("Error en getTopBuyers (Service): " . $e->getMessage());
-            return [];
-        }
     }
 
     private function getPeriodName(string $timeRange): string
