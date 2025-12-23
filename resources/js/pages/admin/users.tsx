@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import UserDetailsModal from './users/UserDetailsModal';
+import UserDetailsModal from '../../components/admin/modals/UserDetailsModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface UserData {
@@ -239,6 +239,7 @@ export default function Users({ auth }: any) {
     const handleToggleStatus = (userId: number) => {
         router.patch(route('admin.users.toggle-status', userId), {}, {
             preserveScroll: true,
+            only: ['users', 'stats']
         });
     };
 

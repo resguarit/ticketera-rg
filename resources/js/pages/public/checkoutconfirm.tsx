@@ -552,7 +552,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
                                                         onChange={(e) => setBillingInfo((prev) => ({ ...prev, phone: e.target.value }))}
                                                         className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.phone ? 'border-red-500' : ''}`}
 
-                                                        placeholder="+54 11 1234-5678"
+                                                        placeholder="11 12345678 (Sin espacios ni símbolos)"
                                                         required
                                                     />
                                                     {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
