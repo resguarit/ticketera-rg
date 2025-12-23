@@ -88,9 +88,8 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 id="firstName"
                 value={billingInfo.firstName}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.firstName ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.firstName ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="Tu nombre"
                 disabled={disabled}
               />
@@ -104,9 +103,8 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 id="lastName"
                 value={billingInfo.lastName}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.lastName ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.lastName ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="Tu apellido"
                 disabled={disabled}
               />
@@ -124,9 +122,8 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 type="email"
                 value={billingInfo.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="tu@email.com"
                 disabled={disabled}
               />
@@ -140,9 +137,8 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 id="phone"
                 value={billingInfo.phone}
                 onChange={(e) => handleInputChange("phone", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="+54 11 1234-5678"
                 disabled={disabled}
               />
@@ -150,26 +146,7 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="documentType" className="text-foreground">
-                Tipo de Documento *
-              </Label>
-              <Select
-                value={billingInfo.documentType}
-                onValueChange={(value) => handleInputChange("documentType", value)}
-                disabled={disabled}
-              >
-                <SelectTrigger className="bg-white border-gray-300 text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-gray-300">
-                  <SelectItem value="DNI">DNI</SelectItem>
-                  <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                  <SelectItem value="Cedula">Cédula</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="documentNumber" className="text-foreground">
                 Número de Documento *
@@ -178,9 +155,8 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 id="documentNumber"
                 value={billingInfo.documentNumber}
                 onChange={(e) => handleInputChange("documentNumber", e.target.value)}
-                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${
-                  errors.documentNumber ? "border-red-500 focus-visible:ring-red-500" : ""
-                }`}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.documentNumber ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
                 placeholder="12345678"
                 disabled={disabled}
               />

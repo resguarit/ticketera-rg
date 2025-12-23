@@ -19,7 +19,7 @@ import {
 } from '@/types/'
 
 interface TicketTypeData extends TicketType {
-    available: number; 
+    available: number;
     locked_quantity?: number; // NUEVO
     color: string;
 }
@@ -63,13 +63,13 @@ interface EventDetailProps {
 // Crear un componente simple para el mapa de Google
 const GoogleMapEmbed = ({ coordinates, venueName, venueAddress }: { coordinates: string, venueName: string, venueAddress: string }) => {
     const [lat, lng] = coordinates.split(',');
-    
+
     // URL para Google Maps Embed
     const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15&maptype=roadmap`;
-    
+
     // URL para abrir Google Maps directamente
     const openUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-    
+
     return (
         <div className="relative group">
             {/* Iframe del mapa */}
@@ -83,9 +83,9 @@ const GoogleMapEmbed = ({ coordinates, venueName, venueAddress }: { coordinates:
                 referrerPolicy="no-referrer-when-downgrade"
                 className="rounded-lg"
             />
-            
+
             {/* Overlay clickeable para abrir Google Maps */}
-            <div 
+            <div
                 className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
                 onClick={() => window.open(openUrl, '_blank')}
             >
@@ -105,13 +105,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
     const [selectedFunctionId, setSelectedFunctionId] = useState<number>(
         eventData.functions.length > 0 ? eventData.functions[0].id : 0
     );
-    
+
     const [selectedTickets, setSelectedTickets] = useState<{ [key: number]: number }>({});
     const [isLoading, setIsLoading] = useState(false);
     const [showEventInfo, setShowEventInfo] = useState(false);
 
     // NUEVO: Estado para la disponibilidad actualizada
-    const [realTimeAvailability, setRealTimeAvailability] = useState<{[key: number]: number}>({});
+    const [realTimeAvailability, setRealTimeAvailability] = useState<{ [key: number]: number }>({});
     const [isRefreshingAvailability, setIsRefreshingAvailability] = useState(false);
 
     // Obtener la función seleccionada
@@ -132,9 +132,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
             setIsRefreshingAvailability(true);
             const response = await fetch(`/events/${eventData.id}/availability?function_id=${selectedFunction.id}`);
             const data = await response.json();
-            
+
             if (data.ticket_types) {
-                const availabilityMap: {[key: number]: number} = {};
+                const availabilityMap: { [key: number]: number } = {};
                 data.ticket_types.forEach((ticket: any) => {
                     availabilityMap[ticket.id] = ticket.available;
                 });
@@ -157,8 +157,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
     // NUEVO: Función para obtener la disponibilidad real de un ticket
     const getRealAvailability = (ticket: TicketTypeData): number => {
-        return realTimeAvailability[ticket.id] !== undefined 
-            ? realTimeAvailability[ticket.id] 
+        return realTimeAvailability[ticket.id] !== undefined
+            ? realTimeAvailability[ticket.id]
             : ticket.available;
     };
 
@@ -167,34 +167,33 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         setSelectedTickets(prev => {
             const current = prev[ticketId] || 0;
             const ticketType = currentTicketTypes.find(t => t.id === ticketId);
-            
+
             if (!ticketType) return prev;
-            
+
             // Usar disponibilidad en tiempo real
             const availableQuantity = getRealAvailability(ticketType);
             const maxPurchaseQuantity = ticketType.max_purchase_quantity || 10;
             const maxAllowed = Math.min(availableQuantity, maxPurchaseQuantity);
-            
+
             // Calcular nueva cantidad con validaciones
             const newQuantity = Math.max(0, Math.min(maxAllowed, current + change));
-            
+
             if (newQuantity === 0) {
                 const { [ticketId]: removed, ...rest } = prev;
                 return rest;
             }
-            
+
             // Actualizar disponibilidad después del cambio
             setTimeout(() => updateAvailability(), 1000);
-            
+
             return { ...prev, [ticketId]: newQuantity };
         });
     };
 
-    // NUEVO: Función para mostrar indicador de disponibilidad en tiempo real
     const getAvailabilityStatus = (ticket: TicketTypeData) => {
         const realAvailable = getRealAvailability(ticket);
         const originalAvailable = ticket.available;
-        
+
         if (realAvailable < originalAvailable) {
             const lockedQuantity = originalAvailable - realAvailable;
             return {
@@ -203,7 +202,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                 realAvailable
             };
         }
-        
+
         return {
             showLocked: false,
             lockedQuantity: 0,
@@ -222,7 +221,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
             const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
             if (!ticket) return total;
-            
+
             // Si es bundle, mostrar cantidad real de entradas
             const realQuantity = ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity;
             return total + realQuantity;
@@ -233,7 +232,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
             const ticket = currentTicketTypes.find((t) => t.id === Number.parseInt(ticketId));
             if (!ticket) return total;
-            
+
             return total + (ticket.is_bundle ? quantity * (ticket.bundle_quantity || 1) : quantity);
         }, 0);
     };
@@ -250,7 +249,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         }
 
         setIsLoading(true);
-        
+
         // Preparar datos para el checkout
         const selectedTicketsData = Object.entries(selectedTickets)
             .filter(([_, quantity]) => quantity > 0)
@@ -298,10 +297,23 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         );
     };
 
+    useEffect(() => {
+
+        console.log("Session storage: ", sessionStorage);
+        const params = new URLSearchParams(window.location.search);
+        const refCode = params.get('ref');
+        if (refCode) {
+            sessionStorage.setItem('referral_code', refCode);
+            console.log("Codigo vendedor detectado: ", refCode);
+            console.log("Session storage: ", sessionStorage);
+        }
+
+    }, []);
+
     return (
         <>
             <Head title={`${eventData.name}`} />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Header */}
                 <Header />
@@ -310,27 +322,27 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                     {/* Back Button */}
                     <div className="mb-4 sm:mb-6">
                         <Link href={route('events')}>  {/* Cambiar de 'events' a 'events.index' */}
-        <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
-            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Volver a Eventos</span>
-            <span className="sm:hidden">Volver</span>
-        </Button>
-    </Link>
-</div>
+                            <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
+                                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Volver a Eventos</span>
+                                <span className="sm:hidden">Volver</span>
+                            </Button>
+                        </Link>
+                    </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
                         <div className="hidden lg:block lg:col-span-2 space-y-4 sm:space-y-6">
                             {/* Hero Image - Usar hero_image_url primero, luego image_url */}
                             <div className="relative h-48 sm:h-64 lg:h-72 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
-                                <img 
-                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'} 
-                                    alt={eventData.name} 
-                                    className="w-full h-full object-cover" 
+                                <img
+                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
+                                    alt={eventData.name}
+                                    className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 <div className="absolute bottom-3 sm:bottom-4 lg:bottom-6 left-3 sm:left-4 lg:left-6">
- 
+
                                     <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-1 sm:mb-2 leading-tight">
                                         {eventData.name}
                                     </h1>
@@ -349,11 +361,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 <div
                                                     key={func.id}
                                                     onClick={() => setSelectedFunctionId(func.id)}
-                                                    className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                                        selectedFunctionId === func.id
-                                                            ? 'border-primary bg-primary/10'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedFunctionId === func.id
+                                                        ? 'border-primary bg-primary/10'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <h4 className="font-bold text-foreground mb-1 sm:mb-2 text-sm sm:text-base">{func.name}</h4>
                                                     <p className="text-foreground/80 text-xs sm:text-sm mb-1 sm:mb-2">{func.description}</p>
@@ -362,12 +373,11 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
                                                     <div className="flex items-center justify-between mt-2">
-                                                        <Badge 
-                                                            className={`text-xs ${
-                                                                selectedFunctionId === func.id 
-                                                                    ? 'bg-primary text-white' 
-                                                                    : 'bg-gray-100 text-gray-600'
-                                                            }`}
+                                                        <Badge
+                                                            className={`text-xs ${selectedFunctionId === func.id
+                                                                ? 'bg-primary text-white'
+                                                                : 'bg-gray-100 text-gray-600'
+                                                                }`}
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
@@ -415,14 +425,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             {/* Venue Map Desktop */}
                             {eventData.venue.coordinates && (
                                 <div>
-                                        {/* Mapa con Google Maps Embed */}
-                                        <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
-                                            <GoogleMapEmbed 
-                                                coordinates={eventData.venue.coordinates}
-                                                venueName={eventData.venue.name}
-                                                venueAddress={eventData.venue.full_address}
-                                            />
-                                        </div>
+                                    {/* Mapa con Google Maps Embed */}
+                                    <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
+                                        <GoogleMapEmbed
+                                            coordinates={eventData.venue.coordinates}
+                                            venueName={eventData.venue.name}
+                                            venueAddress={eventData.venue.full_address}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -431,10 +441,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         <div className="lg:hidden space-y-4 sm:space-y-6">
                             {/* Hero Image Mobile - Usar hero_image_url primero, luego image_url */}
                             <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg">
-                                <img 
-                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'} 
-                                    alt={eventData.name} 
-                                    className="w-full h-full object-cover" 
+                                <img
+                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
+                                    alt={eventData.name}
+                                    className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                 <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4">
@@ -456,11 +466,10 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 <div
                                                     key={func.id}
                                                     onClick={() => setSelectedFunctionId(func.id)}
-                                                    className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                                        selectedFunctionId === func.id
-                                                            ? 'border-primary bg-primary/10'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedFunctionId === func.id
+                                                        ? 'border-primary bg-primary/10'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <h4 className="font-bold text-foreground mb-1 sm:mb-2 text-sm sm:text-base">{func.name}</h4>
                                                     <p className="text-foreground/80 text-xs sm:text-sm mb-1 sm:mb-2">{func.description}</p>
@@ -469,12 +478,11 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         <span>{func.date} • {func.time}</span>
                                                     </div>
                                                     <div className="flex items-center justify-between mt-2">
-                                                        <Badge 
-                                                            className={`text-xs ${
-                                                                selectedFunctionId === func.id 
-                                                                    ? 'bg-primary text-white' 
-                                                                    : 'bg-gray-100 text-gray-600'
-                                                            }`}
+                                                        <Badge
+                                                            className={`text-xs ${selectedFunctionId === func.id
+                                                                ? 'bg-primary text-white'
+                                                                : 'bg-gray-100 text-gray-600'
+                                                                }`}
                                                         >
                                                             {func.ticketTypes.length} tipos de entrada
                                                         </Badge>
@@ -536,13 +544,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                             const selectedQuantity = selectedTickets[ticket.id] || 0;
                                                             const isBundle = ticket.is_bundle || false;
                                                             const bundleQuantity = ticket.bundle_quantity || 1;
-                                                            
+
                                                             // Obtener disponibilidad y estado en tiempo real
                                                             const availabilityStatus = getAvailabilityStatus(ticket);
                                                             const realAvailable = availabilityStatus.realAvailable;
                                                             const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
                                                             const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
-                                                            
+
                                                             return (
                                                                 <div
                                                                     key={ticket.id}
@@ -592,8 +600,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 disabled={selectedQuantity >= maxAllowed}
                                                                                 className="w-8 h-8 p-0"
                                                                                 title={
-                                                                                    selectedQuantity >= maxAllowed 
-                                                                                        ? `Límite alcanzado (${maxAllowed})` 
+                                                                                    selectedQuantity >= maxAllowed
+                                                                                        ? `Límite alcanzado (${maxAllowed})`
                                                                                         : `Agregar (máx. ${maxAllowed})`
                                                                                 }
                                                                             >
@@ -806,16 +814,16 @@ export default function EventDetail({ eventData }: EventDetailProps) {
 
                             {/* Venue Map Mobile */}
                             {eventData.venue.coordinates && (
-                                        <div>
-                                        {/* Mapa Mobile */}
-                                        <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
-                                            <GoogleMapEmbed 
-                                                coordinates={eventData.venue.coordinates}
-                                                venueName={eventData.venue.name}
-                                                venueAddress={eventData.venue.full_address}
-                                            />
-                                        </div>
+                                <div>
+                                    {/* Mapa Mobile */}
+                                    <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
+                                        <GoogleMapEmbed
+                                            coordinates={eventData.venue.coordinates}
+                                            venueName={eventData.venue.name}
+                                            venueAddress={eventData.venue.full_address}
+                                        />
                                     </div>
+                                </div>
                             )}
                         </div>
 
@@ -868,12 +876,12 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                             const selectedQuantity = selectedTickets[ticket.id] || 0;
                                                             const isBundle = ticket.is_bundle || false;
                                                             const bundleQuantity = ticket.bundle_quantity || 1;
-                                                            
+
                                                             const availabilityStatus = getAvailabilityStatus(ticket);
                                                             const realAvailable = availabilityStatus.realAvailable;
                                                             const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
                                                             const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
-                                                            
+
                                                             return (
                                                                 <div
                                                                     key={ticket.id}
@@ -893,9 +901,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 <div className="flex items-center space-x-2">
 
                                                                                 </div>
-                                                                            
 
-                                                                            
+
+
                                                                                 {/* Mostrar advertencia cuando queda poco stock */}
                                                                                 {realAvailable <= 5 && realAvailable > 0 && (
                                                                                     <p className="text-red-600 text-xs font-medium">
@@ -931,8 +939,8 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 disabled={selectedQuantity >= maxAllowed}
                                                                                 className="w-8 h-8 p-0"
                                                                                 title={
-                                                                                    selectedQuantity >= maxAllowed 
-                                                                                        ? `Límite alcanzado (${maxAllowed})` 
+                                                                                    selectedQuantity >= maxAllowed
+                                                                                        ? `Límite alcanzado (${maxAllowed})`
                                                                                         : `Agregar (máx. ${maxAllowed})`
                                                                                 }
                                                                             >

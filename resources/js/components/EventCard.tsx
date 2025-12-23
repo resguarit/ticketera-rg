@@ -9,7 +9,7 @@ interface EventCardProps {
     event: {
         id: number;
         name: string;
-        description?: string;
+        description?: string | null;
         image_url?: string;
         featured?: boolean;
         location: string;
@@ -31,7 +31,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
     const day = dateObj.getDate().toString().padStart(2, '0');
     const month = dateObj.toLocaleString('es-ES', { month: 'short' });
     const year = dateObj.getFullYear();
-    
+
     // Extraer hora y minutos del tiempo
     const timeHour = event.time ? event.time.split(':')[0] : '00';
     const timeMinutes = event.time ? event.time.split(':')[1] : '00';
@@ -56,13 +56,13 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                     <div className="flex h-32">
                         {/* Imagen izquierda */}
                         <div className="w-32 h-32 flex-shrink-0 relative">
-                            <img 
-                                src={event.image_url || "/placeholder.svg?height=400&width=800"} 
-                                alt={event.name} 
+                            <img
+                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                alt={event.name}
                                 className={`w-full h-full object-cover ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
                             />
                         </div>
-                        
+
                         {/* Contenido derecha */}
                         <div className="flex-1 p-3 flex flex-col justify-between overflow-hidden">
                             {/* Top section */}
@@ -79,7 +79,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                                     {event.name}
                                 </h3>
                             </div>
-                            
+
                             {/* Bottom section - Fecha y hora */}
                             <div className="flex gap-4 flex-shrink-0">
                                 <div className="flex items-center gap-1">
@@ -89,7 +89,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                                         <div className="text-xs font-bold text-black">{year}</div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-1">
                                     <span className="text-2xl font-bold text-black leading-none">{timeHour}</span>
                                     <div className="leading-none">
@@ -119,9 +119,9 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                     <div className="relative h-[260px] overflow-hidden flex-shrink-0">
                         {/* Background image */}
                         <div className="absolute inset-0">
-                            <img 
-                                src={event.image_url || "/placeholder.svg?height=400&width=800"} 
-                                alt={event.name} 
+                            <img
+                                src={event.image_url || "/placeholder.svg?height=400&width=800"}
+                                alt={event.name}
                                 className={`w-full h-full object-cover transition-all duration-300 ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
                             />
                         </div>

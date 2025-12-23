@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { 
+import { toast } from 'sonner';
+import {
     Settings as SettingsIcon,
     Globe,
     Database,
@@ -49,13 +50,13 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                 setGeneralSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
                 setEditingField(null);
                 setTempValue(null);
-                alert('Campo actualizado correctamente');
+                toast.success('Campo actualizado correctamente');
             } else {
-                alert('Error al guardar: ' + data.message);
+                toast.error('Error al guardar: ' + data.message);
             }
         } catch (error: any) {
             console.error('Error al guardar:', error);
-            alert('Error al guardar el campo: ' + (error.response?.data?.message || error.message));
+            toast.error('Error al guardar el campo: ' + (error.response?.data?.message || error.message));
         } finally {
             setIsLoading(false);
         }
@@ -194,7 +195,7 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
     return (
         <>
             <Head title="Configuración" />
-            
+
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
                     {/* Header */}
@@ -220,15 +221,15 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {renderReadOnlyField(
-                                    'Nombre del Sitio', 
-                                    generalSettings.siteName, 
+                                    'Nombre del Sitio',
+                                    generalSettings.siteName,
                                     'text',
                                     <SettingsIcon className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderReadOnlyField(
-                                    'Descripción del Sitio', 
-                                    generalSettings.siteDescription, 
+                                    'Descripción del Sitio',
+                                    generalSettings.siteDescription,
                                     'textarea',
                                     <Globe className="w-4 h-4 text-gray-600" />
                                 )}
@@ -244,19 +245,19 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {renderEditableField(
-                                    'general', 
-                                    'supportEmail', 
-                                    'Email de Soporte', 
-                                    generalSettings.supportEmail, 
+                                    'general',
+                                    'supportEmail',
+                                    'Email de Soporte',
+                                    generalSettings.supportEmail,
                                     'email',
                                     <Mail className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderEditableField(
-                                    'general', 
-                                    'supportPhone', 
-                                    'Teléfono de Soporte', 
-                                    generalSettings.supportPhone, 
+                                    'general',
+                                    'supportPhone',
+                                    'Teléfono de Soporte',
+                                    generalSettings.supportPhone,
                                     'text',
                                     <Phone className="w-4 h-4 text-gray-600" />
                                 )}
@@ -272,19 +273,19 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {renderEditableField(
-                                    'general', 
-                                    'businessDays', 
-                                    'Días de Atención', 
-                                    generalSettings.businessDays, 
+                                    'general',
+                                    'businessDays',
+                                    'Días de Atención',
+                                    generalSettings.businessDays,
                                     'text',
                                     <Clock className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderEditableField(
-                                    'general', 
-                                    'businessHours', 
-                                    'Horarios de Atención', 
-                                    generalSettings.businessHours, 
+                                    'general',
+                                    'businessHours',
+                                    'Horarios de Atención',
+                                    generalSettings.businessHours,
                                     'text',
                                     <Clock className="w-4 h-4 text-gray-600" />
                                 )}

@@ -23,10 +23,6 @@ export default function NewOrganizer() {
         instagram_url: '',
         twitter_url: '',
         tax: '',
-        decidir_public_key_prod: '',
-        decidir_secret_key_prod: '',
-        decidir_public_key_test: '',
-        decidir_secret_key_test: '',
     });
 
     useEffect(() => {
@@ -140,7 +136,7 @@ export default function NewOrganizer() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        
+
         // Validar antes de enviar
         if (!validateRequiredFields()) {
             return;
@@ -155,7 +151,7 @@ export default function NewOrganizer() {
             },
             onError: (errors) => {
                 console.log('Form errors:', errors);
-                
+
                 // Mostrar errores específicos del servidor
                 if (errors.name) {
                     toast.error(`Nombre: ${errors.name}`, { id: 'create-organizer' });
@@ -189,7 +185,7 @@ export default function NewOrganizer() {
                 <div className='container mx-auto px-4 py-6'>
                     <div className='flex items-center justify-between mb-6'>
                         <div className="flex items-center space-x-4">
-                            <BackButton 
+                            <BackButton
                                 href={route('admin.organizers.index')}
                             />
                             <div>
@@ -199,7 +195,7 @@ export default function NewOrganizer() {
                         </div>
 
                     </div>
-                    
+
                     <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
                         <Card className='bg-white shadow-lg border-gray-200'>
                             <CardHeader className='pb-0'>
@@ -211,10 +207,10 @@ export default function NewOrganizer() {
                                         <Label htmlFor="name" className="text-black">
                                             Nombre del Organizador <span className="text-red-500">*</span>
                                         </Label>
-                                        <Input 
-                                            id="name" 
-                                            value={data.name} 
-                                            onChange={(e) => setData('name', e.target.value)} 
+                                        <Input
+                                            id="name"
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
                                             className="bg-white border-gray-300 text-black placeholder:text-gray-500"
                                             placeholder="Ej: MusicPro Events"
                                         />
@@ -224,10 +220,10 @@ export default function NewOrganizer() {
                                         <Label htmlFor="referring" className="text-black">
                                             Referente <span className="text-red-500">*</span>
                                         </Label>
-                                        <Input 
-                                            id="referring" 
-                                            value={data.referring} 
-                                            onChange={(e) => setData('referring', e.target.value)} 
+                                        <Input
+                                            id="referring"
+                                            value={data.referring}
+                                            onChange={(e) => setData('referring', e.target.value)}
                                             className="bg-white border-gray-300 text-black placeholder:text-gray-500"
                                             placeholder="Ej: Juan Pérez"
                                         />
@@ -237,11 +233,11 @@ export default function NewOrganizer() {
                                         <Label htmlFor="email" className="text-black">
                                             Email <span className="text-red-500">*</span>
                                         </Label>
-                                        <Input 
-                                            id="email" 
-                                            type="email" 
-                                            value={data.email} 
-                                            onChange={(e) => setData('email', e.target.value)} 
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
                                             className="bg-white border-gray-300 text-black placeholder:text-gray-500"
                                             placeholder="contacto@musicpro.com"
                                         />
@@ -251,10 +247,10 @@ export default function NewOrganizer() {
                                         <Label htmlFor="phone" className="text-black">
                                             Teléfono <span className="text-red-500">*</span>
                                         </Label>
-                                        <Input 
-                                            id="phone" 
-                                            value={data.phone} 
-                                            onChange={(e) => setData('phone', e.target.value)} 
+                                        <Input
+                                            id="phone"
+                                            value={data.phone}
+                                            onChange={(e) => setData('phone', e.target.value)}
                                             className="bg-white border-gray-300 text-black placeholder:text-gray-500"
                                             placeholder="+54 11 1234-5678"
                                         />
@@ -262,14 +258,14 @@ export default function NewOrganizer() {
                                     </div>
                                     <div>
                                         <Label htmlFor="tax" className="text-black">Cargo por servicio (%)<span className="text-red-500">*</span></Label>
-                                        <Input 
-                                            id="tax" 
+                                        <Input
+                                            id="tax"
                                             type="number"
                                             step="0.01"
                                             min="0"
                                             max="100"
-                                            value={data.tax} 
-                                            onChange={(e) => setData('tax', e.target.value)} 
+                                            value={data.tax}
+                                            onChange={(e) => setData('tax', e.target.value)}
                                             className="bg-white border-gray-300 text-black placeholder:text-gray-500"
                                             placeholder="5.5"
                                         />
@@ -294,11 +290,11 @@ export default function NewOrganizer() {
                                             <span className="inline-flex items-center px-3 text-sm text-gray-600 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
                                                 facebook.com/
                                             </span>
-                                            <Input 
-                                                id="facebook_url" 
-                                                value={data.facebook_url} 
-                                                onChange={(e) => setData('facebook_url', e.target.value)} 
-                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500" 
+                                            <Input
+                                                id="facebook_url"
+                                                value={data.facebook_url}
+                                                onChange={(e) => setData('facebook_url', e.target.value)}
+                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500"
                                                 placeholder="musicproevents"
                                             />
                                         </div>
@@ -310,11 +306,11 @@ export default function NewOrganizer() {
                                             <span className="inline-flex items-center px-3 text-sm text-gray-600 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
                                                 instagram.com/
                                             </span>
-                                            <Input 
-                                                id="instagram_url" 
-                                                value={data.instagram_url} 
-                                                onChange={(e) => setData('instagram_url', e.target.value)} 
-                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500" 
+                                            <Input
+                                                id="instagram_url"
+                                                value={data.instagram_url}
+                                                onChange={(e) => setData('instagram_url', e.target.value)}
+                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500"
                                                 placeholder="musicproevents"
                                             />
                                         </div>
@@ -326,11 +322,11 @@ export default function NewOrganizer() {
                                             <span className="inline-flex items-center px-3 text-sm text-gray-600 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
                                                 x.com/
                                             </span>
-                                            <Input 
-                                                id="twitter_url" 
-                                                value={data.twitter_url} 
-                                                onChange={(e) => setData('twitter_url', e.target.value)} 
-                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500" 
+                                            <Input
+                                                id="twitter_url"
+                                                value={data.twitter_url}
+                                                onChange={(e) => setData('twitter_url', e.target.value)}
+                                                className="rounded-l-none bg-white border-gray-300 text-black placeholder:text-gray-500"
                                                 placeholder="musicproevents"
                                             />
                                         </div>
@@ -351,12 +347,12 @@ export default function NewOrganizer() {
                                     <div className='space-y-2'>
                                         <Label htmlFor="logo" className="text-black">Subir Logo</Label>
                                         <div className='flex items-center py-4'>
-                                            <Input 
-                                                className='w-full bg-white border-gray-300 text-black file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200' 
-                                                id="logo" 
-                                                type="file" 
+                                            <Input
+                                                className='w-full bg-white border-gray-300 text-black file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200'
+                                                id="logo"
+                                                type="file"
                                                 accept="image/*"
-                                                onChange={handleLogoChange} 
+                                                onChange={handleLogoChange}
                                             />
                                         </div>
                                         <p className="text-xs text-gray-500">Formatos soportados: JPG, PNG, GIF, WebP</p>
@@ -366,10 +362,10 @@ export default function NewOrganizer() {
                                         <div className="space-y-2">
                                             <Label className="text-black">Vista Previa del Logo</Label>
                                             <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                                                <img 
-                                                    src={logoPreview} 
-                                                    alt="Vista previa" 
-                                                    className="h-32 w-32 object-contain mx-auto rounded-md" 
+                                                <img
+                                                    src={logoPreview}
+                                                    alt="Vista previa"
+                                                    className="h-32 w-32 object-contain mx-auto rounded-md"
                                                 />
                                             </div>
                                         </div>
@@ -378,77 +374,20 @@ export default function NewOrganizer() {
                             </CardContent>
                         </Card>
 
-                        {/* Sección de claves de Decidir (opcional) */}
-                        <Card className='bg-white shadow-lg border-gray-200'>
-                            <CardHeader className='pb-0'>
-                                <CardTitle className='text-lg font-semibold text-black'>Configuración de Decidir (Opcional)</CardTitle>
-                                <p className="text-sm text-gray-600">Configuración para el procesamiento de pagos</p>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="decidir_public_key_prod" className="text-black">Clave Pública (Producción)</Label>
-                                        <Input 
-                                            id="decidir_public_key_prod" 
-                                            value={data.decidir_public_key_prod} 
-                                            onChange={(e) => setData('decidir_public_key_prod', e.target.value)} 
-                                            className="bg-white border-gray-300 text-black placeholder:text-gray-500"
-                                            placeholder="pk_live_..."
-                                        />
-                                        <InputError message={errors.decidir_public_key_prod} className="mt-1" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="decidir_secret_key_prod" className="text-black">Clave Secreta (Producción)</Label>
-                                        <Input 
-                                            id="decidir_secret_key_prod" 
-                                            type="password"
-                                            value={data.decidir_secret_key_prod} 
-                                            onChange={(e) => setData('decidir_secret_key_prod', e.target.value)} 
-                                            className="bg-white border-gray-300 text-black placeholder:text-gray-500"
-                                            placeholder="sk_live_..."
-                                        />
-                                        <InputError message={errors.decidir_secret_key_prod} className="mt-1" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="decidir_public_key_test" className="text-black">Clave Pública (Pruebas)</Label>
-                                        <Input 
-                                            id="decidir_public_key_test" 
-                                            value={data.decidir_public_key_test} 
-                                            onChange={(e) => setData('decidir_public_key_test', e.target.value)} 
-                                            className="bg-white border-gray-300 text-black placeholder:text-gray-500"
-                                            placeholder="pk_test_..."
-                                        />
-                                        <InputError message={errors.decidir_public_key_test} className="mt-1" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="decidir_secret_key_test" className="text-black">Clave Secreta (Pruebas)</Label>
-                                        <Input 
-                                            id="decidir_secret_key_test" 
-                                            type="password"
-                                            value={data.decidir_secret_key_test} 
-                                            onChange={(e) => setData('decidir_secret_key_test', e.target.value)} 
-                                            className="bg-white border-gray-300 text-black placeholder:text-gray-500"
-                                            placeholder="sk_test_..."
-                                        />
-                                        <InputError message={errors.decidir_secret_key_test} className="mt-1" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                            <div className="flex w-full justify-end space-x-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    asChild
-                                    className="w-fit"
-                                >
-                                    <Link href={route('admin.organizers.index')}>
-                                        Cancelar
-                                    </Link>
-                                </Button>
-                            <Button 
-                                onClick={submit} 
-                                disabled={processing} 
+                        <div className="flex w-full justify-end space-x-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="w-fit"
+                            >
+                                <Link href={route('admin.organizers.index')}>
+                                    Cancelar
+                                </Link>
+                            </Button>
+                            <Button
+                                onClick={submit}
+                                disabled={processing}
                                 className="bg-primary text-white hover:bg-primary-hover"
                             >
                                 <Save className="w-4 h-4 mr-2" />

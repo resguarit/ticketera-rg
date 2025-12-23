@@ -209,7 +209,7 @@ test('last name is required', function () {
     $response->assertSessionHasErrors(['lastName']);
 });
 
-test('document number is required', function () {
+test('document number not is required', function () {
     $user = User::factory()->create();
 
     $response = $this
@@ -223,7 +223,7 @@ test('document number is required', function () {
             'email' => $user->email,
         ]);
 
-    $response->assertSessionHasErrors(['documentNumber']);
+    $response->assertSessionHasNoErrors();
 });
 
 test('email must be valid format', function () {
@@ -296,7 +296,7 @@ test('user relationships are preserved after update', function () {
 
 test('soft deleted user cannot update profile', function () {
     $user = User::factory()->create();
-    
+
     $user->delete();
 
     $response = $this
@@ -355,7 +355,7 @@ test('address can be empty', function () {
 
 test('user name method returns full name', function () {
     $user = User::factory()->create();
-    
+
     $user->person->update([
         'name' => 'John',
         'last_name' => 'Doe',

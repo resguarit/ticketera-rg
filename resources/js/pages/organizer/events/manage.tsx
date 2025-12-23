@@ -2,11 +2,11 @@ import { Head } from '@inertiajs/react';
 import EventManagementLayout from '@/layouts/event-management-layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-    Calendar, 
-    MapPin, 
-    Users, 
-    DollarSign, 
+import {
+    Calendar,
+    MapPin,
+    Users,
+    DollarSign,
     TrendingUp,
     Clock,
     Ticket,
@@ -19,9 +19,9 @@ import { compareDates, isDateAfter } from '@/lib/dateHelpers';
 import { formatCurrency } from '@/lib/currencyHelpers';
 
 interface EventFunctionDetail extends EventFunction {
-    date: string;       
-    time: string;       
-    formatted_date: string; 
+    date: string;
+    time: string;
+    formatted_date: string;
     day_name: string;
     status: string;
     status_label: string;
@@ -47,13 +47,13 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
     // Calcular estadísticas básicas
     const totalFunctions = event.functions?.length || 0;
     const activeFunctions = event.functions?.filter(f => f.is_active)?.length || 0;
-    
+
     // Obtener la próxima función usando el currentDateTime del backend
     const upcomingFunctions = event.functions?.filter(f => {
         const functionDateTime = `${f.formatted_date}T${f.time}:00`;
         return isDateAfter(functionDateTime, currentDateTime);
     }) || [];
-    
+
     const nextFunction = upcomingFunctions.sort((a, b) => {
         const dateTimeA = `${a.formatted_date}T${a.time}:00`;
         const dateTimeB = `${b.formatted_date}T${b.time}:00`;
@@ -91,7 +91,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
     return (
         <>
             <Head title={`Gestionar: ${event.name}`} />
-            
+
             <EventManagementLayout event={event} activeTab="overview">
                 <div className="space-y-6">
                     {/* Header del evento */}
@@ -106,8 +106,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                         </Badge>
                                     )}
                                 </div>
-                                <p className="text-gray-600 mb-4 max-w-3xl">{event.description}</p>
-                                
+                                <p className="text-gray-600 mb-4 max-w-3xl line-clamp-3 md:line-clamp-none">{event.description}</p>
+
                                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -123,7 +123,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {event.image_url && (
                                 <div className="ml-6">
                                     <img
@@ -137,7 +137,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                     </div>
 
                     {/* Estadísticas rápidas */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-2">
                         <Card className="p-3 py-4 bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
@@ -190,14 +190,14 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                             </div>
                         </Card>
                     </div>
-                    
-                    <div className='flex gap-4'>
+
+                    <div className='flex flex-col md:flex-row gap-4'>
                         {/* Próxima función */}
                         {nextFunction && (
-                            <Card className="p-6 w-1/2">
+                            <Card className="p-6 w-full md:w-1/2">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Próxima Función</h3>
                                 <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="flex-1">
                                             <h4 className="font-medium text-indigo-900 mb-2">{nextFunction.name}</h4>
                                             <div className="flex items-center gap-4 mb-3 text-sm text-indigo-700">
@@ -215,7 +215,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                             )}
                                             {getFunctionStatusBadge(nextFunction)}
                                         </div>
-                                        <div className="text-right ml-4">
+                                        <div className="text-left sm:text-right sm:ml-4">
                                             <Badge variant="outline" className="border-indigo-300 text-indigo-700">
                                                 {nextFunction.day_name}
                                             </Badge>
@@ -226,14 +226,14 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                         )}
 
                         {/* Lista de todas las funciones */}
-                        <Card className="p-6 w-1/2">
+                        <Card className="p-6 w-full md:w-1/2">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Todas las Funciones</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                                 {event.functions && event.functions.length > 0 ? (
                                     event.functions.map((func) => (
-                                        <div key={func.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <div key={func.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-4">
                                             <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
+                                                <div className="flex items-center gap-3 mb-2 flex-wrap">
                                                     <h4 className="font-medium text-gray-900">{func.name}</h4>
                                                     {getFunctionStatusBadge(func)}
                                                 </div>
@@ -245,7 +245,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                                     <p className="text-sm text-gray-500 mt-1">{func.description}</p>
                                                 )}
                                             </div>
-                                            <div className="flex flex-col items-end gap-1 text-right ml-4">
+                                            <div className="flex flex-row sm:flex-col items-start sm:items-end gap-x-4 gap-y-1 sm:text-right sm:ml-4">
                                                 <span className="text-sm text-gray-700 font-medium">{func.entradas_vendidas} entradas</span>
                                                 <span className="text-xs text-purple-600">{func.tickets_emitidos} tickets emitidos</span>
                                             </div>

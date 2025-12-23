@@ -33,7 +33,7 @@ interface PurchaseData {
         is_bundle?: boolean;        // NUEVO
         bundle_quantity?: number;   // NUEVO
         total_individual_tickets?: number; // NUEVO
-    }> ;
+    }>;
     total: number;
     purchaseDate: string;
 }
@@ -45,7 +45,7 @@ interface CheckoutSuccessProps {
 
 export default function CheckoutSuccess({ purchaseData, accountCreated = false }: CheckoutSuccessProps) {
     const [showConfetti, setShowConfetti] = useState(true);
-    
+
     const { auth } = usePage<SharedData>().props;
 
     useEffect(() => {
@@ -56,7 +56,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
     return (
         <>
             <Head title="¡Compra Exitosa!" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-secondary relative overflow-hidden">
                 {/* Confetti Effect */}
                 {showConfetti && (
@@ -122,7 +122,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
 
                         {/* Caso 2: Usuario invitado, YA TENÍA una cuenta con ese email */}
                         {!auth.user && !accountCreated && (
-                             <Card className="mb-6 bg-green-50 border-green-200">
+                            <Card className="mb-6 bg-green-50 border-green-200">
                                 <CardHeader className="flex-row items-center gap-4">
                                     <UserCheck className="w-8 h-8 text-green-600" />
                                     <div>
@@ -300,14 +300,6 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                         Centro de Ayuda
                                     </Button>
                                 </Link>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-gray-300 text-foreground hover:bg-gray-50"
-                                >
-                                    <Phone className="w-4 h-4 mr-2" />
-                                    Contactar Soporte
-                                </Button>
                             </div>
                         </div>
 

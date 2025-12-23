@@ -52,7 +52,8 @@ interface EventFunctionDetail extends EventFunctionSimple {
     start_time: string;
 }
 
-interface EventWithDetails extends Event, EventRelations {
+
+interface EventWithDetails extends Event, Omit<EventRelations, 'functions'> {
     functions: EventFunctionDetail[];
 }
 
@@ -162,7 +163,7 @@ export default function EventAccess({
     };
 
     return (
-        <EventManagementLayout event={event} activeTab="access">
+        <EventManagementLayout event={event as any} activeTab="access">
             <Head title={`Control de Accesos - ${event.name}`} />
 
             <div className="space-y-6">
@@ -216,7 +217,7 @@ export default function EventAccess({
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <Input
-                                        placeholder="Escanear o buscar código / DNI / Nombre..."
+                                        placeholder="Buscar por código / DNI / Nombre / ID de Orden..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -384,7 +385,7 @@ export default function EventAccess({
                     {/* Paginación simple */}
                     {tickets.links && tickets.data.length > 0 && (
                         <div className="p-4 border-t flex justify-center">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center flex-wrap justify-center gap-2">
                                 {tickets.links.map((link, i) => (
                                     <Link
                                         key={i}

@@ -16,9 +16,9 @@ import TicketDetailsModal from '@/components/organizers/modals/TicketDetailsModa
 import { PaginatedResponse } from '@/types/ui/ui';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ConfirmDeleteModal from '@/components/ConfirmationModal';
-import { 
-    UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock, 
-    ShoppingCart, UserCheck, DollarSign, RefreshCw, 
+import {
+    UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock,
+    ShoppingCart, UserCheck, DollarSign, RefreshCw,
     Search, ArrowDown, ArrowUp, ArrowUpDown
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -30,9 +30,9 @@ interface EventAttendeeFunction {
 }
 
 interface EventFunctionDetail extends EventFunction {
-    date: string;       
-    time: string;       
-    formatted_date: string; 
+    date: string;
+    time: string;
+    formatted_date: string;
     day_name: string;
 }
 
@@ -49,14 +49,14 @@ interface EventAttendeesProps {
     stats: AttendeeStats;
     // --- AGREGAR PROPS ---
     search?: string;
-    sort_direction?: 'asc' | 'desc';
+    sort_direction?: 'asc' | 'desc' | null;
     // --- FIN AGREGAR PROPS ---
 }
 
-export default function EventAttendees({ 
-    auth, 
-    event, 
-    attendees, 
+export default function EventAttendees({
+    auth,
+    event,
+    attendees,
     functions,
     selectedFunctionId,
     stats,
@@ -65,7 +65,7 @@ export default function EventAttendees({
     sort_direction: initialSort = null
     // --- FIN AGREGAR PROPS ---
 }: EventAttendeesProps) {
-    
+
     // --- AGREGAR ESTADOS ---
     const [searchQuery, setSearchQuery] = useState(initialSearch);
     const [dateSort, setDateSort] = useState<'asc' | 'desc' | null>(initialSort);
@@ -74,7 +74,7 @@ export default function EventAttendees({
     const [filterFunction, setFilterFunction] = useState<string>(
         selectedFunctionId?.toString() || 'all'
     );
-    
+
     // Estados para el modal de detalles
     const [ticketDetailsModal, setTicketDetailsModal] = useState({
         isOpen: false,
@@ -123,10 +123,10 @@ export default function EventAttendees({
         router.get(
             route('organizer.events.attendees', event.id),
             currentParams as any,
-            { 
-                preserveState: true, 
-                preserveScroll: true, 
-                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction'] 
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction']
             }
         );
     };
@@ -145,7 +145,7 @@ export default function EventAttendees({
         if (dateSort === null) newSort = 'desc';
         else if (dateSort === 'desc') newSort = 'asc';
         else newSort = null;
-        
+
         setDateSort(newSort);
         applyFilters({ sort_direction: newSort });
     };
@@ -170,7 +170,7 @@ export default function EventAttendees({
         try {
             let response;
             let url;
-            
+
             if (attendee.type === 'buyer') {
                 url = route('organizer.events.attendees.order.details', {
                     event: event.id,
@@ -191,7 +191,7 @@ export default function EventAttendees({
             }
 
             const data = await response.json();
-            
+
             setTicketDetailsModal({
                 isOpen: true,
                 loading: false,
@@ -229,7 +229,7 @@ export default function EventAttendees({
                 }
 
                 const assistantDetails = await response.json();
-                
+
                 // Extraemos los IDs de todos los tickets disponibles y usados del asistente
                 const ticketIds: number[] = [];
                 if (assistantDetails.per_type && Array.isArray(assistantDetails.per_type)) {
@@ -314,7 +314,7 @@ export default function EventAttendees({
             });
             return;
         }
-        
+
         if (attendeeType === 'invited') {
             router.delete(
                 route('organizer.events.assistants.destroy', {
@@ -349,13 +349,13 @@ export default function EventAttendees({
         if (attendee.tickets_used > 0) {
             return <Badge variant="default" className="bg-green-100 text-green-800">Usado</Badge>;
         }
-        if (attendee.is_cancelled) {
-        return <Badge className='bg-red-100 text-red-600 border border-red-300'>Tickets no disponibles</Badge>;
+        if (attendee.type === 'invited' && attendee.is_cancelled) {
+            return <Badge className='bg-red-100 text-red-600 border border-red-300'>Tickets no disponibles</Badge>;
         }
-        if (attendee.tickets_count > 0 && attendee.order_status !== 'cancelled') {
+        if (attendee.type === 'buyer' && attendee.tickets_count > 0 && attendee.order_status !== 'cancelled') {
             return <Badge variant="default">Con tickets</Badge>;
         }
-        if (attendee.tickets_count > 0 && attendee.order_status === 'cancelled') {
+        if (attendee.type === 'buyer' && attendee.tickets_count > 0 && attendee.order_status === 'cancelled') {
             return <Badge variant="default">Tickets no disponibles</Badge>;
         }
         if (attendee.type === 'invited' && attendee.sended_at) {
@@ -365,7 +365,7 @@ export default function EventAttendees({
     };
 
     const getTypeBadge = (attendee: AttendeeForTable) => {
-        const isCancelled = attendee.is_cancelled || attendee.order_status === 'cancelled';
+        const isCancelled = (attendee.type === 'invited' && attendee.is_cancelled) || (attendee.type === 'buyer' && attendee.order_status === 'cancelled');
 
         if (attendee.type === 'invited') {
             return (
@@ -379,18 +379,18 @@ export default function EventAttendees({
             );
         }
         if (attendee.order_status === 'cancelled') {
-            return <Badge variant="outline" className="bg-red-50 text-red-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;  
+            return <Badge variant="outline" className="bg-red-50 text-red-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;
         }
         return <Badge variant="outline" className="bg-green-50 text-green-700"><ShoppingCart className="w-3 h-3 mr-1" />Comprador</Badge>;
     };
 
     return (
-        <EventManagementLayout 
+        <EventManagementLayout
             event={event}
             activeTab="attendees"
         >
             <Head title={`Asistentes - ${event.name}`} />
-            
+
             <div className="space-y-6">
 
                 {/* Tabla de asistentes */}
@@ -403,20 +403,21 @@ export default function EventAttendees({
                                     Administra y controla los asistentes de tu evento, tanto invitados como compradores
                                 </CardDescription>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
                                 {/* Botón de actualización */}
-                                <Button 
-                                    variant="outline" 
-                                    onClick={handleRefresh} 
+                                <Button
+                                    variant="outline"
+                                    onClick={handleRefresh}
                                     title="Actualizar lista"
+                                    className="w-full md:w-auto"
                                 >
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Actualizar
                                 </Button>
-                                
+
                                 {/* Filtro por función */}
                                 <Select value={filterFunction} onValueChange={handleFunctionFilter}>
-                                    <SelectTrigger className="w-[200px]">
+                                    <SelectTrigger className="w-full md:w-[200px]">
                                         <SelectValue placeholder="Filtrar por función" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -428,8 +429,8 @@ export default function EventAttendees({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                
-                                <Button onClick={handleInviteAssistant}>
+
+                                <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
                                     <UserPlus className="h-4 w-4 mr-2" />
                                     Invitar asistente
                                 </Button>
@@ -463,159 +464,162 @@ export default function EventAttendees({
                     {/* --- FIN BARRA DE BÚSQUEDA --- */}
 
                     <CardContent>
-                        {(!attendees.data || attendees.data.length === 0) ? (
-                            <div className="text-center py-8">
-                                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    {/* MODIFICADO: Mensaje dinámico */}
-                                    {initialSearch ? "No se encontraron resultados" : "No hay asistentes"}
-                                </h3>
-                                <p className="text-gray-600 mb-4">
-                                    {initialSearch
-                                        ? "Intenta con otros términos de búsqueda o limpia los filtros."
-                                        : "Comienza invitando a tu primer asistente al evento."}
-                                </p>
-                                {!initialSearch && (
-                                    <Button onClick={handleInviteAssistant}>
-                                        <UserPlus className="h-4 w-4 mr-2" />
-                                        Invitar asistente
-                                    </Button>
-                                )}
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Tipo</TableHead>
-                                        <TableHead>Nombre</TableHead>
-                                        <TableHead>DNI</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Función</TableHead>
-                                        <TableHead>Estado</TableHead>
-                                        <TableHead>Tickets</TableHead>
-                                        {/* --- MODIFICAR CABECERA FECHA --- */}
-                                        <TableHead>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={toggleDateSort}
-                                                className="h-auto p-0 hover:bg-transparent font-medium"
-                                            >
-                                                Fecha
-                                                {dateSort === null && <ArrowUpDown className="ml-2 h-4 w-4" />}
-                                                {dateSort === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
-                                                {dateSort === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
-                                            </Button>
-                                        </TableHead>
-                                        {/* --- FIN MODIFICAR --- */}
-                                        <TableHead className="text-right">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {Array.isArray(attendees.data) && attendees.data.map((attendee: AttendeeForTable) => (
-                                        <TableRow key={`${attendee.type}-${attendee.type === 'invited' ? attendee.assistant_id : attendee.order_id}`}>
-                                            <TableCell>
-                                                {getTypeBadge(attendee)}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {attendee.full_name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {attendee.dni || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {attendee.email || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div>
-                                                    <div className="font-medium">{attendee.function_name}</div>
-                                                    <div className="text-sm text-gray-500">{attendee.function_date}</div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {getStatusBadge(attendee)}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm">
-                                                    <div>{attendee.tickets_count} tickets</div>
-                                                    <div className="text-gray-500">
-                                                        {attendee.tickets_used} usados
-                                                    </div>
-                                                    {attendee.type === 'buyer' && (
-                                                        <div 
-                                                        className={`font-semibold ${
-                                                            attendee.order_status === 'cancelled' 
-                                                            ? 'text-red-600 line-through' 
-                                                            : 'text-green-600'
-                                                        }`}>
-                                                            {formatCurrency(attendee.total_amount)}
+                        <div className="overflow-x-auto">
+                            {(!attendees.data || attendees.data.length === 0) ? (
+                                <div className="text-center py-8">
+                                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                        {/* MODIFICADO: Mensaje dinámico */}
+                                        {initialSearch ? "No se encontraron resultados" : "No hay asistentes"}
+                                    </h3>
+                                    <p className="text-gray-600 mb-4">
+                                        {initialSearch
+                                            ? "Intenta con otros términos de búsqueda o limpia los filtros."
+                                            : "Comienza invitando a tu primer asistente al evento."}
+                                    </p>
+                                    {!initialSearch && (
+                                        <Button onClick={handleInviteAssistant}>
+                                            <UserPlus className="h-4 w-4 mr-2" />
+                                            Invitar asistente
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="min-w-[800px]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Tipo</TableHead>
+                                                <TableHead>Nombre</TableHead>
+                                                <TableHead>DNI</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Función</TableHead>
+                                                <TableHead>Estado</TableHead>
+                                                <TableHead>Tickets</TableHead>
+                                                {/* --- MODIFICAR CABECERA FECHA --- */}
+                                                <TableHead>
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={toggleDateSort}
+                                                        className="h-auto p-0 hover:bg-transparent font-medium"
+                                                    >
+                                                        Fecha
+                                                        {dateSort === null && <ArrowUpDown className="ml-2 h-4 w-4" />}
+                                                        {dateSort === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
+                                                        {dateSort === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
+                                                    </Button>
+                                                </TableHead>
+                                                {/* --- FIN MODIFICAR --- */}
+                                                <TableHead className="text-right">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {Array.isArray(attendees.data) && attendees.data.map((attendee: AttendeeForTable) => (
+                                                <TableRow key={`${attendee.type}-${attendee.type === 'invited' ? attendee.assistant_id : attendee.order_id}`}>
+                                                    <TableCell>
+                                                        {getTypeBadge(attendee)}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
+                                                        {attendee.full_name}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {attendee.dni || 'N/A'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {attendee.email || 'N/A'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>
+                                                            <div className="font-medium">{attendee.function_name}</div>
+                                                            <div className="text-sm text-gray-500">{attendee.function_date}</div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm">
-                                                    {attendee.type === 'invited' ? (
-                                                        <>
-                                                            <div>Invitado: {attendee.invited_at}</div>
-                                                            {attendee.sended_at && (
-                                                                <div className="text-gray-500">
-                                                                    Enviado: {attendee.sended_at}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {getStatusBadge(attendee)}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm">
+                                                            <div>{attendee.tickets_count} tickets</div>
+                                                            <div className="text-gray-500">
+                                                                {attendee.tickets_used} usados
+                                                            </div>
+                                                            {attendee.type === 'buyer' && (
+                                                                <div
+                                                                    className={`font-semibold ${attendee.order_status === 'cancelled'
+                                                                        ? 'text-red-600 line-through'
+                                                                        : 'text-green-600'
+                                                                        }`}>
+                                                                    {formatCurrency(attendee.total_amount)}
                                                                 </div>
                                                             )}
-                                                        </>
-                                                    ) : (
-                                                        <div>Comprado: {attendee.purchased_at}</div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => handleViewTickets(attendee)}>
-                                                            <Eye className="mr-2 h-4 w-4" />
-                                                            Ver tickets
-                                                        </DropdownMenuItem>
-                                                        {attendee.type === 'invited' && (
-                                                            <>
-                                                                <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
-                                                                    <Mail className="mr-2 h-4 w-4" />
-                                                                    Reenviar invitación
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm">
+                                                            {attendee.type === 'invited' ? (
+                                                                <>
+                                                                    <div>Invitado: {attendee.invited_at}</div>
+                                                                    {attendee.sended_at && (
+                                                                        <div className="text-gray-500">
+                                                                            Enviado: {attendee.sended_at}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <div>Comprado: {attendee.purchased_at}</div>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleViewTickets(attendee)}>
+                                                                    <Eye className="mr-2 h-4 w-4" />
+                                                                    Ver tickets
                                                                 </DropdownMenuItem>
-                                                                {!attendee.is_cancelled && (
-                                                                    <DropdownMenuItem
-                                                                        onClick={() => handleConfirmDeleteAttendee(attendee)}
-                                                                        className="text-red-600"
-                                                                    >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                                        Eliminar
+                                                                {attendee.type === 'invited' && (
+                                                                    <>
+                                                                        <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
+                                                                            <Mail className="mr-2 h-4 w-4" />
+                                                                            Reenviar invitación
+                                                                        </DropdownMenuItem>
+                                                                        {!attendee.is_cancelled && (
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => handleConfirmDeleteAttendee(attendee)}
+                                                                                className="text-red-600"
+                                                                            >
+                                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                                Eliminar
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                                {attendee.type === 'buyer' && (
+                                                                    <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
+                                                                        <Mail className="mr-2 h-4 w-4" />
+                                                                        Reenviar tickets
                                                                     </DropdownMenuItem>
                                                                 )}
-                                                            </>
-                                                        )}
-                                                        {attendee.type === 'buyer' && (
-                                                            <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
-                                                                <Mail className="mr-2 h-4 w-4" />
-                                                                Reenviar tickets
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                        
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Pagination */}
                         {attendees.links && attendees.data.length > 0 && (
                             <div className="mt-6 flex justify-center">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center flex-wrap justify-center gap-2">
                                     {attendees.links.map((link, index) => (
                                         <Link
                                             key={index}
@@ -623,13 +627,12 @@ export default function EventAttendees({
                                             onClick={(e) => {
                                                 if (!link.url) e.preventDefault();
                                             }}
-                                            className={`px-3 py-2 text-sm rounded-md ${
-                                                link.active
-                                                    ? 'bg-black text-white'
-                                                    : link.url
+                                            className={`px-3 py-2 text-sm rounded-md ${link.active
+                                                ? 'bg-black text-white'
+                                                : link.url
                                                     ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            }`}
+                                                }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                             preserveState
                                             preserveScroll

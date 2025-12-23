@@ -40,7 +40,7 @@ class Organizer extends Model
     protected function imageUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->logo_url
+            get: fn() => $this->logo_url
                 ? Storage::url($this->logo_url)
                 : null,
         );
@@ -54,6 +54,11 @@ class Organizer extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function promoters(): HasMany
+    {
+        return $this->hasMany(Promoter::class);
     }
 
     public function issuedTickets(): HasManyThrough
