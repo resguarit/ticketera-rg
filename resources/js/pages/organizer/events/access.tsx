@@ -217,7 +217,7 @@ export default function EventAccess({
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <Input
-                                        placeholder="Escanear o buscar código / DNI / Nombre..."
+                                        placeholder="Buscar por código / DNI / Nombre / ID de Orden..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
