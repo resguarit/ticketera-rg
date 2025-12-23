@@ -57,6 +57,9 @@ class TicketController extends Controller
                             ->orWhere('last_name', 'like', "%{$search}%")
                             ->orWhere('dni', 'like', "%{$search}%")
                             ->orWhereRaw("CONCAT(name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                    })
+                    ->orWhereHas('order', function ($o) use ($search) {
+                        $o->where('transaction_id', 'like', "%{$search}%");
                     });
             });
         }
