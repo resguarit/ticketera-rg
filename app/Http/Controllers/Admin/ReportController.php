@@ -322,7 +322,7 @@ private function getTopEvents(Carbon $startDate, int $limit): array
                 'id' => $event->id,
                 'name' => $event->name,
                 'category' => $event->category->name ?? 'Sin categoría',
-                'revenue' => $totalRevenue, // AHORA INCLUYE EL CARGO POR SERVICIO
+                'revenue' => (float) $totalRevenue, // AHORA INCLUYE EL CARGO POR SERVICIO
                 'tickets_sold' => $ticketsSold,
                 'growth' => $growthFormatted,
                 'status' => $statusInfo['value'],
@@ -408,7 +408,7 @@ private function getTopEvents(Carbon $startDate, int $limit): array
 
             $months[] = [
                 'month' => $current->locale('es')->format('M'),
-                'revenue' => $monthRevenue,
+                'revenue' => (float) $monthRevenue,
                 'tickets' => $monthTickets,
             ];
 
