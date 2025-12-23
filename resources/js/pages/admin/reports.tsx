@@ -13,7 +13,8 @@ import {
     RefreshCw,
     PieChart,
     FileText,
-    EyeOff
+    EyeOff,
+    SaveAll
 } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
@@ -652,7 +653,7 @@ export default function Reports({ auth }: any) {
                                     onClick={() => handleDownloadReport('complete')}
                                     disabled={isGenerating}
                                 >
-                                    <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                                    <SaveAll  className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                                     <span className="text-xs sm:text-sm">Reporte Completo</span>
                                 </Button>
                             </div>

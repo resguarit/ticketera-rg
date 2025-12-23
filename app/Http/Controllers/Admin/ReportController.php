@@ -212,81 +212,127 @@ class ReportController extends Controller
         ];
     }
 
-    private function getTopEvents(Carbon $startDate, int $limit): array
-    {
-        return Event::with(['category', 'venue.ciudad', 'functions'])
-            ->select('events.*')
-            ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
-            ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
-            ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
-                $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
-            })
-            ->whereNotNull('orders.id')
-            ->groupBy('events.id')
-            ->orderByRaw('SUM(ticket_types.price) DESC')
-            ->limit($limit)
-            ->get()
-            ->map(function ($event) use ($startDate) {
-                $revenue = DB::table('issued_tickets')
+private function getTopEvents(Carbon $startDate, int $limit): array
+{
+    return Event::with(['category', 'venue.ciudad', 'functions'])
+        ->select('events.*')
+        ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
+        ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
+        ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
+        ->leftJoin('orders', function($join) use ($startDate) {
+            $join->on('issued_tickets.order_id', '=', 'orders.id')
+                 ->where('orders.status', OrderStatus::PAID)
+                 ->where('orders.created_at', '>=', $startDate);
+        })
+        ->whereNotNull('orders.id')
+        ->groupBy('events.id')
+        ->orderByRaw('SUM(ticket_types.price) DESC')
+        ->limit($limit)
+        ->get()
+        ->map(function ($event) use ($startDate) {
+            // Obtener todas las órdenes que contienen tickets de este evento
+            $eventOrders = DB::table('orders')
+                ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                ->where('event_functions.event_id', $event->id)
+                ->where('orders.status', OrderStatus::PAID)
+                ->where('orders.created_at', '>=', $startDate)
+                ->select('orders.id', 'orders.total_amount')
+                ->distinct()
+                ->get();
+
+            $totalRevenue = 0;
+            foreach ($eventOrders as $order) {
+                // Contar tickets de este evento en esta orden
+                $eventTicketsInOrder = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                    ->where('issued_tickets.order_id', $order->id)
                     ->where('event_functions.event_id', $event->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
-
-                // Calcular revenue del período anterior
-                $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
-                $previousRevenue = DB::table('issued_tickets')
-                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
-                    ->where('event_functions.event_id', $event->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->whereBetween('orders.created_at', [$previousPeriod, $startDate])
-                    ->sum('ticket_types.price');
-
-                // Calcular tasa de crecimiento
-                $growthRate = $previousRevenue > 0 
-                    ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 1) 
-                    : 0;
-
-                // Formatear como string con signo
-                $growthFormatted = $growthRate > 0 
-                    ? '+' . $growthRate . '%' 
-                    : $growthRate . '%';
-
-                $ticketsSold = DB::table('issued_tickets')
-                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
-                    ->where('event_functions.event_id', $event->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->where('orders.created_at', '>=', $startDate)
                     ->count();
 
-                // Determinar estado del evento usando la misma lógica del EventController
-                $statusInfo = $this->determineEventStatus($event);
+                // Contar total de tickets en esta orden
+                $totalTicketsInOrder = DB::table('issued_tickets')
+                    ->where('order_id', $order->id)
+                    ->count();
 
-                return [
-                    'id' => $event->id,
-                    'name' => $event->name,
-                    'category' => $event->category->name ?? 'Sin categoría',
-                    'revenue' => $revenue,
-                    'tickets_sold' => $ticketsSold,
-                    'growth' => $growthFormatted,
-                    'status' => $statusInfo['value'],
-                    'status_label' => $statusInfo['label'],
-                    'status_color' => $statusInfo['color'],
-                    'is_active' => $statusInfo['is_active'],
-                ];
-            })
-            ->toArray();
-    }
+                // Calcular proporción del total_amount que corresponde a este evento
+                if ($totalTicketsInOrder > 0) {
+                    $proportion = $eventTicketsInOrder / $totalTicketsInOrder;
+                    $totalRevenue += $order->total_amount * $proportion;
+                }
+            }
+
+            // Calcular revenue del período anterior usando el mismo método
+            $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
+            $previousOrders = DB::table('orders')
+                ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                ->where('event_functions.event_id', $event->id)
+                ->where('orders.status', OrderStatus::PAID)
+                ->whereBetween('orders.created_at', [$previousPeriod, $startDate])
+                ->select('orders.id', 'orders.total_amount')
+                ->distinct()
+                ->get();
+
+            $previousRevenue = 0;
+            foreach ($previousOrders as $order) {
+                $eventTicketsInOrder = DB::table('issued_tickets')
+                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                    ->where('issued_tickets.order_id', $order->id)
+                    ->where('event_functions.event_id', $event->id)
+                    ->count();
+
+                $totalTicketsInOrder = DB::table('issued_tickets')
+                    ->where('order_id', $order->id)
+                    ->count();
+
+                if ($totalTicketsInOrder > 0) {
+                    $proportion = $eventTicketsInOrder / $totalTicketsInOrder;
+                    $previousRevenue += $order->total_amount * $proportion;
+                }
+            }
+
+            // Calcular tasa de crecimiento
+            $growthRate = $previousRevenue > 0 
+                ? round((($totalRevenue - $previousRevenue) / $previousRevenue) * 100, 1) 
+                : 0;
+
+            // Formatear como string con signo
+            $growthFormatted = $growthRate > 0 
+                ? '+' . $growthRate . '%' 
+                : $growthRate . '%';
+
+            $ticketsSold = DB::table('issued_tickets')
+                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                ->where('event_functions.event_id', $event->id)
+                ->where('orders.status', OrderStatus::PAID)
+                ->where('orders.created_at', '>=', $startDate)
+                ->count();
+
+            // Determinar estado del evento usando la misma lógica del EventController
+            $statusInfo = $this->determineEventStatus($event);
+
+            return [
+                'id' => $event->id,
+                'name' => $event->name,
+                'category' => $event->category->name ?? 'Sin categoría',
+                'revenue' => $totalRevenue, // AHORA INCLUYE EL CARGO POR SERVICIO
+                'tickets_sold' => $ticketsSold,
+                'growth' => $growthFormatted,
+                'status' => $statusInfo['value'],
+                'status_label' => $statusInfo['label'],
+                'status_color' => $statusInfo['color'],
+                'is_active' => $statusInfo['is_active'],
+            ];
+        })
+        ->toArray();
+}
 
     /**
      * Determina el estado de un evento basado en sus funciones
@@ -377,19 +423,45 @@ class ReportController extends Controller
         $categories = Category::with(['events'])
             ->get()
             ->map(function ($category) use ($startDate) {
-                $categoryRevenue = DB::table('issued_tickets')
+                // Obtener todas las órdenes que contienen tickets de eventos de esta categoría
+                $categoryOrders = DB::table('orders')
+                    ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
                     ->join('events', 'event_functions.event_id', '=', 'events.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
                     ->where('events.category_id', $category->id)
                     ->where('orders.status', OrderStatus::PAID)
                     ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
+                    ->select('orders.id', 'orders.total_amount')
+                    ->distinct()
+                    ->get();
+
+                $categoryRevenue = 0;
+                foreach ($categoryOrders as $order) {
+                    // Contar tickets de esta categoría en esta orden
+                    $categoryTicketsInOrder = DB::table('issued_tickets')
+                        ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                        ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                        ->join('events', 'event_functions.event_id', '=', 'events.id')
+                        ->where('issued_tickets.order_id', $order->id)
+                        ->where('events.category_id', $category->id)
+                        ->count();
+
+                    // Contar total de tickets en esta orden
+                    $totalTicketsInOrder = DB::table('issued_tickets')
+                        ->where('order_id', $order->id)
+                        ->count();
+
+                    // Calcular proporción del total_amount que corresponde a esta categoría
+                    if ($totalTicketsInOrder > 0) {
+                        $proportion = $categoryTicketsInOrder / $totalTicketsInOrder;
+                        $categoryRevenue += $order->total_amount * $proportion;
+                    }
+                }
 
                 return [
                     'category' => $category->name,
-                    'revenue' => $categoryRevenue,
+                    'revenue' => $categoryRevenue, // AHORA INCLUYE EL CARGO POR SERVICIO
                 ];
             })
             ->filter(function($item) {
@@ -398,19 +470,19 @@ class ReportController extends Controller
             ->sortByDesc('revenue')
             ->values();
 
-        $totalRevenue = $categories->sum('revenue');
-        
-        $colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
-        
-        return $categories->map(function($category, $index) use ($totalRevenue, $colors) {
-            return [
-                'category' => $category['category'],
-                'revenue' => $category['revenue'],
-                'percentage' => $totalRevenue > 0 ? round(($category['revenue'] / $totalRevenue) * 100, 1) : 0,
-                'color' => $colors[$index % count($colors)],
-            ];
-        })->toArray();
-    }
+    $totalRevenue = $categories->sum('revenue');
+    
+    $colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+    
+    return $categories->map(function($category, $index) use ($totalRevenue, $colors) {
+        return [
+            'category' => $category['category'],
+            'revenue' => $category['revenue'],
+            'percentage' => $totalRevenue > 0 ? round(($category['revenue'] / $totalRevenue) * 100, 1) : 0,
+            'color' => $colors[$index % count($colors)],
+        ];
+    })->toArray();
+}
 
     private function getUserDemographics(): array
     {
