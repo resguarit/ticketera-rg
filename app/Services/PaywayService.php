@@ -59,6 +59,8 @@ class PaywayService implements PaymentGatewayInterface
                 }
             }
 
+
+
             $result = [
                 'success' => true,
                 'payment_id' => $responseData['id'] ?? null,
@@ -72,6 +74,8 @@ class PaywayService implements PaymentGatewayInterface
                 'fraud_detection' => $responseData['fraud_detection'] ?? null,
                 'raw_response' => $responseData
             ];
+
+            Log::error($result);
 
             if ($responseData['status'] === 'approved') {
                 return PaymentResult::success($responseData['id'], $responseData['status'], $responseData);
