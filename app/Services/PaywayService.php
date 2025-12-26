@@ -75,8 +75,6 @@ class PaywayService implements PaymentGatewayInterface
                 'raw_response' => $responseData
             ];
 
-            Log::error($result);
-
             if ($responseData['status'] === 'approved') {
                 return PaymentResult::success($responseData['id'], $responseData['status'], $responseData);
             } else {

@@ -271,6 +271,8 @@ class CheckoutController extends Controller
                     'eventName' => Event::find($validated['event_id'])->name ?? null,
                     'timestamp' => now()->format('d/m/Y H:i')
                 ]);
+
+                Log::error($checkoutResult);
             }
         } catch (\Exception $e) {
             try {
