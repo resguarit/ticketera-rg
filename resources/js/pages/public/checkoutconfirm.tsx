@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatCreditCardExpiry } from '@/lib/creditCardHelpers';
-import { formatPrice, formatPriceWithCurrency, formatNumber } from '@/lib/currencyHelpers';
+import { formatPrice, formatPriceWithCurrency, formatNumber, formatCurrency } from '@/lib/currencyHelpers';
 import { ArrowLeft, CreditCard, Shield, Lock, Calendar, MapPin, Users, Ticket, Check, AlertCircle, Eye, EyeOff, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -858,7 +858,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
+                                                <p className="text-foreground font-bold">{formatCurrency(ticket.price * ticket.quantity)}</p>
                                                 {ticket.is_bundle ? (
                                                     // Para packs: solo mostrar el precio por entrada individual
                                                     <p className="text-foreground/60 text-xs">

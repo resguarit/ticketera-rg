@@ -161,7 +161,7 @@ class EventController extends Controller
                                     'id' => $ticket->id,
                                     'name' => $ticket->name,
                                     'description' => $ticket->description,
-                                    'price' => $ticket->price,
+                                    'price' => (float) $ticket->price,
                                     'available' => $realAvailable,
                                     'quantity' => $ticket->quantity,
                                     'quantity_sold' => $ticket->quantity_sold,
