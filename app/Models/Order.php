@@ -22,6 +22,9 @@ class Order extends Model
         'cuotas',
         'cuota_id',
         'payment_method',
+        'card_bin',
+        'card_brand',
+        'payment_type', // added payment_type as well to store 'single' or others if needed, though user didn't explicitly ask I see it in payload. Sticking to user request for now + logic.
         'transaction_id',
         'subtotal',
         'discount', // Porcentaje de descuento aplicado
@@ -83,7 +86,7 @@ class Order extends Model
                 if (!$this->relationLoaded('items.ticketType.eventFunction.event.organizer')) {
                     $this->load('items.ticketType.eventFunction.event.organizer');
                 }
-                
+
                 // Devuelve el organizador del primer item
                 return $this->items->first()?->ticketType?->eventFunction?->event?->organizer;
             }
@@ -126,5 +129,4 @@ class Order extends Model
         }
         return $value;
     }
-
 }

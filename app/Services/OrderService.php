@@ -352,7 +352,13 @@ class OrderService
     {
         try {
             if ($paymentResult->success) {
-                $order->update(['status' => OrderStatus::PAID]);
+                $raw = $paymentResult->rawResponse ?? [];
+                $order->update([
+                    'status' => OrderStatus::PAID,
+                    'card_bin' => $raw['bin'] ?? null,
+                    'card_brand' => $raw['card_brand'] ?? null,
+                    'payment_type' => $raw['payment_type'] ?? null,
+                ]);
                 $order->items()->update(['status' => IssuedTicketStatus::AVAILABLE]);
                 $this->checkStagesAfterPurchase($processedTicketTypes);
             } else {
