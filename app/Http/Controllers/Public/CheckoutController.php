@@ -93,7 +93,7 @@ class CheckoutController extends Controller
                         $selectedTickets[] = [
                             'id' => $ticketType->id,
                             'type' => $ticketType->name,
-                            'price' => $ticketType->price,
+                            'price' => (float) $ticketType->price,
                             'quantity' => (int)$quantity,
                             'description' => $ticketType->description,
                             'is_bundle' => $ticketType->isBundle(),

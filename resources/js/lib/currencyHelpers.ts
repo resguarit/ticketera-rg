@@ -16,10 +16,11 @@ export const formatCurrency = (amount: number, showCurrency = true): string => {
 export const formatPrice = (price: number): string => {
   const hasDecimals = price % 1 !== 0;
   
-  return `$${price.toLocaleString('es-AR', {
+  const formatted = price.toLocaleString('es-AR', {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2
-  })}`;
+  });
+  return `$${formatted}`;
 };
 
 export const formatPriceWithCurrency = (price: number): string => {
