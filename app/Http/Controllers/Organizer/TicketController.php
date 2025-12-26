@@ -27,6 +27,7 @@ class TicketController extends Controller
         $query = IssuedTicket::query()
             ->with([
                 'ticketType.eventFunction',
+                'ticketType.sector',
                 'assistant.person',
                 'client.person',
                 'scanLogs' => function ($q) {
@@ -90,7 +91,7 @@ class TicketController extends Controller
                 'status' => $ticket->status,
                 'owner_name' => $ownerName,
                 'owner_dni' => $ownerDni,
-                'ticket_type' => $ticket->ticketType->name,
+                'ticket_type' => $ticket->ticketType->name . ($ticket->ticketType->sector ? ' - ' . $ticket->ticketType->sector->name : ''),
                 'function_name' => $ticket->ticketType->eventFunction->name,
                 'is_bundle' => $ticket->isFromBundle(),
                 'bundle_reference' => $ticket->bundle_reference,

@@ -553,7 +553,7 @@ class EventController extends Controller
 
                         return [
                             'id' => $ticketType->id,
-                            'name' => $ticketType->name,
+                            'name' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
                             'description' => $ticketType->description,
                             'price' => (float) ($ticketType->price ?? 0),
                             'sales_start_date' => $ticketType->sales_start_date,

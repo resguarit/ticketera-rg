@@ -146,7 +146,7 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
                                             {order_items.map((item, index) => (
                                                 <div key={index} className="flex justify-between text-sm py-1 border-b border-dashed border-gray-100 last:border-0">
                                                     <span className="text-gray-700">
-                                                        {item.quantity}x {item.ticket_type_name} - {item.sector_name}
+                                                        {item.quantity}x {item.ticket_type_name}
                                                     </span>
                                                     <span className="font-medium whitespace-nowrap ml-4">
                                                         {/* If grouped, show total for that group? Or unit price? Usually total for the line item */}
