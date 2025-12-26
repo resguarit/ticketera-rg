@@ -80,7 +80,7 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
                     <div className="mb-8">
                         <Link href={route('my-tickets')} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-2">
                             <ArrowLeft className="w-4 h-4 mr-1" />
-                            Volver a Mis Compras
+                            Volver a Mis Entradas
                         </Link>
                     </div>
 
@@ -110,8 +110,8 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                variant="secondary"
-                                                className="flex-1"
+                                                variant="outline"
+                                                className="flex-1 bg-blue-50"
                                                 onClick={() => handleDownloadTicket(ticket.id)}
                                             >
                                                 <Download className="w-3.5 h-3.5 mr-2" />

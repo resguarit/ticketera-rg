@@ -145,12 +145,12 @@ export default function MyTicketsAll({ tickets, stats }: MyTicketsAllProps) {
                 <div className="mb-8">
                     <Link href={route('my-tickets')} className="text-sm flex items-center text-gray-500 hover:text-gray-900 mb-4 transition-colors">
                         <ArrowLeft className="w-4 h-4 mr-1" />
-                        Volver a Mis Compras
+                        Volver a Mis Entradas
                     </Link>
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold">Mis Tickets</h1>
-                            <p className="text-gray-500 mt-1">Vista detallada de todas tus entradas adquiridas.</p>
+                            <p className="text-gray-500 mt-1">Vista detallada de todos tus tickets adquiridos.</p>
                         </div>
                         <div className="text-right hidden sm:block">
                             {/* Stats removed */}

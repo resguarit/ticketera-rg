@@ -28,11 +28,11 @@ export default function Header({ className = '' }: HeaderProps) {
                 <div className="flex items-center justify-between w-full">
                     {/* Logo */}
                     <Link href={route('home')} className="flex items-center  space-x-2">
-                            <img 
-                                src="/images/logo-bordes.png" 
-                                alt="TRG Logo" 
-                                className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
-                            />
+                        <img
+                            src="/images/logo-bordes.png"
+                            alt="TRG Logo"
+                            className="w-6 h-6 sm:w-18 sm:h-18 object-contain"
+                        />
                         <h1 className="text-lg sm:text-xl font-bold text-white">
                             <span className="hidden sm:inline"> <span className="font-medium">ENTRADAS</span></span>
                             <span className="sm:hidden font-medium">RG ENTRADAS</span>
@@ -40,13 +40,13 @@ export default function Header({ className = '' }: HeaderProps) {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center space-x-6 lg:space-x-10"> 
+                    <nav className="hidden md:flex items-center space-x-6 lg:space-x-10">
                         <Link href={route('events')} className="text-white font-medium hover:scale-110 transition-transform ">
                             Eventos
                         </Link>
                         {auth.user && (
                             <Link href={route('my-tickets')} className="text-white font-medium hover:scale-110 transition-transform ">
-                                Mis Tickets
+                                Mis Entradas
                             </Link>
                         )}
                         <Link href={route('help')} className="text-white font-medium hover:scale-110 transition-transform">
@@ -62,7 +62,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 </Link>
                                 {auth.user.role === 'admin' && (
                                     <Link href={route('admin.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
-                                        <Button 
+                                        <Button
                                             variant="outline"
                                             size="sm"
                                             className='bg-orange-500 text-white hover:text-white hover:bg-orange-600 border-orange-500'
@@ -73,7 +73,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 )}
                                 {auth.user.role === 'organizer' && (
                                     <Link href={route('organizer.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
-                                        <Button 
+                                        <Button
                                             variant="outline"
                                             size="sm"
                                             className='bg-green-500 text-white hover:text-white hover:bg-green-600 border-green-500'
@@ -120,8 +120,8 @@ export default function Header({ className = '' }: HeaderProps) {
                                     <span className="sr-only">Abrir menú</span>
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent 
-                                side="right" 
+                            <SheetContent
+                                side="right"
                                 className="w-[280px] sm:w-[320px] bg-white border-l border-gray-200 p-0"
                             >
                                 <SheetHeader className="px-4 py-4 border-b border-gray-100">
@@ -136,9 +136,9 @@ export default function Header({ className = '' }: HeaderProps) {
                                     <div className="flex-1 ">
                                         {/* User Section */}
                                         {auth.user && (
-                                            <Link className=""                                                     
-                                            href={route('my-account')}
-                                                    onClick={handleLinkClick}>
+                                            <Link className=""
+                                                href={route('my-account')}
+                                                onClick={handleLinkClick}>
                                                 <div className="mx-6 mb-2 flex items-center space-x-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                                                         <User className="w-5 h-5 text-white" />
