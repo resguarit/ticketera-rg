@@ -28,6 +28,7 @@ import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 
 interface RealTimeStats {
     today_sales: number;
+    today_orders: number; // NUEVO
     today_tickets: number;
     active_events: number;
     total_users: number;
@@ -38,10 +39,12 @@ interface ReportsProps {
     salesData: {
         totalRevenue: number;
         monthlyRevenue: number;
-        netRevenue: number; // NUEVO
-        monthlyNetRevenue: number; // NUEVO
-        totalServiceFees: number; // NUEVO
-        monthlyServiceFees: number; // NUEVO
+        netRevenue: number;
+        monthlyNetRevenue: number;
+        totalServiceFees: number;
+        monthlyServiceFees: number;
+        totalOrders: number; // NUEVO
+        monthlyOrders: number; // NUEVO
         totalTickets: number;
         monthlyTickets: number;
         averageTicketPrice: number;
@@ -283,17 +286,17 @@ export default function Reports({ auth }: any) {
                             </CardContent>
                         </Card>
 
-                        {/* Card 3: Tickets Vendidos */}
+                        {/* Card 3: Entradas Vendidas */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Tickets Vendidos</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalTickets)}</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium">Entradas Vendidas</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalOrders)}</p>
                                         <div className="flex items-center mt-2">
                                             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
-                                            <span className="text-xs sm:text-sm text-gray-600 ">
-                                                {formatNumber(salesData.monthlyTickets)} este mes
+                                            <span className="text-xs sm:text-sm text-gray-600">
+                                                {formatNumber(salesData.totalTickets)} tickets emitidos
                                             </span>
                                         </div>
                                     </div>
@@ -329,19 +332,20 @@ export default function Reports({ auth }: any) {
                             <CardContent className="p-4 sm:p-6">
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-center">
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Ventas Hoy</p>
-                                        <p className="text-lg sm:text-2xl font-bold">{formatCurrency(realTimeStats.today_sales)}</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Ventas Hoy</p>
+                                        <p className="text-lg sm:text-2xl font-bold">${formatNumber(realTimeStats.today_sales)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Tickets Hoy</p>
-                                        <p className="text-lg sm:text-2xl font-bold">{realTimeStats.today_tickets}</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Entradas Hoy</p>
+                                        <p className="text-lg sm:text-2xl font-bold">{realTimeStats.today_orders}</p>
+                                        <p className="text-xs opacity-75">{realTimeStats.today_tickets} tickets</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Eventos Activos</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Eventos Activos</p>
                                         <p className="text-lg sm:text-2xl font-bold">{realTimeStats.active_events}</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Total Usuarios</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Usuarios</p>
                                         <p className="text-lg sm:text-2xl font-bold">{realTimeStats.total_users}</p>
                                     </div>
                                 </div>
@@ -419,7 +423,7 @@ export default function Reports({ auth }: any) {
                                                     <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
                                                 </div>
                                                 <p className="text-xl sm:text-2xl font-bold text-green-900">{formatCurrency(salesData.monthlyRevenue)}</p>
-                                                <p className="text-green-700 text-xs sm:text-sm">{salesData.monthlyTickets} tickets</p>
+                                                <p className="text-green-700 text-xs sm:text-sm">{salesData.monthlyOrders} entradas ({salesData.monthlyTickets} tickets)</p>
                                             </div>
 
                                             <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">

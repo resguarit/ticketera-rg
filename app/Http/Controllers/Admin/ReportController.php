@@ -76,6 +76,13 @@ class ReportController extends Controller
             ->whereDate('created_at', $today)
             ->sum('total_amount');
 
+        // MODIFICADO: Contar órdenes únicas (entradas vendidas)
+        $todayOrders = Order::where('status', OrderStatus::PAID)
+            ->whereDate('created_at', $today)
+            ->whereHas('issuedTickets')
+            ->count();
+
+        // Tickets emitidos
         $todayTickets = IssuedTicket::whereHas('order', function($query) use ($today) {
             $query->where('status', OrderStatus::PAID)
                   ->whereDate('created_at', $today);
@@ -89,7 +96,8 @@ class ReportController extends Controller
 
         return response()->json([
             'today_sales' => (float) $todaySales,
-            'today_tickets' => $todayTickets,
+            'today_orders' => $todayOrders, // NUEVO: Entradas vendidas hoy
+            'today_tickets' => $todayTickets, // Tickets emitidos hoy
             'active_events' => $activeEvents,
             'total_users' => $totalUsers,
             'last_update' => Carbon::now()->format('d/m/Y H:i:s'),
@@ -162,6 +170,18 @@ class ReportController extends Controller
         $totalServiceFees = $totalRevenue - $netRevenue;
         $monthlyServiceFees = $monthlyRevenue - $monthlyNetRevenue;
 
+        // NUEVO: Contar entradas vendidas (órdenes únicas con tickets)
+        $totalOrders = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', $startDate)
+            ->whereHas('issuedTickets')
+            ->count();
+
+        $monthlyOrders = Order::where('status', OrderStatus::PAID)
+            ->where('created_at', '>=', Carbon::now()->startOfMonth())
+            ->whereHas('issuedTickets')
+            ->count();
+
+        // Contar tickets emitidos (incluyendo lotes)
         $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
                   ->where('created_at', '>=', $startDate);
@@ -171,10 +191,6 @@ class ReportController extends Controller
             $query->where('status', OrderStatus::PAID)
                   ->where('created_at', '>=', Carbon::now()->startOfMonth());
         })->count();
-
-        $totalOrders = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->count();
 
         // Calcular tasa de crecimiento comparando con período anterior
         $previousPeriod = $startDate->copy()->sub($startDate->diff(Carbon::now()));
@@ -204,8 +220,10 @@ class ReportController extends Controller
             'monthlyNetRevenue' => (float) $monthlyNetRevenue,
             'totalServiceFees' => (float) $totalServiceFees,
             'monthlyServiceFees' => (float) $monthlyServiceFees,
-            'totalTickets' => $totalTickets,
-            'monthlyTickets' => $monthlyTickets,
+            'totalOrders' => $totalOrders, // NUEVO: Entradas vendidas
+            'monthlyOrders' => $monthlyOrders, // NUEVO: Entradas del mes
+            'totalTickets' => $totalTickets, // Tickets emitidos (total)
+            'monthlyTickets' => $monthlyTickets, // Tickets emitidos (mes)
             'averageTicketPrice' => (float) ($totalTickets > 0 ? $totalRevenue / $totalTickets : 0),
             'conversionRate' => $conversionRate,
             'growthRate' => round($growthRate, 1),
@@ -471,9 +489,9 @@ private function getTopEvents(Carbon $startDate, int $limit): array
             ->values();
 
     $totalRevenue = $categories->sum('revenue');
-    
+
     $colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
-    
+
     return $categories->map(function($category, $index) use ($totalRevenue, $colors) {
         return [
             'category' => $category['category'],
@@ -482,7 +500,7 @@ private function getTopEvents(Carbon $startDate, int $limit): array
             'color' => $colors[$index % count($colors)],
         ];
     })->toArray();
-}
+    }
 
     private function getUserDemographics(): array
     {
