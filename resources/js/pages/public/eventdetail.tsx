@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
+import { formatCurrency } from '@/lib/currencyHelpers';
 
 import {
     Event,
@@ -575,7 +576,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                         </div>
                                                                         <div className="text-right flex-shrink-0">
                                                                             <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                                {formatPrice(ticket.price)}
+                                                                                {formatCurrency(ticket.price)}
                                                                             </p>
                                                                             <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
                                                                         </div>
@@ -733,7 +734,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <div className="flex justify-between text-foreground text-lg sm:text-xl font-bold">
                                                     <span>Total:</span>
-                                                    <span>${getTotalPrice().toLocaleString()} ARS</span>
+                                                    <span>{formatCurrency(getTotalPrice())}</span>
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}

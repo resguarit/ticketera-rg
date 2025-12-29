@@ -224,4 +224,40 @@ class RevenueService
 
         return $chartData;
     }
+
+    /**
+     * NUEVO: Calcula ingresos netos para un organizador (sin cargo por servicio)
+     */
+    public function netRevenueForOrganizer(Organizer $organizer, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
+                $q->where('organizer_id', $organizer->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        return (float) ($query->sum('subtotal') ?? 0);
+    }
+
+    /**
+     * NUEVO: Calcula cargo por servicio total para un organizador
+     */
+    public function serviceFeeForOrganizer(Organizer $organizer, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
+                $q->where('organizer_id', $organizer->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        return (float) ($query->sum('service_fee') ?? 0);
+    }
 }

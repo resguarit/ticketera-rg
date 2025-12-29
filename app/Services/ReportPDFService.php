@@ -90,33 +90,8 @@ class ReportPDFService
         return $pdf->download('reporte-financiero-' . date('Y-m-d') . '.pdf');
     }
 
-    public function generateUsersReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
-    {
-        $userStats = $this->getUserStats($startDate);
-        $registrationTrends = $this->getRegistrationTrends($startDate);
-        $topBuyers = $this->getTopBuyers($startDate);
-        
-        $data = [
-            'title' => 'Reporte de Usuarios',
-            'period' => $this->getPeriodName($timeRange),
-            'startDate' => $startDate->format('d/m/Y'),
-            'endDate' => Carbon::now()->format('d/m/Y'),
-            'generatedAt' => Carbon::now()->format('d/m/Y H:i'),
-            'userStats' => $userStats,
-            'registrationTrends' => $registrationTrends,
-            'topBuyers' => $topBuyers,
-        ];
-
-        $pdf = Pdf::loadView('pdfs.reports.users', $data)
-            ->setPaper('a4', 'portrait')
-            ->setOptions(['defaultFont' => 'DejaVu Sans']);
-
-        return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
-    }
-
     public function generateCompleteReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
     {
-        // Obtener todos los datos
         $salesData = $this->getSalesData($startDate);
         $monthlyData = $this->getMonthlyData($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 15);
@@ -149,30 +124,72 @@ class ReportPDFService
         return $pdf->download('reporte-completo-' . date('Y-m-d') . '.pdf');
     }
 
+    public function generateUsersReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
+    {
+        try {
+            $userStats = $this->getUserStatsDetailed($startDate);
+            $verificationStats = $this->getVerificationStats();
+            $contactStats = $this->getContactStats();
+            $topBuyers = $this->getTopBuyers($startDate, 15);
+            $registrationTrends = $this->getRegistrationTrends($startDate);
+            $activityStats = $this->getUserActivityStats($startDate);
+            
+            $data = [
+                'title' => 'Reporte de Usuarios',
+                'period' => $this->getPeriodName($timeRange),
+                'startDate' => $startDate->format('d/m/Y'),
+                'endDate' => Carbon::now()->format('d/m/Y'),
+                'generatedAt' => Carbon::now()->format('d/m/Y H:i'),
+                'userStats' => $userStats,
+                'verificationStats' => $verificationStats,
+                'contactStats' => $contactStats,
+                'topBuyers' => $topBuyers,
+                'registrationTrends' => $registrationTrends,
+                'activityStats' => $activityStats,
+            ];
+
+            $pdf = Pdf::loadView('pdfs.reports.users', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOptions(['defaultFont' => 'DejaVu Sans']);
+
+            return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
+            
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
     // Métodos privados para obtener datos
     private function getSalesData(Carbon $startDate): array
     {
-        $totalRevenue = Order::where('status', OrderStatus::PAID)
+        $orders = Order::where('status', OrderStatus::PAID)
             ->where('created_at', '>=', $startDate)
-            ->sum('total_amount');
+            ->get();
+
+        $totalRevenue = $orders->sum('total_amount');
+
+        $netRevenue = $orders->sum(function($order) {
+            $discount = $order->subtotal * ($order->discount ?? 0);
+            return $order->subtotal - $discount;
+        });
+            
+        $totalServiceFees = $orders->sum('service_fee');
 
         $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
                   ->where('created_at', '>=', $startDate);
         })->count();
 
-        $totalOrders = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->count();
-
-        $avgTicketPrice = $totalTickets > 0 ? $totalRevenue / $totalTickets : 0;
+        $totalOrders = $orders->count();
 
         return [
             'totalRevenue' => $totalRevenue,
+            'netRevenue' => $netRevenue,
+            'totalServiceFees' => $totalServiceFees,
             'totalTickets' => $totalTickets,
             'totalOrders' => $totalOrders,
-            'avgTicketPrice' => $avgTicketPrice,
             'avgOrderValue' => $totalOrders > 0 ? $totalRevenue / $totalOrders : 0,
+            'avgTicketPrice' => $totalTickets > 0 ? $totalRevenue / $totalTickets : 0,
         ];
     }
 
@@ -182,12 +199,19 @@ class ReportPDFService
         $current = $startDate->copy()->startOfMonth();
         
         while ($current <= Carbon::now()->endOfMonth()) {
-            $monthRevenue = Order::where('status', OrderStatus::PAID)
+            $monthOrders = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
                     $current->copy()->endOfMonth()
                 ])
-                ->sum('total_amount');
+                ->get();
+
+            $monthRevenue = $monthOrders->sum('total_amount');
+            
+            $monthNetRevenue = $monthOrders->sum(function($order) {
+                $discount = $order->subtotal * ($order->discount ?? 0);
+                return $order->subtotal - $discount;
+            });
 
             $monthTickets = IssuedTicket::whereHas('order', function($query) use ($current) {
                 $query->where('status', OrderStatus::PAID)
@@ -197,18 +221,15 @@ class ReportPDFService
                       ]);
             })->count();
 
-            $monthOrders = Order::where('status', OrderStatus::PAID)
-                ->whereBetween('created_at', [
-                    $current->copy()->startOfMonth(),
-                    $current->copy()->endOfMonth()
-                ])
-                ->count();
+            $monthServiceFees = $monthOrders->sum('service_fee');
 
             $months[] = [
                 'month' => $current->locale('es')->format('F Y'),
                 'revenue' => $monthRevenue,
+                'netRevenue' => $monthNetRevenue,
+                'serviceFees' => $monthServiceFees,
                 'tickets' => $monthTickets,
-                'orders' => $monthOrders,
+                'orders' => $monthOrders->count(),
             ];
 
             $current->addMonth();
@@ -231,18 +252,39 @@ class ReportPDFService
             })
             ->whereNotNull('orders.id')
             ->groupBy('events.id')
-            ->orderByRaw('SUM(ticket_types.price) DESC')
+            ->orderByRaw('SUM(orders.total_amount) DESC')
             ->limit($limit)
             ->get()
             ->map(function ($event) use ($startDate) {
-                $revenue = DB::table('issued_tickets')
+                $eventOrders = DB::table('orders')
+                    ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
                     ->where('event_functions.event_id', $event->id)
                     ->where('orders.status', OrderStatus::PAID)
                     ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
+                    ->select('orders.id', 'orders.total_amount', 'orders.subtotal', 'orders.discount')
+                    ->distinct()
+                    ->get();
+
+                $totalRevenue = 0;
+                foreach ($eventOrders as $order) {
+                    $eventTicketsInOrder = DB::table('issued_tickets')
+                        ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                        ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                        ->where('issued_tickets.order_id', $order->id)
+                        ->where('event_functions.event_id', $event->id)
+                        ->count();
+
+                    $totalTicketsInOrder = DB::table('issued_tickets')
+                        ->where('order_id', $order->id)
+                        ->count();
+
+                    if ($totalTicketsInOrder > 0) {
+                        $proportion = $eventTicketsInOrder / $totalTicketsInOrder;
+                        $totalRevenue += $order->total_amount * $proportion;
+                    }
+                }
 
                 $ticketsSold = DB::table('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
@@ -258,96 +300,190 @@ class ReportPDFService
                     'category' => $event->category->name ?? 'Sin categoría',
                     'venue' => $event->venue->name,
                     'city' => $event->venue->ciudad->name ?? 'Sin ciudad',
-                    'revenue' => $revenue,
+                    'revenue' => $totalRevenue,
                     'ticketsSold' => $ticketsSold,
                 ];
-            })
-            ->toArray();
-    }
-
-    private function getEventsAnalytics(Carbon $startDate): array
-    {
-        $totalEvents = Event::where('created_at', '>=', $startDate)->count();
-        $activeEvents = Event::whereHas('functions', function($query) {
-            $query->where('start_time', '>', Carbon::now());
-        })->count();
-
-        $completedEvents = Event::whereHas('functions', function($query) {
-            $query->where('start_time', '<', Carbon::now());
-        })->count();
-
-        $avgTicketsPerEvent = Event::leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
-            ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
-            ->where('events.created_at', '>=', $startDate)
-            ->avg('ticket_types.quantity_sold') ?? 0;
-
-        return [
-            'totalEvents' => $totalEvents,
-            'activeEvents' => $activeEvents,
-            'completedEvents' => $completedEvents,
-            'avgTicketsPerEvent' => round($avgTicketsPerEvent),
-        ];
-    }
-
-    private function getCategoryStats(Carbon $startDate): array
-    {
-        return Category::with(['events'])
-            ->get()
-            ->map(function ($category) use ($startDate) {
-                $categoryRevenue = DB::table('issued_tickets')
-                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
-                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
-                    ->join('events', 'event_functions.event_id', '=', 'events.id')
-                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
-                    ->where('events.category_id', $category->id)
-                    ->where('orders.status', OrderStatus::PAID)
-                    ->where('orders.created_at', '>=', $startDate)
-                    ->sum('ticket_types.price');
-
-                $eventsCount = Event::where('category_id', $category->id)
-                    ->where('created_at', '>=', $startDate)
-                    ->count();
-
-                return [
-                    'name' => $category->name,
-                    'revenue' => $categoryRevenue,
-                    'eventsCount' => $eventsCount,
-                ];
-            })
-            ->filter(function($item) {
-                return $item['revenue'] > 0 || $item['eventsCount'] > 0;
             })
             ->sortByDesc('revenue')
             ->values()
             ->toArray();
     }
 
+    private function getEventsAnalytics(Carbon $startDate): array
+    {
+        try {
+            $totalEvents = Event::where('created_at', '>=', $startDate)->count();
+            
+            $activeEvents = Event::whereHas('functions', function($query) {
+                $query->where('start_time', '>', Carbon::now())
+                      ->where('is_active', true);
+            })->count();
+
+            $completedEvents = Event::whereHas('functions', function($query) {
+                $query->where('end_time', '<', Carbon::now());
+            })->count();
+
+            $totalTicketsSold = DB::table('issued_tickets')
+                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                ->where('events.created_at', '>=', $startDate)
+                ->where('orders.status', OrderStatus::PAID)
+                ->where('orders.created_at', '>=', $startDate)
+                ->count();
+
+            return [
+                'totalEvents' => $totalEvents,
+                'activeEvents' => $activeEvents,
+                'completedEvents' => $completedEvents,
+                'totalTicketsSold' => $totalTicketsSold,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'totalEvents' => 0,
+                'activeEvents' => 0,
+                'completedEvents' => 0,
+                'totalTicketsSold' => 0,
+            ];
+        }
+    }
+
+    private function getCategoryStats(Carbon $startDate): array
+    {
+        try {
+            return Category::all()
+                ->map(function ($category) use ($startDate) {
+                    try {
+                        $categoryOrders = DB::table('orders')
+                            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+                            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                            ->join('events', 'event_functions.event_id', '=', 'events.id')
+                            ->where('events.category_id', $category->id)
+                            ->where('orders.status', OrderStatus::PAID)
+                            ->where('orders.created_at', '>=', $startDate)
+                            ->select('orders.id', 'orders.total_amount')
+                            ->distinct()
+                            ->get();
+
+                        $categoryRevenue = 0;
+                        foreach ($categoryOrders as $order) {
+                            $categoryTicketsInOrder = DB::table('issued_tickets')
+                                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                                ->where('issued_tickets.order_id', $order->id)
+                                ->where('events.category_id', $category->id)
+                                ->count();
+
+                            $totalTicketsInOrder = DB::table('issued_tickets')
+                                ->where('order_id', $order->id)
+                                ->count();
+
+                            if ($totalTicketsInOrder > 0) {
+                                $proportion = $categoryTicketsInOrder / $totalTicketsInOrder;
+                                $categoryRevenue += $order->total_amount * $proportion;
+                            }
+                        }
+
+                        $eventsCount = Event::where('category_id', $category->id)
+                            ->where('created_at', '>=', $startDate)
+                            ->count();
+
+                        return [
+                            'name' => $category->name ?? 'Sin nombre',
+                            'revenue' => $categoryRevenue,
+                            'eventsCount' => $eventsCount,
+                        ];
+                    } catch (\Exception $e) {
+                        return null;
+                    }
+                })
+                ->filter(function($item) {
+                    return $item !== null && ($item['revenue'] > 0 || $item['eventsCount'] > 0);
+                })
+                ->sortByDesc('revenue')
+                ->values()
+                ->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
     private function getVenueStats(Carbon $startDate): array
     {
-        return DB::table('venues')
-            ->select([
-                'venues.name',
-                'ciudades.name as city',
-                DB::raw('COUNT(DISTINCT events.id) as events_count'),
-                DB::raw('COALESCE(SUM(ticket_types.price), 0) as total_revenue')
-            ])
-            ->leftJoin('events', 'venues.id', '=', 'events.venue_id')
-            ->leftJoin('ciudades', 'venues.ciudad_id', '=', 'ciudades.id')
-            ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
-            ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
-            ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
-                $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
-            })
-            ->where('events.created_at', '>=', $startDate)
-            ->groupBy('venues.id', 'venues.name', 'ciudades.name')
-            ->having('events_count', '>', 0)
-            ->orderBy('total_revenue', 'DESC')
-            ->limit(10)
-            ->get()
-            ->toArray();
+        try {
+            $venues = DB::table('venues')
+                ->select([
+                    'venues.id',
+                    'venues.name',
+                    'ciudades.name as city'
+                ])
+                ->leftJoin('ciudades', 'venues.ciudad_id', '=', 'ciudades.id')
+                ->get();
+
+            $venueStats = [];
+
+            foreach ($venues as $venue) {
+                try {
+                    $eventsCount = Event::where('venue_id', $venue->id)
+                        ->where('created_at', '>=', $startDate)
+                        ->count();
+
+                    if ($eventsCount > 0) {
+                        $venueOrders = DB::table('orders')
+                            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+                            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                            ->join('events', 'event_functions.event_id', '=', 'events.id')
+                            ->where('events.venue_id', $venue->id)
+                            ->where('orders.status', OrderStatus::PAID)
+                            ->where('orders.created_at', '>=', $startDate)
+                            ->select('orders.id', 'orders.total_amount')
+                            ->distinct()
+                            ->get();
+
+                        $revenue = 0;
+                        foreach ($venueOrders as $order) {
+                            $venueTicketsInOrder = DB::table('issued_tickets')
+                                ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                                ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                                ->join('events', 'event_functions.event_id', '=', 'events.id')
+                                ->where('issued_tickets.order_id', $order->id)
+                                ->where('events.venue_id', $venue->id)
+                                ->count();
+
+                            $totalTicketsInOrder = DB::table('issued_tickets')
+                                ->where('order_id', $order->id)
+                                ->count();
+
+                            if ($totalTicketsInOrder > 0) {
+                                $proportion = $venueTicketsInOrder / $totalTicketsInOrder;
+                                $revenue += $order->total_amount * $proportion;
+                            }
+                        }
+
+                        $venueStats[] = [
+                            'name' => $venue->name ?? 'Sin nombre',
+                            'city' => $venue->city ?? 'Sin ciudad',
+                            'events_count' => $eventsCount,
+                            'total_revenue' => $revenue,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            usort($venueStats, function($a, $b) {
+                return $b['total_revenue'] <=> $a['total_revenue'];
+            });
+
+            return array_slice($venueStats, 0, 10);
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     private function getFinancialAnalytics(Carbon $startDate): array
@@ -372,29 +508,50 @@ class ReportPDFService
 
     private function getOrganizerStats(Carbon $startDate): array
     {
-        return DB::table('organizers')
-            ->select([
-                'organizers.name',
-                'organizers.business_name',
-                DB::raw('COUNT(DISTINCT events.id) as events_count'),
-                DB::raw('COALESCE(SUM(ticket_types.price), 0) as total_revenue'),
-                DB::raw('COUNT(issued_tickets.id) as tickets_sold')
-            ])
-            ->leftJoin('events', 'organizers.id', '=', 'events.organizer_id')
-            ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
-            ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
-            ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
-                $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
-            })
-            ->groupBy('organizers.id', 'organizers.name', 'organizers.business_name')
-            ->having('total_revenue', '>', 0)
-            ->orderBy('total_revenue', 'DESC')
-            ->limit(10)
-            ->get()
-            ->toArray();
+        $organizers = Organizer::all();
+        $organizerStats = [];
+
+        foreach ($organizers as $organizer) {
+            $eventsCount = Event::where('organizer_id', $organizer->id)
+                ->where('created_at', '>=', $startDate)
+                ->count();
+
+            if ($eventsCount > 0) {
+                $revenue = DB::table('issued_tickets')
+                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                    ->join('events', 'event_functions.event_id', '=', 'events.id')
+                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                    ->where('events.organizer_id', $organizer->id)
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate)
+                    ->sum('ticket_types.price');
+
+                $ticketsSold = DB::table('issued_tickets')
+                    ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+                    ->join('events', 'event_functions.event_id', '=', 'events.id')
+                    ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+                    ->where('events.organizer_id', $organizer->id)
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate)
+                    ->count();
+
+                $organizerStats[] = [
+                    'name' => $organizer->name,
+                    'business_name' => $organizer->business_name,
+                    'events_count' => $eventsCount,
+                    'total_revenue' => $revenue ?? 0,
+                    'tickets_sold' => $ticketsSold,
+                ];
+            }
+        }
+
+        usort($organizerStats, function($a, $b) {
+            return $b['total_revenue'] <=> $a['total_revenue'];
+        });
+
+        return array_slice($organizerStats, 0, 10);
     }
 
     private function getPaymentMethodStats(Carbon $startDate): array
@@ -423,16 +580,143 @@ class ReportPDFService
             ->whereNotNull('email_verified_at')
             ->count();
 
-        $avgOrderValue = Order::where('status', OrderStatus::PAID)
-            ->where('created_at', '>=', $startDate)
-            ->avg('total_amount') ?? 0;
-
         return [
             'totalUsers' => $totalUsers,
             'newUsers' => $newUsers,
             'activeUsers' => $activeUsers,
-            'avgOrderValue' => $avgOrderValue,
         ];
+    }
+
+    private function getUserStatsDetailed(Carbon $startDate): array
+    {
+        $totalUsers = User::where('role', UserRole::CLIENT)->count();
+        
+        $activeUsers = User::where('role', UserRole::CLIENT)
+            ->whereNotNull('email_verified_at')
+            ->count();
+        
+        $newUsers = User::where('role', UserRole::CLIENT)
+            ->where('created_at', '>=', $startDate)
+            ->count();
+        
+        $usersWithPhone = User::where('role', UserRole::CLIENT)
+            ->whereHas('person', function($query) {
+                $query->whereNotNull('phone')
+                      ->where('phone', '!=', '');
+            })
+            ->count();
+        
+        $verificationRate = $totalUsers > 0 
+            ? round(($activeUsers / $totalUsers) * 100, 1) 
+            : 0;
+
+        return [
+            'totalUsers' => $totalUsers,
+            'activeUsers' => $activeUsers,
+            'newUsers' => $newUsers,
+            'usersWithPhone' => $usersWithPhone,
+            'verificationRate' => $verificationRate,
+        ];
+    }
+
+    private function getVerificationStats(): array
+    {
+        $totalUsers = User::where('role', UserRole::CLIENT)->count();
+        
+        $verified = User::where('role', UserRole::CLIENT)
+            ->whereNotNull('email_verified_at')
+            ->count();
+        
+        $pending = $totalUsers - $verified;
+        
+        return [
+            'verified' => $verified,
+            'pending' => $pending,
+            'verifiedPercentage' => $totalUsers > 0 ? round(($verified / $totalUsers) * 100, 1) : 0,
+            'pendingPercentage' => $totalUsers > 0 ? round(($pending / $totalUsers) * 100, 1) : 0,
+        ];
+    }
+
+    private function getContactStats(): array
+    {
+        $totalUsers = User::where('role', UserRole::CLIENT)->count();
+        
+        $withPhone = User::where('role', UserRole::CLIENT)
+            ->whereHas('person', function($query) {
+                $query->whereNotNull('phone')
+                      ->where('phone', '!=', '');
+            })
+            ->count();
+        
+        $withAddress = User::where('role', UserRole::CLIENT)
+            ->whereHas('person', function($query) {
+                $query->whereNotNull('address')
+                      ->where('address', '!=', '');
+            })
+            ->count();
+        
+        $withDni = User::where('role', UserRole::CLIENT)
+            ->whereHas('person', function($query) {
+                $query->whereNotNull('dni')
+                      ->where('dni', '!=', '');
+            })
+            ->count();
+        
+        return [
+            'withPhone' => $withPhone,
+            'withoutPhone' => $totalUsers - $withPhone,
+            'phonePercentage' => $totalUsers > 0 ? round(($withPhone / $totalUsers) * 100, 1) : 0,
+            
+            'withAddress' => $withAddress,
+            'withoutAddress' => $totalUsers - $withAddress,
+            'addressPercentage' => $totalUsers > 0 ? round(($withAddress / $totalUsers) * 100, 1) : 0,
+            
+            'withDni' => $withDni,
+            'withoutDni' => $totalUsers - $withDni,
+            'dniPercentage' => $totalUsers > 0 ? round(($withDni / $totalUsers) * 100, 1) : 0,
+        ];
+    }
+
+    private function getTopBuyers(Carbon $startDate, int $limit = 15): array
+    {
+        try {
+            $topBuyerIds = DB::table('orders')
+                ->select('client_id', 
+                    DB::raw('COUNT(*) as total_orders'),
+                    DB::raw('SUM(total_amount) as total_spent'))
+                ->where('status', OrderStatus::PAID->value)
+                ->where('created_at', '>=', $startDate)
+                ->whereNotNull('client_id')
+                ->groupBy('client_id')
+                ->orderBy('total_spent', 'DESC')
+                ->limit($limit)
+                ->get();
+            
+            $buyers = [];
+            foreach ($topBuyerIds as $buyerData) {
+                $user = User::with('person')
+                    ->where('id', $buyerData->client_id)
+                    ->where('role', UserRole::CLIENT)
+                    ->first();
+                
+                if ($user) {
+                    $buyers[] = [
+                        'name' => $user->person 
+                            ? "{$user->person->name} {$user->person->last_name}" 
+                            : 'Sin nombre',
+                        'email' => $user->email,
+                        'totalOrders' => $buyerData->total_orders,
+                        'totalSpent' => $buyerData->total_spent ?? 0,
+                        'emailVerified' => $user->email_verified_at !== null,
+                    ];
+                }
+            }
+            
+            return $buyers;
+            
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     private function getRegistrationTrends(Carbon $startDate): array
@@ -441,63 +725,83 @@ class ReportPDFService
         $current = $startDate->copy()->startOfMonth();
         
         while ($current <= Carbon::now()->endOfMonth()) {
-            $registrations = User::where('role', UserRole::CLIENT)
+            $newUsers = User::where('role', UserRole::CLIENT)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
                     $current->copy()->endOfMonth()
                 ])
                 ->count();
-
-            $firstOrders = Order::where('status', OrderStatus::PAID)
+            
+            $verifiedUsers = User::where('role', UserRole::CLIENT)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
                     $current->copy()->endOfMonth()
                 ])
-                ->whereRaw('(SELECT COUNT(*) FROM orders o2 WHERE o2.client_id = orders.client_id AND o2.status = "PAID" AND o2.created_at < orders.created_at) = 0')
+                ->whereNotNull('email_verified_at')
                 ->count();
-
+            
+            $verificationRate = $newUsers > 0 
+                ? round(($verifiedUsers / $newUsers) * 100, 1) 
+                : 0;
+            
             $trends[] = [
                 'month' => $current->locale('es')->format('F Y'),
-                'registrations' => $registrations,
-                'orders' => $firstOrders,
+                'newUsers' => $newUsers,
+                'verifiedUsers' => $verifiedUsers,
+                'verificationRate' => $verificationRate,
             ];
-
+            
             $current->addMonth();
         }
-
+        
         return $trends;
     }
 
-    private function getTopBuyers(Carbon $startDate): array
+    private function getUserActivityStats(Carbon $startDate): array
     {
-        return User::with('person')
-            ->where('role', UserRole::CLIENT)
-            ->whereHas('orders', function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            })
-            ->withCount(['orders' => function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            }])
-            ->withSum(['orders' => function($query) use ($startDate) {
-                $query->where('status', OrderStatus::PAID)
-                      ->where('created_at', '>=', $startDate);
-            }], 'total_amount')
-            ->orderBy('orders_sum_total_amount', 'desc')
-            ->limit(15)
-            ->get()
-            ->map(function($user) {
-                return [
-                    'name' => $user->person ? $user->person->name . ' ' . $user->person->last_name : 'Sin nombre',
-                    'email' => $user->email,
-                    'total_orders' => $user->orders_count,
-                    'total_spent' => $user->orders_sum_total_amount ?? 0,
-                    'avg_order' => $user->orders_count > 0 ? ($user->orders_sum_total_amount / $user->orders_count) : 0,
-                    'registration_date' => $user->created_at->format('d/m/Y'),
-                ];
-            })
-            ->toArray();
+        try {
+            $totalUsers = User::where('role', UserRole::CLIENT)->count();
+            
+            $usersWithOrders = DB::table('orders')
+                ->where('status', OrderStatus::PAID->value)
+                ->where('created_at', '>=', $startDate)
+                ->whereNotNull('client_id')
+                ->distinct('client_id')
+                ->count('client_id');
+            
+            $usersWithoutOrders = $totalUsers - $usersWithOrders;
+            
+            $totalRevenue = Order::where('status', OrderStatus::PAID)
+                ->where('created_at', '>=', $startDate)
+                ->sum('total_amount');
+            
+            $avgOrderValue = $usersWithOrders > 0 
+                ? $totalRevenue / $usersWithOrders 
+                : 0;
+            
+            return [
+                'usersWithOrders' => $usersWithOrders,
+                'usersWithoutOrders' => $usersWithoutOrders,
+                'usersWithOrdersPercentage' => $totalUsers > 0 
+                    ? round(($usersWithOrders / $totalUsers) * 100, 1) 
+                    : 0,
+                'usersWithoutOrdersPercentage' => $totalUsers > 0 
+                    ? round(($usersWithoutOrders / $totalUsers) * 100, 1) 
+                    : 0,
+                'totalRevenue' => $totalRevenue,
+                'avgOrderValue' => $avgOrderValue,
+            ];
+            
+        } catch (\Exception $e) {
+            return [
+                'usersWithOrders' => 0,
+                'usersWithoutOrders' => 0,
+                'usersWithOrdersPercentage' => 0,
+                'usersWithoutOrdersPercentage' => 0,
+                'totalRevenue' => 0,
+                'avgOrderValue' => 0,
+            ];
+        }
     }
 
     private function getPeriodName(string $timeRange): string

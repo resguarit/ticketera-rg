@@ -17,7 +17,7 @@ interface UserData {
     created_at: string;
     last_login: string;
     total_purchases: number;
-    total_spent: string;
+    total_spent: number;
     last_purchase: string | null;
 }
 
@@ -178,20 +178,14 @@ export default function UserDetailsModal({ isOpen, onClose, user, onUserUpdated 
                     {/* Estadísticas de Compras */}
                     <div className="bg-blue-50 rounded-lg p-4">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Estadísticas de Compras</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-blue-600">{user.total_purchases}</p>
                                 <p className="text-sm text-gray-600">Total Compras</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-green-600">${user.total_spent}</p>
+                                <p className="text-lg font-bold text-green-600">{formatCurrency(user.total_spent)}</p>
                                 <p className="text-sm text-gray-600">Total Gastado</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-lg font-semibold text-purple-600">
-                                    ${user.total_purchases > 0 ? (parseFloat(user.total_spent) / user.total_purchases).toFixed(0) : '0'}
-                                </p>
-                                <p className="text-sm text-gray-600">Promedio por Compra</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-sm font-medium text-gray-700">

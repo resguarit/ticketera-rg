@@ -1,4 +1,7 @@
-{{-- filepath: resources/views/pdfs/reports/users.blade.php --}}
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,289 +9,268 @@
     <title>{{ $title }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DejaVu Sans', 'Helvetica', sans-serif; font-size: 11px; color: #000; line-height: 1.5; margin: 30px; }
         
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-        }
+        .header-table { width: 100%; border-bottom: 2px solid #000; margin-bottom: 30px; padding-bottom: 10px; }
+        .header-title { font-size: 20px; text-transform: uppercase; font-weight: bold; }
+        .header-meta { text-align: right; font-size: 10px; color: #444; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
         
-        .header {
-            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .table-formal th { background-color: #000; color: #fff; text-transform: uppercase; font-size: 10px; font-weight: bold; border-bottom: none; }
+        .table-formal tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { font-size: 14px; opacity: 0.9; }
+        .kpi-table { margin-bottom: 40px; border: 1px solid #000; }
+        .kpi-table td { padding: 15px 10px; text-align: center; border-right: 1px solid #000; border-bottom: none; }
+        .kpi-table td:last-child { border-right: none; }
+        .kpi-label { display: block; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
+        .kpi-value { font-size: 16px; font-weight: bold; color: #000; }
+
+        .section-title { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; }
         
-        .user-overview {
-            display: flex;
-            margin-bottom: 30px;
-            gap: 15px;
-        }
+        .progress-bar { width: 100%; height: 20px; background-color: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background-color: #000; }
         
-        .user-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .user-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #6f42c1;
-            margin-bottom: 5px;
-        }
-        
-        .user-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin: 30px 0 15px;
-            border-bottom: 2px solid #6f42c1;
-            padding-bottom: 5px;
-        }
-        
-        .registration-timeline {
-            margin: 20px 0;
-        }
-        
-        .timeline-item {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .timeline-month {
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .timeline-stats {
-            text-align: right;
-            font-size: 11px;
-        }
-        
-        .top-buyers {
-            margin: 30px 0;
-        }
-        
-        .buyer-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .buyer-table th,
-        .buyer-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .buyer-table th {
-            background: #f8f9fa;
-            font-weight: bold;
-            font-size: 11px;
-            text-transform: uppercase;
-        }
-        
-        .buyer-table td {
-            font-size: 11px;
-        }
-        
-        .demographics-chart {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .demo-item {
-            flex: 1;
-            background: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .demo-age {
-            font-weight: bold;
-            color: #6f42c1;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .demo-count {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 3px;
-        }
-        
-        .demo-percentage {
-            font-size: 10px;
-            color: #666;
-        }
-        
-        .insights-box {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .insight-title {
-            font-weight: bold;
-            color: #0056b3;
-            margin-bottom: 8px;
-        }
-        
-        .insight-text {
-            font-size: 11px;
-            color: #004085;
-            line-height: 1.5;
-        }
-        
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 9px; font-weight: bold; }
+        .badge-dark { background-color: #000; color: white; }
+        .badge-light { background-color: #666; color: white; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p>Período: {{ $period }} | {{ $startDate }} - {{ $endDate }}</p>
-        <p>Generado el {{ $generatedAt }}</p>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td style="border:none; vertical-align: bottom;">
+                <div class="header-title">{{ $title }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">RG ENTRADAS - REPORTE DE USUARIOS</div>
+            </td>
+            <td style="border:none; vertical-align: bottom;" class="header-meta">
+                <strong>Período:</strong> {{ $startDate }} - {{ $endDate }}<br>
+                <strong>Generado:</strong> {{ $generatedAt }}
+            </td>
+        </tr>
+    </table>
 
-    <!-- Resumen de Usuarios -->
-    <div class="user-overview">
-        <div class="user-card">
-            <div class="user-value">{{ number_format($userStats['totalUsers']) }}</div>
-            <div class="user-label">Total Usuarios</div>
-        </div>
-        <div class="user-card">
-            <div class="user-value">{{ number_format($userStats['newUsers']) }}</div>
-            <div class="user-label">Nuevos Usuarios</div>
-        </div>
-        <div class="user-card">
-            <div class="user-value">{{ number_format($userStats['activeUsers']) }}</div>
-            <div class="user-label">Usuarios Activos</div>
-        </div>
-        <div class="user-card">
-            <div class="user-value">{{ number_format($userStats['avgOrderValue'], 2) }}</div>
-            <div class="user-label">Gasto Promedio</div>
-        </div>
-    </div>
+    {{-- KPIs Principales --}}
+    <table class="kpi-table">
+        <tr>
+            <td style="background-color: #eee; width: 20%;">
+                <span class="kpi-label">Total Usuarios</span>
+                <span class="kpi-value">{{ number_format($userStats['totalUsers']) }}</span>
+            </td>
+            <td style="width: 20%;">
+                <span class="kpi-label">Usuarios Activos</span>
+                <span class="kpi-value">{{ number_format($userStats['activeUsers']) }}</span>
+            </td>
+            <td style="width: 20%;">
+                <span class="kpi-label">Usuarios Nuevos</span>
+                <span class="kpi-value">{{ number_format($userStats['newUsers']) }}</span>
+            </td>
+            <td style="width: 20%;">
+                <span class="kpi-label">Con Teléfono</span>
+                <span class="kpi-value">{{ number_format($userStats['usersWithPhone']) }}</span>
+            </td>
+            <td style="width: 20%;">
+                <span class="kpi-label">Tasa Verificación</span>
+                <span class="kpi-value">{{ $userStats['verificationRate'] }}%</span>
+            </td>
+        </tr>
+    </table>
 
-    <!-- Tendencias de Registro -->
-    <h3 class="section-title">Evolución de Registros</h3>
-    <div class="registration-timeline">
-        @foreach($registrationTrends as $trend)
-            <div class="timeline-item">
-                <div>
-                    <div class="timeline-month">{{ $trend['month'] }}</div>
-                </div>
-                <div class="timeline-stats">
-                    <div><strong>{{ $trend['registrations'] }}</strong> nuevos usuarios</div>
-                    <div>{{ $trend['orders'] }} primera compra</div>
-                </div>
-            </div>
-        @endforeach
-    </div>
-
-    <!-- Demographics -->
-    <h3 class="section-title">Demografía por Rangos de Edad</h3>
-    <div class="demographics-chart">
-        <div class="demo-item">
-            <div class="demo-age">18-25 años</div>
-            <div class="demo-count">{{ number_format($userStats['totalUsers'] * 0.3) }}</div>
-            <div class="demo-percentage">30% del total</div>
-        </div>
-        <div class="demo-item">
-            <div class="demo-age">26-35 años</div>
-            <div class="demo-count">{{ number_format($userStats['totalUsers'] * 0.35) }}</div>
-            <div class="demo-percentage">35% del total</div>
-        </div>
-        <div class="demo-item">
-            <div class="demo-age">36-45 años</div>
-            <div class="demo-count">{{ number_format($userStats['totalUsers'] * 0.2) }}</div>
-            <div class="demo-percentage">20% del total</div>
-        </div>
-        <div class="demo-item">
-            <div class="demo-age">46+ años</div>
-            <div class="demo-count">{{ number_format($userStats['totalUsers'] * 0.15) }}</div>
-            <div class="demo-percentage">15% del total</div>
-        </div>
-    </div>
-
-    <!-- Top Compradores -->
-    <h3 class="section-title">Top Compradores por Volumen</h3>
-    <table class="buyer-table">
+    {{-- Estadísticas de Verificación --}}
+    <div class="section-title">Estado de Verificación de Usuarios</div>
+    <table class="table-formal">
         <thead>
             <tr>
-                <th>Usuario</th>
-                <th>Email</th>
-                <th>Total Órdenes</th>
-                <th>Total Gastado</th>
-                <th>Promedio por Orden</th>
-                <th>Registro</th>
+                <th style="width: 40%;">Estado</th>
+                <th class="text-right" style="width: 20%;">Cantidad</th>
+                <th class="text-right" style="width: 20%;">Porcentaje</th>
+                <th style="width: 20%;"></th>
             </tr>
         </thead>
         <tbody>
-            @foreach($topBuyers as $buyer)
-                <tr>
-                    <td>{{ $buyer['name'] }}</td>
-                    <td>{{ $buyer['email'] }}</td>
-                    <td>{{ $buyer['total_orders'] }}</td>
-                    <td>${{ number_format($buyer['total_spent'], 2, ',', '.') }}</td>
-                    <td>${{ number_format($buyer['avg_order'], 2, ',', '.') }}</td>
-                    <td>{{ $buyer['registration_date'] }}</td>
-                </tr>
-            @endforeach
+            <tr>
+                <td class="font-bold">
+                    Email Verificado
+                </td>
+                <td class="text-right">{{ number_format($verificationStats['verified']) }}</td>
+                <td class="text-right font-bold">{{ $verificationStats['verifiedPercentage'] }}%</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ $verificationStats['verifiedPercentage'] }}%;"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="font-bold">
+                    Email Pendiente
+                </td>
+                <td class="text-right">{{ number_format($verificationStats['pending']) }}</td>
+                <td class="text-right font-bold">{{ $verificationStats['pendingPercentage'] }}%</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ $verificationStats['pendingPercentage'] }}%; background-color: #666;"></div>
+                    </div>
+                </td>
+            </tr>
         </tbody>
     </table>
 
-    <!-- Insights -->
-    <div class="insights-box">
-        <div class="insight-title">Insights Clave del Análisis</div>
-        <div class="insight-text">
-            • El {{ number_format((($userStats['newUsers'] / $userStats['totalUsers']) * 100), 1) }}% de usuarios se registraron en este período<br>
-            • El segmento de 26-35 años representa el mayor porcentaje de usuarios activos<br>
-            • El ticket promedio de compra es ${{ number_format($userStats['avgOrderValue'], 2, ',', '.') }}<br>
-            • Tasa de activación: {{ number_format((($userStats['activeUsers'] / $userStats['totalUsers']) * 100), 1) }}% de usuarios verificados
-        </div>
-    </div>
+    {{-- Estadísticas de Información de Contacto --}}
+    <div class="section-title">Información de Contacto</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th style="width: 40%;">Tipo de Dato</th>
+                <th class="text-right" style="width: 20%;">Con Información</th>
+                <th class="text-right" style="width: 20%;">Sin Información</th>
+                <th class="text-right" style="width: 20%;">% Completitud</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="font-bold">Número de Teléfono</td>
+                <td class="text-right">{{ number_format($contactStats['withPhone']) }}</td>
+                <td class="text-right" style="color: #999;">{{ number_format($contactStats['withoutPhone']) }}</td>
+                <td class="text-right font-bold">{{ $contactStats['phonePercentage'] }}%</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Dirección</td>
+                <td class="text-right">{{ number_format($contactStats['withAddress']) }}</td>
+                <td class="text-right" style="color: #999;">{{ number_format($contactStats['withoutAddress']) }}</td>
+                <td class="text-right font-bold">{{ $contactStats['addressPercentage'] }}%</td>
+            </tr>
+            <tr>
+                <td class="font-bold">DNI</td>
+                <td class="text-right">{{ number_format($contactStats['withDni']) }}</td>
+                <td class="text-right" style="color: #999;">{{ number_format($contactStats['withoutDni']) }}</td>
+                <td class="text-right font-bold">{{ $contactStats['dniPercentage'] }}%</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <!-- Footer -->
+    {{-- Top 15 Compradores --}}
+    <div class="section-title">Top 15 Compradores</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 35%;">Usuario</th>
+                <th style="width: 20%;">Email</th>
+                <th class="text-right" style="width: 15%;">Órdenes</th>
+                <th class="text-right" style="width: 20%;">Total Gastado</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if(!empty($topBuyers) && count($topBuyers) > 0)
+                @foreach($topBuyers as $index => $buyer)
+                    <tr>
+                        <td class="text-center" style="font-weight: bold;">{{ $index + 1 }}</td>
+                        <td class="font-bold">{{ $buyer['name'] }}</td>
+                        <td style="font-size: 9px; color: #555;">{{ $buyer['email'] }}</td>
+                        <td class="text-right">{{ number_format($buyer['totalOrders']) }}</td>
+                        <td class="text-right font-bold">{{ CurrencyHelper::format($buyer['totalSpent'] ?? 0, false) }}</td>
+                    </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999; padding: 20px;">
+                        No hay datos de compradores en este período
+                    </td>
+                </tr>
+            @endif
+        </tbody>
+    </table>
+
+    {{-- Tendencia de Registros --}}
+    <div class="section-title">Tendencia de Registros por Mes</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th style="width: 30%;">Mes</th>
+                <th class="text-right" style="width: 20%;">Nuevos Registros</th>
+                <th class="text-right" style="width: 20%;">Registros Verificados</th>
+                <th class="text-right" style="width: 15%;">Tasa Verificación</th>
+                <th style="width: 15%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if(!empty($registrationTrends) && count($registrationTrends) > 0)
+                @foreach($registrationTrends as $trend)
+                    <tr>
+                        <td class="font-bold">{{ $trend['month'] }}</td>
+                        <td class="text-right">{{ number_format($trend['newUsers']) }}</td>
+                        <td class="text-right">{{ number_format($trend['verifiedUsers']) }}</td>
+                        <td class="text-right font-bold">{{ $trend['verificationRate'] }}%</td>
+                        <td>
+                            <div class="progress-bar" style="height: 12px;">
+                                <div class="progress-fill" style="width: {{ $trend['verificationRate'] }}%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999; padding: 20px;">
+                        No hay datos de registros en este período
+                    </td>
+                </tr>
+            @endif
+        </tbody>
+    </table>
+
+    {{-- Resumen de Actividad --}}
+    <div class="section-title">Resumen de Actividad de Usuarios</div>
+    <table style="width: 100%; border: 1px solid #ddd;">
+        <tr>
+            <td style="width: 50%; padding: 15px; border-right: 1px solid #ddd; border-bottom: none;">
+                <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Usuarios con Compras</strong>
+                <div style="font-size: 24px; font-weight: bold; color: #000;">
+                    {{ number_format($activityStats['usersWithOrders']) }}
+                </div>
+                <div style="color: #666; font-size: 10px; margin-top: 5px;">
+                    {{ $activityStats['usersWithOrdersPercentage'] }}% del total
+                </div>
+            </td>
+            <td style="width: 50%; padding: 15px; border-bottom: none;">
+                <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Usuarios sin Compras</strong>
+                <div style="font-size: 24px; font-weight: bold; color: #666;">
+                    {{ number_format($activityStats['usersWithoutOrders']) }}
+                </div>
+                <div style="color: #666; font-size: 10px; margin-top: 5px;">
+                    {{ $activityStats['usersWithoutOrdersPercentage'] }}% del total
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 50%; padding: 15px; border-right: 1px solid #ddd; border-bottom: none;">
+                <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Valor Promedio de Compra</strong>
+                <div style="font-size: 24px; font-weight: bold; color: #000;">
+                    {{ CurrencyHelper::format($activityStats['avgOrderValue'] ?? 0, false) }}
+                </div>
+                <div style="color: #666; font-size: 10px; margin-top: 5px;">
+                    Por usuario comprador
+                </div>
+            </td>
+            <td style="width: 50%; padding: 15px; border-bottom: none;">
+                <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Total Gastado por Todos</strong>
+                <div style="font-size: 24px; font-weight: bold; color: #000;">
+                    {{ CurrencyHelper::format($activityStats['totalRevenue'] ?? 0, false) }}
+                </div>
+                <div style="color: #666; font-size: 10px; margin-top: 5px;">
+                    En el período seleccionado
+                </div>
+            </td>
+        </tr>
+    </table>
+
     <div class="footer">
-        <p>RG ENTRADAS - Sistema de Gestión de Eventos | Reporte de Usuarios</p>
-        <p>Análisis de comportamiento y demografía de usuarios de la plataforma</p>
+        CONFIDENCIAL | Documento Comercial | Página 1
     </div>
 </body>
 </html>

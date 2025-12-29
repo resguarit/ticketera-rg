@@ -19,7 +19,8 @@ import {
     Tag,
     Building2,
     HelpCircle,
-    HandCoins
+    HandCoins,
+    Image
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -46,7 +47,7 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                 {
                     title: 'Banners',
                     href: '/admin/banners',
-                    icon: LayoutGrid,
+                    icon: Image ,
                 },
                 {
                     title: 'Organizadores',

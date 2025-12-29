@@ -281,7 +281,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                 </div>
 
                                                 {/* Lista de tipos de entradas */}
-                                                <div className="flex flex-wrap gap-4 justify-start">
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                                                     {func.ticketTypes && func.ticketTypes.length > 0 ? (
                                                         func.ticketTypes.map((ticket) => (
                                                             <TicketTypeCard

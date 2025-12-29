@@ -257,15 +257,30 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
       <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
         <Header />
 
-        <div className="container mx-auto px-4 py-8">
-          <CheckoutTimer lockExpiration={lockExpiration} sessionId={sessionId} onExpire={() => setExpired(true)} />
-
-          <div className="mb-6">
-            <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Evento
-            </Button>
+        <div className="mx-auto px-4 lg:px-16 py-8">
+          <div className="w-full flex flex-col lg:flex-row lg:justify-between gap-4">
+            {/* Botón - arriba en mobile, izquierda en lg+ */}
+            <div className="lg:w-1/2">
+              <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver al Evento
+              </Button>
+            </div>
+            
+            {/* Timer - debajo en mobile (full width), centro en lg+ */}
+            <div className="flex justify-center w-full lg:w-full">
+              <CheckoutTimer 
+                lockExpiration={lockExpiration} 
+                sessionId={sessionId} 
+                eventId={eventId}
+                onExpire={() => setExpired(true)} 
+              />
+            </div>
+            
+            {/* Spacer solo visible en lg+ */}
+            <div className="hidden lg:flex lg:w-1/2"></div>
           </div>
+
 
           <div className="mb-8">
             <div className="flex items-center justify-center space-x-4 mb-4">
