@@ -9,10 +9,9 @@ import { Ciudad, Provincia, Venue } from '@/types';
 import VenueForm from './VenueForm';
 import BackButton from '@/components/Backbutton';
 
-// Extender el tipo base Venue para la edición
 interface VenueForEdit extends Venue {
     provincia_id: number;
-    ciudad: Ciudad; // Hacemos que ciudad sea obligatoria en este contexto
+    ciudad: Ciudad;
     sectors: Sector[];
 }
 
@@ -31,12 +30,12 @@ export default function EditVenue() {
         provincia_id_or_name: venue.provincia_id?.toString() || '',
         ciudad_name: venue.ciudad?.name || '',
         coordinates: venue.coordinates || '',
+        google_maps_url: venue.google_maps_url || '', // NUEVO
         banner: null as File | null,
         referring: venue.referring || '',
-        sectors: venue.sectors || [], // <-- AÑADIR CAMPO
+        sectors: venue.sectors || [],
     });
 
-    // Función para validar campos requeridos antes del envío
     const validateRequiredFields = () => {
         const requiredFields = [
             { field: 'name', label: 'Nombre del recinto', value: data.name },
@@ -52,13 +51,11 @@ export default function EditVenue() {
             }
         }
 
-        // Validar sectores
         if (!data.sectors || data.sectors.length === 0) {
             toast.error('Debe agregar al menos un sector', { id: 'validation-error' });
             return false;
         }
 
-        // Validar cada sector
         for (let i = 0; i < data.sectors.length; i++) {
             const sector = data.sectors[i];
             if (!sector.name || sector.name.trim() === '') {
@@ -71,7 +68,6 @@ export default function EditVenue() {
             }
         }
 
-        // Validar coordenadas si se proporcionan
         if (data.coordinates && data.coordinates.trim() !== '') {
             const coords = data.coordinates.split(',').map(Number);
             if (coords.length !== 2 || coords.some(isNaN)) {
@@ -80,7 +76,6 @@ export default function EditVenue() {
             }
         }
 
-        // Validar archivo banner si se seleccionó
         if (data.banner) {
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!allowedTypes.includes(data.banner.type)) {
@@ -88,8 +83,7 @@ export default function EditVenue() {
                 return false;
             }
 
-            // Validar tamaño del archivo (máximo 2MB)
-            const maxSize = 2 * 1024 * 1024; // 2MB en bytes
+            const maxSize = 2 * 1024 * 1024;
             if (data.banner.size > maxSize) {
                 toast.error('El banner no puede ser mayor a 2MB', { id: 'validation-error' });
                 return false;
@@ -102,7 +96,6 @@ export default function EditVenue() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         
-        // Validar antes de enviar
         if (!validateRequiredFields()) {
             return;
         }
@@ -117,7 +110,6 @@ export default function EditVenue() {
             onError: (errors) => {
                 console.log('Form errors:', errors);
                 
-                // Mostrar errores específicos del servidor
                 if (errors.name) {
                     toast.error(`Nombre: ${errors.name}`, { id: 'update-venue' });
                 } else if (errors.address) {
@@ -128,6 +120,8 @@ export default function EditVenue() {
                     toast.error(`Ciudad: ${errors.ciudad_name}`, { id: 'update-venue' });
                 } else if (errors.coordinates) {
                     toast.error(`Coordenadas: ${errors.coordinates}`, { id: 'update-venue' });
+                } else if (errors.google_maps_url) {
+                    toast.error(`Google Maps: ${errors.google_maps_url}`, { id: 'update-venue' });
                 } else if (errors.banner) {
                     toast.error(`Banner: ${errors.banner}`, { id: 'update-venue' });
                 } else if (errors.sectors) {

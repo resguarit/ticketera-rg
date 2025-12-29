@@ -13,6 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { Ciudad, Provincia, Venue, Sector } from '@/types';
 import SectorFormModal from '@/components/admin/modals/SectorFormModal';
+import { GoogleMapsInput } from '@/components/admin/GoogleMapsInput';
 
 interface VenueFormData {
     name: string;
@@ -22,6 +23,7 @@ interface VenueFormData {
     coordinates: string;
     banner: File | null;
     referring: string;
+    google_maps_url: string;
     sectors: Sector[];
 }
 
@@ -328,6 +330,12 @@ export default function VenueForm({ data, setData, errors, processing, onSubmit,
                 />
                 <InputError message={errors.referring} />
             </div>
+
+            <GoogleMapsInput
+                value={data.google_maps_url}
+                onChange={(value) => setData('google_maps_url', value)}
+                error={errors.google_maps_url}
+            />
 
             <div className="space-y-2">
                 <Label>Ubicación en el Mapa</Label>

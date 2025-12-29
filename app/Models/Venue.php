@@ -21,6 +21,7 @@ class Venue extends Model
         'address', // Mantiene calle, altura, entre calles
         'ciudad_id', // Nueva relación
         'coordinates',
+        'google_maps_url', // NUEVO
         'banner_url',
         'referring',
     ];
