@@ -209,12 +209,12 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <CardContent className="space-y-4">
                             {topEvents.length > 0 ? topEvents.map(event => (
                                 <div key={event.id} className="space-y-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1 space-y-1">
-                                            <p className="text-sm font-medium leading-none truncate">{event.name}</p>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 space-y-1 min-w-0">
+                                            <p className="text-sm font-medium leading-none truncate" title={event.name}>{event.name}</p>
                                             <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
                                         </div>
-                                        <div className="font-medium text-sm text-green-600 ml-2">{formatCurrency(event.revenue)}</div>
+                                        <div className="font-medium text-sm text-green-600 whitespace-nowrap shrink-0">{formatCurrency(event.revenue)}</div>
                                     </div>
                                     {getStatusBadge(event)}
                                 </div>

@@ -66,17 +66,16 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
             <div className="bg-gradient-to-br from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center h-[112px]">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex flex-col gap-2 flex-shrink-0">
+                        <div className="flex flex-col gap-2 flex-shrink-0 w-[50px]">
                             {nextFunction && (
-                                <div className="bg-white/20 rounded px-2 py-1 text-center min-w-[50px]">
+                                <div className="bg-white/20 rounded px-2 py-1 text-center w-full">
                                     <div className="text-xs font-medium">{month}</div>
                                     <div className="text-lg font-bold">{day}</div>
                                 </div>
                             )}
                             {event.featured && (
-                                <div className="bg-secondary text-white px-2 py-1 rounded-full flex items-center justify-center gap-1 text-xs font-medium">
+                                <div className="bg-secondary text-white px-2 py-1 rounded-full flex items-center justify-center gap-1 text-xs font-medium w-full">
                                     <Star className="w-3 h-3 fill-current" />
-                                    <span className="text-xs">Destacado</span>
                                 </div>
                             )}
                         </div>
