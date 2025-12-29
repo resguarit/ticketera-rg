@@ -1,4 +1,7 @@
-{{-- filepath: resources/views/pdfs/reports/users.blade.php --}}
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -171,7 +174,7 @@
                         <td class="font-bold">{{ $buyer['name'] }}</td>
                         <td style="font-size: 9px; color: #555;">{{ $buyer['email'] }}</td>
                         <td class="text-right">{{ number_format($buyer['totalOrders']) }}</td>
-                        <td class="text-right font-bold">${{ number_format($buyer['totalSpent'], 2, ',', '.') }}</td>
+                        <td class="text-right font-bold">{{ CurrencyHelper::format($buyer['totalSpent'] ?? 0, false) }}</td>
                     </tr>
                 @endforeach
             @else
@@ -248,7 +251,7 @@
             <td style="width: 50%; padding: 15px; border-right: 1px solid #ddd; border-bottom: none;">
                 <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Valor Promedio de Compra</strong>
                 <div style="font-size: 24px; font-weight: bold; color: #000;">
-                    ${{ number_format($activityStats['avgOrderValue'], 2, ',', '.') }}
+                    {{ CurrencyHelper::format($activityStats['avgOrderValue'] ?? 0, false) }}
                 </div>
                 <div style="color: #666; font-size: 10px; margin-top: 5px;">
                     Por usuario comprador
@@ -257,7 +260,7 @@
             <td style="width: 50%; padding: 15px; border-bottom: none;">
                 <strong style="display: block; margin-bottom: 10px; font-size: 12px;">Total Gastado por Todos</strong>
                 <div style="font-size: 24px; font-weight: bold; color: #000;">
-                    ${{ number_format($activityStats['totalRevenue'], 2, ',', '.') }}
+                    {{ CurrencyHelper::format($activityStats['totalRevenue'] ?? 0, false) }}
                 </div>
                 <div style="color: #666; font-size: 10px; margin-top: 5px;">
                     En el período seleccionado

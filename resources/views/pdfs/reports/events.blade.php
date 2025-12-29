@@ -1,4 +1,7 @@
-{{-- filepath: resources/views/pdfs/reports/events.blade.php --}}
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -85,7 +88,7 @@
                         {{ $event['venue'] ?? 'Sin venue' }} • {{ $event['category'] }}
                     </td>
                     <td class="text-center">{{ number_format($event['ticketsSold']) }}</td>
-                    <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($event['revenue'] ?? 0, false) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -107,7 +110,7 @@
                 <tr>
                     <td class="font-bold">{{ $category['name'] }}</td>
                     <td class="text-center">{{ $category['eventsCount'] }}</td>
-                    <td class="text-right font-bold">${{ number_format($category['revenue'], 2, ',', '.') }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($category['revenue']?? 0, false) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -131,7 +134,7 @@
                     <td class="font-bold">{{ $venue['name'] }}</td>
                     <td style="font-size: 10px; color: #555;">{{ $venue['city'] ?? 'Sin ciudad' }}</td>
                     <td class="text-center">{{ $venue['events_count'] }}</td>
-                    <td class="text-right font-bold">${{ number_format($venue['total_revenue'], 2, ',', '.') }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($venue['total_revenue'] ?? 0, false) }}</td>
                 </tr>
             @endforeach
         </tbody>
