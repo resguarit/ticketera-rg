@@ -70,7 +70,8 @@ class TicketController extends Controller
             'order',
             'ticketType.eventFunction.event.venue.ciudad.provincia',
             'ticketType.eventFunction.event.category',
-            'ticketType.eventFunction.event.organizer'
+            'ticketType.eventFunction.event.organizer',
+            'ticketType.sector' // Eager load sector
         ])
             ->where('client_id', $user->id)
             ->where('status', '!=', 'cancelled')
@@ -91,7 +92,7 @@ class TicketController extends Controller
                     'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
                         $event->venue->ciudad->provincia->name : null,
                     'full_address' => $event->venue->getFullAddressAttribute(),
-                    'ticketType' => $ticket->ticketType->name,
+                    'ticketType' => $ticket->ticketType->name . ($ticket->ticketType->sector ? ' - ' . $ticket->ticketType->sector->name : ''),
                     'quantity' => 1,
                     'price' => $ticket->ticketType->price,
                     'total' => $ticket->ticketType->price,
@@ -181,7 +182,7 @@ class TicketController extends Controller
             }
 
             return [
-                'ticket_type_name' => $ticketType->name,
+                'ticket_type_name' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
                 'sector_name' => $ticketType->sector ? $ticketType->sector->name : '',
                 'price' => $ticketType->price,
                 'quantity' => $quantity,

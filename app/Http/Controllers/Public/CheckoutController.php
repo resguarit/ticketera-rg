@@ -49,7 +49,7 @@ class CheckoutController extends Controller
         }
 
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
-        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes', 'cuotas']);
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes.sector', 'cuotas']);
 
         $dataEncoded = $request->input('data');
         if (!$dataEncoded) {
@@ -92,7 +92,7 @@ class CheckoutController extends Controller
 
                         $selectedTickets[] = [
                             'id' => $ticketType->id,
-                            'type' => $ticketType->name,
+                            'type' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
                             'price' => $ticketType->price,
                             'quantity' => (int)$quantity,
                             'description' => $ticketType->description,
@@ -348,6 +348,7 @@ class CheckoutController extends Controller
             // ACTUALIZADO: Cargar la orden con ciudad y provincia
             $order = Order::with([
                 'items.ticketType.eventFunction.event.venue.ciudad.provincia',
+                'items.ticketType.sector',
                 'client.person'
             ])
                 ->where(function ($q) use ($orderKey) {
@@ -390,9 +391,12 @@ class CheckoutController extends Controller
                         'description' => $eventFunction->description,
                     ],
                 ],
-                'tickets' => $orderSummary['grouped_tickets']->map(function ($ticket) {
+                'tickets' => $orderSummary['grouped_tickets']->map(function ($ticket) use ($order) {
+                    $relatedItem = $order->items->firstWhere('ticket_type_id', $ticket['ticket_type_id']);
+                    $sectorName = $relatedItem && $relatedItem->ticketType->sector ? ' - ' . $relatedItem->ticketType->sector->name : '';
+
                     $ticketData = [
-                        'type' => $ticket['ticket_type_name'],
+                        'type' => $ticket['ticket_type_name'] . $sectorName,
                         'quantity' => $ticket['quantity'],
                         'price' => $ticket['unit_price'],
                     ];
