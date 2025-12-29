@@ -63,26 +63,28 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
 
         <Card className="flex flex-col bg-white py-0 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 gap-0 cursor-pointer" onClick={handleCardClick}>
             {/* Header con fecha y título (altura fija) */}
-            <div className="bg-gradient-to-br from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center min-h-[112px]">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        {nextFunction && (
-                            <div className="bg-white/20 rounded px-2 py-1 text-center min-w-[50px]">
-                                <div className="text-xs font-medium">{month}</div>
-                                <div className="text-lg font-bold">{day}</div>
-                            </div>
-                        )}
-                        <div>
-                            <h3 className="font-semibold text-lg leading-tight">{event.name}</h3>
-                            <p className="text-white text-sm">By {event.organizer.name}</p>
+            <div className="bg-gradient-to-br from-primary to-chart-5 text-white px-4 py-3 rounded-t-lg relative flex flex-col justify-center h-[112px]">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                            {nextFunction && (
+                                <div className="bg-white/20 rounded px-2 py-1 text-center min-w-[50px]">
+                                    <div className="text-xs font-medium">{month}</div>
+                                    <div className="text-lg font-bold">{day}</div>
+                                </div>
+                            )}
+                            {event.featured && (
+                                <div className="bg-secondary text-white px-2 py-1 rounded-full flex items-center justify-center gap-1 text-xs font-medium">
+                                    <Star className="w-3 h-3 fill-current" />
+                                    <span className="text-xs">Destacado</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-lg leading-tight line-clamp-2">{event.name}</h3>
+                            <p className="text-white/90 text-sm truncate">By {event.organizer.name}</p>
                         </div>
                     </div>
-                    {event.featured && (
-                        <div className="bg-secondary text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium">
-                            <Star className="w-3 h-3 fill-current" />
-                            Destacado
-                        </div>
-                    )}
                 </div>
             </div>
 
