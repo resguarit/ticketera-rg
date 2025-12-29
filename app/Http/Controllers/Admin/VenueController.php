@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Venue;
 use App\Models\Ciudad;
 use App\Models\Provincia;
-use App\Models\Sector; // <-- AÑADIR ESTO
+use App\Models\Sector;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +34,8 @@ class VenueController extends Controller
                     'eventos_count' => $venue->eventos_count,
                     'sectors_count' => $venue->sectors_count,
                     'coordinates' => $venue->coordinates,
-                    'banner_url' => $venue->image_url, // Usa el accesor del modelo
+                    'google_maps_url' => $venue->google_maps_url, // NUEVO
+                    'banner_url' => $venue->image_url,
                     'referring' => $venue->referring,
                 ];
             });
@@ -62,14 +63,12 @@ class VenueController extends Controller
         $provincia_input = $request->input('provincia_id_or_name');
         $ciudad_input = $request->input('ciudad_name');
 
-        // Si el input de provincia es numérico, es un ID. Si no, es un nombre para crear.
         if (is_numeric($provincia_input)) {
             $provincia = Provincia::findOrFail($provincia_input);
         } else {
             $provincia = Provincia::firstOrCreate(['name' => $provincia_input]);
         }
 
-        // Buscar o crear la ciudad asociada a esa provincia
         $ciudad = Ciudad::firstOrCreate(
             ['name' => $ciudad_input, 'provincia_id' => $provincia->id]
         );
@@ -85,6 +84,7 @@ class VenueController extends Controller
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
             'coordinates' => 'nullable|string|max:100',
+            'google_maps_url' => 'nullable|url|max:1000', // NUEVO
             'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000',
             'sectors' => 'required|array|min:1',
@@ -102,7 +102,6 @@ class VenueController extends Controller
 
         $venue = Venue::create($venueData);
 
-        // Crear los sectores
         foreach ($validated['sectors'] as $sectorData) {
             $venue->sectors()->create($sectorData);
         }
@@ -122,7 +121,7 @@ class VenueController extends Controller
 
     public function edit(Venue $venue): Response
     {
-        $venue->load('ciudad.provincia', 'sectors'); // Cargar la relación de sectores
+        $venue->load('ciudad.provincia', 'sectors');
         
         $venueData = [
             'id' => $venue->id,
@@ -131,10 +130,11 @@ class VenueController extends Controller
             'ciudad_id' => $venue->ciudad_id,
             'provincia_id' => $venue->ciudad->provincia_id,
             'coordinates' => $venue->coordinates,
+            'google_maps_url' => $venue->google_maps_url, // NUEVO
             'banner_url' => $venue->image_url,
             'referring' => $venue->referring,
             'ciudad' => $venue->ciudad,
-            'sectors' => $venue->sectors, // Pasar la colección de sectores
+            'sectors' => $venue->sectors,
         ];
 
         return Inertia::render('admin/venues/edit', array_merge($this->getFormData(), [
@@ -150,10 +150,11 @@ class VenueController extends Controller
             'provincia_id_or_name' => 'required|string|max:255',
             'ciudad_name' => 'required|string|max:255',
             'coordinates' => 'nullable|string|max:100',
+            'google_maps_url' => 'nullable|url|max:1000', // NUEVO
             'banner' => 'nullable|image|max:2048',
             'referring' => 'nullable|string|max:1000',
-            'sectors' => 'present|array', // 'present' asegura que el campo sectors venga, aunque esté vacío
-            'sectors.*.id' => 'nullable|integer', // No necesita 'exists' aquí, lo manejaremos nosotros
+            'sectors' => 'present|array',
+            'sectors.*.id' => 'nullable|integer',
             'sectors.*.name' => 'required|string|max:255',
             'sectors.*.capacity' => 'required|integer|min:0',
             'sectors.*.description' => 'nullable|string|max:1000',
@@ -171,13 +172,10 @@ class VenueController extends Controller
 
         $venue->update($venueData);
 
-        // Sincronizar sectores
         $incomingSectors = $validated['sectors'] ?? [];
         $incomingSectorIds = [];
 
         foreach ($incomingSectors as $sectorData) {
-            // Si el ID es real (no el timestamp de JS), lo usamos para actualizar.
-            // Si no, creamos uno nuevo.
             $sector = $venue->sectors()->updateOrCreate(
                 [
                     'id' => isset($sectorData['id']) && Sector::find($sectorData['id']) ? $sectorData['id'] : null
@@ -191,7 +189,6 @@ class VenueController extends Controller
             $incomingSectorIds[] = $sector->id;
         }
 
-        // Eliminar sectores que ya no están en la petición
         $venue->sectors()->whereNotIn('id', $incomingSectorIds)->delete();
 
         return redirect()->route('admin.venues.index')
@@ -217,7 +214,7 @@ class VenueController extends Controller
     public function getForSelect()
     {
         $venues = Venue::with('ciudad')
-            ->select('id', 'name', 'address', 'ciudad_id')
+            ->select('id', 'name', 'address', 'ciudad_id', 'google_maps_url') // NUEVO
             ->get()
             ->map(function($venue) {
                 return [
@@ -226,6 +223,7 @@ class VenueController extends Controller
                     'address' => $venue->address,
                     'city' => $venue->ciudad ? $venue->ciudad->name : 'Sin ciudad',
                     'full_address' => $venue->getFullAddressAttribute(),
+                    'google_maps_url' => $venue->google_maps_url, // NUEVO
                 ];
             });
         

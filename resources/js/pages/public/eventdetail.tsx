@@ -29,7 +29,8 @@ interface VenueData {
     id: number;
     name: string;
     address: string;
-    coordinates: string | null;
+    coordinates?: string | null;
+    google_maps_url?: string | null; // NUEVO
     full_address: string;
 }
 
@@ -61,41 +62,142 @@ interface EventDetailProps {
     eventData: EventData;
 }
 
-// Crear un componente simple para el mapa de Google
-const GoogleMapEmbed = ({ coordinates, venueName, venueAddress }: { coordinates: string, venueName: string, venueAddress: string }) => {
-    const [lat, lng] = coordinates.split(',');
-
-    // URL para Google Maps Embed
-    const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15&maptype=roadmap`;
-
-    // URL para abrir Google Maps directamente
-    const openUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-
-    return (
-        <div className="relative group">
-            {/* Iframe del mapa */}
-            <iframe
-                src={embedUrl}
-                width="100%"
-                height="400px"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="rounded-lg"
-            />
-
-            {/* Overlay clickeable para abrir Google Maps */}
-            <div
-                className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
-                onClick={() => window.open(openUrl, '_blank')}
-            >
-                <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
-                    <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">Abrir en Google Maps</span>
+// Crear un componente mejorado para el mapa de Google
+const GoogleMapEmbed = ({ 
+    coordinates, 
+    googleMapsUrl, 
+    venueName, 
+    venueAddress 
+}: { 
+    coordinates?: string | null, 
+    googleMapsUrl?: string | null,
+    venueName: string, 
+    venueAddress: string 
+}) => {
+    // PRIORIDAD 1: Si existe google_maps_url, extraer coordenadas o usar directamente
+    if (googleMapsUrl) {
+        // Si ya es una URL de embed, usarla directamente
+        if (googleMapsUrl.includes('/maps/embed')) {
+            return (
+                <div className="relative group">
+                    <iframe
+                        src={googleMapsUrl}
+                        width="100%"
+                        height="400px"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        className="rounded-lg"
+                    />
+                    <div
+                        className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
+                        onClick={() => window.open(googleMapsUrl.replace('/maps/embed', '/maps'), '_blank')}
+                    >
+                        <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
+                            <div className="flex items-center space-x-2">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium">Abrir en Google Maps</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            );
+        }
+
+        // Si es URL normal, intentar extraer coordenadas
+        const coordMatch = googleMapsUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (coordMatch) {
+            const lat = coordMatch[1];
+            const lng = coordMatch[2];
+            const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15`;
+
+            return (
+                <div className="relative group">
+                    <iframe
+                        src={embedUrl}
+                        width="100%"
+                        height="400px"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        className="rounded-lg"
+                    />
+                    <div
+                        className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
+                        onClick={() => window.open(googleMapsUrl, '_blank')}
+                    >
+                        <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
+                            <div className="flex items-center space-x-2">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium">Abrir en Google Maps</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Si no se pueden extraer coordenadas, mostrar botón para abrir
+        return (
+            <div className="h-[400px] rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border border-blue-200">
+                <div className="text-center">
+                    <MapPin className="w-16 h-16 mx-auto mb-4 text-blue-500" />
+                    <p className="text-lg font-semibold text-gray-700 mb-2">{venueName}</p>
+                    <p className="text-sm text-gray-600 mb-4">{venueAddress}</p>
+                    <Button
+                        onClick={() => window.open(googleMapsUrl, '_blank')}
+                        className="bg-blue-500 hover:bg-blue-600"
+                    >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Ver en Google Maps
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // PRIORIDAD 2: Si no hay URL pero hay coordenadas, usar coordenadas
+    if (coordinates) {
+        const [lat, lng] = coordinates.split(',');
+        const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD0LnecjX6lkqf5pr7j8GLqiPS6ETeaeSs&q=${lat},${lng}&zoom=15&maptype=roadmap`;
+        const openUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        return (
+            <div className="relative group">
+                <iframe
+                    src={embedUrl}
+                    width="100%"
+                    height="400px"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="rounded-lg"
+                />
+                <div
+                    className="absolute inset-0 bg-transparent cursor-pointer flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-lg"
+                    onClick={() => window.open(openUrl, '_blank')}
+                >
+                    <div className="bg-white/90 px-4 py-2 rounded-lg shadow-lg">
+                        <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">Abrir en Google Maps</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // FALLBACK: Si no hay ni URL ni coordenadas
+    return (
+        <div className="h-[400px] rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+            <div className="text-center text-gray-500">
+                <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">Ubicación no disponible</p>
+                <p className="text-xs mt-1">{venueAddress}</p>
             </div>
         </div>
     );
@@ -322,7 +424,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                 <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                     {/* Back Button */}
                     <div className="mb-4 sm:mb-6">
-                        <Link href={route('events')}>  {/* Cambiar de 'events' a 'events.index' */}
+                        <Link href={route('events')}>
                             <Button variant="ghost" size="sm" className="text-foreground hover:text-primary text-xs sm:text-sm h-8 sm:h-9">
                                 <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline">Volver a Eventos</span>
@@ -423,13 +525,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Venue Map Desktop */}
-                            {eventData.venue.coordinates && (
+                            {/* Venue Map Desktop - ACTUALIZADO */}
+                            {(eventData.venue.google_maps_url || eventData.venue.coordinates) && (
                                 <div>
                                     {/* Mapa con Google Maps Embed */}
                                     <div className="h-64 sm:h-80 rounded-lg overflow-hidden border border-gray-200">
                                         <GoogleMapEmbed
                                             coordinates={eventData.venue.coordinates}
+                                            googleMapsUrl={eventData.venue.google_maps_url}
                                             venueName={eventData.venue.name}
                                             venueAddress={eventData.venue.full_address}
                                         />
@@ -814,12 +917,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                             </Collapsible>
 
                             {/* Venue Map Mobile */}
-                            {eventData.venue.coordinates && (
+                            {(eventData.venue.google_maps_url || eventData.venue.coordinates) && (
                                 <div>
                                     {/* Mapa Mobile */}
                                     <div className="h-48 sm:h-64 rounded-lg overflow-hidden border border-gray-200">
                                         <GoogleMapEmbed
                                             coordinates={eventData.venue.coordinates}
+                                            googleMapsUrl={eventData.venue.google_maps_url}
                                             venueName={eventData.venue.name}
                                             venueAddress={eventData.venue.full_address}
                                         />

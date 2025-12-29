@@ -136,6 +136,7 @@ class EventController extends Controller
                                 // NUEVO: Filtrar por fechas de venta además de is_hidden
                                 $now = now();
                                 
+
                                 // No mostrar tickets ocultos
                                 if ($ticket->is_hidden) {
                                     return false;
@@ -202,6 +203,7 @@ class EventController extends Controller
                 'name' => $event->venue->name,
                 'address' => $event->venue->address,
                 'coordinates' => $event->venue->coordinates,
+                'google_maps_url' => $event->venue->google_maps_url, // NUEVO
                 'full_address' => $event->venue->getFullAddressAttribute(),
             ],
             'date' => $functions->first()['date'] ?? 'Fecha por confirmar',
