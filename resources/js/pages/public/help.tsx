@@ -12,6 +12,8 @@ import {
     CreditCard,
     Ticket,
     Users,
+    Copy,
+    Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,7 @@ import Footer from '@/components/footer';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Faq, FaqCategory as FaqCategoryModel } from '@/types/models';
+import { toast } from 'sonner';
 
 // Mapa para convertir el nombre del icono (string) en un componente de React
 const iconMap: { [key: string]: React.ElementType } = {
@@ -58,6 +61,7 @@ export default function Help() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
+    const [emailCopied, setEmailCopied] = useState(false);
     const [contactForm, setContactForm] = useState({
         name: "",
         email: "",
@@ -88,6 +92,18 @@ export default function Help() {
         setContactForm({ name: "", email: "", subject: "", message: "" });
     };
 
+    // Función para copiar el email al portapapeles
+    const copyEmailToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(supportEmail);
+            setEmailCopied(true);
+            toast.success('Email copiado al portapapeles');
+            setTimeout(() => setEmailCopied(false), 2000);
+        } catch (err) {
+            toast.error('Error al copiar el email');
+        }
+    };
+
     // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
     const whatsappNumber = supportPhone.replace(/\D/g, '');
 
@@ -107,8 +123,8 @@ export default function Help() {
             description: "Llámanos para soporte inmediato",
             icon: Phone,
             color: "green-500",
-            available: `${businessDays} ${businessHours}`, // Usar datos dinámicos
-            action: supportPhone, // Usar teléfono dinámico
+            available: `${businessDays} ${businessHours}`,
+            action: supportPhone,
             href: `tel:${supportPhone.replace(/\s/g, '')}`,
             type: "phone"
         },
@@ -118,8 +134,7 @@ export default function Help() {
             icon: Mail,
             color: "red-500",
             available: "Respuesta en 24hs",
-            action: supportEmail, // Usar el email dinámico
-            href: `mailto:${supportEmail}?subject=Consulta%20sobre%20entradas&body=Hola,%20necesito%20ayuda%20con...`,
+            action: supportEmail,
             type: "email"
         },
     ];
@@ -160,16 +175,35 @@ export default function Help() {
                                     <p className="text-foreground/80 mb-2 sm:mb-3 text-sm sm:text-base">{option.description}</p>
                                     <Badge className="mb-3 sm:mb-4 bg-gray-100 text-foreground border-0 text-xs sm:text-sm">{option.available}</Badge>
                                     <div>
-                                        <a
-                                            href={option.href}
-                                            target={option.type === 'whatsapp' ? "_blank" : undefined}
-                                            rel={option.type === 'whatsapp' ? "noopener noreferrer" : undefined}
-                                            className="block w-full"
-                                        >
-                                            <Button className={`bg-${option.color} hover:bg-${option.color}/90 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors`}>
-                                                {option.action}
+                                        {option.type === 'email' ? (
+                                            <Button 
+                                                onClick={copyEmailToClipboard}
+                                                className={`bg-${option.color} hover:bg-${option.color}/90 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors flex items-center justify-center gap-2`}
+                                            >
+                                                {emailCopied ? (
+                                                    <>
+                                                        <Check className="w-4 h-4" />
+                                                        Copiado
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-4 h-4" />
+                                                        {option.action}
+                                                    </>
+                                                )}
                                             </Button>
-                                        </a>
+                                        ) : (
+                                            <a
+                                                href={option.href}
+                                                target={option.type === 'whatsapp' ? "_blank" : undefined}
+                                                rel={option.type === 'whatsapp' ? "noopener noreferrer" : undefined}
+                                                className="block w-full"
+                                            >
+                                                <Button className={`bg-${option.color} hover:bg-${option.color}/90 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors`}>
+                                                    {option.action}
+                                                </Button>
+                                            </a>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
