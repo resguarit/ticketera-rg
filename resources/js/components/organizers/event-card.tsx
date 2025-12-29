@@ -89,80 +89,76 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
 
             {/* Contenido principal (se expandirá para llenar el espacio) */}
             <div className="p-4 flex flex-col flex-grow">
-                {/* Wrapper para el contenido variable que crece */}
-                <div className="flex-grow">
-                    {/* Información del evento */}
-                    <div className="space-y-2 mb-4">
+                {/* Información del evento - Altura fija */}
+                <div className="space-y-2 mb-4 h-[112px] flex flex-col justify-start">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>{event.category.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="w-4 h-4" />
+                        <span>{event.venue.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{event.functions?.length || 0} función{event.functions?.length !== 1 ? 'es' : ''}</span>
+                    </div>
+                    {nextFunction && (
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span>{event.category.name}</span>
+                            <Clock className="w-4 h-4" />
+                            <span>Próxima: {nextFunction.date} • {nextFunction.time}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <MapPin className="w-4 h-4" />
-                            <span>{event.venue.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{event.functions?.length || 0} función{event.functions?.length !== 1 ? 'es' : ''}</span>
-                        </div>
-                        {nextFunction && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Clock className="w-4 h-4" />
-                                <span>Próxima: {nextFunction.date} • {nextFunction.time}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Descripción (con altura mínima para 2 líneas) */}
-                    <div className="mb-4 min-h-[44px]">
-                        <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
-                            {event.description}
-                        </p>
-                    </div>
-
-                    {/* Banner (con altura mínima para mantener el espacio) */}
-                    <div className="mb-4 min-h-[108px]">
-                        {event.image_url && (
-                            <>
-                                <div className="text-sm font-medium text-gray-700 mb-2">Banner</div>
-                                <img
-                                    src={event.image_url}
-                                    alt={`Banner de ${event.name}`}
-
-                                    className="w-full h-20 object-cover rounded border"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                    }}
-                                />
-                            </>
-                        )}
-                    </div>
-
-                    {/* Funciones */}
-                    <div className="mb-4">
-                        {event.functions && event.functions.length > 0 && (
-                            <>
-                                <div className="text-sm font-medium text-gray-700 mb-2">Funciones</div>
-                                <div className="space-y-1">
-                                    {event.functions.slice(0, 3).map((func) => (
-                                        <div key={func.id} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
-                                            <span className="font-medium">{func.name}</span>
-                                            <span className="text-gray-600">{func.date} • {func.time}</span>
-                                        </div>
-                                    ))}
-                                    {event.functions.length > 3 && (
-                                        <div className="text-xs text-gray-500 text-center">
-                                            +{event.functions.length - 3} funciones más
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    )}
                 </div>
 
-                {/* Botones de acción (se alinearán en la parte inferior) */}
+                {/* Descripción - Altura fija */}
+                <div className="mb-4 h-[68px] flex flex-col">
+                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                        {event.description}
+                    </p>
+                </div>
+
+                {/* Banner - Altura fija */}
+                <div className="mb-4 h-[108px] flex flex-col">
+                    {event.image_url && (
+                        <>
+                            <div className="text-sm font-medium text-gray-700 mb-2">Banner</div>
+                            <img
+                                src={event.image_url}
+                                alt={`Banner de ${event.name}`}
+                                className="w-full h-20 object-cover rounded border"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                }}
+                            />
+                        </>
+                    )}
+                </div>
+
+                {/* Funciones - Altura variable pero alineada */}
+                <div className="mb-4 flex-grow">
+                    {event.functions && event.functions.length > 0 && (
+                        <>
+                            <div className="text-sm font-medium text-gray-700 mb-2">Funciones</div>
+                            <div className="space-y-1">
+                                {event.functions.slice(0, 3).map((func) => (
+                                    <div key={func.id} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
+                                        <span className="font-medium">{func.name}</span>
+                                        <span className="text-gray-600">{func.date} • {func.time}</span>
+                                    </div>
+                                ))}
+                                {event.functions.length > 3 && (
+                                    <div className="text-xs text-gray-500 text-center">
+                                        +{event.functions.length - 3} funciones más
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Botones de acción - Siempre en el fondo */}
                 <div className="flex gap-2 mt-auto pt-4" onClick={preventCardClick}>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                         <Link href={route('organizer.events.edit', event.id)}>
