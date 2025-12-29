@@ -50,7 +50,7 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $paymentCategory->id,
                 'question' => '¿Qué métodos de pago aceptan?',
-                'answer' => 'Aceptamos todas las tarjetas de crédito y débito principales (Visa, Mastercard, American Express), transferencias bancarias y billeteras digitales como MercadoPago.',
+                'answer' => 'Aceptamos todas las tarjetas de crédito y débito principales (Visa, Mastercard, American Express).',
                 'order' => 1,
             ],
             [
@@ -58,12 +58,6 @@ class FaqSeeder extends Seeder
                 'question' => '¿Es seguro pagar en línea?',
                 'answer' => 'Absolutamente. Utilizamos encriptación SSL de 256 bits y cumplimos con los estándares PCI DSS para proteger tu información financiera.',
                 'order' => 2,
-            ],
-            [
-                'faq_category_id' => $paymentCategory->id,
-                'question' => '¿Puedo obtener una factura?',
-                'answer' => 'Sí, recibirás automáticamente una factura por email después de completar tu compra. También puedes descargarla desde tu cuenta.',
-                'order' => 3,
             ],
 
             // Eventos
