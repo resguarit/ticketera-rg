@@ -27,7 +27,8 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         // ACTUALIZADO: incluir ciudad y provincia
-        $query = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
+        $query = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
+            ->where('is_archived', false);
 
         // Filtros existentes...
         if ($request->filled('search')) {
