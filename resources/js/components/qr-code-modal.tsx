@@ -1,4 +1,5 @@
-import QRCode from 'react-qr-code'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import QRCode from "react-qr-code";
 
 interface ModalQRProps {
     open: boolean;
@@ -7,26 +8,23 @@ interface ModalQRProps {
 }
 
 export default function ModalQR({ open, onClose, value }: ModalQRProps) {
-    if (!open) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-            <div className="bg-white rounded-xl shadow-lg p-6 w-80 text-center">
-                <h3 className="text-lg font-semibold mb-4">
-                    QR del ticket
-                </h3>
-
-                <div className="flex justify-center mb-4 bg-white p-3 rounded">
-                    <QRCode value={value} size={180} />
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="sm:max-w-sm flex flex-col items-center justify-center p-6">
+                <DialogHeader>
+                    <DialogTitle className="text-center">Código de Acceso</DialogTitle>
+                    <DialogDescription className="text-center">
+                        Presenta este código en la entrada del evento.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="p-4 bg-white rounded-lg border shadow-sm my-4">
+                    <QRCode value={value} size={200} />
                 </div>
-
-                <button
-                    onClick={onClose}
-                    className="mt-4 px-4 py-2 bg-red-500 rounded text-white hover:bg-red-600 transition"
-                >
-                    Cerrar
-                </button>
-            </div>
-        </div>
+                <div className="text-center bg-gray-50 p-3 rounded-md w-full">
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Código Único</p>
+                    <p className="font-mono text-lg font-bold tracking-wider">{value}</p>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -355,7 +355,7 @@ class AssistantController extends Controller
 
         $order->load([
             'client.person',
-            'issuedTickets.ticketType',
+            'issuedTickets.ticketType.sector',
             'discountCode'
         ]);
 
@@ -378,7 +378,7 @@ class AssistantController extends Controller
 
                 return [
                     'ticket_type_id' => $ticketType->id,
-                    'ticket_type_name' => $ticketType->name,
+                    'ticket_type_name' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
                     'price' => round($price, 2), // Precio por lote
                     'quantity' => $lotesVendidos, // CORREGIDO: Mostrar lotes vendidos
                     'bundle_quantity' => $bundleQuantity,
@@ -459,7 +459,7 @@ class AssistantController extends Controller
         $assistant->load([
             'person',
             'eventFunction',
-            'issuedTickets.ticketType'
+            'issuedTickets.ticketType.sector'
         ]);
 
         $person = $assistant->person;
@@ -483,7 +483,7 @@ class AssistantController extends Controller
 
                 return [
                     'ticket_type_id' => $ticketType->id,
-                    'ticket_type_name' => $ticketType->name,
+                    'ticket_type_name' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
                     'courtesy_value' => round($courtesyValue, 2),
                     'quantity' => $quantity,
                     'total_courtesy_value' => round($quantity * $courtesyValue, 2),

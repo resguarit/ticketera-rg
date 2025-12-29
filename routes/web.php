@@ -30,6 +30,8 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
 });
 
 Route::middleware('auth')->get('/my-tickets', [UserTicketController::class, 'index'])->name('my-tickets');
+Route::middleware('auth')->get('/my-tickets/all', [UserTicketController::class, 'allTickets'])->name('my-tickets.all');
+Route::middleware('auth')->get('/my-tickets/{order}', [UserTicketController::class, 'show'])->name('my-tickets.show');
 
 Route::middleware('auth')->get('/my-account', function () {
     return redirect()->route('profile.edit');

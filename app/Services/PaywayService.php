@@ -59,6 +59,8 @@ class PaywayService implements PaymentGatewayInterface
                 }
             }
 
+
+
             $result = [
                 'success' => true,
                 'payment_id' => $responseData['id'] ?? null,

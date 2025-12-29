@@ -1,13 +1,18 @@
 {{-- filepath: resources/views/pdfs/ticket.blade.php --}}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket - {{ $event->name }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
@@ -16,7 +21,7 @@
             background: #f5f5f5;
             padding: 20px;
         }
-        
+
         .ticket-container {
             width: 100%;
             max-width: 600px;
@@ -25,9 +30,9 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         /* Header */
         .ticket-header {
             background: #f8f9fa;
@@ -36,14 +41,14 @@
             min-height: 140px;
             position: relative;
         }
-        
+
         .header-top {
             width: 100%;
             height: 80px;
             margin-bottom: 15px;
             overflow: hidden;
         }
-        
+
         .event-banner {
             width: 200px;
             height: 80px;
@@ -52,13 +57,13 @@
             overflow: hidden;
             float: left;
         }
-        
+
         .event-banner img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .logo-rg {
             background: transparent;
             color: white;
@@ -74,73 +79,73 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .logo-rg img {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
-        
+
         .event-info-bottom {
             text-align: left;
             padding-left: 0;
         }
-        
+
         .event-title {
             font-size: 18px;
             font-weight: bold;
             color: #000;
             margin-bottom: 5px;
         }
-        
+
         .event-date-time {
             font-size: 14px;
             color: #666;
             margin-bottom: 3px;
         }
-        
+
         .event-location {
             font-size: 12px;
             color: #666;
         }
-        
+
         /* Body */
         .ticket-body {
             padding: 20px;
         }
-        
+
         .ticket-details-grid {
             display: flex;
             margin-bottom: 15px;
         }
-        
+
         .ticket-info-left {
             width: 65%;
         }
-        
+
         .ticket-info-right {
             width: 100%;
             text-align: center;
             margin-top: 40px;
         }
-        
+
         .detail-row {
             display: flex;
             margin-bottom: 8px;
         }
-        
+
         .detail-label {
             font-weight: bold;
             width: 120px;
             color: #000;
             font-size: 11px;
         }
-        
+
         .detail-value {
             font-size: 11px;
             flex: 1;
         }
-        
+
         /* QR */
         .qr-code {
             width: 220px;
@@ -160,7 +165,7 @@
             color: #000;
             margin-top: 5px;
         }
-        
+
         /* Footer */
         .ticket-footer {
             background: #f8f9fa;
@@ -172,19 +177,20 @@
         }
     </style>
 </head>
+
 <body>
     <div class="ticket-container">
         <!-- Header -->
         <div class="ticket-header">
             <!-- Top: Banner (izquierda) y Logo (derecha) -->
             <div class="header-top">
-                
+
                 <!-- Logo RG (derecha) -->
                 <div class="logo-rg">
                     <img src="{{ public_path('images/logo_ticketera.png') }}" alt="RG Entradas">
                 </div>
             </div>
-            
+
             <!-- Bottom: Información del evento (alineada a la izquierda) -->
             <div class="event-info-bottom">
                 <div class="event-title">{{ $event->name }}</div>
@@ -196,7 +202,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Body -->
         <div class="ticket-body">
             <div class="ticket-details-grid">
@@ -207,7 +213,7 @@
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Tipo de Entrada:</div>
-                        <div class="detail-value">{{ $ticket->ticketType->name }}</div>
+                        <div class="detail-value">{{ $ticket->ticketType->name }} @if($ticket->ticketType->sector) - {{ $ticket->ticketType->sector->name }} @endif</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Precio:</div>
@@ -224,14 +230,14 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="ticket-info-right">
                     <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Código QR">
                     <div class="qr-code-text">{{ $ticket->unique_code }}</div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Footer -->
         <div class="ticket-footer">
             <p>Ticket generado el {{ now()->format('d/m/Y H:i') }} | RG ENTRADAS - Sistema de Gestión de Eventos</p>
@@ -239,4 +245,5 @@
         </div>
     </div>
 </body>
+
 </html>

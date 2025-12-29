@@ -281,8 +281,7 @@ export default function CheckoutSuccess({ purchaseData, accountCreated = false }
                                     <li>• Recibirás un email de confirmación con tus tickets en los próximos minutos</li>
                                     <li>• Guarda el código QR de cada ticket para el acceso al evento</li>
                                     <li>• Llega 30 minutos antes del evento para evitar demoras</li>
-                                    <li>• Los tickets son intransferibles sin autorización previa</li>
-                                    <li>• Para cancelaciones, contacta al soporte hasta 24hs antes del evento</li>
+                                    <li>• Para cancelaciones, contacta al soporte</li>
                                 </ul>
                             </CardContent>
                         </Card>
