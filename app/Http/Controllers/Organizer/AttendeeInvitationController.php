@@ -43,29 +43,31 @@ class AttendeeInvitationController extends Controller
 
         // Obtener las funciones del evento con sus tipos de tickets (solo individuales, no bundles)
         $eventFunctions = $event->functions()
-            ->with(['ticketTypes' => function($query) {
+            ->with(['ticketTypes' => function ($query) {
                 $query->where('is_bundle', false) // Solo tickets individuales
-                    ->with('issuedTickets');
+                    ->with(['issuedTickets', 'sector']);
             }])
             ->where('is_active', true)
             ->get()
-            ->map(function($function) {
+            ->map(function ($function) {
                 // Formatear las fechas
                 $startTime = Carbon::parse($function->start_time);
-                
-                $function->ticketTypes = $function->ticketTypes->map(function($ticketType) {
+
+                $function->ticketTypes = $function->ticketTypes->map(function ($ticketType) {
                     // Contar solo tickets vinculados a órdenes (no invitaciones)
                     $totalIssued = $ticketType->issuedTickets()
                         ->whereNotNull('order_id')
                         ->where('status', '!=', IssuedTicketStatus::CANCELLED)
                         ->count();
-                    
+
                     $available = $ticketType->quantity - $totalIssued;
-                    
+
                     // Agregar propiedades calculadas al modelo existente
                     $ticketType->sold = $totalIssued;
                     $ticketType->available = max(0, $available);
-                    
+
+                    $ticketType->name = $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : '');
+
                     return $ticketType;
                 });
 
@@ -74,7 +76,7 @@ class AttendeeInvitationController extends Controller
                 $function->time = $startTime->format('H:i');
                 $function->formatted_date = $startTime->format('d \d\e F \d\e Y');
                 $function->day_name = $startTime->locale('es')->dayName;
-                
+
                 return $function;
             });
 
@@ -124,7 +126,7 @@ class AttendeeInvitationController extends Controller
             // Verificar que las funciones pertenezcan al evento
             $functionIds = collect($request->tickets)->pluck('event_function_id')->unique();
             $validFunctions = $event->functions()->whereIn('id', $functionIds)->pluck('id');
-            
+
             if ($validFunctions->count() !== $functionIds->count()) {
                 throw new \Exception('Una o más funciones no pertenecen a este evento.');
             }
@@ -230,7 +232,6 @@ class AttendeeInvitationController extends Controller
 
             return redirect()->route('organizer.events.attendees', $event)
                 ->with('success', 'Asistente invitado exitosamente.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()

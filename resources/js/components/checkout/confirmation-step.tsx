@@ -95,8 +95,6 @@ export default function ConfirmationStep({
           </div>
           <ul className="text-foreground/80 text-sm space-y-1">
             <li>• Los tickets serán enviados a tu email después del pago</li>
-            <li>• Puedes cancelar hasta 24 horas antes del evento</li>
-            <li>• Los tickets son intransferibles sin autorización</li>
             <li>• Guarda tu código QR para el acceso al evento</li>
           </ul>
         </div>

@@ -32,23 +32,23 @@ class EventController extends Controller
         // Filtros existentes...
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhereHas('venue', function($venue) use ($search) {
-                      $venue->where('name', 'LIKE', "%{$search}%");
-                  });
+                    ->orWhereHas('venue', function ($venue) use ($search) {
+                        $venue->where('name', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
         if ($request->filled('category') && $request->get('category') !== 'all') {
-            $query->whereHas('category', function($q) use ($request) {
+            $query->whereHas('category', function ($q) use ($request) {
                 $q->where('name', 'LIKE', '%' . $request->get('category') . '%');
             });
         }
 
         if ($request->filled('city') && $request->get('city') !== 'all') {
             $city = $request->get('city');
-            $query->whereHas('venue.ciudad', function($q) use ($city) {
+            $query->whereHas('venue.ciudad', function ($q) use ($city) {
                 $q->where('name', $city);
             });
         }
@@ -63,7 +63,7 @@ class EventController extends Controller
         }
 
         // Categorías para filtros
-        $categories = Category::all()->map(function($category) {
+        $categories = Category::all()->map(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -92,7 +92,7 @@ class EventController extends Controller
     public function show(Event $event): Response
     {
         // ACTUALIZADO: incluir ciudad y provincia
-        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes']);
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes.sector']);
 
         // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
         foreach ($event->functions as $function) {
@@ -101,11 +101,11 @@ class EventController extends Controller
 
         // Preparar funciones con sus tickets
         $functions = $event->functions
-            ->filter(function($function) {
+            ->filter(function ($function) {
                 // Solo mostrar funciones activas al público
                 return $function->is_active;
             })
-            ->map(function($function) {
+            ->map(function ($function) {
                 // Estados donde NO se deben mostrar tickets
                 $hideTicketsStates = [
                     EventFunctionStatus::CANCELLED->value,
@@ -130,52 +130,52 @@ class EventController extends Controller
                     'status_label' => $function->status->label(),
                     'status_color' => $function->status->color(),
                     'should_show_tickets' => $shouldShowTickets,
-                    'ticketTypes' => $shouldShowTickets 
+                    'ticketTypes' => $shouldShowTickets
                         ? $function->ticketTypes
-                            ->filter(function($ticket) {
-                                // NUEVO: Filtrar por fechas de venta además de is_hidden
-                                $now = now();
-                                
-                                // No mostrar tickets ocultos
-                                if ($ticket->is_hidden) {
-                                    return false;
-                                }
-                                
-                                // No mostrar si la venta aún no ha comenzado
-                                if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
-                                    return false;
-                                }
-                                
-                                // No mostrar si la venta ya ha finalizado
-                                if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
-                                    return false;
-                                }
-                                
-                                return true;
-                            })
-                            ->map(function($ticket) {
-                                $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
-                                $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-                                
-                                return [
-                                    'id' => $ticket->id,
-                                    'name' => $ticket->name,
-                                    'description' => $ticket->description,
-                                    'price' => (float) $ticket->price,
-                                    'available' => $realAvailable,
-                                    'quantity' => $ticket->quantity,
-                                    'quantity_sold' => $ticket->quantity_sold,
-                                    'locked_quantity' => $lockedQuantity,
-                                    'max_purchase_quantity' => $ticket->max_purchase_quantity,
-                                    'sales_start_date' => $ticket->sales_start_date,
-                                    'sales_end_date' => $ticket->sales_end_date,
-                                    'is_hidden' => $ticket->is_hidden,
-                                    'is_bundle' => $ticket->is_bundle,
-                                    'bundle_quantity' => $ticket->bundle_quantity,
-                                    'color' => 'from-blue-500 to-cyan-500',
-                                ];
-                            })
-                            ->values()
+                        ->filter(function ($ticket) {
+                            // NUEVO: Filtrar por fechas de venta además de is_hidden
+                            $now = now();
+
+                            // No mostrar tickets ocultos
+                            if ($ticket->is_hidden) {
+                                return false;
+                            }
+
+                            // No mostrar si la venta aún no ha comenzado
+                            if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
+                                return false;
+                            }
+
+                            // No mostrar si la venta ya ha finalizado
+                            if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
+                                return false;
+                            }
+
+                            return true;
+                        })
+                        ->map(function ($ticket) {
+                            $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
+                            $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
+
+                            return [
+                                'id' => $ticket->id,
+                                'name' => $ticket->name . ($ticket->sector ? ' - ' . $ticket->sector->name : ''),
+                                'description' => $ticket->description,
+                                'price' => (float) $ticket->price,
+                                'available' => $realAvailable,
+                                'quantity' => $ticket->quantity,
+                                'quantity_sold' => $ticket->quantity_sold,
+                                'locked_quantity' => $lockedQuantity,
+                                'max_purchase_quantity' => $ticket->max_purchase_quantity,
+                                'sales_start_date' => $ticket->sales_start_date,
+                                'sales_end_date' => $ticket->sales_end_date,
+                                'is_hidden' => $ticket->is_hidden,
+                                'is_bundle' => $ticket->is_bundle,
+                                'bundle_quantity' => $ticket->bundle_quantity,
+                                'color' => 'from-blue-500 to-cyan-500',
+                            ];
+                        })
+                        ->values()
                         : [], // Array vacío si no se deben mostrar tickets
                 ];
             })
@@ -189,7 +189,7 @@ class EventController extends Controller
             'hero_image_url' => $event->hero_image_url,
             'location' => $event->venue->name,
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ? 
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
                 $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'category' => strtolower($event->category->name),
@@ -216,8 +216,8 @@ class EventController extends Controller
     public function getAvailability(Event $event, Request $request)
     {
         $functionId = $request->get('function_id');
-        $function = $event->functions()->with('ticketTypes')->find($functionId);
-        
+        $function = $event->functions()->with('ticketTypes.sector')->find($functionId);
+
         if (!$function) {
             return response()->json(['error' => 'Function not found'], 404);
         }
@@ -226,30 +226,30 @@ class EventController extends Controller
         $function->updateStatus();
 
         $now = now();
-        
+
         $ticketTypes = $function->ticketTypes
-            ->filter(function($ticket) use ($now) {
+            ->filter(function ($ticket) use ($now) {
                 // NUEVO: Aplicar el mismo filtro de fechas de venta
                 if ($ticket->is_hidden) {
                     return false;
                 }
-                
+
                 // No mostrar si la venta aún no ha comenzado
                 if ($ticket->sales_start_date && $now->lt($ticket->sales_start_date)) {
                     return false;
                 }
-                
+
                 // No mostrar si la venta ya ha finalizado
                 if ($ticket->sales_end_date && $now->gt($ticket->sales_end_date)) {
                     return false;
                 }
-                
+
                 return true;
             })
-            ->map(function($ticket) {
+            ->map(function ($ticket) {
                 $lockedQuantity = $this->ticketLockService->getLockedQuantity($ticket->id);
                 $realAvailable = max(0, ($ticket->quantity - $ticket->quantity_sold) - $lockedQuantity);
-                
+
                 return [
                     'id' => $ticket->id,
                     'available' => $realAvailable,
