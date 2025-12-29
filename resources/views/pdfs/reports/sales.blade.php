@@ -55,14 +55,17 @@
             <td>
                 <span class="kpi-label">Ingresos Netos</span>
                 <span class="kpi-value">${{ number_format($salesData['netRevenue'], 2, ',', '.') }}</span>
+                <span class="kpi-label" style="font-size: 8px; color: #555;">(No Incluye Cargo por Servicio)</span>
+
             </td>
             <td>
                 <span class="kpi-label">Ingresos Cargo por Servicio</span>
                 <span class="kpi-value">${{ number_format($salesData['totalServiceFees'], 2, ',', '.') }}</span>
             </td>
             <td>
-                <span class="kpi-label">Tickets</span>
+                <span class="kpi-label">Tickets Emitidos</span>
                 <span class="kpi-value">{{ number_format($salesData['totalTickets']) }}</span>
+                <span class="kpi-label" style="font-size: 8px; color: #555;">(Incluye lotes)</span>
             </td>
             <td>
                 <span class="kpi-label">Órdenes</span>
