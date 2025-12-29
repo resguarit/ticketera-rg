@@ -23,6 +23,7 @@ class HomeController extends Controller
         // Eventos destacados con hero banners
         $featuredEvents = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
             ->where('featured', true)
+            ->where('is_archived', false)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -87,6 +88,7 @@ class HomeController extends Controller
 
         // Resto de eventos para la grilla
         $events = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
+            ->where('is_archived', false)
             ->orderBy('created_at', 'desc')
             ->get();
 
