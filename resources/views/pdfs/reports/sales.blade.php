@@ -1,4 +1,7 @@
-{{-- filepath: resources/views/pdfs/reports/sales.blade.php --}}
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -50,26 +53,26 @@
         <tr>
             <td style="background-color: #eee;">
                 <span class="kpi-label">Ingresos Totales</span>
-                <span class="kpi-value">${{ number_format($salesData['totalRevenue'], 2, ',', '.') }}</span>
+                <span class="kpi-value">{{ CurrencyHelper::format($salesData['totalRevenue'], false) }}</span>
             </td>
             <td>
                 <span class="kpi-label">Ingresos Netos</span>
-                <span class="kpi-value">${{ number_format($salesData['netRevenue'], 2, ',', '.') }}</span>
+                <span class="kpi-value">{{ CurrencyHelper::format($salesData['netRevenue'], false) }}</span>
                 <span class="kpi-label" style="font-size: 8px; color: #555;">(No Incluye Cargo por Servicio)</span>
 
             </td>
             <td>
                 <span class="kpi-label">Ingresos Cargo por Servicio</span>
-                <span class="kpi-value">${{ number_format($salesData['totalServiceFees'], 2, ',', '.') }}</span>
+                <span class="kpi-value">{{ CurrencyHelper::format($salesData['totalServiceFees'], false) }}</span>
             </td>
             <td>
                 <span class="kpi-label">Tickets Emitidos</span>
-                <span class="kpi-value">{{ number_format($salesData['totalTickets']) }}</span>
+                <span class="kpi-value">{{ CurrencyHelper::formatNumber($salesData['totalTickets']) }}</span>
                 <span class="kpi-label" style="font-size: 8px; color: #555;">(Incluye lotes)</span>
             </td>
             <td>
                 <span class="kpi-label">Órdenes</span>
-                <span class="kpi-value">{{ number_format($salesData['totalOrders']) }}</span>
+                <span class="kpi-value">{{ CurrencyHelper::formatNumber($salesData['totalOrders']) }}</span>
             </td>
         </tr>
     </table>
@@ -89,10 +92,10 @@
             @foreach($monthlyData as $month)
                 <tr>
                     <td class="font-bold">{{ $month['month'] }}</td>
-                    <td class="text-right">{{ number_format($month['tickets']) }}</td>
-                    <td class="text-right font-bold">${{ number_format($month['revenue'], 2, ',', '.') }}</td>
-                    <td class="text-right" style="color: #555;">${{ number_format($month['netRevenue'], 2, ',', '.') }}</td>
-                    <td class="text-right" style="color: #555;">${{ number_format($month['serviceFees'], 2, ',', '.') }}</td>
+                    <td class="text-right">{{ CurrencyHelper::formatNumber($month['tickets']) }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($month['revenue'], false) }}</td>
+                    <td class="text-right" style="color: #555;">{{ CurrencyHelper::format($month['netRevenue'], false) }}</td>
+                    <td class="text-right" style="color: #555;">{{ CurrencyHelper::format($month['serviceFees'], false) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -117,8 +120,8 @@
                     <td style="font-size: 10px; color: #555;">
                         {{ $event['venue'] ?? '-' }} • {{ $event['category'] }}
                     </td>
-                    <td class="text-center">{{ number_format($event['ticketsSold']) }}</td>
-                    <td class="text-right font-bold">${{ number_format($event['revenue'], 2, ',', '.') }}</td>
+                    <td class="text-center">{{ CurrencyHelper::formatNumber($event['ticketsSold']) }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($event['revenue'], false) }}</td>
                 </tr>
             @endforeach
         </tbody>
