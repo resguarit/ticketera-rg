@@ -201,10 +201,10 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Configuración del Sistema
                             </h1>
-                            <p className="text-gray-600 text-lg">
+                            <p className="text-gray-600 text-sm md:text-base lg:text-lg">
                                 Administra la información general de la plataforma
                             </p>
                         </div>

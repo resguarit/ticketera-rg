@@ -2,7 +2,7 @@ import { Shield } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { formatPrice, formatPriceWithCurrency, formatNumber } from "@/lib/currencyHelpers"
+import { formatPrice, formatPriceWithCurrency, formatNumber, formatCurrency } from "@/lib/currencyHelpers"
 
 interface SelectedTicket {
   id: number
@@ -88,13 +88,13 @@ export default function OrderSummary({ eventData }: OrderSummaryProps) {
               </div>
             </div>
             <div className="text-right ml-2">
-              <p className="text-foreground font-bold">{formatNumber(ticket.price * ticket.quantity)}</p>
+              <p className="text-foreground font-bold">{formatCurrency(ticket.price * ticket.quantity)}</p>
               {ticket.is_bundle ? (
                 <p className="text-foreground/60 text-xs">
-                  {formatPrice(ticket.price / (ticket.bundle_quantity || 1))} c/u
+                  {formatCurrency(ticket.price / (ticket.bundle_quantity || 1), false)} c/u
                 </p>
               ) : (
-                <p className="text-foreground/60 text-sm">{formatPrice(ticket.price)} c/u</p>
+                <p className="text-foreground/60 text-sm">{formatCurrency(ticket.price, false)} c/u</p>
               )}
             </div>
           </div>

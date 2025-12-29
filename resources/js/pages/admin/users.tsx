@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminDashboardLayout, StatCardProps, FilterConfig } from '@/components/admin';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import UserDetailsModal from './users/UserDetailsModal';
+import UserDetailsModal from '../../components/admin/modals/UserDetailsModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface UserData {
@@ -22,7 +22,7 @@ interface UserData {
     created_at: string;
     last_login: string;
     total_purchases: number;
-    total_spent: string;
+    total_spent: number;  // Cambiar de string a number
     last_purchase: string | null;
 }
 
@@ -32,7 +32,6 @@ interface UserStats {
     pending: number;
     new_this_month: number;
     total_orders: number;
-    total_revenue: number;
 }
 
 interface PaginatedUsers {
@@ -189,11 +188,10 @@ export default function Users({ auth }: any) {
             variant: "warning",
         },
         {
-            title: "Ingresos Generados",
-            value: stats.total_revenue,
+            title: "Total de Pedidos",
+            value: stats.total_orders,
             icon: ShoppingCart,
             variant: "info",
-            format: "currency",
         },
     ];
 
@@ -241,6 +239,7 @@ export default function Users({ auth }: any) {
     const handleToggleStatus = (userId: number) => {
         router.patch(route('admin.users.toggle-status', userId), {}, {
             preserveScroll: true,
+            only: ['users', 'stats']
         });
     };
 
@@ -315,7 +314,7 @@ export default function Users({ auth }: any) {
                                                     <span>DNI: {user.dni}</span>
                                                     <span>Tel: {user.phone}</span>
                                                     <span>Compras: {user.total_purchases}</span>
-                                                    <span>Gastado: ${user.total_spent}</span>
+                                                    <span>Gastado: {formatCurrency(user.total_spent)}</span>
                                                 </div>
                                             </div>
                                         </div>

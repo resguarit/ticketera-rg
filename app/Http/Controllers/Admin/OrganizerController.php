@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrganizerRequest;
 use App\Http\Requests\Admin\UpdateOrganizerRequest;
 use App\Models\Event;
+use App\Enums\EventFunctionStatus; // AGREGADO: Import del enum
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,13 +30,22 @@ class OrganizerController extends Controller
         $totalOrganizers = Organizer::count();
         $activeOrganizers = Organizer::count();
         $totalEvents = Event::count();
-        $totalRevenue = 0;
+        
+        // Organizadores que tienen eventos con funciones activas
+        // CORREGIDO: Usar 'events.functions' en lugar de 'events.eventFunctions'
+        $organizersWithActiveEvents = Organizer::whereHas('events.functions', function($query) {
+            $query->whereIn('status', [
+                EventFunctionStatus::ON_SALE->value,
+                EventFunctionStatus::UPCOMING->value,
+                EventFunctionStatus::SOLD_OUT->value
+            ]);
+        })->count();
 
         $stats = [
             'total_organizers' => $totalOrganizers,
             'active_organizers' => $activeOrganizers,
             'total_events' => $totalEvents,
-            'total_revenue' => $totalRevenue,
+            'organizers_with_active_events' => $organizersWithActiveEvents,
         ];
 
         $organizers = Organizer::query()
@@ -44,11 +54,9 @@ class OrganizerController extends Controller
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             })
-            // Manejar el caso de ordenamiento
             ->when($request->input('sort_by') && $request->input('sort_by') !== 'all', function (Builder $query) use ($request) {
                 $query->orderBy($request->input('sort_by'), $request->input('sort_direction', 'desc'));
             }, function (Builder $query) use ($request) {
-                // Orden por defecto cuando sort_by es 'all' o no está definido
                 $query->orderBy('created_at', $request->input('sort_direction', 'desc'));
             })
             ->paginate(10)

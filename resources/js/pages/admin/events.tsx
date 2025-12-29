@@ -437,7 +437,6 @@ export default function Events({ auth }: any) {
                                                     <span>{event.tickets_sold}/{event.total_tickets} tickets</span>
                                                 </div>
                                                 <div className="flex items-center text-gray-700 text-xs sm:text-sm">
-                                                    <DollarSign className="w-4 h-4 mr-2 text-primary" />
                                                     <span>{formatCurrency(event.revenue)}</span>
                                                 </div>
                                             </div>

@@ -55,27 +55,34 @@ class UserController extends Controller
             }
         }
 
+        // Agregar subconsultas para órdenes pagadas
+        $query->addSelect([
+            'paid_orders_count' => Order::selectRaw('COUNT(*)')
+                ->whereColumn('orders.client_id', 'users.id')
+                ->where('status', 'PAID'),
+            'paid_orders_sum' => Order::selectRaw('COALESCE(SUM(total_amount), 0)')
+                ->whereColumn('orders.client_id', 'users.id')
+                ->where('status', 'PAID')
+        ]);
+
         // Ordenamiento
         switch ($sortBy) {
             case 'name':
                 $query->leftJoin('person', 'users.person_id', '=', 'person.id')
                       ->orderBy('person.name', $sortDirection)
-                      ->select('users.*');
+                      ->select('users.*', 
+                        DB::raw('(SELECT COUNT(*) FROM orders WHERE orders.client_id = users.id AND orders.status = "PAID") as paid_orders_count'),
+                        DB::raw('(SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE orders.client_id = users.id AND orders.status = "PAID") as paid_orders_sum')
+                      );
                 break;
             case 'email':
                 $query->orderBy('email', $sortDirection);
                 break;
             case 'purchases':
-                $query->withCount(['orders' => function($q) {
-                    $q->where('status', 'PAID');
-                }])
-                ->orderBy('orders_count', $sortDirection);
+                $query->orderBy('paid_orders_count', $sortDirection);
                 break;
             case 'spent':
-                $query->withSum(['orders' => function($q) {
-                    $q->where('status', 'PAID');
-                }], 'total_amount')
-                ->orderBy('orders_sum_total_amount', $sortDirection);
+                $query->orderBy('paid_orders_sum', $sortDirection);
                 break;
             default:
                 $query->orderBy('created_at', $sortDirection);
@@ -84,20 +91,12 @@ class UserController extends Controller
         // Paginación
         $users = $query->paginate(15)->withQueryString();
 
-        // Procesar datos para el frontend
+        // Procesar datos para el frontend usando datos pre-cargados
         $usersData = $users->getCollection()->map(function ($user) {
-            // Estadísticas del usuario
-            $totalPurchases = Order::where('client_id', $user->id)
-                ->where('status', 'PAID')
-                ->count();
-            
-            $totalSpent = Order::where('client_id', $user->id)
-                ->where('status', 'PAID')
-                ->sum('total_amount');
-
+            // Obtener última orden solo si es necesario
             $lastOrder = Order::where('client_id', $user->id)
                 ->latest()
-                ->first();
+                ->first(['id', 'created_at']);
 
             return [
                 'id' => $user->id,
@@ -109,9 +108,10 @@ class UserController extends Controller
                 'status' => $user->email_verified_at ? 'active' : 'pending',
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at->format('Y-m-d'),
-                'last_login' => $user->updated_at->format('Y-m-d'), // Aproximación
-                'total_purchases' => $totalPurchases,
-                'total_spent' => $totalSpent,
+                'last_login' => $user->updated_at->format('Y-m-d'),
+                'total_purchases' => $user->paid_orders_count ?? 0,
+                'total_spent' => (float) ($user->paid_orders_sum ?? 0),                
+                \Log::debug('User ID: ' . $user->id . ' - Paid Orders Sum: ' . ($user->paid_orders_sum ?? 0)),
                 'last_purchase' => $lastOrder ? $lastOrder->created_at->format('Y-m-d') : null,
             ];
         });

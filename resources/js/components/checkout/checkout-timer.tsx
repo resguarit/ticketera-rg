@@ -69,7 +69,7 @@ export default function CheckoutTimer({
 
   if (expired) {
     return (
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center w-full mb-6">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-50 via-red-100 to-red-50 border-2 border-red-200 shadow-lg">
           <div className="absolute inset-0 bg-gradient-to-r from-red-400/10 via-transparent to-red-400/10 animate-pulse" />
           <div className="relative flex items-center gap-3 px-6 py-4">
@@ -99,7 +99,7 @@ export default function CheckoutTimer({
     <div className="flex justify-center mb-6">
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl border-2 shadow-lg transition-all duration-300",
+          "relative overflow-hidden rounded-2xl border-2 shadow-lg transition-all duration-300 w-full max-w-2xl",
           isCritical && "bg-gradient-to-r from-red-50 via-red-100 to-red-50 border-red-300 animate-pulse",
           isWarning && "bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 border-orange-300",
           isNormal && "bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/30"
@@ -115,90 +115,95 @@ export default function CheckoutTimer({
           )}
         />
 
-        <div className="relative flex items-center gap-4 px-6 py-4">
-          {/* Icon */}
-          <div className="flex-shrink-0">
-            <div className="relative">
-              <div
-                className={cn(
-                  "absolute inset-0 rounded-full blur-md opacity-60",
-                  isCritical && "bg-red-500 animate-pulse",
-                  isWarning && "bg-orange-500",
-                  isNormal && "bg-primary"
-                )}
-              />
-              <div
-                className={cn(
-                  "relative text-white p-2.5 rounded-full shadow-lg",
-                  isCritical && "bg-gradient-to-br from-red-500 to-red-600",
-                  isWarning && "bg-gradient-to-br from-orange-500 to-orange-600",
-                  isNormal && "bg-gradient-to-br from-primary to-primary-hover"
-                )}
-              >
-                {isCritical ? (
-                  <Zap className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
-                ) : (
-                  <Clock className="w-5 h-5" strokeWidth={2.5} />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p
-                className={cn(
-                  "font-semibold text-sm sm:text-base",
-                  isCritical && "text-red-900",
-                  isWarning && "text-orange-900",
-                  isNormal && "text-primary"
-                )}
-              >
-                <span className="hidden sm:inline">Tiempo restante para completar la compra</span>
-                <span className="sm:hidden">Tiempo restante</span>
-              </p>
-            </div>
-            <p
-              className={cn(
-                "text-xs mt-0.5",
-                isCritical && "text-red-700",
-                isWarning && "text-orange-700",
-                isNormal && "text-primary/70"
-              )}
-            >
-              {isCritical && "¡Apúrate! Tu reserva está por expirar"}
-              {isWarning && "Completa tu compra pronto"}
-              {isNormal && "Tus entradas están reservadas"}
-            </p>
-          </div>
-
-          {/* Timer Display */}
-          <div className="flex-shrink-0">
-            <div
-              className={cn(
-                "relative px-4 py-2.5 rounded-xl shadow-inner",
-                isCritical && "bg-red-700 backdrop-blur-sm",
-                isWarning && "bg-orange-600 backdrop-blur-sm",
-                isNormal && "bg-primary backdrop-blur-sm"
-              )}
-            >
-              <div
-                className={cn(
-                  "text-xl sm:text-2xl font-mono font-medium tracking-wider",
-                  isCritical && "text-red-50 drop-shadow-glow",
-                  isWarning && "text-orange-50",
-                  isNormal && "text-white"
-                )}
-              >
-                {formatTime(timeLeft)}
-              </div>
-              {isCritical && (
-                <div className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+        <div className="relative px-6 py-4">
+          {/* Contenedor responsive: columna en mobile, fila en md+ */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Icon + Content (siempre juntos) */}
+            <div className="flex items-center gap-4 flex-1">
+              {/* Icon */}
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <div
+                    className={cn(
+                      "absolute inset-0 rounded-full blur-md opacity-60",
+                      isCritical && "bg-red-500 animate-pulse",
+                      isWarning && "bg-orange-500",
+                      isNormal && "bg-primary"
+                    )}
+                  />
+                  <div
+                    className={cn(
+                      "relative text-white p-2.5 rounded-full shadow-lg",
+                      isCritical && "bg-gradient-to-br from-red-500 to-red-600",
+                      isWarning && "bg-gradient-to-br from-orange-500 to-orange-600",
+                      isNormal && "bg-gradient-to-br from-primary to-primary-hover"
+                    )}
+                  >
+                    {isCritical ? (
+                      <Zap className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
+                    ) : (
+                      <Clock className="w-5 h-5" strokeWidth={2.5} />
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p
+                    className={cn(
+                      "font-semibold text-sm sm:text-base",
+                      isCritical && "text-red-900",
+                      isWarning && "text-orange-900",
+                      isNormal && "text-primary"
+                    )}
+                  >
+                    Tiempo restante para completar la compra
+                  </p>
+                </div>
+                <p
+                  className={cn(
+                    "text-xs mt-0.5",
+                    isCritical && "text-red-700",
+                    isWarning && "text-orange-700",
+                    isNormal && "text-primary/70"
+                  )}
+                >
+                  {isCritical && "¡Apúrate! Tu reserva está por expirar"}
+                  {isWarning && "Completa tu compra pronto"}
+                  {isNormal && "Completa tu compra pronto"}
+                </p>
+              </div>
+            </div>
+
+            {/* Timer Display - debajo en mobile, al lado en md+ */}
+            <div className="flex justify-center md:justify-end">
+              <div
+                className={cn(
+                  "relative px-4 py-2.5 rounded-xl shadow-inner",
+                  isCritical && "bg-red-700 backdrop-blur-sm",
+                  isWarning && "bg-orange-600 backdrop-blur-sm",
+                  isNormal && "bg-primary backdrop-blur-sm"
+                )}
+              >
+                <div
+                  className={cn(
+                    "text-xl sm:text-2xl font-mono font-medium tracking-wider",
+                    isCritical && "text-red-50 drop-shadow-glow",
+                    isWarning && "text-orange-50",
+                    isNormal && "text-white"
+                  )}
+                >
+                  {formatTime(timeLeft)}
+                </div>
+                {isCritical && (
+                  <div className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

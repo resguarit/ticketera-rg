@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { formatNumber } from '@/lib/currencyHelpers';
-import { calculateTotalRevenue, calculateSalesPercentage } from '@/lib/ticketHelpers';
+import { formatCurrency } from '@/lib/currencyHelpers';
+import { calculateSalesPercentage } from '@/lib/ticketHelpers';
 import { getVenueCompleteAddress } from '@/lib/venueHelpers';
 import { 
     ArrowLeft,
@@ -90,6 +90,8 @@ interface EventData {
     hero_image_url: string;
     featured: boolean;
     total_revenue: number;
+    net_revenue: number;  // Agregar
+    service_fee: number;   // Agregar
     organizer: {
         id: number;
         name: string;
@@ -111,6 +113,7 @@ interface EventData {
     functions: EventFunction[];
     created_at: string;
     updated_at: string;
+    total_issued_tickets: number; // Agregar esta línea
 }
 
 interface PageProps {
@@ -132,6 +135,7 @@ export default function Show({ auth }: any) {
     );
 
     const totalRevenue = event.total_revenue;
+    const netRevenue = event.net_revenue;
     const salesProgress = calculateSalesPercentage(soldTickets, totalTickets);
 
     // Determinar estado del evento basado en prioridad de funciones
@@ -342,10 +346,10 @@ export default function Show({ auth }: any) {
                     </div>
 
                     {/* Estado y estadísticas rápidas */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-8">
                         {/* Estado */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-10 h-10 ${status.color} rounded-lg flex items-center justify-center`}>
                                         <StatusIcon className="w-5 h-5 text-white" />
@@ -362,8 +366,8 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Tickets vendidos */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-2 rounded-lg flex items-center justify-center">
                                         <Users className="w-5 h-5 text-white" />
@@ -377,38 +381,39 @@ export default function Show({ auth }: any) {
                         </Card>
 
                         {/* Ingresos */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-3 rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Ingresos</p>
-                                        <p className="font-semibold text-black">{formatNumber(totalRevenue)}</p>
+                                        <p className="font-semibold text-black">{formatCurrency(totalRevenue)}</p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Progreso de ventas */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        {/* Ingreso Neto */}
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-chart-4 rounded-lg flex items-center justify-center">
-                                        <TrendingUp className="w-5 h-5 text-white" />
+                                        <DollarSign className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-600">Progreso</p>
-                                        <p className="font-semibold text-black">{Math.round(salesProgress)}%</p>
+                                        <p className="text-sm text-gray-600">Ingreso Neto</p>
+                                        <p className="font-semibold text-black">{formatCurrency(event.net_revenue)}</p>
+                                        <p className="text-xs text-gray-500">Cargo: {formatCurrency(event.service_fee)}</p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Funciones */}
-                        <Card className="bg-white border-gray-200">
-                            <CardContent className="p-4">
+                        <Card className="bg-white border-gray-200 flex items-center justify-center">
+                            <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                                         <Calendar className="w-5 h-5 text-white" />
@@ -546,7 +551,7 @@ export default function Show({ auth }: any) {
                                                         <p className="text-sm text-gray-600">Disponibles</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-2xl font-bold text-purple-600">${totalRevenue.toLocaleString()}</p>
+                                                        <p className="text-2xl font-bold text-purple-600">{formatCurrency(totalRevenue)}</p>
                                                         <p className="text-sm text-gray-600">Ingresos</p>
                                                     </div>
                                                 </div>
@@ -678,9 +683,16 @@ export default function Show({ auth }: any) {
 
                         {/* Tab: Tickets */}
                         <TabsContent value="tickets">
-                            <Card className="bg-white border-gray-200">
-                                <CardHeader>
-                                    <CardTitle className="text-black">Tipos de Tickets</CardTitle>
+                            <Card className="bg-white border-gray-200 gap-2">
+                                <CardHeader className='pb-2'>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-black">Tipos de Tickets</CardTitle>
+                                            <p className="text-sm text-gray-600 mt-4">
+                                                Total de tickets emitidos: <span className="font-semibold text-black">{event.total_issued_tickets.toLocaleString('es-AR')}</span>
+                                            </p>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     {event.functions.some(func => func.ticket_types.length > 0) ? (
@@ -762,14 +774,14 @@ export default function Show({ auth }: any) {
                                                     <p className="text-sm text-gray-600">Tickets Vendidos</p>
                                                 </div>
                                                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                                    <p className="text-2xl font-bold text-blue-600">${totalRevenue.toLocaleString()}</p>
+                                                <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</p>
                                                     <p className="text-sm text-gray-600">Ingresos Totales</p>
                                                 </div>
                                             </div>
                                             
                                             <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                                <p className="text-2xl font-bold text-purple-600">{Math.round(salesProgress)}%</p>
-                                                <p className="text-sm text-gray-600">Progreso de Ventas</p>
+                                                <p className="text-2xl font-bold text-purple-600">{formatCurrency(netRevenue)}</p>
+                                                <p className="text-sm text-gray-600">Ingresos Netos</p>
                                             </div>
                                         </div>
                                     </CardContent>

@@ -201,10 +201,15 @@ class DashboardController extends Controller
         $chartDays = $this->getChartDays($period);
         $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, $chartDays);
 
+        $netRevenue = $this->revenueService->netRevenueForOrganizer($organizer, $dates['start'], $dates['end']);
+        $serviceFee = $this->revenueService->serviceFeeForOrganizer($organizer, $dates['start'], $dates['end']);
+
         return Inertia::render('organizer/dashboard', [
             'organizer' => $organizer,
             'stats' => [
                 'totalRevenue' => $totalRevenue,
+                'netRevenue' => $netRevenue,
+                'serviceFee' => $serviceFee,
                 'totalEntradasVendidas' => $totalEntradasVendidas,
                 'totalTicketsSold' => $totalTicketsEmitidos,
                 'activeEventsCount' => $activeEventsCount,
