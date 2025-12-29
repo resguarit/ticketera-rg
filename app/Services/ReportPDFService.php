@@ -92,7 +92,6 @@ class ReportPDFService
 
     public function generateCompleteReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
     {
-        // Obtener todos los datos
         $salesData = $this->getSalesData($startDate);
         $monthlyData = $this->getMonthlyData($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 15);
@@ -128,33 +127,12 @@ class ReportPDFService
     public function generateUsersReport(Carbon $startDate, string $timeRange): \Illuminate\Http\Response
     {
         try {
-            \Log::info('=== INICIO generateUsersReport ===');
-            \Log::info('StartDate: ' . $startDate->format('Y-m-d H:i:s'));
-            \Log::info('TimeRange: ' . $timeRange);
-            
-            \Log::info('Obteniendo getUserStatsDetailed...');
             $userStats = $this->getUserStatsDetailed($startDate);
-            \Log::info('getUserStatsDetailed OK', $userStats);
-            
-            \Log::info('Obteniendo getVerificationStats...');
             $verificationStats = $this->getVerificationStats();
-            \Log::info('getVerificationStats OK', $verificationStats);
-            
-            \Log::info('Obteniendo getContactStats...');
             $contactStats = $this->getContactStats();
-            \Log::info('getContactStats OK', $contactStats);
-            
-            \Log::info('Obteniendo getTopBuyers...');
             $topBuyers = $this->getTopBuyers($startDate, 15);
-            \Log::info('getTopBuyers OK - Total compradores: ' . count($topBuyers));
-            
-            \Log::info('Obteniendo getRegistrationTrends...');
             $registrationTrends = $this->getRegistrationTrends($startDate);
-            \Log::info('getRegistrationTrends OK - Total meses: ' . count($registrationTrends));
-            
-            \Log::info('Obteniendo getUserActivityStats...');
             $activityStats = $this->getUserActivityStats($startDate);
-            \Log::info('getUserActivityStats OK', $activityStats);
             
             $data = [
                 'title' => 'Reporte de Usuarios',
@@ -169,26 +147,14 @@ class ReportPDFService
                 'registrationTrends' => $registrationTrends,
                 'activityStats' => $activityStats,
             ];
-            
-            \Log::info('Datos preparados, generando PDF...');
-            \Log::info('Data keys: ' . implode(', ', array_keys($data)));
 
             $pdf = Pdf::loadView('pdfs.reports.users', $data)
                 ->setPaper('a4', 'portrait')
                 ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
-            \Log::info('PDF generado exitosamente');
-            \Log::info('=== FIN generateUsersReport ===');
-
             return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
             
         } catch (\Exception $e) {
-            \Log::error('=== ERROR en generateUsersReport ===');
-            \Log::error('Mensaje: ' . $e->getMessage());
-            \Log::error('Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-            \Log::error('Trace: ' . $e->getTraceAsString());
-            \Log::error('=== FIN ERROR ===');
-            
             throw $e;
         }
     }
@@ -374,8 +340,6 @@ class ReportPDFService
                 'totalTicketsSold' => $totalTicketsSold,
             ];
         } catch (\Exception $e) {
-            \Log::error("Error en getEventsAnalytics: " . $e->getMessage());
-            
             return [
                 'totalEvents' => 0,
                 'activeEvents' => 0,
@@ -433,7 +397,6 @@ class ReportPDFService
                             'eventsCount' => $eventsCount,
                         ];
                     } catch (\Exception $e) {
-                        \Log::warning("Error procesando categoría {$category->id}: " . $e->getMessage());
                         return null;
                     }
                 })
@@ -444,7 +407,6 @@ class ReportPDFService
                 ->values()
                 ->toArray();
         } catch (\Exception $e) {
-            \Log::error("Error en getCategoryStats: " . $e->getMessage());
             return [];
         }
     }
@@ -510,7 +472,6 @@ class ReportPDFService
                         ];
                     }
                 } catch (\Exception $e) {
-                    \Log::warning("Error procesando venue {$venue->id}: " . $e->getMessage());
                     continue;
                 }
             }
@@ -521,7 +482,6 @@ class ReportPDFService
 
             return array_slice($venueStats, 0, 10);
         } catch (\Exception $e) {
-            \Log::error("Error en getVenueStats: " . $e->getMessage());
             return [];
         }
     }
@@ -720,9 +680,6 @@ class ReportPDFService
     private function getTopBuyers(Carbon $startDate, int $limit = 15): array
     {
         try {
-            \Log::info('=== getTopBuyers - Inicio ===');
-            
-            // Obtener los client_id con más compras usando query directo
             $topBuyerIds = DB::table('orders')
                 ->select('client_id', 
                     DB::raw('COUNT(*) as total_orders'),
@@ -735,9 +692,6 @@ class ReportPDFService
                 ->limit($limit)
                 ->get();
             
-            \Log::info('Top buyers IDs encontrados: ' . $topBuyerIds->count());
-            
-            // Obtener la información de los usuarios
             $buyers = [];
             foreach ($topBuyerIds as $buyerData) {
                 $user = User::with('person')
@@ -758,14 +712,9 @@ class ReportPDFService
                 }
             }
             
-            \Log::info('getTopBuyers - Total compradores procesados: ' . count($buyers));
-            \Log::info('=== getTopBuyers - Fin ===');
-            
             return $buyers;
             
         } catch (\Exception $e) {
-            \Log::error('Error en getTopBuyers: ' . $e->getMessage());
-            \Log::error('Trace: ' . $e->getTraceAsString());
             return [];
         }
     }
@@ -811,11 +760,8 @@ class ReportPDFService
     private function getUserActivityStats(Carbon $startDate): array
     {
         try {
-            \Log::info('=== getUserActivityStats - Inicio ===');
-            
             $totalUsers = User::where('role', UserRole::CLIENT)->count();
             
-            // Usuarios únicos que han hecho al menos una compra (usando query directo)
             $usersWithOrders = DB::table('orders')
                 ->where('status', OrderStatus::PAID->value)
                 ->where('created_at', '>=', $startDate)
@@ -825,17 +771,15 @@ class ReportPDFService
             
             $usersWithoutOrders = $totalUsers - $usersWithOrders;
             
-            // Total de ingresos en el período
             $totalRevenue = Order::where('status', OrderStatus::PAID)
                 ->where('created_at', '>=', $startDate)
                 ->sum('total_amount');
             
-            // Valor promedio de compra por usuario que compró
             $avgOrderValue = $usersWithOrders > 0 
                 ? $totalRevenue / $usersWithOrders 
                 : 0;
             
-            $result = [
+            return [
                 'usersWithOrders' => $usersWithOrders,
                 'usersWithoutOrders' => $usersWithoutOrders,
                 'usersWithOrdersPercentage' => $totalUsers > 0 
@@ -848,14 +792,7 @@ class ReportPDFService
                 'avgOrderValue' => $avgOrderValue,
             ];
             
-            \Log::info('getUserActivityStats OK', $result);
-            \Log::info('=== getUserActivityStats - Fin ===');
-            
-            return $result;
-            
         } catch (\Exception $e) {
-            \Log::error('Error en getUserActivityStats: ' . $e->getMessage());
-            \Log::error('Trace: ' . $e->getTraceAsString());
             return [
                 'usersWithOrders' => 0,
                 'usersWithoutOrders' => 0,
