@@ -239,6 +239,25 @@ class OrderService
         });
     }
 
+    public function refundOrder(Order $order, float $amount): bool
+    {
+        return DB::transaction(function () use ($order, $amount) {
+            $order->update([
+                'status' => OrderStatus::REFUNDED,
+                'refunded_at' => now(),
+                'refunded_amount' => $amount
+            ]);
+
+            $this->releaseTickets($order);
+
+            $order->items()->update([
+                'status' => IssuedTicketStatus::CANCELLED
+            ]);
+
+            return true;
+        });
+    }
+
     private function releaseTickets(Order $order): void
     {
         $ticketCounts = $order->items->groupBy('ticket_type_id')->map(function ($tickets) {

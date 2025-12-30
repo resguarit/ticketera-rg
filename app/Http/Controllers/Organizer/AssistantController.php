@@ -18,6 +18,7 @@ use App\Models\IssuedTicket;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Response;
 use App\Services\EmailDispatcherService;
+use App\Services\OrderService;
 
 class AssistantController extends Controller
 {
@@ -67,6 +68,7 @@ class AssistantController extends Controller
                 'event_functions.name as function_name',
                 'event_functions.start_time as function_date_time',
                 DB::raw('0 as total_amount'),
+                DB::raw('0 as subtotal'),
                 DB::raw('null as order_status'),
                 'assistants.deleted_at as is_cancelled_at', // Usar soft delete
                 'assistants.created_at as invited_at',
@@ -100,6 +102,7 @@ class AssistantController extends Controller
                 DB::raw('MIN(event_functions.name) as function_name'),
                 DB::raw('MIN(event_functions.start_time) as function_date_time'),
                 'orders.total_amount',
+                'orders.subtotal',
                 'orders.status as order_status',
                 DB::raw('null as is_cancelled_at'),
                 DB::raw('null as invited_at'),
@@ -111,7 +114,7 @@ class AssistantController extends Controller
             ->withCount(['issuedTickets as tickets_used' => function ($query) {
                 $query->where('status', IssuedTicketStatus::USED);
             }])
-            ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.status', 'orders.order_date'); // Agrupar por orden
+            ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date'); // Agrupar por orden
 
         // 3. Aplicar Filtro de Función
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
@@ -169,6 +172,7 @@ class AssistantController extends Controller
                 'function_name' => $attendee['function_name'],
                 'function_date' => $functionDate->isoFormat('D MMM YYYY, HH:mm'),
                 'total_amount' => (float) $attendee['total_amount'],
+                'subtotal' => (float) $attendee['subtotal'],
                 'order_status' => $attendee['order_status'],
                 // 'is_cancelled' para invitados (soft delete) o compradores (status orden)
                 'is_cancelled' => !empty($attendee['is_cancelled_at']) || $attendee['order_status'] === OrderStatus::CANCELLED->value,
@@ -337,6 +341,33 @@ class AssistantController extends Controller
         $this->emailService->resendTicketPurchaseConfirmation($order);
 
         return redirect()->back()->with('success', 'Tickets de compra reenviados correctamente.');
+    }
+
+    public function refund(Event $event, Order $order, Request $request, OrderService $orderService)
+    {
+        $this->checkOwnership($event);
+
+        // Verificar que la orden pertenezca al evento
+        $orderBelongsToEvent = $order->issuedTickets()
+            ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
+                $query->where('event_id', $event->id);
+            })
+            ->exists();
+
+        if (!$orderBelongsToEvent) {
+            abort(404, 'Esta orden no pertenece al evento especificado.');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0|max:' . $order->total_amount,
+        ]);
+
+        try {
+            $orderService->refundOrder($order, $request->amount);
+            return redirect()->back()->with('success', 'Orden devuelta correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Error al devolver la orden: ' . $e->getMessage()]);
+        }
     }
 
     public function showOrderDetails(Event $event, Order $order)
