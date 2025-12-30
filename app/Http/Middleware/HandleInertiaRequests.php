@@ -59,6 +59,8 @@ class HandleInertiaRequests extends Middleware
             'credentials' => fn() => $request->session()->get('credentials'),
             'supportEmail' => Setting::get('support_email', 'contacto@rgentradas.com'),
             'supportPhone' => Setting::get('support_phone', '+54 9 2216 91-4649'),
+            'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas/'),
+            'facebookUrl' => Setting::get('facebook_url', 'https://www.facebook.com/profile.php?id=61581574912784'),
         ];
     }
 }

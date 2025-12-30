@@ -10,7 +10,7 @@ interface FooterProps {
 
 export default function Footer({ className = '' }: FooterProps) {
     const currentYear = new Date().getFullYear();
-    const { supportEmail, supportPhone } = usePage<PageProps>().props;
+    const { supportEmail, supportPhone, facebookUrl, instagramUrl } = usePage<PageProps>().props;
     const [emailCopied, setEmailCopied] = useState(false);
     
     // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
@@ -136,7 +136,7 @@ export default function Footer({ className = '' }: FooterProps) {
                         {/* Social Links */}
                         <div className="flex space-x-3">
                             <a 
-                                href="https://www.facebook.com/share/17N6jjxJvY/?mibextid=wwXIfr" 
+                                href={facebookUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -145,7 +145,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Facebook className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://www.instagram.com/rgentradas/" 
+                                href={instagramUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -161,15 +161,6 @@ export default function Footer({ className = '' }: FooterProps) {
                                 aria-label="WhatsApp"
                             >
                                 <MessageCircle  className="w-4 h-4" />
-                            </a>
-                            <a 
-                                href="https://www.youtube.com/@RGEntradas" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
-                                aria-label="YouTube"
-                            >
-                                <Youtube className="w-4 h-4" />
                             </a>
                         </div>
 

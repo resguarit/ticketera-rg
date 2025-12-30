@@ -80,7 +80,7 @@ class SettingsController extends Controller
             'businessDays' => Setting::get('business_days', 'Lunes a Viernes'),
             'businessHours' => Setting::get('business_hours', '9:00 - 18:00'),
             'facebookUrl' => Setting::get('facebook_url', 'https://www.facebook.com/share/17N6jjxJvY/?mibextid=wwXIfr'),
-            'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas.com.ar/'),
+            'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas/'),
         ];
     }
 }
