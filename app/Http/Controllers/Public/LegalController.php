@@ -24,11 +24,4 @@ class LegalController extends Controller
         return Inertia::render('public/privacy');
     }
 
-    /**
-     * Mostrar página de Política de Reembolsos
-     */
-    public function refunds(): Response
-    {
-        return Inertia::render('public/refunds');
-    }
 }

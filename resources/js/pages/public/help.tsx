@@ -14,6 +14,9 @@ import {
     Users,
     Copy,
     Check,
+    Share2,
+    Instagram,
+    Facebook,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,12 +55,14 @@ interface HelpPageProps extends PageProps {
     supportPhone: string;
     businessDays: string;
     businessHours: string;
+    facebookUrl: string;
+    instagramUrl: string;
     [key: string]: unknown;
 }
 
 export default function Help() {
     // Obtener las categorías y datos de configuración desde las props
-    const { faqCategories, supportEmail, supportPhone, businessDays, businessHours } = usePage<HelpPageProps>().props;
+    const { faqCategories, supportEmail, supportPhone, businessDays, businessHours, facebookUrl, instagramUrl } = usePage<HelpPageProps>().props;
 
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
@@ -70,7 +75,7 @@ export default function Help() {
     });
 
     const toggleItem = (itemId: string) => {
-        setOpenItems((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+        setOpenItems((prev) => prev.includes(itemId) ? [] : [itemId]);
     };
 
     const filteredFAQs = faqCategories
@@ -105,37 +110,36 @@ export default function Help() {
     };
 
     // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
-    const whatsappNumber = supportPhone.replace(/\D/g, '');
+    const whatsappNumber = supportPhone?.replace(/\D/g, '') || '5492216914649';
 
     const contactOptions = [
         {
-            title: "Chat en Vivo",
-            description: "Habla con nuestro equipo de soporte",
+            title: "WhatsApp",
+            description: "Escribinos para consultas rápidas",
             icon: MessageCircle,
-            color: "primary",
-            available: "24/7",
-            action: "Iniciar Chat",
+            color: "green-500",
+            available: "Respuesta inmediata",
+            action: "Enviar Mensaje",
             href: `https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20ayuda`,
             type: "whatsapp"
         },
         {
-            title: "Teléfono",
-            description: "Llámanos para soporte inmediato",
-            icon: Phone,
-            color: "green-500",
-            available: `${businessDays} ${businessHours}`,
-            action: supportPhone,
-            href: `tel:${supportPhone.replace(/\s/g, '')}`,
-            type: "phone"
-        },
-        {
             title: "Email",
-            description: "Envíanos un mensaje detallado",
+            description: "Envianos un mensaje detallado",
             icon: Mail,
             color: "red-500",
             available: "Respuesta en 24hs",
             action: supportEmail,
             type: "email"
+        },
+        {
+            title: "Redes Sociales",
+            description: "Seguinos y contactanos",
+            icon: Share2,
+            color: "blue-500",
+            available: "Instagram y Facebook",
+            action: "Ver Redes",
+            type: "social"
         },
     ];
 
@@ -192,11 +196,36 @@ export default function Help() {
                                                     </>
                                                 )}
                                             </Button>
+                                        ) : option.type === 'social' ? (
+                                            <div className="flex gap-2 justify-center">
+                                                <a
+                                                    href={instagramUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1"
+                                                >
+                                                    <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors flex items-center justify-center gap-1">
+                                                        <Instagram className="w-4 h-4" />
+                                                        <span className="hidden sm:inline">Instagram</span>
+                                                    </Button>
+                                                </a>
+                                                <a
+                                                    href={facebookUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1"
+                                                >
+                                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors flex items-center justify-center gap-1">
+                                                        <Facebook className="w-4 h-4" />
+                                                        <span className="hidden sm:inline">Facebook</span>
+                                                    </Button>
+                                                </a>
+                                            </div>
                                         ) : (
                                             <a
                                                 href={option.href}
-                                                target={option.type === 'whatsapp' ? "_blank" : undefined}
-                                                rel={option.type === 'whatsapp' ? "noopener noreferrer" : undefined}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="block w-full"
                                             >
                                                 <Button className={`bg-${option.color} hover:bg-${option.color}/90 text-white w-full text-sm sm:text-base h-9 sm:h-10 transition-colors`}>
@@ -237,7 +266,7 @@ export default function Help() {
                                                 const isOpen = openItems.includes(itemId);
 
                                                 return (
-                                                    <Collapsible key={index}>
+                                                    <Collapsible key={index} open={isOpen}>
                                                         <CollapsibleTrigger
                                                             onClick={() => toggleItem(itemId)}
                                                             className="flex items-center justify-between w-full p-3 sm:p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
@@ -334,9 +363,14 @@ export default function Help() {
                                     <Link href="/privacy" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Privacidad
                                     </Link>
-                                    <Link href="/refunds" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
-                                        Política de Reembolsos
-                                    </Link>
+                                    <a 
+                                        href={`https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1"
+                                    >
+                                        Botón de Arrepentimiento
+                                    </a>
                                 </CardContent>
                             </Card>
                         </div>

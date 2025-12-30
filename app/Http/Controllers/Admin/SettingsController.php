@@ -62,6 +62,8 @@ class SettingsController extends Controller
                 'supportPhone' => 'support_phone',
                 'businessDays' => 'business_days',
                 'businessHours' => 'business_hours',
+                'facebookUrl' => 'facebook_url',
+                'instagramUrl' => 'instagram_url',
             ],
         ];
 
@@ -77,6 +79,8 @@ class SettingsController extends Controller
             'supportPhone' => Setting::get('support_phone', '+54 9 11 1234-5678'),
             'businessDays' => Setting::get('business_days', 'Lunes a Viernes'),
             'businessHours' => Setting::get('business_hours', '9:00 - 18:00'),
+            'facebookUrl' => Setting::get('facebook_url', 'https://www.facebook.com/share/17N6jjxJvY/?mibextid=wwXIfr'),
+            'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas/'),
         ];
     }
 }

@@ -51,7 +51,6 @@ Route::get('/help', [HelpController::class, 'index'])->name('help');
 // Rutas legales
 Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
 Route::get('/privacy', [LegalController::class, 'privacy'])->name('privacy');
-Route::get('/refunds', [LegalController::class, 'refunds'])->name('refunds');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
