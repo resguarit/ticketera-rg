@@ -58,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'credentials' => fn() => $request->session()->get('credentials'),
             'supportEmail' => Setting::get('support_email', 'contacto@rgentradas.com'),
+            'supportPhone' => Setting::get('support_phone', '+54 9 2216 91-4649'),
         ];
     }
 }
