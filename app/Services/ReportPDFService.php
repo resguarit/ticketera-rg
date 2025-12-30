@@ -21,7 +21,7 @@ class ReportPDFService
         $salesData = $this->getSalesData($startDate);
         $monthlyData = $this->getMonthlyData($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 10);
-        
+
         $data = [
             'title' => 'Reporte de Ventas',
             'period' => $this->getPeriodName($timeRange),
@@ -46,7 +46,7 @@ class ReportPDFService
         $categoryStats = $this->getCategoryStats($startDate);
         $venueStats = $this->getVenueStats($startDate);
         $topEvents = $this->getTopEventsByRevenue($startDate, 15);
-        
+
         $data = [
             'title' => 'Reporte de Eventos',
             'period' => $this->getPeriodName($timeRange),
@@ -71,7 +71,7 @@ class ReportPDFService
         $financialData = $this->getFinancialAnalytics($startDate);
         $organizerStats = $this->getOrganizerStats($startDate);
         $paymentMethodStats = $this->getPaymentMethodStats($startDate);
-        
+
         $data = [
             'title' => 'Reporte Financiero',
             'period' => $this->getPeriodName($timeRange),
@@ -100,7 +100,7 @@ class ReportPDFService
         $venueStats = $this->getVenueStats($startDate);
         $financialData = $this->getFinancialAnalytics($startDate);
         $userStats = $this->getUserStats($startDate);
-        
+
         $data = [
             'title' => 'Reporte Completo de la Plataforma',
             'period' => $this->getPeriodName($timeRange),
@@ -133,7 +133,7 @@ class ReportPDFService
             $topBuyers = $this->getTopBuyers($startDate, 15);
             $registrationTrends = $this->getRegistrationTrends($startDate);
             $activityStats = $this->getUserActivityStats($startDate);
-            
+
             $data = [
                 'title' => 'Reporte de Usuarios',
                 'period' => $this->getPeriodName($timeRange),
@@ -153,7 +153,6 @@ class ReportPDFService
                 ->setOptions(['defaultFont' => 'DejaVu Sans']);
 
             return $pdf->download('reporte-usuarios-' . date('Y-m-d') . '.pdf');
-            
         } catch (\Exception $e) {
             throw $e;
         }
@@ -168,16 +167,16 @@ class ReportPDFService
 
         $totalRevenue = $orders->sum('total_amount');
 
-        $netRevenue = $orders->sum(function($order) {
+        $netRevenue = $orders->sum(function ($order) {
             $discount = $order->subtotal * ($order->discount ?? 0);
             return $order->subtotal - $discount;
         });
-            
+
         $totalServiceFees = $orders->sum('service_fee');
 
-        $totalTickets = IssuedTicket::whereHas('order', function($query) use ($startDate) {
+        $totalTickets = IssuedTicket::whereHas('order', function ($query) use ($startDate) {
             $query->where('status', OrderStatus::PAID)
-                  ->where('created_at', '>=', $startDate);
+                ->where('created_at', '>=', $startDate);
         })->count();
 
         $totalOrders = $orders->count();
@@ -197,7 +196,7 @@ class ReportPDFService
     {
         $months = [];
         $current = $startDate->copy()->startOfMonth();
-        
+
         while ($current <= Carbon::now()->endOfMonth()) {
             $monthOrders = Order::where('status', OrderStatus::PAID)
                 ->whereBetween('created_at', [
@@ -207,18 +206,18 @@ class ReportPDFService
                 ->get();
 
             $monthRevenue = $monthOrders->sum('total_amount');
-            
-            $monthNetRevenue = $monthOrders->sum(function($order) {
+
+            $monthNetRevenue = $monthOrders->sum(function ($order) {
                 $discount = $order->subtotal * ($order->discount ?? 0);
                 return $order->subtotal - $discount;
             });
 
-            $monthTickets = IssuedTicket::whereHas('order', function($query) use ($current) {
+            $monthTickets = IssuedTicket::whereHas('order', function ($query) use ($current) {
                 $query->where('status', OrderStatus::PAID)
-                      ->whereBetween('created_at', [
-                          $current->copy()->startOfMonth(),
-                          $current->copy()->endOfMonth()
-                      ]);
+                    ->whereBetween('created_at', [
+                        $current->copy()->startOfMonth(),
+                        $current->copy()->endOfMonth()
+                    ]);
             })->count();
 
             $monthServiceFees = $monthOrders->sum('service_fee');
@@ -240,20 +239,29 @@ class ReportPDFService
 
     private function getTopEventsByRevenue(Carbon $startDate, int $limit = 10): array
     {
-        return Event::with(['category', 'venue.ciudad.provincia'])
-            ->select('events.*')
-            ->leftJoin('event_functions', 'events.id', '=', 'event_functions.event_id')
-            ->leftJoin('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
-            ->leftJoin('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
-            ->leftJoin('orders', function($join) use ($startDate) {
+        // 1. Obtener solo los IDs de los eventos con más ingresos
+        $topEventIds = DB::table('events')
+            ->join('event_functions', 'events.id', '=', 'event_functions.event_id')
+            ->join('ticket_types', 'event_functions.id', '=', 'ticket_types.event_function_id')
+            ->join('issued_tickets', 'ticket_types.id', '=', 'issued_tickets.ticket_type_id')
+            ->join('orders', function ($join) use ($startDate) {
                 $join->on('issued_tickets.order_id', '=', 'orders.id')
-                     ->where('orders.status', OrderStatus::PAID)
-                     ->where('orders.created_at', '>=', $startDate);
+                    ->where('orders.status', OrderStatus::PAID)
+                    ->where('orders.created_at', '>=', $startDate);
             })
-            ->whereNotNull('orders.id')
+            ->whereNull('events.deleted_at')
             ->groupBy('events.id')
             ->orderByRaw('SUM(orders.total_amount) DESC')
             ->limit($limit)
+            ->pluck('events.id');
+
+        if ($topEventIds->isEmpty()) {
+            return [];
+        }
+
+        // 2. Cargar los modelos completos usando esos IDs
+        return Event::with(['category', 'venue.ciudad.provincia'])
+            ->whereIn('id', $topEventIds)
             ->get()
             ->map(function ($event) use ($startDate) {
                 $eventOrders = DB::table('orders')
@@ -313,13 +321,13 @@ class ReportPDFService
     {
         try {
             $totalEvents = Event::where('created_at', '>=', $startDate)->count();
-            
-            $activeEvents = Event::whereHas('functions', function($query) {
+
+            $activeEvents = Event::whereHas('functions', function ($query) {
                 $query->where('start_time', '>', Carbon::now())
-                      ->where('is_active', true);
+                    ->where('is_active', true);
             })->count();
 
-            $completedEvents = Event::whereHas('functions', function($query) {
+            $completedEvents = Event::whereHas('functions', function ($query) {
                 $query->where('end_time', '<', Carbon::now());
             })->count();
 
@@ -400,7 +408,7 @@ class ReportPDFService
                         return null;
                     }
                 })
-                ->filter(function($item) {
+                ->filter(function ($item) {
                     return $item !== null && ($item['revenue'] > 0 || $item['eventsCount'] > 0);
                 })
                 ->sortByDesc('revenue')
@@ -476,7 +484,7 @@ class ReportPDFService
                 }
             }
 
-            usort($venueStats, function($a, $b) {
+            usort($venueStats, function ($a, $b) {
                 return $b['total_revenue'] <=> $a['total_revenue'];
             });
 
@@ -547,7 +555,7 @@ class ReportPDFService
             }
         }
 
-        usort($organizerStats, function($a, $b) {
+        usort($organizerStats, function ($a, $b) {
             return $b['total_revenue'] <=> $a['total_revenue'];
         });
 
@@ -575,7 +583,7 @@ class ReportPDFService
         $newUsers = User::where('role', UserRole::CLIENT)
             ->where('created_at', '>=', $startDate)
             ->count();
-        
+
         $activeUsers = User::where('role', UserRole::CLIENT)
             ->whereNotNull('email_verified_at')
             ->count();
@@ -590,24 +598,24 @@ class ReportPDFService
     private function getUserStatsDetailed(Carbon $startDate): array
     {
         $totalUsers = User::where('role', UserRole::CLIENT)->count();
-        
+
         $activeUsers = User::where('role', UserRole::CLIENT)
             ->whereNotNull('email_verified_at')
             ->count();
-        
+
         $newUsers = User::where('role', UserRole::CLIENT)
             ->where('created_at', '>=', $startDate)
             ->count();
-        
+
         $usersWithPhone = User::where('role', UserRole::CLIENT)
-            ->whereHas('person', function($query) {
+            ->whereHas('person', function ($query) {
                 $query->whereNotNull('phone')
-                      ->where('phone', '!=', '');
+                    ->where('phone', '!=', '');
             })
             ->count();
-        
-        $verificationRate = $totalUsers > 0 
-            ? round(($activeUsers / $totalUsers) * 100, 1) 
+
+        $verificationRate = $totalUsers > 0
+            ? round(($activeUsers / $totalUsers) * 100, 1)
             : 0;
 
         return [
@@ -622,13 +630,13 @@ class ReportPDFService
     private function getVerificationStats(): array
     {
         $totalUsers = User::where('role', UserRole::CLIENT)->count();
-        
+
         $verified = User::where('role', UserRole::CLIENT)
             ->whereNotNull('email_verified_at')
             ->count();
-        
+
         $pending = $totalUsers - $verified;
-        
+
         return [
             'verified' => $verified,
             'pending' => $pending,
@@ -640,37 +648,37 @@ class ReportPDFService
     private function getContactStats(): array
     {
         $totalUsers = User::where('role', UserRole::CLIENT)->count();
-        
+
         $withPhone = User::where('role', UserRole::CLIENT)
-            ->whereHas('person', function($query) {
+            ->whereHas('person', function ($query) {
                 $query->whereNotNull('phone')
-                      ->where('phone', '!=', '');
+                    ->where('phone', '!=', '');
             })
             ->count();
-        
+
         $withAddress = User::where('role', UserRole::CLIENT)
-            ->whereHas('person', function($query) {
+            ->whereHas('person', function ($query) {
                 $query->whereNotNull('address')
-                      ->where('address', '!=', '');
+                    ->where('address', '!=', '');
             })
             ->count();
-        
+
         $withDni = User::where('role', UserRole::CLIENT)
-            ->whereHas('person', function($query) {
+            ->whereHas('person', function ($query) {
                 $query->whereNotNull('dni')
-                      ->where('dni', '!=', '');
+                    ->where('dni', '!=', '');
             })
             ->count();
-        
+
         return [
             'withPhone' => $withPhone,
             'withoutPhone' => $totalUsers - $withPhone,
             'phonePercentage' => $totalUsers > 0 ? round(($withPhone / $totalUsers) * 100, 1) : 0,
-            
+
             'withAddress' => $withAddress,
             'withoutAddress' => $totalUsers - $withAddress,
             'addressPercentage' => $totalUsers > 0 ? round(($withAddress / $totalUsers) * 100, 1) : 0,
-            
+
             'withDni' => $withDni,
             'withoutDni' => $totalUsers - $withDni,
             'dniPercentage' => $totalUsers > 0 ? round(($withDni / $totalUsers) * 100, 1) : 0,
@@ -681,9 +689,11 @@ class ReportPDFService
     {
         try {
             $topBuyerIds = DB::table('orders')
-                ->select('client_id', 
+                ->select(
+                    'client_id',
                     DB::raw('COUNT(*) as total_orders'),
-                    DB::raw('SUM(total_amount) as total_spent'))
+                    DB::raw('SUM(total_amount) as total_spent')
+                )
                 ->where('status', OrderStatus::PAID->value)
                 ->where('created_at', '>=', $startDate)
                 ->whereNotNull('client_id')
@@ -691,18 +701,18 @@ class ReportPDFService
                 ->orderBy('total_spent', 'DESC')
                 ->limit($limit)
                 ->get();
-            
+
             $buyers = [];
             foreach ($topBuyerIds as $buyerData) {
                 $user = User::with('person')
                     ->where('id', $buyerData->client_id)
                     ->where('role', UserRole::CLIENT)
                     ->first();
-                
+
                 if ($user) {
                     $buyers[] = [
-                        'name' => $user->person 
-                            ? "{$user->person->name} {$user->person->last_name}" 
+                        'name' => $user->person
+                            ? "{$user->person->name} {$user->person->last_name}"
                             : 'Sin nombre',
                         'email' => $user->email,
                         'totalOrders' => $buyerData->total_orders,
@@ -711,9 +721,8 @@ class ReportPDFService
                     ];
                 }
             }
-            
+
             return $buyers;
-            
         } catch (\Exception $e) {
             return [];
         }
@@ -723,7 +732,7 @@ class ReportPDFService
     {
         $trends = [];
         $current = $startDate->copy()->startOfMonth();
-        
+
         while ($current <= Carbon::now()->endOfMonth()) {
             $newUsers = User::where('role', UserRole::CLIENT)
                 ->whereBetween('created_at', [
@@ -731,7 +740,7 @@ class ReportPDFService
                     $current->copy()->endOfMonth()
                 ])
                 ->count();
-            
+
             $verifiedUsers = User::where('role', UserRole::CLIENT)
                 ->whereBetween('created_at', [
                     $current->copy()->startOfMonth(),
@@ -739,21 +748,21 @@ class ReportPDFService
                 ])
                 ->whereNotNull('email_verified_at')
                 ->count();
-            
-            $verificationRate = $newUsers > 0 
-                ? round(($verifiedUsers / $newUsers) * 100, 1) 
+
+            $verificationRate = $newUsers > 0
+                ? round(($verifiedUsers / $newUsers) * 100, 1)
                 : 0;
-            
+
             $trends[] = [
                 'month' => $current->locale('es')->format('F Y'),
                 'newUsers' => $newUsers,
                 'verifiedUsers' => $verifiedUsers,
                 'verificationRate' => $verificationRate,
             ];
-            
+
             $current->addMonth();
         }
-        
+
         return $trends;
     }
 
@@ -761,37 +770,36 @@ class ReportPDFService
     {
         try {
             $totalUsers = User::where('role', UserRole::CLIENT)->count();
-            
+
             $usersWithOrders = DB::table('orders')
                 ->where('status', OrderStatus::PAID->value)
                 ->where('created_at', '>=', $startDate)
                 ->whereNotNull('client_id')
                 ->distinct('client_id')
                 ->count('client_id');
-            
+
             $usersWithoutOrders = $totalUsers - $usersWithOrders;
-            
+
             $totalRevenue = Order::where('status', OrderStatus::PAID)
                 ->where('created_at', '>=', $startDate)
                 ->sum('total_amount');
-            
-            $avgOrderValue = $usersWithOrders > 0 
-                ? $totalRevenue / $usersWithOrders 
+
+            $avgOrderValue = $usersWithOrders > 0
+                ? $totalRevenue / $usersWithOrders
                 : 0;
-            
+
             return [
                 'usersWithOrders' => $usersWithOrders,
                 'usersWithoutOrders' => $usersWithoutOrders,
-                'usersWithOrdersPercentage' => $totalUsers > 0 
-                    ? round(($usersWithOrders / $totalUsers) * 100, 1) 
+                'usersWithOrdersPercentage' => $totalUsers > 0
+                    ? round(($usersWithOrders / $totalUsers) * 100, 1)
                     : 0,
-                'usersWithoutOrdersPercentage' => $totalUsers > 0 
-                    ? round(($usersWithoutOrders / $totalUsers) * 100, 1) 
+                'usersWithoutOrdersPercentage' => $totalUsers > 0
+                    ? round(($usersWithoutOrders / $totalUsers) * 100, 1)
                     : 0,
                 'totalRevenue' => $totalRevenue,
                 'avgOrderValue' => $avgOrderValue,
             ];
-            
         } catch (\Exception $e) {
             return [
                 'usersWithOrders' => 0,
@@ -806,7 +814,7 @@ class ReportPDFService
 
     private function getPeriodName(string $timeRange): string
     {
-        return match($timeRange) {
+        return match ($timeRange) {
             '1m' => 'Último mes',
             '3m' => 'Últimos 3 meses',
             '6m' => 'Últimos 6 meses',
