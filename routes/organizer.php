@@ -66,6 +66,7 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
             Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
             Route::patch('/order/{order}/resend-purchase', [AssistantController::class, 'resendPurchase'])->name('resendPurchase');
+            Route::post('/order/{order}/refund', [AssistantController::class, 'refund'])->name('refund');
         });
 
         // Rutas para vendedores

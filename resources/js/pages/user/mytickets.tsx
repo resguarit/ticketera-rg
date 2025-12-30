@@ -34,6 +34,8 @@ export default function MyTickets({ orders }: MyTicketsProps) {
                 return "bg-yellow-500";
             case "cancelled":
                 return "bg-red-500";
+            case "refunded":
+                return "bg-gray-400";
             default:
                 return "bg-gray-500";
         }
@@ -47,6 +49,8 @@ export default function MyTickets({ orders }: MyTicketsProps) {
                 return "Pendiente";
             case "cancelled":
                 return "Cancelado";
+            case "refunded":
+                return "Devuelto";
             default:
                 return status;
         }
