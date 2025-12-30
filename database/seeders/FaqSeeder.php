@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\FaqCategory;
 use App\Models\Faq;
 
@@ -14,6 +15,15 @@ class FaqSeeder extends Seeder
      */
     public function run(): void
     {
+        // Desactivar las foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
+        // Limpiar la tabla
+        Faq::truncate();
+        
+        // Reactivar las foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $ticketsCategory = FaqCategory::where('title', 'Compra de Tickets')->first();
         $paymentCategory = FaqCategory::where('title', 'Pagos y Facturación')->first();
         $eventsCategory = FaqCategory::where('title', 'Eventos')->first();
@@ -30,7 +40,7 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $ticketsCategory->id,
                 'question' => '¿Necesito crear una cuenta para comprar?',
-                'answer' => 'No es obligatorio crear una cuenta antes de comprar. Durante el proceso de compra, si ingresás un email que no está registrado, el sistema creará automáticamente una cuenta para vos con una contraseña temporal que recibirás por email. Esto te permitirá acceder a tus tickets en cualquier momento desde "Mis Entradas". Si ya tenés cuenta, simplemente iniciá sesión para una compra más rápida.',
+                'answer' => 'No es obligatorio crear una cuenta antes de comprar. Durante el proceso de compra, si ingresás un email que no está registrado, el sistema creará automáticamente una cuenta para vos y te pedirá ingresar una contraseña. Esto te permitirá acceder a tus tickets en cualquier momento desde "Mis Entradas". Si ya tenés cuenta, simplemente iniciá sesión para una compra más rápida.',
                 'order' => 2,
             ],
             [
@@ -42,7 +52,7 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $ticketsCategory->id,
                 'question' => '¿Puedo cancelar o solicitar reembolso de mi compra?',
-                'answer' => 'Las políticas de cancelación y reembolso están detalladas en nuestros Términos y Condiciones (sección 5). En resumen: podés ejercer tu derecho de arrepentimiento dentro de los 10 días de la compra según la Ley de Defensa del Consumidor, las cancelaciones por el organizador dan derecho a reembolso completo, y las cancelaciones por el comprador están sujetas a la política del organizador. Para más información, consultá la sección completa de "Cancelaciones, Reembolsos y Arrepentimiento" en nuestros Términos y Condiciones o contactanos por WhatsApp al +54 9 2216 91-4649.',
+                'answer' => 'Las políticas de cancelación y reembolso están detalladas en nuestros Términos y Condiciones (sección 5). En resumen: podés ejercer tu derecho de arrepentimiento dentro de los 10 días de la compra según la Ley de Defensa del Consumidor, las cancelaciones por el organizador dan derecho a reembolso completo, y las cancelaciones por el comprador están sujetas a la política del organizador. Para más información, consultá la sección completa de "Cancelaciones, Reembolsos y Arrepentimiento" en nuestros Términos y Condiciones o contactanos por WhatsApp.',
                 'order' => 4,
             ],
             [
@@ -73,27 +83,21 @@ class FaqSeeder extends Seeder
             ],
             [
                 'faq_category_id' => $paymentCategory->id,
-                'question' => '¿Es seguro pagar en línea?',
-                'answer' => 'Absolutamente. Utilizamos la plataforma de pagos Decidir (Prisma Medios de Pago) con encriptación SSL de 256 bits y cumplimos con los estándares internacionales PCI DSS para proteger tu información financiera. Tus datos de tarjeta se procesan de forma segura y tokenizada, y nunca se almacenan en nuestros servidores. Todas las transacciones están protegidas contra fraude.',
+                'question' => '¿Puedo pagar en cuotas?',
+                'answer' => 'Sí, podés financiar tu compra en cuotas según las opciones disponibles de tu tarjeta de crédito. Durante el proceso de pago, seleccioná tu tarjeta y el sistema te mostrará automáticamente las opciones de cuotas disponibles (1, 3, 6, 12 cuotas, etc.) según tu tipo de tarjeta y el monto de la compra. Las cuotas sin interés dependen de las promociones vigentes de cada banco.',
                 'order' => 2,
             ],
             [
                 'faq_category_id' => $paymentCategory->id,
-                'question' => '¿Puedo pagar en cuotas?',
-                'answer' => 'Sí, podés financiar tu compra en cuotas según las opciones disponibles de tu tarjeta de crédito. Durante el proceso de pago, seleccioná tu tarjeta y el sistema te mostrará automáticamente las opciones de cuotas disponibles (1, 3, 6, 12 cuotas, etc.) según tu tipo de tarjeta y el monto de la compra. Las cuotas sin interés dependen de las promociones vigentes de cada banco.',
-                'order' => 3,
-            ],
-            [
-                'faq_category_id' => $paymentCategory->id,
                 'question' => '¿Qué hago si mi pago fue rechazado?',
-                'answer' => 'Si tu pago fue rechazado, puede deberse a varios motivos: fondos insuficientes, datos incorrectos, límite de compra alcanzado, o problemas de seguridad bancaria. Te recomendamos: 1) Verificar que los datos de tu tarjeta sean correctos. 2) Contactar a tu banco para autorizar la compra. 3) Intentar con otra tarjeta. 4) Si el problema persiste, contactanos por WhatsApp al +54 9 2216 91-4649 y te ayudaremos a resolver el inconveniente.',
-                'order' => 4,
+                'answer' => 'Si tu pago fue rechazado, puede deberse a varios motivos: fondos insuficientes, datos incorrectos, límite de compra alcanzado, o problemas de seguridad bancaria. Te recomendamos: 1) Verificar que los datos de tu tarjeta sean correctos. 2) Contactar a tu banco para autorizar la compra. 3) Intentar con otra tarjeta. 4) Si el problema persiste, contactanos por WhatsApp y te ayudaremos a resolver el inconveniente.',
+                'order' => 3,
             ],
             [
                 'faq_category_id' => $paymentCategory->id,
                 'question' => '¿Recibiré una factura o comprobante de compra?',
                 'answer' => 'Sí, después de completar tu compra recibirás por email un comprobante con todos los detalles de tu orden: número de transacción, tickets comprados, monto pagado, datos del evento y tus tickets con códigos QR. Este email sirve como comprobante de compra y podés descargarlo o imprimirlo cuando lo necesites.',
-                'order' => 5,
+                'order' => 4,
             ],
 
             // Eventos
@@ -126,7 +130,7 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $accountCategory->id,
                 'question' => '¿Cómo creo una cuenta?',
-                'answer' => 'Tenés dos formas de crear una cuenta: 1) Haciendo clic en "Registrarse" en el menú superior, donde necesitarás tu email y una contraseña segura. 2) Automáticamente durante el proceso de compra: si comprás con un email no registrado, el sistema creará una cuenta para vos y te enviará una contraseña temporal por email que luego podrás cambiar desde tu perfil.',
+                'answer' => 'Tenés dos formas de crear una cuenta: 1) Haciendo clic en "Registrarse" en el menú superior, donde necesitarás tu email y una contraseña segura. 2) Automáticamente durante el proceso de compra: si comprás con un email no registrado, el sistema creará una cuenta para vos y te pedirá ingresar una contraseña.',
                 'order' => 1,
             ],
             [
