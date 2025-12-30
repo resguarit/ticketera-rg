@@ -1,6 +1,7 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle} from 'lucide-react';
 import logoResguarit from '../../../public/favicon.ico'
+import { PageProps } from '@/types';
 
 interface FooterProps {
     className?: string;
@@ -8,6 +9,7 @@ interface FooterProps {
 
 export default function Footer({ className = '' }: FooterProps) {
     const currentYear = new Date().getFullYear();
+    const { supportEmail } = usePage<PageProps>().props;
 
     return (
         <footer className={`bg-dark text-white ${className}`}>
@@ -34,11 +36,11 @@ export default function Footer({ className = '' }: FooterProps) {
                             </div>
                             <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
                                 <Phone className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <a href="tel:+542216914649"><span className="text-sm">+54 2966 123456</span></a>
+                                <a href="tel:+542216914649"><span className="text-sm">+54 2216 91-4649</span></a>
                             </div>
                             <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
                                 <Mail className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <a href="mailto:info@rg-entradas.com"><span className="text-sm">info@rg-entradas.com</span></a>
+                                <a href={`mailto:${supportEmail}`}><span className="text-sm">{supportEmail}</span></a>
                             </div>
                         </div>
                     </div>
@@ -90,7 +92,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <span>Política de Privacidad</span>
                             </Link>
                             <a 
-                                href="https://wa.me/5492216914649?text=Hola,%20quiero%20solicitar%20el%20arrepentimiento%20de%20una%20compra"
+                                href="https://wa.me/5492216914649?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"

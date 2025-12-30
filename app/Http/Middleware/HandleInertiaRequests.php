@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -56,6 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn() => $request->session()->get('error'),
             ],
             'credentials' => fn() => $request->session()->get('credentials'),
+            'supportEmail' => Setting::get('support_email', 'contacto@rgentradas.com'),
         ];
     }
 }
