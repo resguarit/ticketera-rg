@@ -184,31 +184,49 @@ export default function MyAccount() {
                         <div className="flex-1 min-w-0">
                             <Label className="text-xs font-medium text-gray-500 mb-1 block">{label}</Label>
                             {isEditing ? (
-                                <Input
-                                    type={type}
-                                    value={field === 'name' 
-                                        ? `${tempInfo.firstName} ${tempInfo.lastName}` 
-                                        : tempInfo[fieldKey as keyof typeof tempInfo]
-                                    }
-                                    onChange={(e) => {
-                                        if (field === 'name') {
-                                            const [first, ...rest] = e.target.value.split(' ');
-                                            setTempInfo(prev => ({
-                                                ...prev,
-                                                firstName: first || '',
-                                                lastName: rest.join(' ') || ''
-                                            }));
-                                        } else {
+                                field === 'name' ? (
+                                    <div className="space-y-2">
+                                        <Input
+                                            type="text"
+                                            value={tempInfo.firstName}
+                                            onChange={(e) => {
+                                                setTempInfo(prev => ({
+                                                    ...prev,
+                                                    firstName: e.target.value
+                                                }));
+                                            }}
+                                            placeholder="Nombre"
+                                            className="h-9 text-sm"
+                                            autoFocus
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={tempInfo.lastName}
+                                            onChange={(e) => {
+                                                setTempInfo(prev => ({
+                                                    ...prev,
+                                                    lastName: e.target.value
+                                                }));
+                                            }}
+                                            placeholder="Apellido"
+                                            className="h-9 text-sm"
+                                        />
+                                    </div>
+                                ) : (
+                                    <Input
+                                        type={type}
+                                        value={tempInfo[fieldKey as keyof typeof tempInfo]}
+                                        onChange={(e) => {
                                             setTempInfo(prev => ({
                                                 ...prev,
                                                 [fieldKey]: e.target.value
                                             }));
-                                        }
-                                    }}
-                                    placeholder={placeholder}
-                                    className="h-9 text-sm"
-                                    autoFocus
-                                />
+                                        }}
+                                        placeholder={placeholder}
+                                        className="h-9 text-sm"
+                                        autoFocus
+                                    />
+                                )
                             ) : (
                                 <p className="text-sm font-medium text-gray-900 truncate">
                                     {value || <span className="text-gray-400">No especificado</span>}
