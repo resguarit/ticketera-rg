@@ -322,7 +322,8 @@ export default function MyAccount() {
                         <div className="lg:col-span-1">
                             <Card className="bg-white shadow-xl border-0">
                                 <CardContent className="p-0">
-                                    <nav className="space-y-1 p-2">
+                                    {/* Vista Desktop - Vertical */}
+                                    <nav className="hidden lg:block space-y-1 p-2">
                                         {sidebarItems.map((item) => (
                                             <button
                                                 key={item.id}
@@ -348,6 +349,34 @@ export default function MyAccount() {
                                                         {item.description}
                                                     </p>
                                                 </div>
+                                            </button>
+                                        ))}
+                                    </nav>
+
+                                    {/* Vista Mobile - Horizontal 3 columnas */}
+                                    <nav className="lg:hidden grid grid-cols-3 gap-2 p-2">
+                                        {sidebarItems.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => setActiveTab(item.id)}
+                                                className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 ${
+                                                    activeTab === item.id
+                                                        ? "bg-white "
+                                                        : "bg-white/50 hover:bg-white/80"
+                                                }`}
+                                            >
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2 ${
+                                                    activeTab === item.id ? "bg-primary" : "bg-primary/10"
+                                                }`}>
+                                                    <item.icon className={`w-6 h-6 ${
+                                                        activeTab === item.id ? "text-white" : "text-primary"
+                                                    }`} />
+                                                </div>
+                                                <p className={`text-xs font-medium text-center leading-tight ${
+                                                    activeTab === item.id ? "text-primary" : "text-gray-700"
+                                                }`}>
+                                                    {item.label}
+                                                </p>
                                             </button>
                                         ))}
                                     </nav>
