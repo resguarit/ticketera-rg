@@ -75,7 +75,7 @@ export default function Help() {
     });
 
     const toggleItem = (itemId: string) => {
-        setOpenItems((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+        setOpenItems((prev) => prev.includes(itemId) ? [] : [itemId]);
     };
 
     const filteredFAQs = faqCategories
@@ -266,7 +266,7 @@ export default function Help() {
                                                 const isOpen = openItems.includes(itemId);
 
                                                 return (
-                                                    <Collapsible key={index}>
+                                                    <Collapsible key={index} open={isOpen}>
                                                         <CollapsibleTrigger
                                                             onClick={() => toggleItem(itemId)}
                                                             className="flex items-center justify-between w-full p-3 sm:p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
