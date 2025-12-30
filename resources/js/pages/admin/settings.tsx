@@ -11,7 +11,9 @@ import {
     Phone,
     Clock,
     Mail,
-    Info
+    Info,
+    Facebook,
+    Instagram
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,7 +108,7 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
         fieldKey: string,
         label: string,
         value: any,
-        type: 'text' | 'email' | 'textarea' = 'text',
+        type: 'text' | 'email' | 'textarea' | 'url' = 'text',
         icon?: React.ReactNode
     ) => {
         const isEditing = editingField === `${group}.${fieldKey}`;
@@ -288,6 +290,34 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                                     generalSettings.businessHours,
                                     'text',
                                     <Clock className="w-4 h-4 text-gray-600" />
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-white border-gray-200 shadow-lg lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-black flex items-center space-x-2">
+                                    <Globe className="w-5 h-5" />
+                                    <span>Redes Sociales</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {renderEditableField(
+                                    'general',
+                                    'facebookUrl',
+                                    'URL de Facebook',
+                                    generalSettings.facebookUrl,
+                                    'url',
+                                    <Facebook className="w-4 h-4 text-gray-600" />
+                                )}
+
+                                {renderEditableField(
+                                    'general',
+                                    'instagramUrl',
+                                    'URL de Instagram',
+                                    generalSettings.instagramUrl,
+                                    'url',
+                                    <Instagram className="w-4 h-4 text-gray-600" />
                                 )}
                             </CardContent>
                         </Card>

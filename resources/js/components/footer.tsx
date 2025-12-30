@@ -145,7 +145,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Facebook className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://www.instagram.com/rgentradas.com.ar/" 
+                                href="https://www.instagram.com/rgentradas/" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
