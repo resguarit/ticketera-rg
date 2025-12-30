@@ -470,6 +470,7 @@ class AssistantController extends Controller
                 'service_fee_amount' => round($serviceFeeAmount, 2),
                 'tax_percentage' => round($taxPercentage * 100, 1),
                 'total_paid' => round($totalPaid, 2),
+                'refunded_amount' => round($order->refunded_amount ?? 0, 2),
             ],
             'discount_code' => $order->discountCode ? [
                 'code' => $order->discountCode->code,

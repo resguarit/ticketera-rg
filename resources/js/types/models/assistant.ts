@@ -114,6 +114,7 @@ export interface OrderTotals {
     service_fee_amount: number;
     tax_percentage: number;
     total_paid: number;
+    refunded_amount?: number;
 }
 
 export interface InvitedTotals {

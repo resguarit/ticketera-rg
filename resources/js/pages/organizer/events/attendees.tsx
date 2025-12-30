@@ -390,7 +390,7 @@ export default function EventAttendees({
 
     const getStatusBadge = (attendee: AttendeeForTable) => {
         if (attendee.order_status === 'refunded') {
-            return <Badge variant="outline" className='bg-gray-100 text-gray-800 border-gray-300'>Devuelto</Badge>;
+            return <Badge variant="outline" className='bg-gray-100 text-gray-500 border-gray-300'>Devuelto</Badge>;
         }
         if (attendee.tickets_used > 0) {
             return <Badge variant="default" className="bg-green-100 text-green-800">Usado</Badge>;
@@ -593,7 +593,9 @@ export default function EventAttendees({
                                                                 <div
                                                                     className={`font-semibold ${attendee.order_status === 'cancelled'
                                                                         ? 'text-red-600 line-through'
-                                                                        : 'text-green-600'
+                                                                        : attendee.order_status === 'refunded'
+                                                                            ? 'text-gray-500 line-through'
+                                                                            : 'text-green-600'
                                                                         }`}>
                                                                     {formatCurrency(attendee.total_amount)}
                                                                 </div>
