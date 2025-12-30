@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
                 FaqCategorySeeder::class,
                 FaqSeeder::class,
                 PaymentMethodSeeder::class,
+                SettingsSeeder::class,
             ]);
 
             DB::commit();
