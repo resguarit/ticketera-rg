@@ -158,7 +158,7 @@ export default function Home({ featuredEvents, banners = [], events, categories,
                 <section className="relative h-[160px] sm:h-[200px] lg:h-[300px] overflow-hidden">
                     {slides.length > 0 ? (
                         <>
-                            <div className="absolute inset-0 bg-black/20 z-10"></div>
+                            <div className="absolute inset-0 z-10"></div>
 
                             {slides[currentSlide].type === 'event' ? (
                                 <Link href={slides[currentSlide].link || '#'}>
