@@ -126,13 +126,13 @@ class FaqSeeder extends Seeder
             [
                 'faq_category_id' => $accountCategory->id,
                 'question' => '¿Cómo creo una cuenta?',
-                'answer' => 'Tenés dos formas de crear una cuenta: 1) Haciendo clic en "Iniciar Sesión" en el menú superior y luego en "Crear cuenta", donde necesitarás tu email y una contraseña segura. 2) Automáticamente durante el proceso de compra: si comprás con un email no registrado, el sistema creará una cuenta para vos y te enviará una contraseña temporal por email que luego podrás cambiar desde tu perfil.',
+                'answer' => 'Tenés dos formas de crear una cuenta: 1) Haciendo clic en "Registrarse" en el menú superior, donde necesitarás tu email y una contraseña segura. 2) Automáticamente durante el proceso de compra: si comprás con un email no registrado, el sistema creará una cuenta para vos y te enviará una contraseña temporal por email que luego podrás cambiar desde tu perfil.',
                 'order' => 1,
             ],
             [
                 'faq_category_id' => $accountCategory->id,
                 'question' => '¿Olvidé mi contraseña, qué hago?',
-                'answer' => 'No te preocupes, es muy fácil recuperarla. Hacé clic en "¿Olvidaste tu contraseña?" en la página de inicio de sesión, ingresá tu email registrado y te enviaremos un enlace seguro para restablecer tu contraseña. El enlace es válido por 60 minutos. Si no recibís el email, revisá tu carpeta de spam o intentá nuevamente. Si compraste como invitado, buscá el email de bienvenida con tu contraseña temporal.',
+                'answer' => 'No te preocupes, es muy fácil recuperarla. Hacé clic en "¿Olvidaste tu contraseña?" en la página de inicio de sesión, ingresá tu email registrado y te enviaremos un enlace seguro para restablecer tu contraseña. El enlace es válido por 60 minutos. Si no recibís el email, revisá tu carpeta de spam o intentá nuevamente.',
                 'order' => 2,
             ],
             [
