@@ -334,9 +334,14 @@ export default function Help() {
                                     <Link href="/privacy" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Privacidad
                                     </Link>
-                                    <Link href="/refunds" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
-                                        Política de Reembolsos
-                                    </Link>
+                                    <a 
+                                        href="https://wa.me/5492216914649?text=Hola,%20quiero%20solicitar%20el%20arrepentimiento%20de%20una%20compra"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1"
+                                    >
+                                        Botón de Arrepentimiento
+                                    </a>
                                 </CardContent>
                             </Card>
                         </div>

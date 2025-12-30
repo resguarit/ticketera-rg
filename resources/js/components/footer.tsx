@@ -89,13 +89,15 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Shield className="w-4 h-4" />
                                 <span>Política de Privacidad</span>
                             </Link>
-                            <Link 
-                                href={route('refunds')}
+                            <a 
+                                href="https://wa.me/5492216914649?text=Hola,%20quiero%20solicitar%20el%20arrepentimiento%20de%20una%20compra"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />
                                 <span>Botón de Arrepentimiento</span>
-                            </Link>
+                            </a>
                         </nav>
                     </div>
 
