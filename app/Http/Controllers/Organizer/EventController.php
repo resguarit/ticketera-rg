@@ -420,6 +420,8 @@ class EventController extends Controller
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
             'total_revenue' => $event->getRevenue(),
+            'net_revenue' => $this->revenueService->netRevenueForEvent($event),
+            'service_fee_revenue' => $this->revenueService->serviceFeeForEvent($event),
             'entradas_vendidas' => $totalEntradasVendidas,
             'tickets_emitidos' => $totalTicketsEmitidos,
             'functions' => $event->functions->map(function ($function) {

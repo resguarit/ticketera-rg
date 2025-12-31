@@ -155,7 +155,7 @@ export default function Home({ featuredEvents, banners = [], events, categories,
 
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Eventos destacados con hero banners y Banners Admin */}
-                <section className="relative h-[160px] sm:h-[200px] lg:h-[300px] overflow-hidden">
+                <section className="relative h-[160px] sm:h-[200px] lg:h-[400px] overflow-hidden">
                     {slides.length > 0 ? (
                         <>
                             <div className="absolute inset-0 z-10"></div>
