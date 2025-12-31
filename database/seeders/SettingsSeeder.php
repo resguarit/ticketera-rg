@@ -13,7 +13,7 @@ class SettingsSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('settings')->truncate();
+        DB::table('settings')->delete();
 
         $settings = [
             // General Settings
@@ -33,7 +33,7 @@ class SettingsSeeder extends Seeder
                 'description' => 'Descripción del sitio web',
                 'is_encrypted' => false,
             ],
-            
+
             // Contact Settings
             [
                 'key' => 'support_email',
@@ -51,7 +51,7 @@ class SettingsSeeder extends Seeder
                 'description' => 'Teléfono de soporte',
                 'is_encrypted' => false,
             ],
-            
+
             // Business Hours
             [
                 'key' => 'business_days',
@@ -69,7 +69,7 @@ class SettingsSeeder extends Seeder
                 'description' => 'Horarios de atención',
                 'is_encrypted' => false,
             ],
-            
+
             // Social Media
             [
                 'key' => 'facebook_url',

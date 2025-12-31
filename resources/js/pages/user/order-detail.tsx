@@ -65,6 +65,7 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
             paid: 'Pagado',
             pending: 'Pendiente',
             cancelled: 'Cancelado',
+            refunded: 'Devuelto',
             rejected: 'Rechazado'
         };
         return statuses[status] || status;
@@ -92,34 +93,44 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
                                 Mis Entradas
                             </h2>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {tickets.map((ticket) => (
-                                    <div key={ticket.id} className="p-4 border rounded-lg bg-gray-50/50 hover:bg-white hover:shadow-md transition-all">
-                                        <div className="mb-3">
-                                            <p className="font-bold text-gray-900">{ticket.ticket_type_name}</p>
-                                            <p className="text-xs font-mono text-gray-500">{ticket.unique_code}</p>
+                                {tickets.map((ticket) => {
+                                    const isCancelled = ticket.status === 'cancelled' || order.status === 'refunded' || order.status === 'cancelled';
+
+                                    return (
+                                        <div key={ticket.id} className={`p-4 border rounded-lg transition-all ${isCancelled ? 'bg-gray-100 border-gray-200 opacity-75' : 'bg-gray-50/50 hover:bg-white hover:shadow-md'
+                                            }`}>
+                                            <div className="mb-3">
+                                                <div className="flex justify-between items-start">
+                                                    <p className={`font-bold ${isCancelled ? 'text-gray-500' : 'text-gray-900'}`}>{ticket.ticket_type_name}</p>
+                                                    {isCancelled && <Badge variant="outline" className="text-xs bg-gray-200 text-gray-600 border-gray-300">Cancelado</Badge>}
+                                                </div>
+                                                <p className="text-xs font-mono text-gray-500">{ticket.unique_code}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className={`flex-1 ${isCancelled ? 'bg-transparent text-gray-400 border-gray-300 cursor-not-allowed' : ''}`}
+                                                    onClick={() => !isCancelled && setSelectedQrCode(ticket.unique_code)}
+                                                    disabled={isCancelled}
+                                                >
+                                                    <QrCode className="w-3.5 h-3.5 mr-2" />
+                                                    QR
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className={`flex-1 ${isCancelled ? 'bg-transparent text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-blue-50'}`}
+                                                    onClick={() => !isCancelled && handleDownloadTicket(ticket.id)}
+                                                    disabled={isCancelled}
+                                                >
+                                                    <Download className="w-3.5 h-3.5 mr-2" />
+                                                    PDF
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="flex-1"
-                                                onClick={() => setSelectedQrCode(ticket.unique_code)}
-                                            >
-                                                <QrCode className="w-3.5 h-3.5 mr-2" />
-                                                QR
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="flex-1 bg-blue-50"
-                                                onClick={() => handleDownloadTicket(ticket.id)}
-                                            >
-                                                <Download className="w-3.5 h-3.5 mr-2" />
-                                                PDF
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 

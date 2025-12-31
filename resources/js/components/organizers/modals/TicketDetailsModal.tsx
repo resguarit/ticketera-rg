@@ -14,13 +14,13 @@ interface TicketDetailsModalProps {
     loading?: boolean;
 }
 
-export default function TicketDetailsModal({ 
-    isOpen, 
-    onClose, 
-    data, 
-    loading = false 
+export default function TicketDetailsModal({
+    isOpen,
+    onClose,
+    data,
+    loading = false
 }: TicketDetailsModalProps) {
-    
+
     // Manejar ESC key
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -28,12 +28,12 @@ export default function TicketDetailsModal({
                 onClose();
             }
         };
-        
+
         if (isOpen) {
             document.addEventListener('keydown', handleEsc);
             document.body.style.overflow = 'hidden';
         }
-        
+
         return () => {
             document.removeEventListener('keydown', handleEsc);
             document.body.style.overflow = 'auto';
@@ -101,8 +101,8 @@ export default function TicketDetailsModal({
                                 <td className="px-3 py-2 font-medium">{item.ticket_type_name}</td>
                                 <td className="text-center px-3 py-2">{item.quantity}</td>
                                 <td className="text-right px-3 py-2">
-                                    {type === 'buyer' ? 
-                                        formatCurrency(item.price) : 
+                                    {type === 'buyer' ?
+                                        formatCurrency(item.price) :
                                         <div className="flex items-center justify-end">
                                             <Badge variant="default" className="bg-green-100 text-green-800 mr-1">GRATIS</Badge>
                                             <span className="text-gray-500 line-through">{formatCurrency(item.courtesy_value)}</span>
@@ -110,8 +110,8 @@ export default function TicketDetailsModal({
                                     }
                                 </td>
                                 <td className="text-right px-3 py-2 font-semibold">
-                                    {type === 'buyer' ? 
-                                        formatCurrency(item.subtotal) : 
+                                    {type === 'buyer' ?
+                                        formatCurrency(item.subtotal) :
                                         <div className="flex items-center justify-end">
                                             <Badge variant="default" className="bg-green-100 text-green-800 mr-1">GRATIS</Badge>
                                             <span className="text-gray-500 line-through">{formatCurrency(item.total_courtesy_value)}</span>
@@ -154,7 +154,7 @@ export default function TicketDetailsModal({
                     </div>
                 </div>
             </div>
-            
+
             <div className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Columna izquierda - Cálculos */}
@@ -163,28 +163,34 @@ export default function TicketDetailsModal({
                             <span>Subtotal:</span>
                             <span className="font-medium">{formatCurrency(data.totals.subtotal)}</span>
                         </div>
-                        
+
                         {data.totals.discount_amount > 0 && (
                             <div className="flex justify-between text-green-600">
                                 <span>Descuento ({data.totals.discount_percentage}%):</span>
                                 <span className="font-medium">-{formatCurrency(data.totals.discount_amount)}</span>
                             </div>
                         )}
-                        
+
                         {data.totals.service_fee_amount > 0 && (
                             <div className="flex justify-between">
                                 <span>Cargo servicio{data.totals.tax_percentage > 0 ? ` (+${data.totals.tax_percentage}%)` : ''}:</span>
                                 <span className="font-medium">{formatCurrency(data.totals.service_fee_amount)}</span>
                             </div>
                         )}
-                        
+
+                        {data.totals.refunded_amount !== undefined && data.totals.refunded_amount > 0 && (
+                            <div className="flex justify-between text-gray-500 font-medium border-t border-gray-100 pt-1 mt-1">
+                                <span>Monto Devuelto:</span>
+                                <span>-{formatCurrency(data.totals.refunded_amount)}</span>
+                            </div>
+                        )}
+
                         <div
-                            className={`border-t pt-2 flex justify-between text-base font-bold ${
-                                data.order.status === 'cancelled'
+                            className={`border-t pt-2 flex justify-between text-base font-bold ${data.order.status === 'cancelled'
                                 ? 'text-red-600 line-through'
                                 : 'text-green-600'
-                            }`}
-                            >
+                                }`}
+                        >
                             <span>
                                 {data.order.status === 'cancelled' ? 'TOTAL CANCELADO:' : 'TOTAL PAGADO:'}
                             </span>
@@ -204,26 +210,25 @@ export default function TicketDetailsModal({
                         )}
 
                         <div
-                            className={`rounded p-2 border ${
-                                data.order.status === 'cancelled'
+                            className={`rounded p-2 border ${data.order.status === 'cancelled'
                                 ? 'border-red-400 bg-red-50'
                                 : 'border-gray-200 bg-gray-50'
-                            }`}
-                            >
+                                }`}
+                        >
                             <p className="text-xs">
                                 <strong>Estado:</strong>{' '}
                                 <span
-                                className={
-                                    data.order.status === 'cancelled' ? 'text-red-600 font-semibold' : ''
-                                }
+                                    className={
+                                        data.order.status === 'cancelled' ? 'text-red-600 font-semibold' : ''
+                                    }
                                 >
-                                {data.order.status}
+                                    {data.order.status}
                                 </span>
                                 {data.order.transaction_id && (
-                                <>
-                                    <br />
-                                    <strong>ID:</strong> {data.order.transaction_id}
-                                </>
+                                    <>
+                                        <br />
+                                        <strong>ID:</strong> {data.order.transaction_id}
+                                    </>
                                 )}
                             </p>
                         </div>
@@ -247,7 +252,7 @@ export default function TicketDetailsModal({
                     </div>
                 </div>
             </div>
-            
+
             <div className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Columna izquierda - Estadísticas */}
@@ -256,20 +261,20 @@ export default function TicketDetailsModal({
                             <span>Total tickets:</span>
                             <span className="font-medium">{data.totals.total_tickets}</span>
                         </div>
-                        
+
                         <div className="flex justify-between text-green-600">
                             <span>Tickets usados:</span>
                             <span className="font-medium">{data.totals.tickets_used}</span>
                         </div>
-                        
+
                         <div className="flex justify-between">
                             <span>Disponibles:</span>
                             <span className="font-medium">{data.totals.tickets_available}</span>
                         </div>
-                        
+
                         <div className="border-t pt-2 flex justify-between text-base font-bold text-blue-600">
                             <span className="flex items-center">
-                                VALOR CORTESÍA 
+                                VALOR CORTESÍA
                                 <Badge variant="default" className="bg-green-100 text-green-800 ml-2">GRATIS</Badge>
                             </span>
                             <span>{formatCurrency(data.totals.total_courtesy_value)}</span>
@@ -301,18 +306,18 @@ export default function TicketDetailsModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Overlay */}
-            <div 
+            <div
                 className="fixed inset-0 bg-black/50"
                 onClick={onClose}
             />
-            
+
             {/* Modal */}
             <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-[90vw] max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header con botón de cierre */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
                     <h2 className="text-lg font-semibold">
                         {loading ? 'Cargando detalles...' : (
-                            data?.type === 'buyer' ? 
+                            data?.type === 'buyer' ?
                                 `Detalle de Compra - Orden #${(data as OrderDetails).order.id}` :
                                 `Tickets Asignados - ${(data as AssistantDetails).person.full_name}`
                         )}
@@ -337,8 +342,8 @@ export default function TicketDetailsModal({
                         <div className="space-y-4">
                             {renderPersonInfo(data.person)}
                             {renderTicketsTable(data.per_type, data.type)}
-                            {data.type === 'buyer' ? 
-                                renderBuyerSummary(data as OrderDetails) : 
+                            {data.type === 'buyer' ?
+                                renderBuyerSummary(data as OrderDetails) :
                                 renderInvitedSummary(data as AssistantDetails)
                             }
                         </div>

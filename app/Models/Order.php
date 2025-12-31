@@ -31,6 +31,8 @@ class Order extends Model
         'tax', // Porcentaje de impuesto aplicado
         'service_fee',
         'total_amount',
+        'refunded_at',
+        'refunded_amount',
         'discount_code_id', // Clave foránea para el código de descuento
         'order_details',
     ];
@@ -43,6 +45,8 @@ class Order extends Model
         'tax' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'refunded_amount' => 'decimal:2',
+        'refunded_at' => 'datetime',
         'order_details' => 'json',
     ];
 

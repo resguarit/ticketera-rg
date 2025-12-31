@@ -17,10 +17,10 @@ class FaqSeeder extends Seeder
     {
         // Desactivar las foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        
+
         // Limpiar la tabla
-        Faq::truncate();
-        
+        Faq::query()->delete();
+
         // Reactivar las foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 

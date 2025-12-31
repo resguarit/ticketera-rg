@@ -22,6 +22,8 @@ import {
     Search, ArrowDown, ArrowUp, ArrowUpDown
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface EventAttendeeFunction {
     id: number;
@@ -86,6 +88,11 @@ export default function EventAttendees({
     const [selectedAttendee, setSelectedAttendee] = useState<AttendeeForTable | null>(null);
     const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
     const [eliminatedAttendee, setEliminatedAttendee] = useState<AttendeeForTable | null>(null);
+
+    // Estado para reembolso
+    const [refundModalOpen, setRefundModalOpen] = useState(false);
+    const [orderToRefund, setOrderToRefund] = useState<AttendeeForTable | null>(null);
+    const [refundType, setRefundType] = useState<'subtotal' | 'total'>('subtotal');
 
     // --- REFACTORIZAR MANEJO DE FILTROS ---
     const applyFilters = (
@@ -345,7 +352,46 @@ export default function EventAttendees({
         }
     };
 
+    const handleOpenRefundModal = (attendee: AttendeeForTable) => {
+        setOrderToRefund(attendee);
+        // Default to subtotal
+        setRefundType('subtotal');
+        setRefundModalOpen(true);
+    };
+
+    const handleRefundSubmit = () => {
+        if (!orderToRefund || orderToRefund.type !== 'buyer') return;
+
+        // Determinar monto basado en selección
+        const amount = refundType === 'subtotal'
+            ? (orderToRefund.subtotal !== undefined && orderToRefund.subtotal > 0 ? orderToRefund.subtotal : orderToRefund.total_amount)
+            : orderToRefund.total_amount;
+
+        router.post(route('organizer.events.assistants.refund', { event: event.id, order: orderToRefund.order_id }), {
+            amount: amount
+        }, {
+            preserveScroll: true, // Importante para evitar saltos
+            onSuccess: () => {
+                setRefundModalOpen(false);
+                toast.success('Orden devuelta correctamente');
+                setOrderToRefund(null);
+            },
+            onError: (errors: any) => {
+                // Manejo de errores
+                const message = errors?.error || 'Error al procesar la devolución';
+                toast.error(message);
+                // No cerramos el modal en error para permitir reintentar
+            },
+            onFinish: () => {
+                // Asegurar que se quite cualquier estado de carga si lo hubiera
+            }
+        });
+    };
+
     const getStatusBadge = (attendee: AttendeeForTable) => {
+        if (attendee.order_status === 'refunded') {
+            return <Badge variant="outline" className='bg-gray-100 text-gray-500 border-gray-300'>Devuelto</Badge>;
+        }
         if (attendee.tickets_used > 0) {
             return <Badge variant="default" className="bg-green-100 text-green-800">Usado</Badge>;
         }
@@ -547,7 +593,9 @@ export default function EventAttendees({
                                                                 <div
                                                                     className={`font-semibold ${attendee.order_status === 'cancelled'
                                                                         ? 'text-red-600 line-through'
-                                                                        : 'text-green-600'
+                                                                        : attendee.order_status === 'refunded'
+                                                                            ? 'text-gray-500 line-through'
+                                                                            : 'text-green-600'
                                                                         }`}>
                                                                     {formatCurrency(attendee.total_amount)}
                                                                 </div>
@@ -600,10 +648,18 @@ export default function EventAttendees({
                                                                     </>
                                                                 )}
                                                                 {attendee.type === 'buyer' && (
-                                                                    <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
-                                                                        <Mail className="mr-2 h-4 w-4" />
-                                                                        Reenviar tickets
-                                                                    </DropdownMenuItem>
+                                                                    <>
+                                                                        {attendee.order_status === 'paid' && (
+                                                                            <DropdownMenuItem onClick={() => handleOpenRefundModal(attendee)}>
+                                                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                                                Devolver
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                        <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
+                                                                            <Mail className="mr-2 h-4 w-4" />
+                                                                            Reenviar tickets
+                                                                        </DropdownMenuItem>
+                                                                    </>
                                                                 )}
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -691,6 +747,81 @@ export default function EventAttendees({
                 advertencia="Todos los datos asociados a este asistente también serán eliminados."
                 confirmVariant='destructive'
             />
+
+            {refundModalOpen && (
+                <>
+                    {/* Overlay */}
+                    <div
+                        className="fixed inset-0 bg-black/50 z-50 transition-opacity"
+                        onClick={() => setRefundModalOpen(false)}
+                    />
+
+                    {/* Modal */}
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                        <div
+                            className="bg-white rounded-md shadow-xl max-w-md w-full p-6 pointer-events-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex flex-col gap-2 text-center sm:text-left mb-4">
+                                <h3 className="text-lg leading-none font-semibold">Devolución Administrativa</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Esta acción marcará la orden como devuelta y liberará los tickets asociados.
+                                    Los fondos no se reembolsan automáticamente a través de la pasarela de pago, esto es solo un registro administrativo.
+                                </p>
+                            </div>
+
+                            <div className="grid gap-4 py-4">
+                                <div className="space-y-4">
+                                    <Label>Selecciona el monto a devolver</Label>
+
+                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('subtotal')}>
+                                        <Checkbox
+                                            id="refund-subtotal"
+                                            checked={refundType === 'subtotal'}
+                                            onCheckedChange={() => setRefundType('subtotal')}
+                                        />
+                                        <div className="grid gap-1.5 leading-none">
+                                            <label
+                                                htmlFor="refund-subtotal"
+                                                className="text-sm font-medium leading-none cursor-pointer"
+                                            >
+                                                Solo Entradas (Subtotal)
+                                            </label>
+                                            <p className="text-sm text-muted-foreground">
+                                                {formatCurrency(orderToRefund?.subtotal || 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('total')}>
+                                        <Checkbox
+                                            id="refund-total"
+                                            checked={refundType === 'total'}
+                                            onCheckedChange={() => setRefundType('total')}
+                                        />
+                                        <div className="grid gap-1.5 leading-none">
+                                            <label
+                                                htmlFor="refund-total"
+                                                className="text-sm font-medium leading-none cursor-pointer"
+                                            >
+                                                Total (con cargos de servicio)
+                                            </label>
+                                            <p className="text-sm text-muted-foreground">
+                                                {formatCurrency(orderToRefund?.total_amount || 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-4">
+                                <Button variant="outline" onClick={() => setRefundModalOpen(false)}>Cancelar</Button>
+                                <Button variant="destructive" onClick={handleRefundSubmit}>Confirmar Devolución</Button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </EventManagementLayout>
     );
 }

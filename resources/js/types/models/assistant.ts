@@ -34,10 +34,13 @@ export interface InvitedAttendee {
     function_date: string;
     invited_at: string;
     sended_at: string | null;
+    total_amount: number;
+    subtotal: number;
     tickets_count: number;
     tickets_used: number;
     tickets: AttendeeTicket[];
     is_cancelled?: boolean;
+    order_status: string | null;
 }
 
 // Tipo para compradores agrupados por order_id
@@ -53,6 +56,7 @@ export interface BuyerAttendee {
     function_date: string;
     purchased_at: string;
     total_amount: number;
+    subtotal: number;
     tickets_count: number;
     tickets_used: number;
     tickets: AttendeeTicket[];
@@ -110,6 +114,7 @@ export interface OrderTotals {
     service_fee_amount: number;
     tax_percentage: number;
     total_paid: number;
+    refunded_amount?: number;
 }
 
 export interface InvitedTotals {
