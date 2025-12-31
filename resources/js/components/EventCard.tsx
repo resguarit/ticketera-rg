@@ -53,13 +53,13 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                         </div>
                     )}
 
-                    <div className="flex h-32">
+                    <div className="flex h-40">
                         {/* Imagen izquierda */}
-                        <div className="w-32 h-32 flex-shrink-0 relative">
+                        <div className="w-32 h-40 flex-shrink-0 relative">
                             <img
                                 src={event.image_url || "/placeholder.svg?height=400&width=800"}
                                 alt={event.name}
-                                className={`w-full h-full object-cover ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
+                                className={`w-full h-full object-contain ${isSoldOut ? 'opacity-60 grayscale' : ''}`}
                             />
                         </div>
 
@@ -73,7 +73,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                                         {event.location}
                                     </span>
                                 </div>
-                                
+
                                 {/* Título con altura máxima exacta para 2 líneas */}
                                 <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 max-h-[2.5rem] overflow-hidden">
                                     {event.name}
@@ -105,7 +105,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
 
             {/* Diseño original para pantallas sm y mayores */}
             <div className="hidden sm:block">
-                <div className="w-full h-[440px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col relative">
+                <div className="w-full h-[580px] bg-white rounded-2xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-all duration-300 flex flex-col relative">
                     {/* Bandera diagonal AGOTADO - Desktop */}
                     {isSoldOut && (
                         <div className="absolute top-0 right-0 z-10 overflow-hidden w-32 h-32">
@@ -116,7 +116,7 @@ export default function EventCard({ event, className = '' }: EventCardProps) {
                     )}
 
                     {/* Header section with dark background - altura fija */}
-                    <div className="relative h-[260px] overflow-hidden flex-shrink-0">
+                    <div className="relative h-[400px] overflow-hidden flex-shrink-0">
                         {/* Background image */}
                         <div className="absolute inset-0">
                             <img
