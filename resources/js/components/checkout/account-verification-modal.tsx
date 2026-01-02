@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, KeyRound, Loader2, AlertCircle } from "lucide-react"
+import { Mail, KeyRound, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,8 @@ export default function AccountVerificationModal({
   const [step, setStep] = useState<VerificationStep>("checking")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -248,15 +250,33 @@ export default function AccountVerificationModal({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Ingresa tu contraseña"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  className={fieldErrors.password ? "border-red-500" : ""}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ingresa tu contraseña"
+                    onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                    className={fieldErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    </span>
+                  </Button>
+                </div>
                 {fieldErrors.password && (
                   <p className="text-xs text-red-500">{fieldErrors.password[0]}</p>
                 )}
@@ -306,28 +326,65 @@ export default function AccountVerificationModal({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="new-password">Contraseña</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  className={fieldErrors.password ? "border-red-500" : ""}
-                />
+                <div className="relative">
+                  <Input
+                    id="new-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mínimo 8 caracteres"
+                    className={fieldErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    </span>
+                  </Button>
+                </div>
                 {fieldErrors.password && (
                   <p className="text-xs text-red-500">{fieldErrors.password[0]}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repite tu contraseña"
-                  onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-                />
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repite tu contraseña"
+                    onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showConfirmPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    </span>
+                  </Button>
+                </div>
               </div>
             </div>
           )}
