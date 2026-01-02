@@ -177,4 +177,8 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 3;
     }
+
+    .text-security-disc {
+        -webkit-text-security: disc;
+    }
 }

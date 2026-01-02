@@ -308,12 +308,12 @@ export default function AccountVerificationModal({
                 <Label htmlFor="new-password">Contraseña</Label>
                 <Input
                   id="new-password"
-                  type="password"
+                  type="text"
                   autoComplete="off"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres"
-                  className={fieldErrors.password ? "border-red-500" : ""}
+                  className={fieldErrors.password ? "border-red-500 text-security-disc" : "text-security-disc"}
                 />
                 {fieldErrors.password && (
                   <p className="text-xs text-red-500">{fieldErrors.password[0]}</p>
@@ -323,12 +323,13 @@ export default function AccountVerificationModal({
                 <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
                 <Input
                   id="confirm-password"
-                  type="password"
+                  type="text"
                   autoComplete="off"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repite tu contraseña"
                   onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+                  className="text-security-disc"
                 />
               </div>
             </div>
