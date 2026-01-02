@@ -249,10 +249,9 @@ export default function AccountVerificationModal({
           {step === "login" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label>Contraseña</Label>
                 <div className="relative">
                   <Input
-                    id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -325,10 +324,9 @@ export default function AccountVerificationModal({
           {step === "register" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password">Contraseña</Label>
+                <Label>Contraseña</Label>
                 <div className="relative">
                   <Input
-                    id="new-password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="off"
                     value={password}
@@ -358,10 +356,9 @@ export default function AccountVerificationModal({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                <Label>Confirmar Contraseña</Label>
                 <div className="relative">
                   <Input
-                    id="confirm-password"
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="off"
                     value={confirmPassword}
