@@ -157,6 +157,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             <div className="flex justify-between">
               <span className="text-muted-foreground">Invitados:</span>
               <span className="font-medium text-indigo-600">{ticket.invited_count}</span>
+
             </div>
           )}
           {isBundle && (
