@@ -12,8 +12,8 @@ export interface TicketType {
     quantity_sold: number;
     max_purchase_quantity: number;
     is_hidden: boolean;
-    is_bundle: boolean;        
-    bundle_quantity: number;   
+    is_bundle: boolean;
+    bundle_quantity: number;
     sales_start_date: string;
     sales_end_date?: string;
     created_at: string;
@@ -23,9 +23,10 @@ export interface TicketType {
     quantity_available?: number;
     sold_percentage?: number;
     total_income?: number;
-    real_quantity?: number;           
-    real_quantity_sold?: number;      
+    real_quantity?: number;
+    real_quantity_sold?: number;
     tickets_issued?: number;          // ← NUEVO: Entradas realmente emitidas
+    invited_count?: number;           // ← NUEVO: Entradas con invitado asignado
 
     // NUEVOS: Campos para tandas (computed attributes del modelo)
     stage_group?: string | null;      // ← NUEVO: Grupo base de la tanda
