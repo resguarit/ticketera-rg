@@ -476,11 +476,19 @@ class EventController extends Controller
         }
 
         // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
+        // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
         $event->load([
             'category',
             'venue',
             'organizer',
-            'functions.ticketTypes.sector'
+            'functions' => function ($q) {
+                $q->with(['ticketTypes' => function ($q2) {
+                    $q2->with('sector')
+                        ->withCount(['issuedTickets as invited_count' => function ($q3) {
+                            $q3->whereNotNull('assistant_id');
+                        }]);
+                }]);
+            }
         ]);
 
         // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
@@ -568,6 +576,7 @@ class EventController extends Controller
                             'is_hidden' => (bool) $ticketType->is_hidden,
                             'is_bundle' => (bool) ($ticketType->is_bundle ?? false),
                             'bundle_quantity' => (int) ($ticketType->bundle_quantity ?? 1),
+                            'invited_count' => (int) $ticketType->invited_count,
                             'tickets_issued' => $ticketType->is_bundle
                                 ? $actualSoldTickets * ($ticketType->bundle_quantity ?? 1)
                                 : $actualSoldTickets,
