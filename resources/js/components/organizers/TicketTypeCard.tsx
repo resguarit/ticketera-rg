@@ -153,8 +153,12 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
             <span className="text-muted-foreground">Progreso:</span>
             <span className="font-medium">{ticket.sold_percentage}%</span>
           </div>
-
-          {/* NUEVA SECCIÓN: Mostrar entradas emitidas si es bundle */}
+          {(ticket.invited_count || 0) > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Invitados:</span>
+              <span className="font-medium text-indigo-600">{ticket.invited_count}</span>
+            </div>
+          )}
           {isBundle && (
             <>
               <div className="flex justify-between col-span-2 pt-2 border-t border-gray-200">
