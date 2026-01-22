@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $organizer = Auth::user()->organizer;
         $organizer->load(['events.functions.ticketTypes', 'events.venue', 'events.category']);
 
-        // Obtener período del request, por defecto último año
+        // Obtener período del request, por defecto último mes
         $period = $request->input('period', 'month');
         $dates = $this->getPeriodDates($period);
 
