@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff, TrendingUp, Percent } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface Stat {
     totalRevenue: number;
+    netRevenue: number;
+    serviceFee: number;
     totalEntradasVendidas: number;
     totalTicketsSold: number;
     activeEventsCount: number;
@@ -63,7 +65,8 @@ interface DashboardProps {
 
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData, currentPeriod }: DashboardProps) {
     const statCards = [
-        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-2' },
+        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-1', description: 'Total facturado' },
+        { title: 'Ingresos Netos', value: formatCurrency(stats.netRevenue), icon: TrendingUp, color: 'text-chart-2', description: 'Lo que recibes' },
         { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3', description: 'lotes + individuales' },
         { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4', description: 'entradas físicas' },
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
@@ -135,14 +138,14 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
             <Head title="Mi Dashboard" />
 
             <div className="container mx-auto p-6 space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
                         <p className="text-gray-600 mt-1">Resumen de la actividad de <strong>{organizer.name}</strong></p>
                     </div>
-                    <div className="flex gap-3 items-center">
+                    <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
                         <Select value={currentPeriod} onValueChange={handlePeriodChange}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full md:w-[180px]">
                                 <SelectValue placeholder="Seleccionar período" />
                             </SelectTrigger>
                             <SelectContent>
@@ -153,8 +156,8 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Link href={route('organizer.events.create')}>
-                            <Button className="bg-primary hover:bg-primary-hover text-white">
+                        <Link href={route('organizer.events.create')} className="w-full md:w-auto">
+                            <Button className="bg-primary hover:bg-primary-hover text-white w-full md:w-auto">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Crear Evento
                             </Button>
@@ -163,15 +166,15 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
                     {statCards.map((card, index) => (
-                        <Card key={index} className="p-6 border-l-4 border-l-blue-500">
+                        <Card key={index} className={`p-4 border-l-4 border-l-chart-3`}>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm font-medium text-gray-600">{card.title}</p>
                                     <card.icon className={`w-4 h-4 ${card.color}`} />
                                 </div>
-                                <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+                                <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                                 {card.description && (
                                     <p className="text-xs text-gray-500">{card.description}</p>
                                 )}
@@ -206,12 +209,12 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                         <CardContent className="space-y-4">
                             {topEvents.length > 0 ? topEvents.map(event => (
                                 <div key={event.id} className="space-y-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1 space-y-1">
-                                            <p className="text-sm font-medium leading-none truncate">{event.name}</p>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 space-y-1 min-w-0">
+                                            <p className="text-sm font-medium leading-none truncate" title={event.name}>{event.name}</p>
                                             <p className="text-xs text-muted-foreground">{formatNumber(event.tickets_sold)} tickets emitidos</p>
                                         </div>
-                                        <div className="font-medium text-sm text-green-600 ml-2">{formatCurrency(event.revenue)}</div>
+                                        <div className="font-medium text-sm text-green-600 whitespace-nowrap shrink-0">{formatCurrency(event.revenue)}</div>
                                     </div>
                                     {getStatusBadge(event)}
                                 </div>
@@ -240,16 +243,16 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                             <div className="p-3 space-y-2">
                                                 <p className="font-semibold text-sm truncate group-hover:text-primary">{event.name}</p>
                                                 <p className="text-xs text-muted-foreground">{event.date}</p>
-                                                
+
                                                 {/* Estado del evento */}
                                                 {getStatusBadge(event)}
-                                                
+
                                                 {/* Barra de progreso */}
-                                                <Progress 
-                                                    value={event.total_entradas > 0 ? (event.entradas_vendidas / event.total_entradas) * 100 : 0} 
-                                                    className="h-2 mt-2 bg-white border border-gray-300" 
+                                                <Progress
+                                                    value={event.total_entradas > 0 ? (event.entradas_vendidas / event.total_entradas) * 100 : 0}
+                                                    className="h-2 mt-2 bg-white border border-gray-300"
                                                 />
-                                                
+
                                                 {/* Estadísticas */}
                                                 <div className="text-xs text-muted-foreground space-y-0.5">
                                                     <div>{formatNumber(event.entradas_vendidas)} / {formatNumber(event.total_entradas)} entradas</div>
@@ -276,7 +279,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                 </Card>
             </div>
 
-            <ChangePasswordDialog 
+            <ChangePasswordDialog
                 open={isModalOpen}
                 onOpenChange={handleModalOpenChange}
                 showDisclaimer={must_change_password}

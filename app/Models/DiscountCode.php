@@ -15,6 +15,7 @@ class DiscountCode extends Model
 
     protected $fillable = [
         'event_id',
+        'promoter_id',
         'name',
         'code',
         'value',
@@ -23,5 +24,15 @@ class DiscountCode extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function promoter(): BelongsTo
+    {
+        return $this->belongsTo(Promoter::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

@@ -22,12 +22,17 @@ class Order extends Model
         'cuotas',
         'cuota_id',
         'payment_method',
+        'card_bin',
+        'card_brand',
+        'payment_type', // added payment_type as well to store 'single' or others if needed, though user didn't explicitly ask I see it in payload. Sticking to user request for now + logic.
         'transaction_id',
         'subtotal',
         'discount', // Porcentaje de descuento aplicado
         'tax', // Porcentaje de impuesto aplicado
         'service_fee',
         'total_amount',
+        'refunded_at',
+        'refunded_amount',
         'discount_code_id', // Clave foránea para el código de descuento
         'order_details',
     ];
@@ -40,6 +45,8 @@ class Order extends Model
         'tax' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'refunded_amount' => 'decimal:2',
+        'refunded_at' => 'datetime',
         'order_details' => 'json',
     ];
 
@@ -83,7 +90,7 @@ class Order extends Model
                 if (!$this->relationLoaded('items.ticketType.eventFunction.event.organizer')) {
                     $this->load('items.ticketType.eventFunction.event.organizer');
                 }
-                
+
                 // Devuelve el organizador del primer item
                 return $this->items->first()?->ticketType?->eventFunction?->event?->organizer;
             }
@@ -126,5 +133,4 @@ class Order extends Model
         }
         return $value;
     }
-
 }

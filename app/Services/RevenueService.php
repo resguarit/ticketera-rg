@@ -224,4 +224,107 @@ class RevenueService
 
         return $chartData;
     }
+
+    /**
+     * NUEVO: Calcula ingresos netos para un organizador (sin cargo por servicio)
+     */
+    public function netRevenueForOrganizer(Organizer $organizer, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
+                $q->where('organizer_id', $organizer->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        return (float) ($query->sum('subtotal') ?? 0);
+    }
+
+    /**
+     * NUEVO: Calcula cargo por servicio total para un organizador
+     */
+    public function serviceFeeForOrganizer(Organizer $organizer, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
+                $q->where('organizer_id', $organizer->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        return (float) ($query->sum('service_fee') ?? 0);
+    }
+
+    /**
+     * Calcula los ingresos netos para un evento (Total - Service Fee) de órdenes PAGADAS.
+     */
+    public function netRevenueForEvent(Event $event, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction', function ($q) use ($event) {
+                $q->where('event_id', $event->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        // Se calcula restando el service_fee al total_amount, o sumando subtotales si el descuento aplica al subtotal antes del fee.
+        // Asumiendo que subtotal es el monto sin service fee.
+        // Si hay descuentos, hay que tener cuidado.
+        // User def: "ingresos netos serian esas mismas ordenes pero sin contar el cargo por servicio"
+        // Si total_amount = subtotal_with_discount + service_fee
+        // Entoces Net = total_amount - service_fee
+        
+        // Podemos sumar (total_amount - service_fee)
+        return (float) ($query->sum(DB::raw('total_amount - service_fee')) ?? 0);
+    }
+
+    /**
+     * Calcula los ingresos por cargo de servicio para un evento.
+     * Incluye órdenes PAGADAS y órdenes REFUNDED donde se retuvo el service fee.
+     */
+    public function serviceFeeForEvent(Event $event, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        // 1. Service fee de órdenes pagadas
+        $paidQuery = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType.eventFunction', function ($q) use ($event) {
+                $q->where('event_id', $event->id);
+            });
+
+        if ($startDate && $endDate) {
+            $paidQuery->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        $paidFees = (float) ($paidQuery->sum('service_fee') ?? 0);
+
+        // 2. Service fee de órdenes reembolsadas donde se retuvo el cargo (refunded_amount approx total - fee)
+        // La condición "solo le fueron devuelta el monto de las entradas" implica que refunded_amount < total_amount
+        // Y específicamente refunded_amount == subtotal (o total - fee).
+        // Usaremos una aproximación por si hay decimales, o igualdad directa si es exacto.
+        // Como es SQL, mejor usar condiciones simples.
+        
+        $refundedQuery = Order::query()
+            ->where('status', OrderStatus::REFUNDED)
+            ->whereHas('issuedTickets.ticketType.eventFunction', function ($q) use ($event) {
+                $q->where('event_id', $event->id);
+            })
+            ->whereRaw('ABS(refunded_amount - (total_amount - service_fee)) < 0.05'); // Tolerancia pequeña para floats
+
+        if ($startDate && $endDate) {
+            $refundedQuery->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        $refundedFees = (float) ($refundedQuery->sum('service_fee') ?? 0);
+
+        return $paidFees + $refundedFees;
+    }
 }

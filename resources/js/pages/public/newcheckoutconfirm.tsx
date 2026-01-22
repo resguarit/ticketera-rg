@@ -59,6 +59,7 @@ export interface BillingInfo {
   city: string
   postalCode: string
   country: string
+  discountCode: string
 }
 
 export interface PaymentInfo {
@@ -103,6 +104,12 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
       decidirSandboxRef.current = new (window as any).Decidir(url)
       decidirSandboxRef.current.setPublishableKey(key)
     }
+
+    const savedCode = sessionStorage.getItem('referral_code');
+    if (savedCode) {
+      console.log("Aplicando codigo de vendedor: ", savedCode);
+      setBillingInfo((prev) => ({ ...prev, discountCode: savedCode }));
+    }
   }, [])
 
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
@@ -116,6 +123,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     city: "",
     postalCode: "",
     country: "Argentina",
+    discountCode: "",
   })
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
@@ -249,15 +257,30 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
       <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
         <Header />
 
-        <div className="container mx-auto px-4 py-8">
-          <CheckoutTimer lockExpiration={lockExpiration} sessionId={sessionId} onExpire={() => setExpired(true)} />
+        <div className="mx-auto px-4 lg:px-16 py-8">
+          <div className="w-full flex flex-col lg:flex-row lg:justify-between gap-4">
+            {/* Botón - arriba en mobile, izquierda en lg+ */}
+            <div className="lg:w-1/2">
+              <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver al Evento
+              </Button>
+            </div>
 
-          <div className="mb-6">
-            <Button onClick={handleBack} variant="ghost" size="sm" className="text-foreground hover:text-primary">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Evento
-            </Button>
+            {/* Timer - debajo en mobile (full width), centro en lg+ */}
+            <div className="flex justify-center w-full lg:w-full">
+              <CheckoutTimer
+                lockExpiration={lockExpiration}
+                sessionId={sessionId}
+                eventId={eventId}
+                onExpire={() => setExpired(true)}
+              />
+            </div>
+
+            {/* Spacer solo visible en lg+ */}
+            <div className="hidden lg:flex lg:w-1/2"></div>
           </div>
+
 
           <div className="mb-8">
             <div className="flex items-center justify-center space-x-4 mb-4">
@@ -285,9 +308,13 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="bg-white border-gray-200 shadow-lg">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 order-1 lg:order-2">
+              <OrderSummary eventData={eventData} />
+            </div>
+
+            <div className="lg:col-span-2 order-2 lg:order-1 flex flex-col gap-6">
+              <Card className="bg-white border-gray-200 shadow-lg order-last lg:order-first">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-gray-500 font-medium">Resumen del Evento</CardTitle>
                 </CardHeader>
@@ -315,62 +342,60 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
                 </CardContent>
               </Card>
 
-              {currentStep === 1 && (
-                <BillingInfoStep
-                  billingInfo={billingInfo}
-                  setBillingInfo={setBillingInfo}
-                  onNext={handleNextStep}
-                  disabled={expired}
-                />
-              )}
-
-              {currentStep === 2 && (
-                <PaymentInfoStep
-                  paymentInfo={paymentInfo}
-                  setPaymentInfo={setPaymentInfo}
-                  billingInfo={billingInfo}
-                  decidirSandbox={decidirSandboxRef.current}
-                  onComplete={handlePaymentStepComplete}
-                  cuotas={eventData.cuotas || []}
-                  cuotas_map={eventData.cuotas_map}
-                  disabled={expired}
-                />
-              )}
-
-              {currentStep === 3 && (
-                <ConfirmationStep
-                  agreements={agreements}
-                  setAgreements={setAgreements}
-                  onSubmit={handleSubmitPayment}
-                  isLoading={isLoading}
-                  disabled={expired}
-                />
-              )}
-
-              <div className="flex justify-between">
-                <Button
-                  onClick={handlePrevStep}
-                  variant="outline"
-                  className="border-gray-300 text-foreground hover:bg-gray-50 bg-transparent"
-                  disabled={currentStep === 1 || expired}
-                >
-                  Anterior
-                </Button>
-
+              <div className="space-y-6 order-first lg:order-last">
                 {currentStep === 1 && (
-                  <Button
-                    onClick={handleNextStep}
-                    className="bg-primary hover:bg-primary-hover text-white px-8"
+                  <BillingInfoStep
+                    billingInfo={billingInfo}
+                    setBillingInfo={setBillingInfo}
+                    onNext={handleNextStep}
                     disabled={expired}
-                  >
-                    Siguiente
-                  </Button>
+                  />
                 )}
-              </div>
-            </div>
 
-            <div className="lg:col-span-1">
-              <OrderSummary eventData={eventData} />
+                {currentStep === 2 && (
+                  <PaymentInfoStep
+                    paymentInfo={paymentInfo}
+                    setPaymentInfo={setPaymentInfo}
+                    billingInfo={billingInfo}
+                    decidirSandbox={decidirSandboxRef.current}
+                    onComplete={handlePaymentStepComplete}
+                    cuotas={eventData.cuotas || []}
+                    cuotas_map={eventData.cuotas_map}
+                    disabled={expired}
+                  />
+                )}
+
+                {currentStep === 3 && (
+                  <ConfirmationStep
+                    agreements={agreements}
+                    setAgreements={setAgreements}
+                    onSubmit={handleSubmitPayment}
+                    isLoading={isLoading}
+                    disabled={expired}
+                  />
+                )}
+
+                <div className="flex justify-between">
+                  <Button
+                    onClick={handlePrevStep}
+                    variant="outline"
+                    className="border-gray-300 text-foreground hover:bg-gray-50 bg-transparent"
+                    disabled={currentStep === 1 || expired}
+                  >
+                    Anterior
+                  </Button>
+
+                  {currentStep === 1 && (
+                    <Button
+                      onClick={handleNextStep}
+                      className="bg-primary hover:bg-primary-hover text-white px-8"
+                      disabled={expired}
+                    >
+                      Siguiente
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

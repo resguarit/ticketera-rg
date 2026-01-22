@@ -31,15 +31,11 @@ class EmailDispatcherService
 
     public function resendTicketPurchaseConfirmation(Order $order)
     {
-        Log::info("Resending ticket purchase confirmation email for Order ID: {$order->id} to {$order->client->email}");
-
         SendOrderTicketJob::dispatch($order);
     }
 
     public function sendTicketPurchaseConfirmation(Order $order)
     {
-        Log::info("Dispatching ticket purchase confirmation email for Order ID: {$order->id} to {$order->client->email}");
-
         SendOrderConfirmationJob::dispatch($order);
     }
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { 
+import { toast } from 'sonner';
+import {
     Settings as SettingsIcon,
     Globe,
     Database,
@@ -10,7 +11,9 @@ import {
     Phone,
     Clock,
     Mail,
-    Info
+    Info,
+    Facebook,
+    Instagram
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,13 +52,13 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                 setGeneralSettings(prev => ({ ...prev, [fieldKey]: tempValue }));
                 setEditingField(null);
                 setTempValue(null);
-                alert('Campo actualizado correctamente');
+                toast.success('Campo actualizado correctamente');
             } else {
-                alert('Error al guardar: ' + data.message);
+                toast.error('Error al guardar: ' + data.message);
             }
         } catch (error: any) {
             console.error('Error al guardar:', error);
-            alert('Error al guardar el campo: ' + (error.response?.data?.message || error.message));
+            toast.error('Error al guardar el campo: ' + (error.response?.data?.message || error.message));
         } finally {
             setIsLoading(false);
         }
@@ -105,7 +108,7 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
         fieldKey: string,
         label: string,
         value: any,
-        type: 'text' | 'email' | 'textarea' = 'text',
+        type: 'text' | 'email' | 'textarea' | 'url' = 'text',
         icon?: React.ReactNode
     ) => {
         const isEditing = editingField === `${group}.${fieldKey}`;
@@ -194,16 +197,16 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
     return (
         <>
             <Head title="Configuración" />
-            
+
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Configuración del Sistema
                             </h1>
-                            <p className="text-gray-600 text-lg">
+                            <p className="text-gray-600 text-sm md:text-base lg:text-lg">
                                 Administra la información general de la plataforma
                             </p>
                         </div>
@@ -220,15 +223,15 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {renderReadOnlyField(
-                                    'Nombre del Sitio', 
-                                    generalSettings.siteName, 
+                                    'Nombre del Sitio',
+                                    generalSettings.siteName,
                                     'text',
                                     <SettingsIcon className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderReadOnlyField(
-                                    'Descripción del Sitio', 
-                                    generalSettings.siteDescription, 
+                                    'Descripción del Sitio',
+                                    generalSettings.siteDescription,
                                     'textarea',
                                     <Globe className="w-4 h-4 text-gray-600" />
                                 )}
@@ -244,19 +247,19 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {renderEditableField(
-                                    'general', 
-                                    'supportEmail', 
-                                    'Email de Soporte', 
-                                    generalSettings.supportEmail, 
+                                    'general',
+                                    'supportEmail',
+                                    'Email de Soporte',
+                                    generalSettings.supportEmail,
                                     'email',
                                     <Mail className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderEditableField(
-                                    'general', 
-                                    'supportPhone', 
-                                    'Teléfono de Soporte', 
-                                    generalSettings.supportPhone, 
+                                    'general',
+                                    'supportPhone',
+                                    'Teléfono de Soporte',
+                                    generalSettings.supportPhone,
                                     'text',
                                     <Phone className="w-4 h-4 text-gray-600" />
                                 )}
@@ -272,21 +275,49 @@ export default function Settings({ auth, generalSettings: initialGeneral }: any)
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {renderEditableField(
-                                    'general', 
-                                    'businessDays', 
-                                    'Días de Atención', 
-                                    generalSettings.businessDays, 
+                                    'general',
+                                    'businessDays',
+                                    'Días de Atención',
+                                    generalSettings.businessDays,
                                     'text',
                                     <Clock className="w-4 h-4 text-gray-600" />
                                 )}
 
                                 {renderEditableField(
-                                    'general', 
-                                    'businessHours', 
-                                    'Horarios de Atención', 
-                                    generalSettings.businessHours, 
+                                    'general',
+                                    'businessHours',
+                                    'Horarios de Atención',
+                                    generalSettings.businessHours,
                                     'text',
                                     <Clock className="w-4 h-4 text-gray-600" />
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-white border-gray-200 shadow-lg lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-black flex items-center space-x-2">
+                                    <Globe className="w-5 h-5" />
+                                    <span>Redes Sociales</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {renderEditableField(
+                                    'general',
+                                    'facebookUrl',
+                                    'URL de Facebook',
+                                    generalSettings.facebookUrl,
+                                    'url',
+                                    <Facebook className="w-4 h-4 text-gray-600" />
+                                )}
+
+                                {renderEditableField(
+                                    'general',
+                                    'instagramUrl',
+                                    'URL de Instagram',
+                                    generalSettings.instagramUrl,
+                                    'url',
+                                    <Instagram className="w-4 h-4 text-gray-600" />
                                 )}
                             </CardContent>
                         </Card>

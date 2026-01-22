@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
         try {
             DB::beginTransaction();
 
-            // Crear personas y usuarios base
             $person = Person::create([
                 'name' => 'Jorge',
                 'last_name' => 'Raul',
@@ -32,19 +31,14 @@ class DatabaseSeeder extends Seeder
                 'password_changed_at' => now(),
             ]);
 
-            // Ejecutar seeders de las tablas principales
             $this->call([
                 ProvinciaSeeder::class,
                 CiudadSeeder::class,
                 CategorySeeder::class,
-                VenueSeeder::class,
-                SectorSeeder::class,
-                //OrganizerSeeder::class,
-                //EventSeeder::class,
-                //EventFunctionSeeder::class,
-                //TicketTypeSeeder::class,
-                FaqCategorySeeder::class, // <-- AÑADIR ESTA LÍNEA
-                FaqSeeder::class,         // <-- AÑADIR ESTA LÍNEA
+                FaqCategorySeeder::class,
+                FaqSeeder::class,
+                PaymentMethodSeeder::class,
+                SettingsSeeder::class,
             ]);
 
             DB::commit();

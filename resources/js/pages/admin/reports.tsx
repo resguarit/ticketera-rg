@@ -13,7 +13,8 @@ import {
     RefreshCw,
     PieChart,
     FileText,
-    EyeOff
+    EyeOff,
+    SaveAll
 } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
@@ -23,9 +24,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 
 interface RealTimeStats {
     today_sales: number;
+    today_orders: number; // NUEVO
     today_tickets: number;
     active_events: number;
     total_users: number;
@@ -36,6 +39,12 @@ interface ReportsProps {
     salesData: {
         totalRevenue: number;
         monthlyRevenue: number;
+        netRevenue: number;
+        monthlyNetRevenue: number;
+        totalServiceFees: number;
+        monthlyServiceFees: number;
+        totalOrders: number; // NUEVO
+        monthlyOrders: number; // NUEVO
         totalTickets: number;
         monthlyTickets: number;
         averageTicketPrice: number;
@@ -73,10 +82,6 @@ interface ReportsProps {
     timeRange: string;
     [key: string]: any;
 }
-
-const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('es-AR').format(num);
-};
 
 export default function Reports({ auth }: any) {
     const { salesData, topEvents, monthlyData, categoryData, userDemographics, timeRange } = usePage<ReportsProps>().props;
@@ -178,13 +183,6 @@ export default function Reports({ auth }: any) {
         );
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS'
-        }).format(amount);
-    };
-
     const getMaxRevenue = () => {
         if (monthlyData.length === 0) return 1;
         return Math.max(...monthlyData.map(m => m.revenue));
@@ -199,7 +197,7 @@ export default function Reports({ auth }: any) {
                     {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
+                            <h1 className="text-2xl md:text-3xl sm:text-3xl lg:text-4xl font-bold text-black mb-2">
                                 Reportes y Analíticas
                             </h1>
                             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
@@ -233,46 +231,34 @@ export default function Reports({ auth }: any) {
                                 <RefreshCw className="w-4 h-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Actualizar</span>
                             </Button>
-                            
-                            <Button 
-                                className="bg-primary text-white hover:bg-primary-hover w-full sm:w-auto"
-                                onClick={() => handleDownloadReport('complete')}
-                                disabled={isGenerating}
-                            >
-                                {isGenerating ? (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span className="hidden sm:inline">Generando...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <Download className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Exportar Reporte</span>
-                                    </div>
-                                )}
-                            </Button>
                         </div>
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 mb-6 sm:mb-8">
+                        {/* Card 1: Ingresos Totales (con service fee) */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Ingresos Totales</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.totalRevenue)}</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Ingresos Totales</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black ">{formatCurrency(salesData.totalRevenue)}</p>
                                         <div className="flex items-center mt-2">
                                             {salesData.growthRate >= 0 ? (
-                                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1 flex-shrink-0" />
+                                                <>
+                                                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm text-chart-2 font-medium">
+                                                        +{salesData.growthRate}% vs período anterior
+                                                    </span>
+                                                </>
                                             ) : (
-                                                <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
+                                                <>
+                                                    <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
+                                                    <span className="text-xs sm:text-sm text-red-500 font-medium">
+                                                        {salesData.growthRate}% vs período anterior
+                                                    </span>
+                                                </>
                                             )}
-                                            <span className={`text-xs sm:text-sm font-medium ${
-                                                salesData.growthRate >= 0 ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                                {salesData.growthRate >= 0 ? '+' : ''}{salesData.growthRate}%
-                                            </span>
                                         </div>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
@@ -282,15 +268,36 @@ export default function Reports({ auth }: any) {
                             </CardContent>
                         </Card>
 
+                        {/* Card 2: NUEVA - Ingreso Neto (sin service fee) */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Tickets Vendidos</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalTickets)}</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium">Ingreso Neto</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatCurrency(salesData.netRevenue)}</p>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Sin cargo de servicio
+                                        </p>
+                                    </div>
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                                        <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Card 3: Entradas Vendidas */}
+                        <Card className="bg-white border-gray-200 shadow-lg">
+                            <CardContent className="p-4 sm:p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium">Entradas Vendidas</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-black">{formatNumber(salesData.totalOrders)}</p>
                                         <div className="flex items-center mt-2">
                                             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-2 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-2 text-xs sm:text-sm font-medium">+22%</span>
+                                            <span className="text-xs sm:text-sm text-gray-600">
+                                                {formatNumber(salesData.totalTickets)} tickets emitidos
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-2 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
@@ -300,34 +307,16 @@ export default function Reports({ auth }: any) {
                             </CardContent>
                         </Card>
 
+                        {/* Card 4: Tasa de Conversión */}
                         <Card className="bg-white border-gray-200 shadow-lg">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Precio Promedio</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-black truncate">{formatCurrency(salesData.averageTicketPrice)}</p>
-                                        <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-3 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-3 text-xs sm:text-sm font-medium">+8%</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-3 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-white border-gray-200 shadow-lg">
-                            <CardContent className="p-4 sm:p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-gray-600 text-xs sm:text-sm font-medium truncate">Tasa de Conversión</p>
+                                        <p className="text-gray-600 text-xs sm:text-sm font-medium ">Tasa de Conversión</p>
                                         <p className="text-lg sm:text-2xl font-bold text-black">{salesData.conversionRate}%</p>
-                                        <div className="flex items-center mt-2">
-                                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-chart-4 mr-1 flex-shrink-0" />
-                                            <span className="text-chart-4 text-xs sm:text-sm font-medium">+3.2%</span>
-                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2 ">
+                                            De órdenes iniciadas a pagadas
+                                        </p>
                                     </div>
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-4 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
                                         <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -343,19 +332,20 @@ export default function Reports({ auth }: any) {
                             <CardContent className="p-4 sm:p-6">
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-center">
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Ventas Hoy</p>
-                                        <p className="text-lg sm:text-2xl font-bold truncate">{formatCurrency(realTimeStats.today_sales)}</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Ventas Hoy</p>
+                                        <p className="text-lg sm:text-2xl font-bold">${formatNumber(realTimeStats.today_sales)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Tickets Hoy</p>
-                                        <p className="text-lg sm:text-2xl font-bold">{realTimeStats.today_tickets}</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Entradas Hoy</p>
+                                        <p className="text-lg sm:text-2xl font-bold">{realTimeStats.today_orders}</p>
+                                        <p className="text-xs opacity-75">{realTimeStats.today_tickets} tickets</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Eventos Activos</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Eventos Activos</p>
                                         <p className="text-lg sm:text-2xl font-bold">{realTimeStats.active_events}</p>
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-xs sm:text-sm">Total Usuarios</p>
+                                        <p className="text-xs sm:text-sm font-medium opacity-90">Usuarios</p>
                                         <p className="text-lg sm:text-2xl font-bold">{realTimeStats.total_users}</p>
                                     </div>
                                 </div>
@@ -433,7 +423,7 @@ export default function Reports({ auth }: any) {
                                                     <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
                                                 </div>
                                                 <p className="text-xl sm:text-2xl font-bold text-green-900">{formatCurrency(salesData.monthlyRevenue)}</p>
-                                                <p className="text-green-700 text-xs sm:text-sm">{salesData.monthlyTickets} tickets</p>
+                                                <p className="text-green-700 text-xs sm:text-sm">{salesData.monthlyOrders} entradas ({salesData.monthlyTickets} tickets)</p>
                                             </div>
 
                                             <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -620,7 +610,7 @@ export default function Reports({ auth }: any) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                 <Button 
                                     variant="outline" 
                                     className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
@@ -649,6 +639,16 @@ export default function Reports({ auth }: any) {
                                 >
                                     <Users className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
                                     <span className="text-xs sm:text-sm">Reporte de Usuarios</span>
+                                </Button>
+                                
+                                <Button 
+                                    variant="outline" 
+                                    className="h-16 sm:h-20 flex-col border-gray-300 text-black hover:bg-gray-50"
+                                    onClick={() => handleDownloadReport('complete')}
+                                    disabled={isGenerating}
+                                >
+                                    <SaveAll  className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                                    <span className="text-xs sm:text-sm">Reporte Completo</span>
                                 </Button>
                             </div>
                         </CardContent>

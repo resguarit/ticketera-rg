@@ -45,18 +45,11 @@ class CheckoutController extends Controller
 
         try {
             $this->ticketLockService->releaseAllSessionLocks($sessionId);
-            Log::info('Locks anteriores liberados para nueva sesión de checkout', [
-                'session_base_id' => substr($sessionId, -8)
-            ]);
         } catch (\Exception $e) {
-            Log::warning('Error liberando locks anteriores', [
-                'session_id' => substr($sessionId, -8),
-                'error' => $e->getMessage()
-            ]);
         }
 
         // ACTUALIZADO: Cargar el evento con ciudad y provincia
-        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes', 'cuotas']);
+        $event->load(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes.sector', 'cuotas']);
 
         $dataEncoded = $request->input('data');
         if (!$dataEncoded) {
@@ -99,8 +92,8 @@ class CheckoutController extends Controller
 
                         $selectedTickets[] = [
                             'id' => $ticketType->id,
-                            'type' => $ticketType->name,
-                            'price' => $ticketType->price,
+                            'type' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
+                            'price' => (float) $ticketType->price,
                             'quantity' => (int)$quantity,
                             'description' => $ticketType->description,
                             'is_bundle' => $ticketType->isBundle(),
@@ -171,17 +164,27 @@ class CheckoutController extends Controller
         if (!session()->has('checkout_session_id')) {
             $newLockId = (string) Str::uuid();
             session(['checkout_session_id' => $newLockId]);
-            Log::info('Generado nuevo checkout_session_id', ['lock_id' => $newLockId]);
         }
         return session('checkout_session_id');
     }
 
     public function processPayment(Request $request): RedirectResponse
     {
+        Log::info('=== INICIO processPayment ===', [
+            'has_session_id' => $request->session()->has('checkout_session_id'),
+            'has_locked_tickets' => $request->session()->has('locked_tickets'),
+            'event_id' => $request->input('event_id'),
+        ]);
+
         $sessionId = $request->session()->get('checkout_session_id');
         $lockedTickets = $request->session()->get('locked_tickets', []);
 
         if (empty($sessionId) || empty($lockedTickets)) {
+            Log::error('Sesión o locks faltantes', [
+                'has_session_id' => !empty($sessionId),
+                'has_locked_tickets' => !empty($lockedTickets),
+            ]);
+            
             return $this->redirectToError([
                 'title' => 'Sesión Expirada',
                 'message' => 'Tu sesión de compra ha expirado. Por favor, inicia el proceso nuevamente.',
@@ -194,9 +197,13 @@ class CheckoutController extends Controller
             ]);
         }
 
+        Log::info('Verificando locks', ['locked_tickets_count' => count($lockedTickets)]);
+
         $lockVerification = $this->ticketLockService->verifyLocks($lockedTickets, $sessionId);
 
         if (!$lockVerification['all_valid']) {
+            Log::warning('Locks inválidos', ['verification' => $lockVerification]);
+            
             $this->ticketLockService->releaseTickets($sessionId);
 
             return $this->redirectToError([
@@ -212,6 +219,9 @@ class CheckoutController extends Controller
         }
 
         try {
+            Log::info('Iniciando validación de request', [
+                'request_keys' => array_keys($request->all())
+            ]);
 
             $validated = $request->validate([
                 'event_id' => 'required|exists:events,id',
@@ -223,6 +233,7 @@ class CheckoutController extends Controller
                 'billing_info.phone' => 'required|string|max:20',
                 'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
                 'billing_info.documentNumber' => 'required|string|max:20',
+                'billing_info.discountCode' => 'nullable|string',
                 'payment_info' => 'required|array',
                 'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
                 'payment_info.installments' => 'required|integer|min:1',
@@ -232,22 +243,25 @@ class CheckoutController extends Controller
                 'agreements' => 'required|array',
                 'agreements.terms' => 'required|boolean|accepted',
                 'agreements.privacy' => 'required|boolean|accepted',
-
             ]);
+
+            Log::info('Validación exitosa, procesando checkout');
+
         } catch (\Illuminate\Validation\ValidationException $e) {
-
-            Log::error('Error de validación en checkout', [
-                'errors' => $e->errors(),
-                'failed_rules' => $e->validator->failed(),
-                'input_keys' => array_keys($request->all())
-            ]);
 
             return redirect()->back()->withInput()->withErrors($e->errors());
         }
 
         try {
-
             $this->ticketLockService->releaseTickets($sessionId);
+
+            Log::info('Creando CheckoutData', [
+                'bin_received' => $validated['bin'] ?? 'null',
+                'bin_length' => isset($validated['bin']) ? strlen($validated['bin']) : 0,
+                'has_token' => !empty($validated['token']),
+                'payment_method' => $validated['payment_info']['method'],
+                'installments' => $validated['payment_info']['installments'],
+            ]);
 
             $checkoutData = new CheckoutData(
                 eventId: $validated['event_id'],
@@ -257,13 +271,21 @@ class CheckoutController extends Controller
                 installments: $validated['payment_info']['installments'],
                 billingInfo: $validated['billing_info'] ?? null,
                 paymentToken: $validated['token'],
-                bin: $validated['bin'],
+                bin: $validated['bin'] ?? null,
             );
+
+            Log::info('Procesando pago con CheckoutService');
 
             $checkoutResult = $this->checkoutService->processOrderPayment($checkoutData);
 
-            if ($checkoutResult->success) {
+            Log::info('Resultado del checkout', [
+                'success' => $checkoutResult->success,
+                'order_id' => $checkoutResult->order?->id,
+                'payment_error_message' => $checkoutResult->paymentResult?->errorMessage,
+                'checkout_message' => $checkoutResult->message ?? 'Sin mensaje',
+            ]);
 
+            if ($checkoutResult->success) {
                 $request->session()->forget(['checkout_session_id', 'locked_tickets']);
 
                 $redirectParams = ['order' => $checkoutResult->order->transaction_id ?? $checkoutResult->order->id];
@@ -273,10 +295,15 @@ class CheckoutController extends Controller
                 return redirect()->to($signedUrl)
                     ->with('success', '¡Compra realizada exitosamente!');
             } else {
+                Log::warning('Pago fallido', [
+                    'checkout_message' => $checkoutResult->message ?? 'Sin mensaje',
+                    'payment_error_message' => $checkoutResult->paymentResult?->errorMessage,
+                    'payment_result_full' => $checkoutResult->paymentResult,
+                ]);
 
                 return $this->redirectToError([
                     'title' => 'Error en el Pago',
-                    'message' => 'No pudimos procesar tu pago. La orden ha sido cancelada.',
+                    'message' => $checkoutResult->message ?? 'No pudimos procesar tu pago. La orden ha sido cancelada.',
                     'errorCode' => 'PAYMENT_FAILED',
                     'canRetry' => true,
                     'retryUrl' => route('event.detail', $validated['event_id']),
@@ -284,20 +311,14 @@ class CheckoutController extends Controller
                     'eventName' => Event::find($validated['event_id'])->name ?? null,
                     'timestamp' => now()->format('d/m/Y H:i')
                 ]);
+
+                Log::error($checkoutResult);
             }
         } catch (\Exception $e) {
             try {
                 $this->ticketLockService->releaseTickets($sessionId);
             } catch (\Exception $releaseError) {
-                Log::error('Error liberando locks en catch', ['error' => $releaseError->getMessage()]);
             }
-
-            Log::error('Error general en checkout', [
-                'message' => $e->getMessage(),
-                'session_id' => $sessionId ?? 'unknown',
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
 
             return $this->redirectToError([
                 'title' => 'Error Inesperado',
@@ -345,10 +366,6 @@ class CheckoutController extends Controller
                 'errorData' => $errorData
             ]);
         } catch (\Exception $e) {
-            Log::error('Error mostrando página de error', [
-                'message' => $e->getMessage(),
-                'encoded_data' => $encodedData
-            ]);
 
             return redirect()->route('home')
                 ->with('error', 'Ha ocurrido un error. Por favor intenta nuevamente.');
@@ -362,7 +379,6 @@ class CheckoutController extends Controller
         $accountCreated = $request->query('account_created', false);
 
         if (!$orderKey) {
-            Log::error('Order ID no encontrado en success page');
             return redirect()->route('home')
                 ->with('error', 'Orden no encontrada');
         }
@@ -372,6 +388,7 @@ class CheckoutController extends Controller
             // ACTUALIZADO: Cargar la orden con ciudad y provincia
             $order = Order::with([
                 'items.ticketType.eventFunction.event.venue.ciudad.provincia',
+                'items.ticketType.sector',
                 'client.person'
             ])
                 ->where(function ($q) use ($orderKey) {
@@ -414,9 +431,12 @@ class CheckoutController extends Controller
                         'description' => $eventFunction->description,
                     ],
                 ],
-                'tickets' => $orderSummary['grouped_tickets']->map(function ($ticket) {
+                'tickets' => $orderSummary['grouped_tickets']->map(function ($ticket) use ($order) {
+                    $relatedItem = $order->items->firstWhere('ticket_type_id', $ticket['ticket_type_id']);
+                    $sectorName = $relatedItem && $relatedItem->ticketType->sector ? ' - ' . $relatedItem->ticketType->sector->name : '';
+
                     $ticketData = [
-                        'type' => $ticket['ticket_type_name'],
+                        'type' => $ticket['ticket_type_name'] . $sectorName,
                         'quantity' => $ticket['quantity'],
                         'price' => $ticket['unit_price'],
                     ];
@@ -439,13 +459,6 @@ class CheckoutController extends Controller
                 'accountCreated' => (bool) $accountCreated
             ]);
         } catch (\Exception $e) {
-            Log::error('Error en success page', [
-                'order_id' => $orderKey,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return redirect()->route('home')
                 ->with('error', 'Error al mostrar la página de éxito');
@@ -488,9 +501,6 @@ class CheckoutController extends Controller
 
             // Si no hay eventId en el request, intentar obtenerlo del sessionStorage o redirigir a home
             if (!$eventId) {
-                Log::warning('EventId no proporcionado en releaseLocks', [
-                    'session_id' => substr($sessionId, -8)
-                ]);
 
                 return redirect()->route('home')
                     ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
@@ -500,11 +510,6 @@ class CheckoutController extends Controller
             return redirect()->route('event.detail', ['event' => $eventId])
                 ->with('warning', 'Tu tiempo de reserva ha expirado. Los tickets han sido liberados.');
         } catch (\Exception $e) {
-            Log::error('Error liberando locks', [
-                'session_id' => $sessionId,
-                'event_id' => $eventId,
-                'error' => $e->getMessage()
-            ]);
 
             // Fallback seguro
             if (!$eventId) {

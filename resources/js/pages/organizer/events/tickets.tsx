@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Ticket, DollarSign, Users, Eye, Calendar, Link } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Users, Eye, Calendar, Link, EyeOff } from 'lucide-react';
 import { TicketTypeCard } from '@/components/organizers/TicketTypeCard';
 import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction, EventFunctionRelations } from '@/types/models/eventFunction';
@@ -19,6 +19,8 @@ interface EventFunctionDetail extends EventFunction, EventFunctionRelations {
     formatted_date: string;
     day_name: string;
     ticketTypes: TicketType[];
+    status_label?: string;
+    status_color?: string;
 }
 
 interface EventWithDetails extends Event, EventRelations {
@@ -77,7 +79,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
     const handleDuplicateTicketAll = (ticket: TicketType, functionIds: number[]) => {
         const func = event.functions.find(f => f.id.toString() === selectedFunction);
         if (!func) return;
-        
+
         router.post(
             route('organizer.events.functions.ticket-types.duplicateAll', {
                 event: event.id,
@@ -159,194 +161,193 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
 
                                 </CardDescription>
                             </div>
-                                <Button 
-                                    onClick={() => handleCreateTicket(Number(selectedFunction))}
-                                    className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
-                                    size="lg"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Crear Entrada
-                                </Button>
+                            <Button
+                                onClick={() => handleCreateTicket(Number(selectedFunction))}
+                                className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
+                                size="lg"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Crear Entrada
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             {/* Contenido con tabs por función */}
-                    {event.functions && event.functions.length > 0 ? (
-                        <Tabs value={selectedFunction} onValueChange={setSelectedFunction} className="w-full">
-                            <div className="mb-6">
-                                <TabsList className="h-11">
-                                    {event.functions.map((func) => (
-                                        <TabsTrigger 
-                                            key={func.id} 
-                                            value={func.id.toString()} 
-                                            className="flex items-center hover:cursor-pointer gap-2 px-4 py-2 text-sm font-medium"
-                                        >
-                                            <Calendar className="w-4 h-4" />
-                                            <span>{func.name}</span>
-                                            <Badge variant="default" className="ml-1 text-xs">
-                                                {func.date}
-                                            </Badge>
-                                            {/* Agregar badge de estado */}
-                                            {func.status && (
-                                                <Badge 
-                                                    className={`ml-1 text-xs ${
-                                                        func.status_color === 'green' ? 'bg-green-500' :
-                                                        func.status_color === 'blue' ? 'bg-blue-500' :
-                                                        func.status_color === 'red' ? 'bg-red-500' :
-                                                        func.status_color === 'yellow' ? 'bg-yellow-500' :
-                                                        func.status_color === 'orange' ? 'bg-orange-500' :
-                                                        'bg-gray-500'
-                                                    } text-white border-0`}
+                            {event.functions && event.functions.length > 0 ? (
+                                <Tabs value={selectedFunction} onValueChange={setSelectedFunction} className="w-full">
+                                    <div className="mb-6 overflow-x-auto pb-2">
+                                        <TabsList className="h-auto w-max justify-start px-2">
+                                            {event.functions.map((func) => (
+                                                <TabsTrigger
+                                                    key={func.id}
+                                                    value={func.id.toString()}
+                                                    className="flex items-center hover:cursor-pointer gap-2 px-4 py-2 text-sm font-medium"
                                                 >
-                                                    {func.status_label}
-                                                </Badge>
-                                            )}
-                                            {!func.is_active && (
-                                                <Badge className="ml-1 bg-gray-400 text-white border-0 text-xs">
-                                                    <EyeOff className="w-3 h-3" />
-                                                </Badge>
-                                            )}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </div>
+                                                    <Calendar className="w-4 h-4" />
+                                                    <span>{func.name}</span>
+                                                    <Badge variant="default" className="ml-1 text-xs">
+                                                        {func.date}
+                                                    </Badge>
+                                                    {/* Agregar badge de estado */}
+                                                    {func.status && (
+                                                        <Badge
+                                                            className={`ml-1 text-xs ${func.status_color === 'green' ? 'bg-green-500' :
+                                                                func.status_color === 'blue' ? 'bg-blue-500' :
+                                                                    func.status_color === 'red' ? 'bg-red-500' :
+                                                                        func.status_color === 'yellow' ? 'bg-yellow-500' :
+                                                                            func.status_color === 'orange' ? 'bg-orange-500' :
+                                                                                'bg-gray-500'
+                                                                } text-white border-0`}
+                                                        >
+                                                            {func.status_label}
+                                                        </Badge>
+                                                    )}
+                                                    {!func.is_active && (
+                                                        <Badge className="ml-1 bg-gray-400 text-white border-0 text-xs">
+                                                            <EyeOff className="w-3 h-3" />
+                                                        </Badge>
+                                                    )}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                    </div>
 
-                            {event.functions.map((func) => {
-                                const stats = func.stats;
-                                
-                                return (
-                                    <TabsContent key={func.id} value={func.id.toString()} className="space-y-6">
-                                        {/* Estadísticas de la función */}
-                                        <div className="bg-card rounded-lg border p-4">
-                                            <h4 className="text-sm font-medium text-muted-foreground mb-3">Resumen de {func.name}</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                <div className="text-center">
-                                                    <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                                                        <div className="bg-muted p-1.5 rounded-full">
-                                                            <Ticket className="h-3 w-3 text-primary" />
-                                                        </div>
-                                                        <span className="text-xs font-medium">Total</span>
-                                                    </div>
-                                                    <div className="text-lg font-bold text-foreground">{formatNumber(stats?.totalTickets || 0)}</div>
-                                                    <div className="text-xs text-muted-foreground">{stats?.totalTypes || 0} tipos</div>
-                                                </div>
-                                                
-                                                <div className="text-center">
-                                                    <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                                                        <div className="bg-muted p-1.5 rounded-full">
-                                                            <Users className="h-3 w-3 text-primary" />
-                                                        </div>
-                                                        <span className="text-xs font-medium">Vendidas</span>
-                                                    </div>
-                                                    <div className="text-lg font-bold text-primary">{formatNumber(stats?.soldTickets || 0)}</div>
-                                                    <div className="text-xs text-muted-foreground">{formatNumber(stats?.availableTickets || 0)} disponibles</div>
-                                                </div>
-                                                
-                                                <div className="text-center">
-                                                    <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                                                        <div className="bg-muted p-1.5 rounded-full">
-                                                            <DollarSign className="h-3 w-3 text-secondary" />
-                                                        </div>
-                                                        <span className="text-xs font-medium">Ingresos</span>
-                                                    </div>
-                                                    <div className="text-lg font-bold text-secondary">
-                                                        {formatCurrency(stats?.totalRevenue || 0)}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">ARS</div>
-                                                </div>
-                                                
-                                                <div className="text-center">
-                                                    <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                                                        <div className="bg-muted p-1.5 rounded-full">
-                                                            <Eye className="h-3 w-3 text-accent-foreground" />
-                                                        </div>
-                                                        <span className="text-xs font-medium">Visibles</span>
-                                                    </div>
-                                                    <div className="text-lg font-bold text-accent-foreground">{stats?.visibleTickets || 0}</div>
-                                                    <div className="text-xs text-muted-foreground">de {stats?.totalTypes || 0}</div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    {event.functions.map((func) => {
+                                        const stats = func.stats;
 
-                                        {/* Botón crear entrada y título */}
-                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-foreground">
-                                                    Tipos de Entradas
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground mt-1">
-                                                    Gestiona los tipos de entradas para {func.name}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Lista de tipos de entradas */}
-                                        <div className="flex flex-wrap gap-4 justify-start">
-                                            {func.ticketTypes && func.ticketTypes.length > 0 ? (
-                                                func.ticketTypes.map((ticket) => (
-                                                    <TicketTypeCard
-                                                        key={ticket.id}
-                                                        ticket={ticket}
-                                                        onToggleVisibility={handleToggleTicketVisibility}
-                                                        onEdit={() => handleEditTicket(ticket.id)}
-                                                        onDuplicateAll={handleDuplicateTicketAll}
-                                                        onDelete={() => handleDeleteTicketClick(ticket)}
-                                                        allFunctions={event.functions.map(f => ({ id: f.id, name: f.name }))}
-                                                        functionsWithTicket={event.functions
-                                                            .filter(f => f.ticketTypes.some(t => t.name === ticket.name && t.sector_id === ticket.sector_id))
-                                                            .map(f => f.id)
-                                                        }
-                                                    />
-                                                ))
-                                            ) : (
-                                                <div className="w-full">
-                                                    <Card className="border-2 border-dashed border-muted-foreground/20 bg-muted/30">
-                                                        <CardContent className="flex flex-col items-center justify-center py-12">
-                                                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                                                <Ticket className="w-8 h-8 text-muted-foreground" />
+                                        return (
+                                            <TabsContent key={func.id} value={func.id.toString()} className="space-y-6">
+                                                {/* Estadísticas de la función */}
+                                                <div className="bg-card rounded-lg border p-4">
+                                                    <h4 className="text-sm font-medium text-muted-foreground mb-3">Resumen de {func.name}</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                        <div className="text-center">
+                                                            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                                                                <div className="bg-muted p-1.5 rounded-full">
+                                                                    <Ticket className="h-3 w-3 text-primary" />
+                                                                </div>
+                                                                <span className="text-xs font-medium">Total</span>
                                                             </div>
-                                                            <h4 className="text-lg font-medium text-foreground mb-2">
-                                                                No hay tipos de entradas configurados
-                                                            </h4>
-                                                            <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
-                                                                Crea el primer tipo de entrada para <strong>{func.name}</strong> y comienza a vender tickets para tu evento
-                                                            </p>
-                                                            <Button 
-                                                                onClick={() => handleCreateTicket(func.id)}
-                                                                className="flex items-center gap-2"
-                                                                size="lg"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                                Crear Primera Entrada
-                                                            </Button>
-                                                        </CardContent>
-                                                    </Card>
+                                                            <div className="text-lg font-bold text-foreground">{formatNumber(stats?.totalTickets || 0)}</div>
+                                                            <div className="text-xs text-muted-foreground">{stats?.totalTypes || 0} tipos</div>
+                                                        </div>
+
+                                                        <div className="text-center">
+                                                            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                                                                <div className="bg-muted p-1.5 rounded-full">
+                                                                    <Users className="h-3 w-3 text-primary" />
+                                                                </div>
+                                                                <span className="text-xs font-medium">Vendidas</span>
+                                                            </div>
+                                                            <div className="text-lg font-bold text-primary">{formatNumber(stats?.soldTickets || 0)}</div>
+                                                            <div className="text-xs text-muted-foreground">{formatNumber(stats?.availableTickets || 0)} disponibles</div>
+                                                        </div>
+
+                                                        <div className="text-center">
+                                                            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                                                                <div className="bg-muted p-1.5 rounded-full">
+                                                                    <DollarSign className="h-3 w-3 text-secondary" />
+                                                                </div>
+                                                                <span className="text-xs font-medium">Ingresos</span>
+                                                            </div>
+                                                            <div className="text-lg font-bold text-secondary">
+                                                                {formatCurrency(stats?.totalRevenue || 0)}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">ARS</div>
+                                                        </div>
+
+                                                        <div className="text-center">
+                                                            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                                                                <div className="bg-muted p-1.5 rounded-full">
+                                                                    <Eye className="h-3 w-3 text-accent-foreground" />
+                                                                </div>
+                                                                <span className="text-xs font-medium">Visibles</span>
+                                                            </div>
+                                                            <div className="text-lg font-bold text-accent-foreground">{stats?.visibleTickets || 0}</div>
+                                                            <div className="text-xs text-muted-foreground">de {stats?.totalTypes || 0}</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
+
+                                                {/* Botón crear entrada y título */}
+                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-foreground">
+                                                            Tipos de Entradas
+                                                        </h3>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            Gestiona los tipos de entradas para {func.name}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Lista de tipos de entradas */}
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                                    {func.ticketTypes && func.ticketTypes.length > 0 ? (
+                                                        func.ticketTypes.map((ticket) => (
+                                                            <TicketTypeCard
+                                                                key={ticket.id}
+                                                                ticket={ticket}
+                                                                onToggleVisibility={handleToggleTicketVisibility}
+                                                                onEdit={() => handleEditTicket(ticket.id)}
+                                                                onDuplicateAll={handleDuplicateTicketAll}
+                                                                onDelete={() => handleDeleteTicketClick(ticket)}
+                                                                allFunctions={event.functions.map(f => ({ id: f.id, name: f.name }))}
+                                                                functionsWithTicket={event.functions
+                                                                    .filter(f => f.ticketTypes.some(t => t.name === ticket.name && t.sector_id === ticket.sector_id))
+                                                                    .map(f => f.id)
+                                                                }
+                                                            />
+                                                        ))
+                                                    ) : (
+                                                        <div className="w-full">
+                                                            <Card className="border-2 border-dashed border-muted-foreground/20 bg-muted/30">
+                                                                <CardContent className="flex flex-col items-center justify-center py-12">
+                                                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                                                        <Ticket className="w-8 h-8 text-muted-foreground" />
+                                                                    </div>
+                                                                    <h4 className="text-lg font-medium text-foreground mb-2">
+                                                                        No hay tipos de entradas configurados
+                                                                    </h4>
+                                                                    <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
+                                                                        Crea el primer tipo de entrada para <strong>{func.name}</strong> y comienza a vender tickets para tu evento
+                                                                    </p>
+                                                                    <Button
+                                                                        onClick={() => handleCreateTicket(func.id)}
+                                                                        className="flex items-center gap-2"
+                                                                        size="lg"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                        Crear Primera Entrada
+                                                                    </Button>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TabsContent>
+                                        );
+                                    })}
+                                </Tabs>
+                            ) : (
+                                <div className="bg-card rounded-lg border p-12">
+                                    <div className="text-center">
+                                        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <Calendar className="w-10 h-10 text-muted-foreground" />
                                         </div>
-                                    </TabsContent>
-                                );
-                            })}
-                        </Tabs>
-                    ) : (
-                        <div className="bg-card rounded-lg border p-12">
-                            <div className="text-center">
-                                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Calendar className="w-10 h-10 text-muted-foreground" />
+                                        <h3 className="text-xl font-semibold text-foreground mb-3">
+                                            No hay funciones configuradas
+                                        </h3>
+                                        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                                            Para poder configurar entradas, primero necesitas crear al menos una función para tu evento.
+                                            Las funciones definen cuándo y cómo se realizará tu evento.
+                                        </p>
+                                        <Button variant="outline" className="flex items-center gap-2">
+                                            <Calendar className="w-4 h-4" />
+                                            Ir a Gestión de Funciones
+                                        </Button>
+                                    </div>
                                 </div>
-                                <h3 className="text-xl font-semibold text-foreground mb-3">
-                                    No hay funciones configuradas
-                                </h3>
-                                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                                    Para poder configurar entradas, primero necesitas crear al menos una función para tu evento. 
-                                    Las funciones definen cuándo y cómo se realizará tu evento.
-                                </p>
-                                <Button variant="outline" className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    Ir a Gestión de Funciones
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                            )}
                         </CardContent>
                     </Card>
                 </div>

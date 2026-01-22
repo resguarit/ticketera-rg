@@ -1,4 +1,7 @@
-{{-- filepath: resources/views/pdfs/reports/events.blade.php --}}
+@php
+    use App\Helpers\CurrencyHelper;
+@endphp
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,266 +9,139 @@
     <title>{{ $title }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DejaVu Sans', 'Helvetica', sans-serif; font-size: 11px; color: #000; line-height: 1.5; margin: 30px; }
         
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-        }
+        .header-table { width: 100%; border-bottom: 2px solid #000; margin-bottom: 30px; padding-bottom: 10px; }
+        .header-title { font-size: 20px; text-transform: uppercase; font-weight: bold; }
+        .header-meta { text-align: right; font-size: 10px; color: #444; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
         
-        .header {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .table-formal th { background-color: #000; color: #fff; text-transform: uppercase; font-size: 10px; font-weight: bold; border-bottom: none; }
+        .table-formal tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { font-size: 14px; opacity: 0.9; }
-        
-        .summary-stats {
-            display: flex;
-            margin-bottom: 30px;
-            gap: 15px;
-        }
-        
-        .summary-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .summary-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .summary-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin: 30px 0 15px;
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 5px;
-        }
-        
-        .event-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .event-card {
-            flex: 1;
-            background: white;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            min-width: 280px;
-        }
-        
-        .event-header {
-            margin-bottom: 10px;
-        }
-        
-        .event-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .event-meta {
-            font-size: 10px;
-            color: #666;
-            margin-bottom: 3px;
-        }
-        
-        .event-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 14px;
-            font-weight: bold;
-            color: #28a745;
-        }
-        
-        .stat-text {
-            font-size: 9px;
-            color: #666;
-        }
-        
-        .category-section {
-            margin: 30px 0;
-        }
-        
-        .category-item {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .category-name {
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .category-stats {
-            text-align: right;
-            font-size: 11px;
-        }
-        
-        .venue-section {
-            margin: 30px 0;
-        }
-        
-        .venue-item {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-        }
-        
-        .venue-name {
-            font-weight: bold;
-            color: #333;
-            font-size: 14px;
-        }
-        
-        .venue-location {
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .venue-stats {
-            font-size: 11px;
-            color: #28a745;
-        }
-        
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
+        .kpi-table { margin-bottom: 40px; border: 1px solid #000; }
+        .kpi-table td { width: 25%; padding: 15px 10px; text-align: center; border-right: 1px solid #000; border-bottom: none; }
+        .kpi-table td:last-child { border-right: none; }
+        .kpi-label { display: block; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
+        .kpi-value { font-size: 16px; font-weight: bold; color: #000; }
+
+        .section-title { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; border-top: 1px solid #000; padding-top: 10px; color: #555; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p>Período: {{ $period }} | {{ $startDate }} - {{ $endDate }}</p>
-        <p>Generado el {{ $generatedAt }}</p>
-    </div>
+    <table class="header-table">
+        <tr>
+            <td style="border:none; vertical-align: bottom;">
+                <div class="header-title">{{ $title }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">RG ENTRADAS - REPORTE DE EVENTOS</div>
+            </td>
+            <td style="border:none; vertical-align: bottom;" class="header-meta">
+                <strong>Período:</strong> {{ $startDate }} - {{ $endDate }}<br>
+                <strong>Generado:</strong> {{ $generatedAt }}
+            </td>
+        </tr>
+    </table>
 
-    <!-- Resumen General -->
-    <div class="summary-stats">
-        <div class="summary-card">
-            <div class="summary-value">{{ $eventsData['totalEvents'] }}</div>
-            <div class="summary-label">Total Eventos</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-value">{{ $eventsData['activeEvents'] }}</div>
-            <div class="summary-label">Eventos Activos</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-value">{{ $eventsData['completedEvents'] }}</div>
-            <div class="summary-label">Eventos Finalizados</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-value">{{ $eventsData['avgTicketsPerEvent'] }}</div>
-            <div class="summary-label">Promedio Tickets</div>
-        </div>
-    </div>
+    <table class="kpi-table">
+        <tr>
+            <td style="background-color: #eee;">
+                <span class="kpi-label">Total Eventos</span>
+                <span class="kpi-value">{{ $eventsData['totalEvents'] }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Eventos Activos</span>
+                <span class="kpi-value">{{ $eventsData['activeEvents'] }}</span>
+            </td>
+            <td>
+                <span class="kpi-label">Eventos Finalizados</span>
+                <span class="kpi-value">{{ $eventsData['completedEvents'] }}</span>
+            </td>
+            <td>
+    <span class="kpi-label">Tickets Vendidos</span>
+    <span class="kpi-value">{{ number_format($eventsData['totalTicketsSold']) }}</span>
+</td>
+        </tr>
+    </table>
 
-    <!-- Top Eventos -->
-    <h3 class="section-title">Eventos Destacados por Rendimiento</h3>
-    <div class="event-grid">
-        @foreach(array_slice($topEvents, 0, 6) as $event)
-            <div class="event-card">
-                <div class="event-header">
-                    <div class="event-title">{{ $event['name'] }}</div>
-                    <div class="event-meta">{{ $event['category'] }}</div>
-                    <div class="event-meta">{{ $event['venue'] ?? 'Sin venue' }}, {{ $event['city'] ?? 'Sin ciudad' }}</div>
-                </div>
-                <div class="event-stats">
-                    <div class="stat-item">
-                        <div class="stat-number">${{ number_format($event['revenue'], 0, ',', '.') }}</div>
-                        <div class="stat-text">Ingresos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ $event['ticketsSold'] }}</div>
-                        <div class="stat-text">Tickets</div>
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <div class="section-title">Eventos Destacados por Rendimiento</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Detalle (Lugar / Categoría)</th>
+                <th class="text-right">Tickets Vendidos</th>
+                <th class="text-right">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($topEvents as $event)
+                <tr>
+                    <td class="font-bold">{{ $event['name'] }}</td>
+                    <td style="font-size: 10px; color: #555;">
+                        {{ $event['venue'] ?? 'Sin venue' }} • {{ $event['category'] }}
+                    </td>
+                    <td class="text-center">{{ number_format($event['ticketsSold']) }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($event['revenue'] ?? 0, false) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-    <!-- Análisis por Categorías -->
-    <div class="category-section">
-        <h3 class="section-title">Rendimiento por Categorías</h3>
-        @foreach($categoryStats as $category)
-            <div class="category-item">
-                <div>
-                    <div class="category-name">{{ $category['name'] }}</div>
-                </div>
-                <div class="category-stats">
-                    <div><strong>${{ number_format($category['revenue'], 2, ',', '.') }}</strong></div>
-                    <div>{{ $category['eventsCount'] }} eventos</div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <br>
 
-    <!-- Análisis por Venues -->
-    <div class="venue-section">
-        <h3 class="section-title">Venues Más Activos</h3>
-        @foreach(array_slice($venueStats, 0, 10) as $venue)
-            <div class="venue-item">
-                <div class="venue-name">{{ $venue['name'] }}</div>
-                <div class="venue-location">{{ $venue['city'] ?? 'Sin ciudad' }}</div>
-                <div class="venue-stats">
-                    {{ $venue['events_count'] }} eventos • ${{ number_format($venue['total_revenue'], 2, ',', '.') }} en ingresos
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <div class="section-title">Rendimiento por Categorías</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Categoría</th>
+                <th class="text-right">Eventos</th>
+                <th class="text-right">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($categoryStats as $category)
+                <tr>
+                    <td class="font-bold">{{ $category['name'] }}</td>
+                    <td class="text-center">{{ $category['eventsCount'] }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($category['revenue']?? 0, false) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-    <!-- Footer -->
+    <br>
+
+    <div class="section-title">Venues Más Activos</div>
+    <table class="table-formal">
+        <thead>
+            <tr>
+                <th>Venue</th>
+                <th>Ciudad</th>
+                <th class="text-right">Eventos</th>
+                <th class="text-right">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(array_slice($venueStats, 0, 10) as $venue)
+                <tr>
+                    <td class="font-bold">{{ $venue['name'] }}</td>
+                    <td style="font-size: 10px; color: #555;">{{ $venue['city'] ?? 'Sin ciudad' }}</td>
+                    <td class="text-center">{{ $venue['events_count'] }}</td>
+                    <td class="text-right font-bold">{{ CurrencyHelper::format($venue['total_revenue'] ?? 0, false) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
     <div class="footer">
-        <p>RG ENTRADAS - Sistema de Gestión de Eventos | Reporte de Eventos</p>
-        <p>Análisis del rendimiento y distribución de eventos en la plataforma</p>
+        CONFIDENCIAL | Documento Comercial | Página 1
     </div>
 </body>
 </html>

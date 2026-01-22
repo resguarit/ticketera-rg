@@ -12,6 +12,7 @@ use App\Models\Person;
 use App\Enums\OrderStatus;
 use App\Enums\IssuedTicketStatus;
 use App\Enums\UserRole;
+use App\Models\DiscountCode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -26,10 +27,24 @@ class OrderService
         return DB::transaction(function () use ($orderData) {
             $userId = null;
             $accountCreated = false;
-    
-            if (!Auth::check()) {                
+
+            $discountCodeId = null;
+
+            if (!empty($orderData['billing_info']['discountCode'])) {
+                $codeStr = $orderData['billing_info']['discountCode'];
+
+                $discountCode = DiscountCode::where('code', $codeStr)
+                    ->where('event_id', $orderData['event_id'])
+                    ->first();
+
+                if ($discountCode) {
+                    $discountCodeId = $discountCode->id;
+                }
+            }
+
+            if (!Auth::check()) {
                 $existingUser = User::where('email', $orderData['billing_info']['email'])->first();
-                
+
                 if (!$existingUser) {
                     $userId = $this->createUserFromBillingInfo($orderData['billing_info']);
                     $accountCreated = true;
@@ -69,27 +84,28 @@ class OrderService
                 'service_fee' => $totals['service_fee'],
                 'total_amount' => $totals['total_amount'],
                 'order_details' => $totals['order_details'],
+                'discount_code_id' => $discountCodeId,
             ];
 
             $order = Order::create($orderCreateData);
-    
+
             // MODIFICACIÓN: Almacenar referencias a ticket types para verificar tandas después
             $processedTicketTypes = [];
-            
+
             foreach ($orderData['selected_tickets'] as $index => $ticketData) {
                 $ticketType = TicketType::findOrFail($ticketData['id']);
 
                 $this->createTicketsForType($order, $ticketType, $ticketData['quantity'], $userId);
-    
+
                 $ticketType->increment('quantity_sold', $ticketData['quantity']);
-                
+
                 // Agregar a la lista para verificar tandas después
                 $processedTicketTypes[] = $ticketType->fresh(); // Recargar con quantity_sold actualizada
             }
-            
+
             // NUEVO: Verificar y activar tandas después de procesar todas las compras
             //$this->checkStagesAfterPurchase($processedTicketTypes);
-    
+
             return [
                 'order' => $order,
                 'account_created' => $accountCreated,
@@ -97,25 +113,18 @@ class OrderService
             ];
         });
     }
-    
+
     /**
      * NUEVO MÉTODO: Verifica y activa tandas después de una compra
      */
     private function checkStagesAfterPurchase(array $ticketTypes): void
     {
         $stageService = app(StageTicketService::class);
-        
+
         foreach ($ticketTypes as $ticketType) {
             // Solo verificar si es parte de un sistema de tandas y está visible
             if ($ticketType->stage_group && !$ticketType->is_hidden) {
-                $activated = $stageService->checkAndActivateNextStage($ticketType);
-                
-                if ($activated) {
-                    Log::info("Tanda activada automáticamente después de compra", [
-                        'agotada' => $ticketType->name,
-                        'function_id' => $ticketType->event_function_id
-                    ]);
-                }
+                $stageService->checkAndActivateNextStage($ticketType);
             }
         }
     }
@@ -124,29 +133,29 @@ class OrderService
     {
         return 'ORD-' . $eventId . '-' . substr(Str::uuid()->toString(), 0, 23);
     }
- 
+
     private function generateUniqueCode(Order $order, TicketType $ticketType, string $suffix = null): string
     {
         $uuid = Str::uuid()->toString();
-        
+
         $baseCode = 'TK-' . $order->id . '-' . $ticketType->id . '-' . substr($uuid, 0, 8);
-        
+
         if ($suffix) {
             $bundleParts = explode('-', $suffix);
             $shortSuffix = end($bundleParts);
             return $baseCode . '-' . $shortSuffix;
         }
-        
+
         return $baseCode;
     }
 
     public function generateUniqueTicketCode(TicketType $ticketType, string $prefix = 'INV'): string
     {
         $uuid = Str::uuid()->toString();
-        
+
         // Formato: {PREFIX}-{ticket_type_id}-{uuid_part}
         $baseCode = $prefix . '-' . $ticketType->id . '-' . substr($uuid, 0, 12);
-        
+
         return $baseCode;
     }
 
@@ -155,7 +164,7 @@ class OrderService
 
         if ($ticketType->isBundle()) {
             for ($i = 0; $i < $quantity; $i++) {
-                $bundleReference = Str::uuid()->toString();                
+                $bundleReference = Str::uuid()->toString();
                 for ($j = 0; $j < $ticketType->bundle_quantity; $j++) {
                     $ticketData = [
                         'order_id' => $order->id,
@@ -192,13 +201,13 @@ class OrderService
     private function createUserFromBillingInfo(array $billingInfo): int
     {
         $existingUser = User::where('email', $billingInfo['email'])->first();
-        
+
         if ($existingUser) {
             return $existingUser->id;
         }
 
         $defaultPassword = $billingInfo['documentNumber'] ?? '12345678';
-        
+
         $person = Person::create([
             'name' => $billingInfo['firstName'],
             'last_name' => $billingInfo['lastName'],
@@ -230,11 +239,30 @@ class OrderService
         });
     }
 
+    public function refundOrder(Order $order, float $amount): bool
+    {
+        return DB::transaction(function () use ($order, $amount) {
+            $order->update([
+                'status' => OrderStatus::REFUNDED,
+                'refunded_at' => now(),
+                'refunded_amount' => $amount
+            ]);
+
+            $this->releaseTickets($order);
+
+            $order->items()->update([
+                'status' => IssuedTicketStatus::CANCELLED
+            ]);
+
+            return true;
+        });
+    }
+
     private function releaseTickets(Order $order): void
     {
         $ticketCounts = $order->items->groupBy('ticket_type_id')->map(function ($tickets) {
             $ticketType = $tickets->first()->ticketType;
-            
+
             if ($ticketType->isBundle()) {
                 return $tickets->whereNotNull('bundle_reference')
                     ->groupBy('bundle_reference')
@@ -243,17 +271,17 @@ class OrderService
                 return $tickets->count();
             }
         });
-        
+
         foreach ($ticketCounts as $ticketTypeId => $count) {
             TicketType::where('id', $ticketTypeId)->decrement('quantity_sold', $count);
         }
     }
-    
+
     public function calculateOrderTotals(array $selectedTickets, float $discount = 0, float $tax = 0): array
     {
         $subtotal = 0;
         $orderDetails = [];
-        
+
         foreach ($selectedTickets as $index => $ticket) {
 
             $ticketType = TicketType::find($ticket['id']);
@@ -271,12 +299,9 @@ class OrderService
                 ];
 
                 $orderDetails[] = $ticketDetail;
-
-            } else {
-                Log::error("TicketType no encontrado", ['ticket_id' => $ticket['id']]);
             }
         }
-        
+
         $subtotalAfterDiscount = $subtotal * (1 - $discount);
         $serviceFee = $subtotalAfterDiscount * $tax;
         $totalAmount = $subtotalAfterDiscount + $serviceFee;
@@ -289,10 +314,10 @@ class OrderService
             'total_amount' => $totalAmount,
             'order_details' => $orderDetails,
         ];
-        
+
         return $result;
     }
-    
+
     public function getOrderSummary(Order $order): array
     {
         $order->load(['items.ticketType', 'client.person']);
@@ -302,12 +327,12 @@ class OrderService
             ->map(function ($tickets) {
                 $firstTicket = $tickets->first();
                 $ticketType = $firstTicket->ticketType;
-                
+
                 if ($ticketType->isBundle()) {
                     $bundleCount = $tickets->whereNotNull('bundle_reference')
                         ->groupBy('bundle_reference')
                         ->count();
-                    
+
                     return [
                         'ticket_type_id' => $firstTicket->ticket_type_id,
                         'ticket_type_name' => $ticketType->name,
@@ -346,7 +371,13 @@ class OrderService
     {
         try {
             if ($paymentResult->success) {
-                $order->update([ 'status' => OrderStatus::PAID ]);
+                $raw = $paymentResult->rawResponse ?? [];
+                $order->update([
+                    'status' => OrderStatus::PAID,
+                    'card_bin' => $raw['bin'] ?? null,
+                    'card_brand' => $raw['card_brand'] ?? null,
+                    'payment_type' => $raw['payment_type'] ?? null,
+                ]);
                 $order->items()->update(['status' => IssuedTicketStatus::AVAILABLE]);
                 $this->checkStagesAfterPurchase($processedTicketTypes);
             } else {
@@ -357,37 +388,6 @@ class OrderService
         } catch (\Exception $e) {
             $this->cancelOrder($order);
             throw $e;
-        }   
-    }
-
-    /*
-    public function processPayment(Order $order, array $paymentData): bool
-    {
-        try {
-            
-            $paymentSuccessful = true;
-            
-            if ($paymentSuccessful) {
-                $order->update([ 'status' => OrderStatus::PAID ]);
-
-                $order->items()->update(['status' => IssuedTicketStatus::AVAILABLE]);
-
-                return true;
-            } else {
-                Log::warning('Pago falló, cancelando orden');
-                $this->cancelOrder($order);
-                return false;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error procesando pago', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            $this->cancelOrder($order);
-            return false;
         }
-    }*/
+    }
 }

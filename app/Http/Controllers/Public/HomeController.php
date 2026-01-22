@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\Category;
+use App\Models\Banner;
 use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,16 +17,20 @@ class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
+        // Banners activos
+        $banners = Banner::where('is_archived', false)->latest()->get();
+
         // Eventos destacados con hero banners
         $featuredEvents = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
             ->where('featured', true)
+            ->where('is_archived', false)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function($event) {
+            ->map(function ($event) {
                 // Obtener funciones activas
                 $activeFunctions = $event->functions->where('is_active', true);
-                
+
                 // Determinar el estado del evento basado en sus funciones activas
                 $priorityOrder = [
                     EventFunctionStatus::ON_SALE->value => 1,
@@ -38,7 +43,7 @@ class HomeController extends Controller
                 ];
 
                 $primaryFunction = $activeFunctions
-                    ->sortBy(function($function) use ($priorityOrder) {
+                    ->sortBy(function ($function) use ($priorityOrder) {
                         return $priorityOrder[$function->status->value] ?? 999;
                     })
                     ->first();
@@ -83,10 +88,11 @@ class HomeController extends Controller
 
         // Resto de eventos para la grilla
         $events = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
+            ->where('is_archived', false)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $categories = Category::all()->map(function($category) {
+        $categories = Category::all()->map(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -100,7 +106,7 @@ class HomeController extends Controller
             ->pluck('venue.ciudad')
             ->filter()
             ->unique('id')
-            ->map(function($ciudad) {
+            ->map(function ($ciudad) {
                 return [
                     'id' => $ciudad->id,
                     'name' => $ciudad->name,
@@ -110,10 +116,10 @@ class HomeController extends Controller
             ->sortBy('name')
             ->values();
 
-        $processedEvents = $events->map(function($event) {
+        $processedEvents = $events->map(function ($event) {
             // Obtener funciones activas
             $activeFunctions = $event->functions->where('is_active', true);
-            
+
             // Determinar el estado del evento basado en sus funciones activas
             $priorityOrder = [
                 EventFunctionStatus::ON_SALE->value => 1,
@@ -126,7 +132,7 @@ class HomeController extends Controller
             ];
 
             $primaryFunction = $activeFunctions
-                ->sortBy(function($function) use ($priorityOrder) {
+                ->sortBy(function ($function) use ($priorityOrder) {
                     return $priorityOrder[$function->status->value] ?? 999;
                 })
                 ->first();
@@ -148,7 +154,7 @@ class HomeController extends Controller
 
             $firstFunction = $event->functions->sortBy('start_time')->first();
             $minPrice = $event->functions->flatMap(fn($func) => $func->ticketTypes ?? collect())->min('price') ?? 0;
-            
+
             return [
                 'id' => $event->id,
                 'slug' => $event->slug,
@@ -168,6 +174,7 @@ class HomeController extends Controller
         });
 
         return Inertia::render('public/home', [
+            'banners' => $banners,
             'featuredEvents' => $featuredEvents,
             'events' => $processedEvents,
             'categories' => $categories,

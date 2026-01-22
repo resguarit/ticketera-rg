@@ -24,11 +24,24 @@ class CheckoutService
     public function processOrderPayment(CheckoutData $checkoutData): CheckoutResult
     {
         try {
+            Log::info('=== INICIO processOrderPayment ===', [
+                'event_id' => $checkoutData->eventId,
+                'installments' => $checkoutData->installments,
+            ]);
+
             $event = Event::findOrFail($checkoutData->eventId);
             $eventTax = $event->tax ? ($event->tax / 100) : 0;
+            
+            Log::info('Buscando payment method', ['method_name' => $checkoutData->paymentMethod]);
+            
             $paymentMethodId = DB::table('payment_method')
                 ->where('name', $checkoutData->paymentMethod)
                 ->value('payway_id');
+
+            if (!$paymentMethodId) {
+                Log::error('Payment method no encontrado', ['method' => $checkoutData->paymentMethod]);
+                throw new \Exception('Método de pago no válido');
+            }
 
             $requestedInstallments = $checkoutData->installments;
             $validInstallments = null;
@@ -41,11 +54,6 @@ class CheckoutService
                     ->first();
 
                 if (!$validInstallments) {
-                    Log::warning('Cuotas no válidas o no habilitadas', [
-                        'event_id' => $checkoutData->eventId,
-                        'bin' => $checkoutData->bin,
-                        'requested_installments' => $requestedInstallments,
-                    ]);
 
                     return new CheckoutResult(
                         success: false,
@@ -57,20 +65,20 @@ class CheckoutService
             }
 
             $orderData = [
-                    'event_id' => $checkoutData->eventId,
-                    'function_id' => $checkoutData->functionId,
-                    'selected_tickets' => $checkoutData->selected_tickets,
-                    'payment_method' => $paymentMethodId,
-                    'cuotas' => $requestedInstallments,
-                    'cuota_id' => $validInstallments ? $validInstallments->id : null,
-                    'billing_info' => $checkoutData->billingInfo,
-                    'tax' => $eventTax,
-                ];
+                'event_id' => $checkoutData->eventId,
+                'function_id' => $checkoutData->functionId,
+                'selected_tickets' => $checkoutData->selected_tickets,
+                'payment_method' => $paymentMethodId,
+                'cuotas' => $requestedInstallments,
+                'cuota_id' => $validInstallments ? $validInstallments->id : null,
+                'billing_info' => $checkoutData->billingInfo,
+                'tax' => $eventTax,
+            ];
 
             $orderResult = $this->orderService->createOrder($orderData);
             $order = $orderResult['order'];
 
-            
+
             $paymentData = new PaymentContext(
                 amount: $order->total_amount,
                 currency: 'ARS',
@@ -87,7 +95,12 @@ class CheckoutService
                 deviceFingerprint: null,
             );
 
+            Log::info('Llamando al gateway de pagos');
             $paymentResult = $this->paymentGateway->charge($paymentData);
+            Log::info('Respuesta del gateway', [
+                'success' => $paymentResult->success,
+                'error_message' => $paymentResult->errorMessage,
+            ]);
 
             $this->orderService->finalizeOrderPayment($order, $paymentResult, $orderResult['processed_ticket_types']);
 
@@ -100,8 +113,12 @@ class CheckoutService
                 order: $order,
                 paymentResult: $paymentResult
             );
-
         } catch (\Exception $e) {
+            Log::error('Error en processOrderPayment', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             throw $e;
         }
     }

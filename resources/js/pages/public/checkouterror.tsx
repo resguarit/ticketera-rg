@@ -44,7 +44,7 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
     return (
         <>
             <Head title="Error en la Compra" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background relative overflow-hidden">
                 {/* Error particles effect */}
                 <div className="absolute inset-0 pointer-events-none">
@@ -99,7 +99,7 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
                                         <p className="text-foreground/70">{errorData.eventName}</p>
                                     </div>
                                 )}
-                                
+
                                 <div>
                                     <h4 className="font-medium text-foreground mb-2">¿Qué pasó?</h4>
                                     <p className="text-foreground/70">
@@ -118,7 +118,7 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
                         {/* Action Buttons - Ahora el usuario decide cuándo continuar */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                             {errorData.canRetry && errorData.retryUrl && (
-                                <Button 
+                                <Button
                                     onClick={handleRetry}
                                     className="bg-primary hover:bg-primary-hover text-white"
                                     size="lg"
@@ -130,8 +130,8 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
 
                             {errorData.eventId ? (
                                 <Link href={route('event.detail', errorData.eventId)}>
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className="w-full border-gray-300 text-foreground hover:bg-gray-50"
                                         size="lg"
                                     >
@@ -141,8 +141,8 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
                                 </Link>
                             ) : (
                                 <Link href={route('home')}>
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className="w-full border-gray-300 text-foreground hover:bg-gray-50"
                                         size="lg"
                                     >
@@ -182,8 +182,6 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
                                 </p>
                                 <ul className="text-foreground/80 space-y-1 text-sm">
                                     <li>• Otra tarjeta de crédito o débito</li>
-                                    <li>• MercadoPago o billeteras digitales</li>
-                                    <li>• Transferencia bancaria (contacta soporte)</li>
                                 </ul>
                             </CardContent>
                         </Card>
@@ -201,19 +199,7 @@ export default function CheckoutError({ errorData }: CheckoutErrorProps) {
                                         Centro de Ayuda
                                     </Button>
                                 </Link>
-                                <Link href="mailto:soporte@ticketeraRG.com">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-gray-300 text-foreground hover:bg-gray-50"
-                                    >
-                                        Contactar Soporte
-                                    </Button>
-                                </Link>
                             </div>
-                            <p className="text-foreground/50 text-xs mt-4">
-                                Horario de atención: Lunes a Viernes de 9:00 a 18:00 hs
-                            </p>
                         </div>
                     </div>
                 </div>

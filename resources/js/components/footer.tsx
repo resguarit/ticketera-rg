@@ -1,6 +1,8 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle} from 'lucide-react';
 import logoResguarit from '../../../public/favicon.ico'
+import { PageProps } from '@/types';
+import { useState } from 'react';
 
 interface FooterProps {
     className?: string;
@@ -8,6 +10,22 @@ interface FooterProps {
 
 export default function Footer({ className = '' }: FooterProps) {
     const currentYear = new Date().getFullYear();
+    const { supportEmail, supportPhone, facebookUrl, instagramUrl } = usePage<PageProps>().props;
+    const [emailCopied, setEmailCopied] = useState(false);
+    
+    // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
+    const whatsappNumber = supportPhone?.replace(/\D/g, '') || '5492216914649';
+
+    // Función para copiar el email al portapapeles
+    const copyEmailToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(supportEmail);
+            setEmailCopied(true);
+            setTimeout(() => setEmailCopied(false), 2000);
+        } catch (err) {
+            console.error('Error al copiar el email');
+        }
+    };
 
     return (
         <footer className={`bg-dark text-white ${className}`}>
@@ -32,14 +50,24 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <MapPin className="w-4 h-4 text-secondary flex-shrink-0" />
                                 <span className="text-sm">La Plata, Buenos Aires</span>
                             </div>
-                            <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
+                            <a 
+                                href={`https://wa.me/${whatsappNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center hover:text-secondary space-x-2 text-gray-300 transition-colors"
+                            >
                                 <Phone className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <a href="tel:+542216914649"><span className="text-sm">+54 2966 123456</span></a>
-                            </div>
-                            <div className="flex items-center hover:text-secondary space-x-2 text-gray-300">
+                                <span className="text-sm">{supportPhone}</span>
+                            </a>
+                            <button
+                                onClick={copyEmailToClipboard}
+                                className="flex items-center hover:cursor-pointer hover:text-secondary space-x-2 text-gray-300 transition-colors"
+                            >
                                 <Mail className="w-4 h-4 text-secondary flex-shrink-0" />
-                                <a href="mailto:info@rg-entradas.com"><span className="text-sm">info@rg-entradas.com</span></a>
-                            </div>
+                                <span className="text-sm">
+                                    {emailCopied ? '¡Copiado!' : supportEmail}
+                                </span>
+                            </button>
                         </div>
                     </div>
 
@@ -89,13 +117,15 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Shield className="w-4 h-4" />
                                 <span>Política de Privacidad</span>
                             </Link>
-                            <Link 
-                                href={route('refunds')}
+                            <a 
+                                href={`https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />
                                 <span>Botón de Arrepentimiento</span>
-                            </Link>
+                            </a>
                         </nav>
                     </div>
 
@@ -106,7 +136,7 @@ export default function Footer({ className = '' }: FooterProps) {
                         {/* Social Links */}
                         <div className="flex space-x-3">
                             <a 
-                                href="https://www.facebook.com/share/17N6jjxJvY/?mibextid=wwXIfr" 
+                                href={facebookUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -115,7 +145,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Facebook className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://www.instagram.com/rgentradas.com.ar/" 
+                                href={instagramUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
@@ -124,22 +154,13 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <Instagram className="w-4 h-4" />
                             </a>
                             <a 
-                                href="https://wa.me/5492216914649" 
+                                href={`https://wa.me/${whatsappNumber}`}
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
                                 aria-label="WhatsApp"
                             >
                                 <MessageCircle  className="w-4 h-4" />
-                            </a>
-                            <a 
-                                href="https://www.youtube.com/@RGEntradas" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
-                                aria-label="YouTube"
-                            >
-                                <Youtube className="w-4 h-4" />
                             </a>
                         </div>
 

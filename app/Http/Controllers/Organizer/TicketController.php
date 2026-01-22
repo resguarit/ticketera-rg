@@ -27,6 +27,7 @@ class TicketController extends Controller
         $query = IssuedTicket::query()
             ->with([
                 'ticketType.eventFunction',
+                'ticketType.sector',
                 'assistant.person',
                 'client.person',
                 'scanLogs' => function ($q) {
@@ -57,6 +58,9 @@ class TicketController extends Controller
                             ->orWhere('last_name', 'like', "%{$search}%")
                             ->orWhere('dni', 'like', "%{$search}%")
                             ->orWhereRaw("CONCAT(name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                    })
+                    ->orWhereHas('order', function ($o) use ($search) {
+                        $o->where('transaction_id', 'like', "%{$search}%");
                     });
             });
         }
@@ -87,7 +91,7 @@ class TicketController extends Controller
                 'status' => $ticket->status,
                 'owner_name' => $ownerName,
                 'owner_dni' => $ownerDni,
-                'ticket_type' => $ticket->ticketType->name,
+                'ticket_type' => $ticket->ticketType->name . ($ticket->ticketType->sector ? ' - ' . $ticket->ticketType->sector->name : ''),
                 'function_name' => $ticket->ticketType->eventFunction->name,
                 'is_bundle' => $ticket->isFromBundle(),
                 'bundle_reference' => $ticket->bundle_reference,
