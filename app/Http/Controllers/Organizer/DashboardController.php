@@ -27,8 +27,8 @@ class DashboardController extends Controller
         $dates = $this->getPeriodDates($period);
 
         // --- Estadísticas Generales (con filtro de período) ---
-        $totalRevenue = $this->revenueService->forOrganizer($organizer, $dates['start'], $dates['end']);
-        
+        $netRevenue = $this->revenueService->netRevenueForOrganizer($organizer, $dates['start'], $dates['end']);
+
         // CORREGIDO: Calcular entradas vendidas y tickets emitidos por separado
         $totalEntradasVendidas = 0; // lotes + entradas individuales (sin multiplicar)
         $totalTicketsEmitidos = 0;  // tickets físicos reales emitidos
@@ -201,15 +201,11 @@ class DashboardController extends Controller
         $chartDays = $this->getChartDays($period);
         $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, $chartDays);
 
-        $netRevenue = $this->revenueService->netRevenueForOrganizer($organizer, $dates['start'], $dates['end']);
-        $serviceFee = $this->revenueService->serviceFeeForOrganizer($organizer, $dates['start'], $dates['end']);
 
         return Inertia::render('organizer/dashboard', [
             'organizer' => $organizer,
             'stats' => [
-                'totalRevenue' => $totalRevenue,
                 'netRevenue' => $netRevenue,
-                'serviceFee' => $serviceFee,
                 'totalEntradasVendidas' => $totalEntradasVendidas,
                 'totalTicketsSold' => $totalTicketsEmitidos,
                 'activeEventsCount' => $activeEventsCount,
