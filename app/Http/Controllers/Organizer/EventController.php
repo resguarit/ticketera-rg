@@ -542,7 +542,7 @@ class EventController extends Controller
                         'soldTickets' => $lotesVendidos,
                         'availableTickets' => $availableLotes,
                         'entradasEmitidas' => $entradasEmitidas,
-                        'netRevenue' => (float) $netRevenue,
+                        'totalRevenue' => (float) $netRevenue,
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],

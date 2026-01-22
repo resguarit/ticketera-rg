@@ -352,6 +352,7 @@ class RevenueService
     public function netRevenueForTicketType(TicketType $ticketType, ?Carbon $startDate = null, ?Carbon $endDate = null): float
     {
         if ($ticketType->is_bundle) {
+            // Para bundles: contar órdenes únicas y multiplicar por el precio del lote
             $lotesVendidos = Order::query()
                 ->where('status', OrderStatus::PAID)
                 ->whereHas('issuedTickets', function ($q) use ($ticketType) {
@@ -365,6 +366,7 @@ class RevenueService
             $countLotes = $lotesVendidos->count();
             return (float) ($countLotes * $ticketType->price);
         } else {
+            // Para individuales: contar tickets vendidos y multiplicar por precio
             $vendidos = IssuedTicket::query()
                 ->where('ticket_type_id', $ticketType->id)
                 ->whereHas('order', function ($q) use ($startDate, $endDate) {
