@@ -7,6 +7,7 @@ use App\Services\RevenueService;
 use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
@@ -308,6 +309,11 @@ class DashboardController extends Controller
     
     public function helpGuide(): Response
     {
-        return Inertia::render('organizer/help-guide');
+        return Inertia::render('organizer/help-guide', [
+            'supportEmail' => Setting::get('support_email', 'soporte@rgentradas.com'),
+            'supportPhone' => Setting::get('support_phone', '+54 9 11 1234-5678'),
+            'businessDays' => Setting::get('business_days', 'Lunes a Viernes'),
+            'businessHours' => Setting::get('business_hours', '9:00 - 18:00'),
+        ]);
     }
 }
