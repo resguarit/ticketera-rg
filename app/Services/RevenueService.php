@@ -202,7 +202,7 @@ class RevenueService
         $endDate = Carbon::now()->endOfDay();
 
         $revenueData = Order::query()
-            ->select(DB::raw('DATE(order_date) as date'), DB::raw('SUM(total_amount) as revenue'))
+            ->select(DB::raw('DATE(order_date) as date'), DB::raw('SUM(subtotal) as revenue'))
             ->where('status', OrderStatus::PAID)
             ->whereBetween('order_date', [$startDate, $endDate])
             ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {

@@ -23,7 +23,7 @@ class DashboardController extends Controller
         $organizer->load(['events.functions.ticketTypes', 'events.venue', 'events.category']);
 
         // Obtener período del request, por defecto último año
-        $period = $request->input('period', 'year');
+        $period = $request->input('period', 'month');
         $dates = $this->getPeriodDates($period);
 
         // --- Estadísticas Generales (con filtro de período) ---
@@ -185,7 +185,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
-                    'revenue' => $this->revenueService->forEvent($event, $dates['start'], $dates['end']),
+                    'revenue' => $this->revenueService->netRevenueForEvent($event, $dates['start'], $dates['end']),
                     'tickets_sold' => $ticketsEmitidos,
                     'status' => $statusInfo['value'],
                     'status_label' => $statusInfo['label'],
