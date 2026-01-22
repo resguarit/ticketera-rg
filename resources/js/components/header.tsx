@@ -60,7 +60,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                 >
                                     Hola, {auth.user.person.name}
                                 </Link>
-                                {auth.user.role === 'admin' && (
+                                {auth.user.role === 'admin' && !auth.is_impersonating && (
                                     <Link href={route('admin.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
                                         <Button
                                             variant="outline"
@@ -71,7 +71,7 @@ export default function Header({ className = '' }: HeaderProps) {
                                         </Button>
                                     </Link>
                                 )}
-                                {auth.user.role === 'organizer' && (
+                                {((auth.user.role === 'organizer') || (auth.user.role === 'admin' && auth.is_impersonating)) && (
                                     <Link href={route('organizer.dashboard')} className="text-white hover:text-primary font-medium transition-colors">
                                         <Button
                                             variant="outline"

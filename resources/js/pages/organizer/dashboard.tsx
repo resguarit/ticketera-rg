@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff, TrendingUp, Percent } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff, TrendingUp, Percent, LogOut } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -138,6 +138,29 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
             <Head title="Mi Dashboard" />
 
             <div className="container mx-auto p-6 space-y-6">
+                {auth.is_impersonating && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                                <Eye className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-yellow-800">Modo Organizador Activo</p>
+                                <p className="text-sm text-yellow-700">
+                                    Estás gestionando el panel de: <strong>{organizer.name}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => router.post(route('admin.impersonate.stop'))}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600"
+                        >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Volver a Admin
+                        </Button>
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>

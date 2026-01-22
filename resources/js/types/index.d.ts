@@ -24,13 +24,14 @@ export * from './models/venue';
 export * from './models/cuota';
 
 // export de las vistas
-export * from './ui/event.views'; 
+export * from './ui/event.views';
 
 export * from './ui';
 
 
 export interface Auth {
     user: User;
+    is_impersonating: boolean;
 }
 
 export interface BreadcrumbItem {
