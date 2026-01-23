@@ -419,9 +419,7 @@ class EventController extends Controller
             'organizer' => $event->organizer,
             'created_at' => $event->created_at,
             'updated_at' => $event->updated_at,
-            'total_revenue' => $event->getRevenue(),
             'net_revenue' => $this->revenueService->netRevenueForEvent($event),
-            'service_fee_revenue' => $this->revenueService->serviceFeeForEvent($event),
             'entradas_vendidas' => $totalEntradasVendidas,
             'tickets_emitidos' => $totalTicketsEmitidos,
             'functions' => $event->functions->map(function ($function) {
@@ -517,10 +515,7 @@ class EventController extends Controller
                     return $ticketType->is_bundle ? $sold * ($ticketType->bundle_quantity ?? 1) : $sold;
                 });
                 $availableLotes = max(0, $totalLotes - $lotesVendidos);
-                $totalRevenue = $function->getRevenue();
-                if ($totalRevenue === null) {
-                    $totalRevenue = 0.0;
-                }
+                $netRevenue = $this->revenueService->netRevenueForFunction($function);
                 $visibleTickets = (int) $ticketTypes->where('is_hidden', false)->count();
                 $totalTypes = (int) $ticketTypes->count();
 
@@ -547,7 +542,7 @@ class EventController extends Controller
                         'soldTickets' => $lotesVendidos,
                         'availableTickets' => $availableLotes,
                         'entradasEmitidas' => $entradasEmitidas,
-                        'totalRevenue' => (float) $totalRevenue,
+                        'totalRevenue' => (float) $netRevenue,
                         'visibleTickets' => $visibleTickets,
                         'totalTypes' => $totalTypes,
                     ],
@@ -555,7 +550,7 @@ class EventController extends Controller
                         $actualSoldTickets = (int) $ticketType->quantity_sold;
                         $availableTickets = max(0, $ticketType->quantity - $actualSoldTickets);
                         $soldPercentage = $ticketType->quantity > 0 ? ($actualSoldTickets / $ticketType->quantity) * 100 : 0;
-                        $totalIncome = $ticketType->getRevenue();
+                        $totalIncome = $this->revenueService->netRevenueForTicketType($ticketType);
 
                         if ($totalIncome === null) {
                             $totalIncome = 0.0;

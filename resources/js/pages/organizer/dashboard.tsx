@@ -13,9 +13,7 @@ import ChangePasswordDialog from '@/components/change-password-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Stat {
-    totalRevenue: number;
     netRevenue: number;
-    serviceFee: number;
     totalEntradasVendidas: number;
     totalTicketsSold: number;
     activeEventsCount: number;
@@ -65,8 +63,7 @@ interface DashboardProps {
 
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData, currentPeriod }: DashboardProps) {
     const statCards = [
-        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-1', description: 'Total facturado' },
-        { title: 'Ingresos Netos', value: formatCurrency(stats.netRevenue), icon: TrendingUp, color: 'text-chart-2', description: 'Lo que recibes' },
+        { title: 'Ingresos Totales', value: formatCurrency(stats.netRevenue), icon: DollarSign, color: 'text-chart-1', description: 'Entradas vendidas x precio' },
         { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3', description: 'lotes + individuales' },
         { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4', description: 'entradas físicas' },
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
@@ -166,7 +163,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
                     {statCards.map((card, index) => (
                         <Card key={index} className={`p-4 border-l-4 border-l-chart-3`}>
                             <div className="space-y-2">
