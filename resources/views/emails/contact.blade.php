@@ -37,7 +37,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2 style="margin: 0; color: #007bff;">Nuevo mensaje recibido desde la web</h2>
+            <h2 style="margin: 0;">Nuevo mensaje recibido desde la web</h2>
         </div>
         
         <div class="field">
