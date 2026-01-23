@@ -147,41 +147,25 @@ ${formData.declaration}
                                     sin responsabilidad alguna.
                                 </p>
 
-                                <Alert className="bg-amber-50 border-amber-300">
-                                    <AlertCircle className="h-4 w-4 text-amber-600" />
-                                    <AlertDescription className="text-amber-800">
+                                <p>
                                         <strong>Importante para eventos:</strong> La solicitud de cancelación deberá realizarse{' '}
                                         <strong>dentro de los diez (10) días corridos desde la compra y hasta setenta y dos (72) horas 
                                         antes del horario de inicio del evento</strong>.
-                                    </AlertDescription>
-                                </Alert>
+                                </p>
 
                                 <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                    <h4 className="font-semibold text-foreground mb-2">Requisitos para ejercer el derecho:</h4>
-                                    <ul className="list-disc list-inside space-y-2 ml-2">
-                                        <li>El correo debe ser enviado <strong>únicamente por el titular de la tarjeta utilizada para la compra</strong></li>
-                                        <li>Debe enviarse <strong>desde el mismo correo electrónico con el que se efectuó la operación</strong></li>
-                                        <li>El asunto debe incluir: <strong>"Botón de Arrepentimiento – Orden N° XXXXX"</strong></li>
-                                        <li>Debe completar todos los datos requeridos en el formulario</li>
-                                    </ul>
-                                </div>
-
-                                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                    <h4 className="font-semibold text-foreground mb-2">Sobre el reintegro:</h4>
-                                    <ul className="list-disc list-inside space-y-2 ml-2">
-                                        <li>El reintegro se realizará <strong>a la misma tarjeta utilizada para el pago</strong></li>
+                                    <h4 className="font-semibold  mb-2">Sobre el reintegro:</h4>
+                                    <ul className="list-disc list-inside space-y-1 ml-2">
+                                        <li>El reintegro se realizará a la misma tarjeta utilizada para el pago</li>
                                         <li>El plazo de acreditación depende de la entidad emisora de la tarjeta</li>
-                                        <li><strong>Se reintegrará exclusivamente el valor de las entradas adquiridas</strong></li>
-                                        <li className="text-red-700 font-medium">
+                                        <li>Se reintegrará exclusivamente el valor de las entradas adquiridas</li>
+                                        <li className="font-bold">
                                             La tarifa correspondiente al servicio de la ticketera NO es reembolsable, 
                                             por tratarse de un cargo por gestión y administración
                                         </li>
                                     </ul>
                                 </div>
 
-                                <p className="text-xs text-foreground/60 italic">
-                                    El número de orden se encuentra detallado en el correo electrónico de confirmación de compra.
-                                </p>
                             </CardContent>
                         </Card>
 
@@ -324,7 +308,7 @@ ${formData.declaration}
                                             type="text"
                                             value={formData.paymentMethod}
                                             onChange={handleChange}
-                                            placeholder="Ej: Visa terminada en 1234"
+                                            placeholder="Ej: Tarjeta Visa Débito"
                                             className="bg-white border-gray-200"
                                             required
                                         />
@@ -351,14 +335,14 @@ ${formData.declaration}
                                     {/* Manifestación Expresa */}
                                     <div className="space-y-2">
                                         <Label htmlFor="declaration" className="text-foreground">
-                                            Manifestación Expresa <span className="text-red-500">*</span>
+                                            Manifestación Expresa
                                         </Label>
-                                        <Textarea
+                                        <Input
                                             id="declaration"
                                             name="declaration"
                                             value={formData.declaration}
                                             onChange={handleChange}
-                                            className="bg-white border-gray-200 min-h-[100px] resize-none"
+                                            className="bg-gray-200 border-gray-200 "
                                             required
                                             readOnly
                                         />
