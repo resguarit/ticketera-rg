@@ -47,7 +47,7 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                 {
                     title: 'Banners',
                     href: '/admin/banners',
-                    icon: Image ,
+                    icon: Image,
                 },
                 {
                     title: 'Organizadores',
@@ -169,10 +169,16 @@ const getFooterNavItemsByRole = (userRole: string): NavItem[] => {
 export function AppSidebar() {
     // Obtener los datos del usuario autenticado
     const page = usePage();
-    const auth = (page.props as any).auth as { user: User | null };
+    const auth = (page.props as any).auth as {
+        user: User | null;
+        is_impersonating: boolean;
+    };
 
     // Determinar el rol del usuario (por defecto 'client' si no está autenticado)
-    const userRole = auth.user?.role || 'client';
+    const actualRole = auth.user?.role || 'client';
+    const userRole = (actualRole == 'admin' && auth.is_impersonating)
+        ? 'organizer'
+        : actualRole;
 
     // Obtener elementos de navegación según el rol
     const mainNavItems = getNavItemsByRole(userRole);

@@ -36,8 +36,9 @@ class AttendeeInvitationController extends Controller
      */
     public function create(Event $event)
     {
-        // Verificar que el evento pertenezca al organizador actual
-        if ($event->organizer_id !== Auth::user()->organizer->id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 

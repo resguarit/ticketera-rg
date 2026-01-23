@@ -15,8 +15,21 @@ use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Admin\SettingsController;
+use Illuminate\Http\Request;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::post('/impersonate/stop', function (Request $request) {
+        $request->session()->pull('impersonated_organizer_id');
+        return redirect()->route('admin.organizers.index')
+            ->with('success', 'Has vuelto a tu panel de administrador.');
+    })->name('impersonate.stop');
+
+    Route::post('/impersonate/{organizer}', function (Request $request, $organizerId) {
+        $request->session()->put('impersonated_organizer_id', $organizerId);
+        return redirect()->route('organizer.dashboard')
+            ->with('success', 'Ahora estas gestionando como este organizador.');
+    })->name('impersonate.start');
 
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
 

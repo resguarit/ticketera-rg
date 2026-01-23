@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Organizer;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\IssuedTicket;
@@ -16,7 +17,9 @@ class TicketController extends Controller
 {
     public function index(Request $request, Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 

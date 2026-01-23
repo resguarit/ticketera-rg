@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -14,6 +14,8 @@ import {
     SheetTrigger,
     SheetClose
 } from "@/components/ui/sheet";
+import { SharedData } from '@/types';
+import { router } from '@inertiajs/react';
 
 
 interface EventFunctionDetail extends EventFunction {
@@ -38,6 +40,9 @@ export default function EventManagementLayout({
     activeTab = 'overview',
     children
 }: EventManagementLayoutProps) {
+    const page = usePage<SharedData>();
+    const { auth } = page.props;
+
     const navigationItems = [
         {
             name: 'Resumen',
@@ -201,6 +206,24 @@ export default function EventManagementLayout({
 
                             {/* Sección derecha: Acciones */}
                             <div className="flex items-center shrink-0 ml-2">
+                                {auth.is_impersonating && (
+                                    <div className="mr-2 flex items-center bg-yellow-50 border border-yellow-200 rounded-md px-3 py-1.5 shadow-sm transition-all hover:border-yellow-300">
+                                        <span className="text-xs font-bold text-yellow-700 mr-2 flex items-center">
+                                            <Eye className="w-3 h-3 mr-1" />
+                                            <span className="hidden lg:inline">Modo Organizador</span>
+                                        </span>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => router.post(route('admin.impersonate.stop'))}
+                                            className="h-7 px-2 text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100 -mr-1"
+                                            title="Volver a Admin"
+                                        >
+                                            <LogOut className="w-3 h-3 mr-1" />
+                                            <span className="text-xs">Salir</span>
+                                        </Button>
+                                    </div>
+                                )}
                                 <Button
                                     variant="outline"
                                     size="sm"

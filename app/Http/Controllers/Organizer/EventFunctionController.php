@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventFunction;
 use App\Enums\EventFunctionStatus;
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ class EventFunctionController extends Controller
 {
     private function checkOwnership(Event $event)
     {
+        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            return;
+        }
+
         if ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Enums\OrderStatus;
 use App\Enums\IssuedTicketStatus;
+use App\Enums\UserRole;
 use App\Models\EventFunction;
 use Carbon\Carbon;
 use App\Models\IssuedTicket;
@@ -33,6 +34,10 @@ class AssistantController extends Controller
 
     private function checkOwnership(Event $event)
     {
+        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            return;
+        }
+
         if ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
