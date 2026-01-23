@@ -118,9 +118,7 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <span>Política de Privacidad</span>
                             </Link>
                             <a 
-                                href={`https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={route('arrepentimiento')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />

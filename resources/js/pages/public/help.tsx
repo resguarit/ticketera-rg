@@ -363,14 +363,12 @@ export default function Help() {
                                     <Link href="/privacy" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Privacidad
                                     </Link>
-                                    <a 
-                                        href={`https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <Link 
+                                        href={route('arrepentimiento')}
                                         className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1"
                                     >
                                         Botón de Arrepentimiento
-                                    </a>
+                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>

@@ -51,6 +51,8 @@ Route::get('/help', [HelpController::class, 'index'])->name('help');
 // Rutas legales
 Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
 Route::get('/privacy', [LegalController::class, 'privacy'])->name('privacy');
+Route::get('/arrepentimiento', [LegalController::class, 'arrepentimiento'])->name('arrepentimiento');
+Route::post('/arrepentimiento/send', [LegalController::class, 'sendContact'])->name('arrepentimiento.send');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

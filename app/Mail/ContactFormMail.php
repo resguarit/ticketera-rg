@@ -23,14 +23,18 @@ class ContactFormMail extends Mailable
     {
         return new Envelope(
             subject: 'Nuevo mensaje de contacto / Arrepentimiento: ' . $this->data['subject'],
-            replyTo: [$this->data['email']] // Para que puedas responder directo al usuario
+            replyTo: [$this->data['email']]
         );
     }
 
     public function content(): Content
     {
+        // Detectar si es una solicitud de arrepentimiento
+        $isArrepentimiento = isset($this->data['subject']) && 
+                            str_contains($this->data['subject'], 'Arrepentimiento');
+        
         return new Content(
-            view: 'emails.contact',
+            view: $isArrepentimiento ? 'emails.arrepentimiento' : 'emails.contact',
         );
     }
 }
