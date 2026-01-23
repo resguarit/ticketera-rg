@@ -1,12 +1,19 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, FileText, Calendar, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { PageProps } from '@/types';
+
+interface TermsPageProps extends PageProps {
+    supportEmail: string;
+    supportPhone: string;
+}
 
 export default function Terms() {
+    const { supportEmail, supportPhone } = usePage<TermsPageProps>().props;
     const lastUpdated = "17 de Septiembre de 2025";
 
     return (
@@ -220,8 +227,8 @@ export default function Terms() {
                             <CardContent className="text-foreground/80">
                                 <p className="mb-2">El Usuario podrá realizar consultas, reclamos o solicitudes de reembolso a través de los siguientes medios de contacto:</p>
                                 <div className="space-y-2">
-                                    <p><strong>Email:</strong> soporte@rgentradas.com</p>
-                                    <p><strong>Teléfono:</strong>  +54 9 11 1234-5678</p>
+                                    <p><strong>Email:</strong> {supportEmail}</p>
+                                    <p><strong>Teléfono:</strong> {supportPhone}</p>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <p className="mb-0"><strong>Formulario de contacto en la Plataforma:</strong></p> 
                                         <Link href={route('help')}>
