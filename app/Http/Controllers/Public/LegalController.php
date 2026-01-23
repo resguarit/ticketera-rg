@@ -56,6 +56,11 @@ class LegalController extends Controller
             'cardHolderDni' => 'nullable|string|max:20',
             'orderNumber' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:2000',
+            'event' => 'nullable|string|max:500',
+            'ticketQuantity' => 'nullable|string|max:10',
+            'paymentMethod' => 'nullable|string|max:255',
+            'reason' => 'nullable|string|max:1000', // Agregar este campo
+            'declaration' => 'nullable|string|max:1000',
         ]);
 
         $recipient = Setting::get('support_email', 'contacto@rgentradas.com');
