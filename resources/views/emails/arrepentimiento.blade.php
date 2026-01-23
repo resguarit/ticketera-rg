@@ -51,11 +51,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2 style="margin: 0;">🔔 Solicitud de Arrepentimiento</h2>
+            <h2 style="margin: 0;">Solicitud de Arrepentimiento</h2>
         </div>
         
         <div class="alert">
-            <strong>⚠️ Acción requerida:</strong> Un cliente ha ejercido su derecho de arrepentimiento según la Ley 24.240.
+            <strong>Acción requerida:</strong> Un cliente ha ejercido su derecho de arrepentimiento según la Ley 24.240.
         </div>
 
         <h3>Datos del Solicitante:</h3>
