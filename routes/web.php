@@ -47,6 +47,7 @@ Route::get('/{event}/availability', [PublicEventController::class, 'getAvailabil
 require __DIR__ . '/checkout.php';
 
 Route::get('/help', [HelpController::class, 'index'])->name('help');
+Route::post('/help/send', [HelpController::class, 'sendContact'])->name('help.send');
 
 // Rutas legales
 Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
