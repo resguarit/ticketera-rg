@@ -14,6 +14,7 @@ import Footer from '@/components/footer';
 import { Event, Category } from '@/types/models';
 import EventCard from '@/components/EventCard';
 import { cn } from '@/lib/utils';
+import WelcomePopup from '@/components/WelcomePopup';
 
 // Definir los tipos de datos que llegan del backend
 interface EventDetail extends Event {
@@ -53,6 +54,10 @@ interface HomeProps {
     events: EventDetail[];
     categories: Category[];
     cities: City[];
+    welcomePopup?: {
+        image_url: string;
+        mobile_image_url?: string;
+    } | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,7 +67,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Home({ featuredEvents, banners = [], events, categories, cities }: HomeProps) {
+export default function Home({ 
+    featuredEvents, 
+    banners = [], 
+    events, 
+    categories, 
+    cities,
+    welcomePopup 
+}: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
@@ -152,6 +164,14 @@ export default function Home({ featuredEvents, banners = [], events, categories,
         <>
             <Head title="Home" />
             <Header className="" />
+
+            {/* Popup de Bienvenida */}
+            {welcomePopup && (
+                <WelcomePopup
+                    imageUrl={welcomePopup.image_url}
+                    mobileImageUrl={welcomePopup.mobile_image_url}
+                />
+            )}
 
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Eventos destacados con hero banners y Banners Admin */}

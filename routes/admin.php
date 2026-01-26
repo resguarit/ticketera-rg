@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\WelcomePopupController;
 use Illuminate\Http\Request;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -112,4 +113,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Gestión de banners
     Route::resource('banners', \App\Http\Controllers\Admin\BannerController::class)->except(['create', 'edit', 'show']);
+
+    // Rutas de Admin
+        Route::resource('popups', WelcomePopupController::class);
+        Route::post('popups/{popup}/toggle-active', [WelcomePopupController::class, 'toggleActive'])
+            ->name('popups.toggle-active');
 });
