@@ -7,13 +7,15 @@ interface WelcomePopupProps {
     mobileImageUrl?: string;
     cookieName?: string;
     expirationDays?: number;
+    autoCloseSeconds?: number; // Nuevo prop para tiempo de cierre automático
 }
 
 export default function WelcomePopup({ 
     imageUrl, 
     mobileImageUrl,
     cookieName = 'welcome_popup_seen',
-    expirationDays = 30
+    expirationDays = 30,
+    autoCloseSeconds = 20 // Por defecto 20 segundos
 }: WelcomePopupProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -23,13 +25,24 @@ export default function WelcomePopup({
         
         if (!hasSeenPopup) {
             // Mostrar el popup después de un pequeño delay para mejor UX
-            const timer = setTimeout(() => {
+            const openTimer = setTimeout(() => {
                 setIsOpen(true);
             }, 1000);
 
-            return () => clearTimeout(timer);
+            return () => clearTimeout(openTimer);
         }
     }, [cookieName]);
+
+    // Nuevo useEffect para cierre automático
+    useEffect(() => {
+        if (isOpen && autoCloseSeconds > 0) {
+            const autoCloseTimer = setTimeout(() => {
+                handleClose();
+            }, autoCloseSeconds * 1000);
+
+            return () => clearTimeout(autoCloseTimer);
+        }
+    }, [isOpen, autoCloseSeconds]);
 
     const handleClose = () => {
         // Crear cookie que expira en X días
