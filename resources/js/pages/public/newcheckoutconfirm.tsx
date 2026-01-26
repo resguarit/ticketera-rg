@@ -14,6 +14,7 @@ import AccountVerificationModal from "@/components/checkout/account-verification
 import CheckoutTimer from "@/components/checkout/checkout-timer"
 import { route } from "ziggy-js"
 import { toast } from "sonner"
+import Footer from "@/components/footer"
 
 interface SelectedTicket {
   id: number
@@ -399,6 +400,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
             </div>
           </div>
         </div>
+        <Footer />
       </div>
 
       <AccountVerificationModal

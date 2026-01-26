@@ -12,12 +12,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/currencyHelpers';
-
 import {
     Event,
     EventFunction,
     TicketType
 } from '@/types/'
+import Footer from '@/components/footer';
 
 interface TicketTypeData extends TicketType {
     available: number;
@@ -1240,6 +1240,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         </div>
                     </div>
                 </div>
+                <Footer />
             </div>
         </>
     );
