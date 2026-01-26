@@ -16,10 +16,14 @@ class Banner extends Model
         'mobile_image_path',
         'title',
         'is_archived',
+        'display_order',
+        'duration_seconds',
     ];
 
     protected $casts = [
         'is_archived' => 'boolean',
+        'display_order' => 'integer',
+        'duration_seconds' => 'integer',
     ];
 
     protected $appends = ['image_url', 'mobile_image_url'];
@@ -40,5 +44,21 @@ class Banner extends Model
                 ? Storage::url($this->mobile_image_path)
                 : null,
         );
+    }
+
+    /**
+     * Scope para obtener banners ordenados
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('display_order', 'asc')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Scope para obtener solo banners activos
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_archived', false);
     }
 }

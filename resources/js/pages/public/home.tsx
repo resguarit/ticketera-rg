@@ -40,6 +40,8 @@ interface Banner {
     image_url: string;
     mobile_image_url?: string;
     title: string | null;
+    display_order: number;
+    duration_seconds: number; // Agregar este campo
 }
 
 interface City {
@@ -92,7 +94,8 @@ export default function Home({
                 image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
                 mobile_image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
                 title: event.name,
-                link: route('event.detail', event.id)
+                link: route('event.detail', event.id),
+                duration: 5000 // Duración por defecto para eventos: 5 segundos
             })),
         ...banners.map(banner => ({
             type: 'banner',
@@ -101,19 +104,21 @@ export default function Home({
             image_url: banner.image_url,
             mobile_image_url: banner.mobile_image_url || banner.image_url,
             title: banner.title || "Promoción",
-            link: null
+            link: null,
+            duration: banner.duration_seconds * 1000 // Convertir a milisegundos
         }))
     ];
 
     // Auto-rotate del carousel cada 5 segundos
     useEffect(() => {
         if (slides.length > 1) {
+            const currentSlideDuration = slides[currentSlide]?.duration || 5000;
             const interval = setInterval(() => {
                 setCurrentSlide((prev) => (prev + 1) % slides.length);
-            }, 5000);
+            }, currentSlideDuration);
             return () => clearInterval(interval);
         }
-    }, [slides.length]);
+    }, [slides.length, currentSlide]); // Agregar currentSlide a las dependencias
 
     // Función para ir al slide anterior
     const goToPreviousSlide = () => {

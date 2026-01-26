@@ -22,7 +22,7 @@ class HomeController extends Controller
         $welcomePopup = WelcomePopup::active()->latest()->first();
 
         // Banners activos
-        $banners = Banner::where('is_archived', false)->latest()->get();
+        $banners = Banner::active()->ordered()->get();
 
         // Eventos destacados con hero banners
         $featuredEvents = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
