@@ -22,54 +22,67 @@ export default function Arrepentimiento() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        subject: 'Solicitud de Arrepentimiento',
+        subject: '',
         name: '',
         dni: '',
-        cardHolderDni: '',
         orderNumber: '',
-        description: '',
+        event: '',
+        ticketQuantity: '',
+        paymentMethod: '',
+        reason: '', // Agregar aquí también
+        declaration: 'Solicito la revocación de la compra en los términos del artículo 34 de la Ley 24.240 de Defensa del Consumidor.',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        try {
-            // Construir el mensaje con todos los datos
-            const message = `
-Solicitud de Arrepentimiento
+        // Construir el asunto con el número de orden
+        const emailSubject = `Botón de Arrepentimiento – Orden N° ${formData.orderNumber}`;
 
-Nombre y Apellido: ${formData.name}
+        // Construir el mensaje con todos los datos requeridos
+        const message = `
+SOLICITUD DE ARREPENTIMIENTO
+
+Nombre y Apellido del Titular: ${formData.name}
 DNI: ${formData.dni}
-DNI Titular Tarjeta: ${formData.cardHolderDni || 'No proporcionado'}
-Número de Compra: ${formData.orderNumber || 'No proporcionado'}
+Correo Electrónico: ${formData.email}
+Número de Orden: ${formData.orderNumber}
+Evento: ${formData.event}
+Cantidad de Entradas: ${formData.ticketQuantity}
+Medio de Pago: ${formData.paymentMethod}
+${formData.reason ? `\nMotivo de la Devolución:\n${formData.reason}\n` : ''}
+Manifestación Expresa:
+${formData.declaration}
+`.trim();
 
-Descripción:
-${formData.description}
-            `.trim();
-
+        try {
             router.post(route('arrepentimiento.send'), {
                 name: formData.name,
                 email: formData.email,
-                subject: formData.subject,
+                subject: emailSubject,
                 message: message,
-                // Campos adicionales para la plantilla de arrepentimiento
                 dni: formData.dni,
-                cardHolderDni: formData.cardHolderDni,
                 orderNumber: formData.orderNumber,
-                description: formData.description,
+                event: formData.event,
+                ticketQuantity: formData.ticketQuantity,
+                paymentMethod: formData.paymentMethod,
+                reason: formData.reason, // Agregar aquí también
+                declaration: formData.declaration,
             }, {
                 onSuccess: () => {
                     toast.success('Solicitud enviada correctamente. Nos pondremos en contacto pronto.');
-                    // Resetear formulario
                     setFormData({
                         email: '',
-                        subject: 'Solicitud de Arrepentimiento',
+                        subject: '',
                         name: '',
                         dni: '',
-                        cardHolderDni: '',
                         orderNumber: '',
-                        description: '',
+                        event: '',
+                        ticketQuantity: '',
+                        paymentMethod: '',
+                        declaration: 'Solicito la revocación de la compra en los términos del artículo 34 de la Ley 24.240 de Defensa del Consumidor.',
+                        reason: '',
                     });
                 },
                 onError: () => {
@@ -118,29 +131,41 @@ ${formData.description}
 
                     {/* Content */}
                     <div className="max-w-4xl mx-auto space-y-6">
-                        {/* Información sobre el derecho */}
+                        {/* Información Legal Completa */}
                         <Card className="bg-blue-50 border-blue-200 shadow-lg gap-2">
                             <CardHeader>
                                 <CardTitle className="text-foreground flex items-center gap-2">
                                     <Info className="w-5 h-5" />
-                                    Información Importante
+                                    Información Legal - Ley 24.240
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3 text-foreground/80">
+                            <CardContent className="space-y-4 text-foreground/80 text-sm leading-relaxed">
                                 <p>
-                                    Según la Ley de Defensa del Consumidor (Ley 24.240), tenés derecho a arrepentirte 
-                                    de tu compra dentro de los <strong>10 días corridos</strong> posteriores a la fecha de adquisición.
+                                    De conformidad con lo establecido en el <strong>artículo 34 de la Ley N° 24.240 de Defensa del Consumidor</strong>, 
+                                    el consumidor tiene derecho a revocar la aceptación del producto o servicio contratado dentro del plazo de{' '}
+                                    <strong>diez (10) días corridos</strong>, contados a partir de la fecha en que se realizó la compra, 
+                                    sin responsabilidad alguna.
                                 </p>
+
                                 <p>
-                                    Para ejercer este derecho, completá el formulario a continuación con tus datos y 
-                                    nos pondremos en contacto a la brevedad para gestionar tu solicitud.
+                                        <strong>Importante para eventos:</strong> La solicitud de cancelación deberá realizarse{' '}
+                                        <strong>dentro de los diez (10) días corridos desde la compra y hasta setenta y dos (72) horas 
+                                        antes del horario de inicio del evento</strong>.
                                 </p>
-                                <Alert>
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertDescription>
-                                        El cargo por servicio no será reembolsable según nuestros términos y condiciones.
-                                    </AlertDescription>
-                                </Alert>
+
+                                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                    <h4 className="font-semibold  mb-2">Sobre el reintegro:</h4>
+                                    <ul className="list-disc list-inside space-y-1 ml-2">
+                                        <li>El reintegro se realizará a la misma tarjeta utilizada para el pago</li>
+                                        <li>El plazo de acreditación depende de la entidad emisora de la tarjeta</li>
+                                        <li>Se reintegrará exclusivamente el valor de las entradas adquiridas</li>
+                                        <li className="font-bold">
+                                            La tarifa correspondiente al servicio de la ticketera NO es reembolsable, 
+                                            por tratarse de un cargo por gestión y administración
+                                        </li>
+                                    </ul>
+                                </div>
+
                             </CardContent>
                         </Card>
 
@@ -150,13 +175,16 @@ ${formData.description}
                                 <CardTitle className="text-primary">
                                     Formulario de Arrepentimiento
                                 </CardTitle>
+                                <p className="text-sm text-foreground/60">
+                                    Complete todos los campos obligatorios. Recuerde que debe usar el mismo email con el que realizó la compra.
+                                </p>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     {/* Email */}
                                     <div className="space-y-2">
                                         <Label htmlFor="email" className="text-foreground">
-                                            Correo Electrónico <span className="text-red-500">*</span>
+                                            Correo Electrónico de la Compra <span className="text-red-500">*</span>
                                         </Label>
                                         <Input
                                             id="email"
@@ -164,16 +192,19 @@ ${formData.description}
                                             type="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            placeholder="tu@email.com"
+                                            placeholder="email@utilizado-en-compra.com"
                                             className="bg-white border-gray-200"
                                             required
                                         />
+                                        <p className="text-xs text-foreground/60">
+                                            Debe ser el mismo email con el que realizó la compra
+                                        </p>
                                     </div>
 
                                     {/* Nombre y Apellido */}
                                     <div className="space-y-2">
                                         <Label htmlFor="name" className="text-foreground">
-                                            Nombre y Apellido <span className="text-red-500">*</span>
+                                            Nombre y Apellido del Titular <span className="text-red-500">*</span>
                                         </Label>
                                         <Input
                                             id="name"
@@ -181,7 +212,7 @@ ${formData.description}
                                             type="text"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            placeholder="Juan Pérez"
+                                            placeholder="Nombre completo del titular de la tarjeta"
                                             className="bg-white border-gray-200"
                                             required
                                         />
@@ -190,7 +221,7 @@ ${formData.description}
                                     {/* DNI */}
                                     <div className="space-y-2">
                                         <Label htmlFor="dni" className="text-foreground">
-                                            DNI (sin puntos) <span className="text-red-500">*</span>
+                                            DNI del Titular (sin puntos) <span className="text-red-500">*</span>
                                         </Label>
                                         <Input
                                             id="dni"
@@ -205,30 +236,10 @@ ${formData.description}
                                         />
                                     </div>
 
-                                    {/* DNI Titular Tarjeta */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cardHolderDni" className="text-foreground">
-                                            DNI del Titular de la Tarjeta (sin puntos)
-                                        </Label>
-                                        <Input
-                                            id="cardHolderDni"
-                                            name="cardHolderDni"
-                                            type="text"
-                                            value={formData.cardHolderDni}
-                                            onChange={handleChange}
-                                            placeholder="12345678"
-                                            pattern="[0-9]{7,8}"
-                                            className="bg-white border-gray-200"
-                                        />
-                                        <p className="text-sm text-foreground/60">
-                                            Solo si es diferente al tuyo
-                                        </p>
-                                    </div>
-
-                                    {/* Número de Compra */}
+                                    {/* Número de Orden */}
                                     <div className="space-y-2">
                                         <Label htmlFor="orderNumber" className="text-foreground">
-                                            Número de Compra
+                                            Número de Orden <span className="text-red-500">*</span>
                                         </Label>
                                         <Input
                                             id="orderNumber"
@@ -238,9 +249,10 @@ ${formData.description}
                                             onChange={handleChange}
                                             placeholder="ORD-123456"
                                             className="bg-white border-gray-200"
+                                            required
                                         />
-                                        <p className="text-sm text-foreground/60">
-                                            Podés encontrar tu número de compra en{' '}
+                                        <p className="text-xs text-foreground/60">
+                                            Lo encontrarás en el email de confirmación de compra o en{' '}
                                             <Link 
                                                 href={route('my-tickets')} 
                                                 className="text-primary hover:underline"
@@ -250,21 +262,95 @@ ${formData.description}
                                         </p>
                                     </div>
 
-                                    {/* Descripción */}
+                                    {/* Evento */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="description" className="text-foreground">
-                                            Descripción <span className="text-red-500">*</span>
+                                        <Label htmlFor="event" className="text-foreground">
+                                            Evento <span className="text-red-500">*</span>
                                         </Label>
-                                        <Textarea
-                                            id="description"
-                                            name="description"
-                                            value={formData.description}
+                                        <Input
+                                            id="event"
+                                            name="event"
+                                            type="text"
+                                            value={formData.event}
                                             onChange={handleChange}
-                                            placeholder="Por favor, describí el motivo de tu arrepentimiento..."
-                                            className="bg-white border-gray-200 min-h-[120px] resize-none"
+                                            placeholder="Nombre del evento para el cual adquirió las entradas"
+                                            className="bg-white border-gray-200"
                                             required
                                         />
                                     </div>
+
+                                    {/* Cantidad de Entradas */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="ticketQuantity" className="text-foreground">
+                                            Cantidad de Entradas <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Input
+                                            id="ticketQuantity"
+                                            name="ticketQuantity"
+                                            type="number"
+                                            min="1"
+                                            value={formData.ticketQuantity}
+                                            onChange={handleChange}
+                                            placeholder="Ej: 2"
+                                            className="bg-white border-gray-200"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Medio de Pago */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="paymentMethod" className="text-foreground">
+                                            Medio de Pago Utilizado <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Input
+                                            id="paymentMethod"
+                                            name="paymentMethod"
+                                            type="text"
+                                            value={formData.paymentMethod}
+                                            onChange={handleChange}
+                                            placeholder="Ej: Tarjeta Visa Débito"
+                                            className="bg-white border-gray-200"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Motivo de la Devolución */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="reason" className="text-foreground">
+                                            Motivo de la Devolución (Opcional)
+                                        </Label>
+                                        <Textarea
+                                            id="reason"
+                                            name="reason"
+                                            value={formData.reason || ''}
+                                            onChange={handleChange}
+                                            placeholder="Si desea, puede agregar información adicional sobre el motivo de su devolución..."
+                                            className="bg-white border-gray-200 min-h-[80px] resize-none"
+                                        />
+                                        <p className="text-xs text-foreground/60">
+                                            Este campo es opcional pero puede ayudarnos a mejorar nuestro servicio
+                                        </p>
+                                    </div>
+
+                                    {/* Manifestación Expresa */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="declaration" className="text-foreground">
+                                            Manifestación Expresa
+                                        </Label>
+                                        <Input
+                                            id="declaration"
+                                            name="declaration"
+                                            value={formData.declaration}
+                                            onChange={handleChange}
+                                            className="bg-gray-200 border-gray-200 "
+                                            required
+                                            readOnly
+                                        />
+                                        <p className="text-xs text-foreground/60">
+                                            Esta declaración es requerida por ley y no puede ser modificada
+                                        </p>
+                                    </div>
+
 
                                     {/* Botón Submit */}
                                     <Button
@@ -272,8 +358,14 @@ ${formData.description}
                                         disabled={isSubmitting}
                                         className="w-full bg-primary hover:bg-primary-hover text-white"
                                     >
-                                        {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+                                        {isSubmitting ? 'Enviando...' : 'Enviar Solicitud de Arrepentimiento'}
                                     </Button>
+
+                                    <p className="text-xs text-center text-foreground/60">
+                                        Al enviar este formulario, confirmo que he leído y comprendido los términos 
+                                        del artículo 34 de la Ley 24.240 y que cumplo con todos los requisitos para 
+                                        ejercer el derecho de arrepentimiento.
+                                    </p>
                                 </form>
                             </CardContent>
                         </Card>
