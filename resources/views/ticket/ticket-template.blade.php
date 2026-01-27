@@ -9,7 +9,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0px;
+                margin: 0;
             }
 
             body {
@@ -29,7 +29,6 @@
         }
 
         /* --- Contenedor de la Hoja A4 --- */
-
         .a4-page {
             width: 210mm;
             height: 297mm;
@@ -132,6 +131,15 @@
             /* +3px */
             height: 55px;
             margin-right: 8px;
+            display: flex;
+            /* Para centrar el SVG */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code svg {
+            width: 100%;
+            height: 100%;
         }
 
         .qr-info {
@@ -178,39 +186,62 @@
 
 <body>
 
+    @php
+    // Agrupar tickets en chunks de 10 para páginas A4
+    $chunks = $tickets->chunk(10);
+    @endphp
+
+    @foreach ($chunks as $chunk)
     <div class="a4-page">
-        {{-- Bucle de ejemplo para 10 entradas (llenar la hoja) --}}
-        @for ($i = 1; $i <= 10; $i++)
-            <div class="ticket-wrapper">
+        @foreach ($chunk as $ticket)
+        @php
+        $event = $ticket->ticketType->eventFunction->event;
+        $function = $ticket->ticketType->eventFunction;
+        $venue = $event->venue;
+        $sectorName = $ticket->ticketType->sector ? $ticket->ticketType->sector->name : $ticket->ticketType->name;
+        // Format Date: e.g., "13/12"
+        $dateShort = \Carbon\Carbon::parse($function->start_time)->format('d/m');
+        // Format Date Long: e.g., "13/12/2025"
+        $dateLong = \Carbon\Carbon::parse($function->start_time)->format('d/m/Y');
+        // Format Time: e.g., "09:00"
+        $time = \Carbon\Carbon::parse($function->start_time)->format('H:i');
+
+        // Price formatting
+        $price = number_format($ticket->ticketType->price, 2, ',', '.');
+        @endphp
+
+        <div class="ticket-wrapper">
 
             <div class="ticket-body">
                 <div class="header-section">
-                    <div class="event-title">Patricio Rey y sus Redonditos de Ricota</div>
-                    <div class="event-venue">ESTADIO UNICO - La Plata</div>
+                    <div class="event-title">{{ $event->name }}</div>
+                    <div class="event-venue">{{ $venue->name }} @if($venue->ciudad) - {{ $venue->ciudad->name }} @endif</div>
                 </div>
 
                 <div class="info-section">
                     <div class="data-row">
-                        <span><span class="data-label">FECHA:</span> 13/12/2025</span>
-                        <span><span class="data-label">HORA:</span> 09:00</span>
+                        <span><span class="data-label">FECHA:</span> {{ $dateLong }}</span>
+                        <span><span class="data-label">HORA:</span> {{ $time }}</span>
                     </div>
                     <div class="data-row">
                         <span class="data-label">SECTOR:</span>
-                        <span class="data-value big">CAMPO GRAL</span>
+                        <span class="data-value big">{{ Str::upper($sectorName) }}</span>
                     </div>
                     <div class="data-row">
                         <span class="data-label">VALOR:</span>
-                        <span class="data-value big">$1.000,00</span>
+                        <span class="data-value big">${{ $price }}</span>
                     </div>
                 </div>
 
                 <div class="qr-wrapper">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=INV-2-{{$i}}" class="qr-code">
+                    <div class="qr-code">
+                        {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)->generate($ticket->unique_code) !!}
+                    </div>
 
                     <div class="qr-info">
-                        <strong>Nº:</strong> INV-2-00{{$i}}<br>
-                        Prod: Río de la Plata<br>
-                        Valido x 1 ingreso.
+                        <strong>Nº:</strong> {{ $ticket->unique_code }}<br>
+                        Prod: {{ Str::limit($event->organizer->business_name, 20) }}<br>
+                        Válido x 1 ingreso.
                     </div>
                 </div>
             </div>
@@ -218,19 +249,20 @@
             <div class="ticket-stub">
                 <div class="stub-title">CONTROL</div>
 
-                <div class="stub-data">F: <span>13/12</span></div>
-                <div class="stub-data">H: <span>09:00</span></div>
-                <div class="stub-data">Sec: <span>CAMPO</span></div>
-                <div class="stub-data">$: <span>1.000</span></div>
+                <div class="stub-data">F: <span>{{ $dateShort }}</span></div>
+                <div class="stub-data">H: <span>{{ $time }}</span></div>
+                <div class="stub-data">Sec: <span>{{ Str::limit(Str::upper($sectorName), 10) }}</span></div>
+                <div class="stub-data">$: <span>{{ number_format($ticket->ticketType->price, 0, ',', '.') }}</span></div>
 
                 <div class="stub-id">
-                    INV-2-00{{$i}}
+                    {{ $ticket->unique_code }}
                 </div>
             </div>
 
+        </div>
+        @endforeach
     </div>
-    @endfor
-    </div>
+    @endforeach
 
 </body>
 
