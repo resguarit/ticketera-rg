@@ -14,6 +14,7 @@ import Footer from '@/components/footer';
 import { Event, Category } from '@/types/models';
 import EventCard from '@/components/EventCard';
 import { cn } from '@/lib/utils';
+import WelcomePopup from '@/components/WelcomePopup';
 
 // Definir los tipos de datos que llegan del backend
 interface EventDetail extends Event {
@@ -39,6 +40,8 @@ interface Banner {
     image_url: string;
     mobile_image_url?: string;
     title: string | null;
+    display_order: number;
+    duration_seconds: number; // Agregar este campo
 }
 
 interface City {
@@ -53,6 +56,10 @@ interface HomeProps {
     events: EventDetail[];
     categories: Category[];
     cities: City[];
+    welcomePopup?: {
+        image_url: string;
+        mobile_image_url?: string;
+    } | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,7 +69,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Home({ featuredEvents, banners = [], events, categories, cities }: HomeProps) {
+export default function Home({ 
+    featuredEvents, 
+    banners = [], 
+    events, 
+    categories, 
+    cities,
+    welcomePopup 
+}: HomeProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCity, setSelectedCity] = useState("all");
@@ -80,7 +94,8 @@ export default function Home({ featuredEvents, banners = [], events, categories,
                 image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
                 mobile_image_url: event.hero_image_url || event.image_url || "/placeholder.svg?height=400&width=800",
                 title: event.name,
-                link: route('event.detail', event.id)
+                link: route('event.detail', event.id),
+                duration: 5000 // Duración por defecto para eventos: 5 segundos
             })),
         ...banners.map(banner => ({
             type: 'banner',
@@ -89,19 +104,21 @@ export default function Home({ featuredEvents, banners = [], events, categories,
             image_url: banner.image_url,
             mobile_image_url: banner.mobile_image_url || banner.image_url,
             title: banner.title || "Promoción",
-            link: null
+            link: null,
+            duration: banner.duration_seconds * 1000 // Convertir a milisegundos
         }))
     ];
 
     // Auto-rotate del carousel cada 5 segundos
     useEffect(() => {
         if (slides.length > 1) {
+            const currentSlideDuration = slides[currentSlide]?.duration || 5000;
             const interval = setInterval(() => {
                 setCurrentSlide((prev) => (prev + 1) % slides.length);
-            }, 5000);
+            }, currentSlideDuration);
             return () => clearInterval(interval);
         }
-    }, [slides.length]);
+    }, [slides.length, currentSlide]); // Agregar currentSlide a las dependencias
 
     // Función para ir al slide anterior
     const goToPreviousSlide = () => {
@@ -152,6 +169,14 @@ export default function Home({ featuredEvents, banners = [], events, categories,
         <>
             <Head title="Home" />
             <Header className="" />
+
+            {/* Popup de Bienvenida */}
+            {welcomePopup && (
+                <WelcomePopup
+                    imageUrl={welcomePopup.image_url}
+                    mobileImageUrl={welcomePopup.mobile_image_url}
+                />
+            )}
 
             <div className="min-h-screen bg-gradient-to-br from-gray-200 to-background">
                 {/* Hero Banner - Eventos destacados con hero banners y Banners Admin */}

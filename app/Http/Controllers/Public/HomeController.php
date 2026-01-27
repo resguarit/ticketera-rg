@@ -8,6 +8,7 @@ use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\Category;
 use App\Models\Banner;
+use App\Models\WelcomePopup;
 use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,8 +18,11 @@ class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
+        // Popup de bienvenida activo
+        $welcomePopup = WelcomePopup::active()->latest()->first();
+
         // Banners activos
-        $banners = Banner::where('is_archived', false)->latest()->get();
+        $banners = Banner::active()->ordered()->get();
 
         // Eventos destacados con hero banners
         $featuredEvents = Event::with(['venue.ciudad.provincia', 'category', 'organizer', 'functions.ticketTypes'])
@@ -174,6 +178,10 @@ class HomeController extends Controller
         });
 
         return Inertia::render('public/home', [
+            'welcomePopup' => $welcomePopup ? [
+                'image_url' => $welcomePopup->full_image_url,
+                'mobile_image_url' => $welcomePopup->full_mobile_image_url,
+            ] : null,
             'banners' => $banners,
             'featuredEvents' => $featuredEvents,
             'events' => $processedEvents,
