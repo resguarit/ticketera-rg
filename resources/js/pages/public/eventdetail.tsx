@@ -446,11 +446,11 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         alt={eventData.name}
                                         className="w-full h-full object-cover"
                                     />
-                                
+
                                 </div>
                                 <div>
                                     <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-black  leading-tight">
-                                            {eventData.name}
+                                        {eventData.name}
                                     </h1>
                                 </div>
                             </div>
@@ -523,7 +523,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
+
 
 
                                 </CardContent>
@@ -549,20 +549,20 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         <div className="lg:hidden space-y-4 sm:space-y-6">
                             {/* Hero Image Mobile - Usar hero_image_url primero, luego image_url */}
                             <div>
-    <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg mb-2">
-        <img
-            src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
-            alt={eventData.name}
-            className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-    </div>
-    <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight">
-            {eventData.name}
-        </h1>
-    </div>
-</div>
+                                <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg mb-2">
+                                    <img
+                                        src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
+                                        alt={eventData.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight">
+                                        {eventData.name}
+                                    </h1>
+                                </div>
+                            </div>
 
                             {/* 1. Functions List Mobile (if multiple) */}
                             {eventData.functions.length > 1 && (
