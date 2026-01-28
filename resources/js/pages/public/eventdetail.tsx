@@ -501,8 +501,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     <CardTitle className="text-foreground text-lg sm:text-xl lg:text-2xl">Información del Evento</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3 sm:space-y-4">
-                                    <HtmlContent content={eventData.description || ''} className="text-foreground/80 leading-relaxed text-sm sm:text-base" />
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 ">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                         <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
                                             <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                                             <div>
@@ -523,6 +522,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                             </div>
                                         </div>
                                     </div>
+                                    <HtmlContent content={eventData.description || ''} className="text-foreground/80 leading-relaxed text-sm sm:text-base" />
 
 
 
