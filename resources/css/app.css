@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/typography';
 
 @import 'leaflet/dist/leaflet.css';
 
@@ -82,47 +83,47 @@
     --primary-foreground: #ffffff;
     --primary-hover: #101086;
     --dark: #06061e;
-    
+
     /* Secondary Colors */
     --secondary: #0dc1ba;
     --secondary-foreground: #ffffff;
-    
+
     /* Accent Colors */
     --accent: #e8f0fe;
     --accent-foreground: #08083a;
-    
+
     /* Base Colors */
     --background: #ffffff;
     --foreground: #292929;
-    
+
     /* Card Colors */
     --card: #ffffff;
     --card-foreground: #333333;
-    
+
     /* Popover Colors */
     --popover: #ffffff;
     --popover-foreground: #333333;
-    
+
     /* Muted Colors */
     --muted: #f9fafb;
     --muted-foreground: #6b7280;
-    
+
     /* Destructive Colors */
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    
+
     /* Border & Input Colors */
     --border: #e5e7eb;
     --input: #e5e7eb;
     --ring: #08083a;
-    
+
     /* Chart Colors */
     --chart-1: #08083a;
     --chart-2: #0a0a4d;
     --chart-3: #0c0c60;
     --chart-4: #0e0e73;
     --chart-5: #101086;
-    
+
     /* Sidebar Colors */
     --sidebar: #f9fafb;
     --sidebar-foreground: #333333;
@@ -132,7 +133,7 @@
     --sidebar-accent-foreground: #08083a;
     --sidebar-border: #e5e7eb;
     --sidebar-ring: #08083a;
-    
+
     --radius: 0.625rem;
 }
 
@@ -145,7 +146,8 @@
     body {
         @apply bg-background text-foreground font-sans;
     }
-        h2 {
+
+    h2 {
         @apply font-bold tracking-tight text-pretty leading-tight;
     }
 
@@ -161,6 +163,28 @@
     h2.card {
         @apply text-3xl mb-2;
     }
+
+    strong,
+    b {
+        font-weight: 700;
+        color: inherit;
+    }
+
+    /* Force prose bold color */
+    .prose strong,
+    .prose b,
+    .prose h1,
+    .prose h2,
+    .prose h3,
+    .prose h4 {
+        color: var(--foreground) !important;
+    }
+
+    .prose a {
+        text-decoration: underline;
+        color: var(--color-primary) !important;
+        font-weight: 500;
+    }
 }
 
 @layer utilities {
@@ -170,7 +194,7 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
-    
+
     .line-clamp-3 {
         overflow: hidden;
         display: -webkit-box;

@@ -1,12 +1,13 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { stripHtml } from '@/lib/utils';
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { 
-    Calendar, 
-    MapPin, 
-    Edit, 
-    Settings, 
+import {
+    Calendar,
+    MapPin,
+    Edit,
+    Settings,
     MoreVertical,
     Star,
     Users,
@@ -17,9 +18,9 @@ import { formatDate, formatDateReadable, formatRelativeTime, formatDateForCard }
 import { Event, Category, Venue, Organizer, EventFunction } from '@/types';
 
 interface EventFunctionDetail extends EventFunction {
-    date: string;       
-    time: string;       
-    formatted_date: string; 
+    date: string;
+    time: string;
+    formatted_date: string;
     day_name: string;
 }
 
@@ -34,14 +35,14 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     // Obtener la próxima función
-    const nextFunction = event.functions && event.functions.length > 0 
+    const nextFunction = event.functions && event.functions.length > 0
         ? event.functions.sort((a, b) => new Date(a.formatted_date + ' ' + a.time).getTime() - new Date(b.formatted_date + ' ' + b.time).getTime())[0]
         : null;
 
     const { month, day } = nextFunction ? formatDateForCard(nextFunction.date) : { month: '', day: '' };
 
     const handleViewPublic = () => {
-            router.visit(route('event.detail', event.id));
+        router.visit(route('event.detail', event.id));
     };
 
     const handleArchive = () => {
@@ -114,7 +115,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                 {/* Descripción - Altura fija */}
                 <div className="mb-4 h-[68px] flex flex-col">
                     <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
-                        {event.description}
+                        {stripHtml(event.description || '')}
                     </p>
                 </div>
 
@@ -183,7 +184,7 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
                         >
                             <MoreVertical className="w-4 h-4" />
                         </Button>
-                        
+
                         {dropdownOpen && (
                             <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10" onClick={preventCardClick}>
                                 <div className="py-1">
