@@ -79,5 +79,3 @@ Route::get('/test-email', function () {
         return "Error al enviar el email: " . $e->getMessage();
     }
 });
-
-Route::view('/test-impresion', 'ticket.ticket');
