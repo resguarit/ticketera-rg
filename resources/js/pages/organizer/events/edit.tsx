@@ -12,10 +12,11 @@ import { Event, Category, Venue, EventFunction } from '@/types';
 import InputError from '@/components/input-error';
 import { useEffect, useState } from 'react';
 import { toast, Toaster } from 'sonner';
+import RichTextEditor from '@/components/ui/rich-text/RichTextEditor';
 
 interface EditEventProps {
-    event: Event & { 
-        functions: EventFunction[], 
+    event: Event & {
+        functions: EventFunction[],
         image_url?: string,
         hero_image_url?: string
     };
@@ -83,7 +84,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        
+
         // Validar campos obligatorios
         if (!data.name.trim()) {
             toast.error('El nombre del evento es obligatorio');
@@ -112,12 +113,12 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
         formData.append('description', data.description);
         formData.append('category_id', data.category_id.toString());
         formData.append('venue_id', data.venue_id.toString());
-        
+
         // Solo agregar archivos si se seleccionaron nuevos
         if (data.banner_url instanceof File) {
             formData.append('banner_url', data.banner_url);
         }
-        
+
         if (data.hero_banner_url instanceof File) {
             formData.append('hero_banner_url', data.hero_banner_url);
         }
@@ -154,7 +155,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
     return (
         <>
-            <Head title={`Editar Evento - ${event.name}`} />            
+            <Head title={`Editar Evento - ${event.name}`} />
             <div className='min-h-screen bg-background'>
                 <div className='container mx-auto px-4 py-6'>
                     <div className="flex items-center mb-6">
@@ -181,16 +182,16 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
                                         <Label htmlFor="name" className="text-card-foreground">Nombre del Evento *</Label>
-                                        <Input 
-                                            id="name" 
-                                            value={data.name} 
-                                            onChange={(e) => setData('name', e.target.value)} 
+                                        <Input
+                                            id="name"
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
                                             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                                             required
                                         />
                                         <InputError message={errors.name} className="mt-1" />
                                     </div>
-                                    
+
                                     <div>
                                         <Label htmlFor="category_id" className="text-card-foreground">Categoría *</Label>
                                         <Select value={String(data.category_id)} onValueChange={(value) => setData('category_id', Number(value))}>
@@ -227,13 +228,11 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
 
                                     <div className="md:col-span-2">
                                         <Label htmlFor="description" className="text-card-foreground">Descripción *</Label>
-                                        <Textarea 
-                                            id="description" 
-                                            value={data.description} 
-                                            onChange={(e) => setData('description', e.target.value)} 
-                                            className="bg-background border-border text-foreground placeholder:text-muted-foreground"
-                                            rows={4}
-                                            required
+                                        <RichTextEditor
+                                            value={data.description}
+                                            onChange={(value) => setData('description', value)}
+                                            placeholder="Describe el evento, qué pueden esperar los asistentes..."
+                                            className="mt-1"
                                         />
                                         <InputError message={errors.description} className="mt-1" />
                                     </div>
@@ -255,10 +254,10 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                             <p className="text-sm text-muted-foreground">
                                                 Imagen que aparece en las tarjetas de eventos. Recomendado: 800x400px
                                             </p>
-                                            <Input 
-                                                className='bg-background border-border text-foreground' 
-                                                id="banner" 
-                                                type="file" 
+                                            <Input
+                                                className='bg-background border-border text-foreground'
+                                                id="banner"
+                                                type="file"
                                                 onChange={handleBannerChange}
                                             />
                                             <InputError message={errors.banner_url} className="mt-1" />
@@ -266,20 +265,20 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                         {bannerPreview && (
                                             <div className='space-y-2'>
                                                 <Label className="text-card-foreground">Vista Previa - Como se verá en la tarjeta</Label>
-                                                
+
                                                 {/* Vista previa móvil */}
                                                 <div className="block sm:hidden">
                                                     <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ width: '212px' }}>
                                                         <div className="flex h-32">
                                                             {/* Imagen izquierda - tamaño móvil */}
                                                             <div className="w-32 h-32 flex-shrink-0">
-                                                                <img 
-                                                                    src={bannerPreview} 
-                                                                    alt="Banner preview móvil" 
+                                                                <img
+                                                                    src={bannerPreview}
+                                                                    alt="Banner preview móvil"
                                                                     className="w-full h-full object-cover"
                                                                 />
                                                             </div>
-                                                            
+
                                                             {/* Contenido derecha - simulado */}
                                                             <div className="flex-1 p-3 flex flex-col justify-between">
                                                                 <div>
@@ -289,12 +288,12 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                                             UBICACIÓN
                                                                         </span>
                                                                     </div>
-                                                                    
+
                                                                     <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 mb-2">
                                                                         {data.name || 'NOMBRE DEL EVENTO'}
                                                                     </h3>
                                                                 </div>
-                                                                
+
                                                                 <div className="flex gap-4">
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="text-2xl font-bold text-black leading-none">15</span>
@@ -303,7 +302,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                                             <div className="text-xs font-bold text-black">2024</div>
                                                                         </div>
                                                                     </div>
-                                                                    
+
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="text-2xl font-bold text-black leading-none">20</span>
                                                                         <div className="leading-none">
@@ -323,9 +322,9 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                     <div className="bg-white rounded-2xl overflow-hidden shadow-lg" style={{ width: '212px', height: '380px' }}>
                                                         {/* Header section con la imagen */}
                                                         <div className="relative overflow-hidden" style={{ height: '260px' }}>
-                                                            <img 
-                                                                src={bannerPreview} 
-                                                                alt="Banner preview desktop" 
+                                                            <img
+                                                                src={bannerPreview}
+                                                                alt="Banner preview desktop"
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         </div>
@@ -383,13 +382,13 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                                 Hero Banner (Opcional)
                                             </Label>
                                             <p className="text-sm text-muted-foreground">
-                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
+                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado.
                                                 Recomendado: 1920x600px
                                             </p>
-                                            <Input 
-                                                className='bg-background border-border text-foreground' 
-                                                id="hero_banner" 
-                                                type="file" 
+                                            <Input
+                                                className='bg-background border-border text-foreground'
+                                                id="hero_banner"
+                                                type="file"
                                                 onChange={handleHeroBannerChange}
                                             />
                                             <InputError message={errors.hero_banner_url} className="mt-1" />
@@ -397,9 +396,9 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                         {heroBannerPreview && (
                                             <div className='space-y-2'>
                                                 <Label className="text-card-foreground">Vista Previa - Hero Banner</Label>
-                                                <img 
-                                                    src={heroBannerPreview} 
-                                                    alt="Hero banner preview" 
+                                                <img
+                                                    src={heroBannerPreview}
+                                                    alt="Hero banner preview"
                                                     className="w-full h-24 object-cover rounded-lg border border-border"
                                                 />
                                                 <p className="text-xs text-muted-foreground">Se mostrará en el banner principal del home</p>
@@ -418,7 +417,7 @@ export default function EditEvent({ event, categories, venues }: EditEventProps)
                                             <div>
                                                 <h4 className="text-sm font-medium text-blue-800">Eventos Destacados</h4>
                                                 <p className="text-sm text-blue-700">
-                                                    Solo los administradores pueden marcar eventos como destacados. 
+                                                    Solo los administradores pueden marcar eventos como destacados.
                                                     Si subes un hero banner, estará listo para cuando tu evento sea destacado.
                                                 </p>
                                             </div>

@@ -22,6 +22,7 @@ import {
 import { Category } from '@/types';
 import { toast, Toaster } from 'sonner';
 import BackButton from '@/components/Backbutton';
+import RichTextEditor from '@/components/ui/rich-text/RichTextEditor';
 
 interface EventFunction {
     id: string;
@@ -31,10 +32,7 @@ interface EventFunction {
     end_time?: string;
 }
 
-interface Category {
-    id: number;
-    name: string;
-}
+
 
 interface Venue {
     id: number;
@@ -109,13 +107,13 @@ export default function EventsNew({ categories, venues }: Props) {
             // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return '';
-            
+
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
-            
+
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         } catch {
             return '';
@@ -128,7 +126,7 @@ export default function EventsNew({ categories, venues }: Props) {
             setSectors([]);
             return;
         }
-        
+
         setLoadingSectors(true);
         try {
             const response = await fetch(`/organizer/api/venues/${venueId}/sectors`);
@@ -204,7 +202,7 @@ export default function EventsNew({ categories, venues }: Props) {
                 toast.error('La fecha de fin no es válida');
                 return;
             }
-            
+
             if (!isDateAfter(functionForm.end_time, functionForm.start_time)) {
                 toast.error('La fecha de fin debe ser posterior a la fecha de inicio');
                 return;
@@ -221,7 +219,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
         if (editingFunction) {
             // Update existing function
-            const updatedFunctions = functions.map(f => 
+            const updatedFunctions = functions.map(f =>
                 f.id === editingFunction.id ? newFunction : f
             );
             setFunctions(updatedFunctions);
@@ -256,7 +254,7 @@ export default function EventsNew({ categories, venues }: Props) {
     const removeFunction = (functionId: string) => {
         const updatedFunctions = functions.filter(f => f.id !== functionId);
         setFunctions(updatedFunctions);
-        
+
         // If we're editing this function, clear the form
         if (editingFunction?.id === functionId) {
             setFunctionForm({
@@ -281,7 +279,7 @@ export default function EventsNew({ categories, venues }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        
+
         // Validar campos obligatorios uno por uno
         if (!data.name.trim()) {
             toast.error('El nombre del evento es obligatorio');
@@ -302,13 +300,13 @@ export default function EventsNew({ categories, venues }: Props) {
             toast.error('Debe seleccionar un recinto para el evento');
             return;
         }
-        
+
         // Validate at least one function
         if (functions.length === 0) {
             toast.error('Debe agregar al menos una función al evento');
             return;
         }
-        
+
         // Convert functions to plain objects
         const functionsData = functions.map(func => ({
             name: func.name,
@@ -316,7 +314,7 @@ export default function EventsNew({ categories, venues }: Props) {
             start_time: func.start_time,
             end_time: func.end_time || null
         }));
-        
+
         // Use Inertia router directly
         router.post(route('organizer.events.store'), {
             ...data,
@@ -353,17 +351,17 @@ export default function EventsNew({ categories, venues }: Props) {
             <Head title='Crear Evento' />
             <div className='min-h-screen bg-background'>
                 <div className='container mx-auto px-4 py-6'>
-                <div className="flex items-center mb-6 gap-2">
-                    <BackButton href={route('organizer.events.index')} />
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Crear Evento</h1>
-                        <p className="text-gray-600 mt-1">
-                            Complete el formulario para crear un nuevo evento.
-                        </p>
+                    <div className="flex items-center mb-6 gap-2">
+                        <BackButton href={route('organizer.events.index')} />
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Crear Evento</h1>
+                            <p className="text-gray-600 mt-1">
+                                Complete el formulario para crear un nuevo evento.
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-{/*                     <div className='flex items-center justify-between mb-6'>
+                    {/*                     <div className='flex items-center justify-between mb-6'>
                         <div>
                             <h2 className="section text-2xl text-foreground">Crear Evento</h2>
                             <p className='text-muted-foreground'>Complete el formulario para crear un nuevo evento.</p>
@@ -392,16 +390,16 @@ export default function EventsNew({ categories, venues }: Props) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
                                         <Label htmlFor="name" className="text-card-foreground">Nombre del Evento *</Label>
-                                        <Input 
-                                            id="name" 
-                                            value={data.name} 
-                                            onChange={(e) => setData('name', e.target.value)} 
+                                        <Input
+                                            id="name"
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
                                             className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                                             required
                                         />
                                         <InputError message={errors.name} className="mt-1" />
                                     </div>
-                                    
+
                                     <div>
                                         <Label htmlFor="category_id" className="text-card-foreground">Categoría *</Label>
                                         <div className="flex gap-2">
@@ -445,13 +443,11 @@ export default function EventsNew({ categories, venues }: Props) {
 
                                     <div className="md:col-span-2">
                                         <Label htmlFor="description" className="text-card-foreground">Descripción *</Label>
-                                        <Textarea 
-                                            id="description" 
-                                            value={data.description} 
-                                            onChange={(e) => setData('description', e.target.value)} 
-                                            className="bg-background border-border text-foreground placeholder:text-muted-foreground"
-                                            rows={4}
-                                            required
+                                        <RichTextEditor
+                                            value={data.description}
+                                            onChange={(value) => setData('description', value)}
+                                            placeholder="Describe el evento, qué pueden esperar los asistentes..."
+                                            className="mt-1"
                                         />
                                         <InputError message={errors.description} className="mt-1" />
                                     </div>
@@ -473,10 +469,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                             <p className="text-sm text-muted-foreground">
                                                 Imagen que aparece en las tarjetas de eventos. Recomendado: 800x400px
                                             </p>
-                                            <Input 
-                                                className='bg-background border-border text-foreground' 
-                                                id="banner" 
-                                                type="file" 
+                                            <Input
+                                                className='bg-background border-border text-foreground'
+                                                id="banner"
+                                                type="file"
                                                 onChange={handleBannerChange}
                                                 accept="image/*"
                                             />
@@ -491,13 +487,13 @@ export default function EventsNew({ categories, venues }: Props) {
                                                         <div className="flex h-32">
                                                             {/* Imagen izquierda - tamaño móvil */}
                                                             <div className="w-32 h-32 flex-shrink-0">
-                                                                <img 
-                                                                    src={bannerPreview} 
-                                                                    alt="Banner preview móvil" 
+                                                                <img
+                                                                    src={bannerPreview}
+                                                                    alt="Banner preview móvil"
                                                                     className="w-full h-full object-cover"
                                                                 />
                                                             </div>
-                                                            
+
                                                             {/* Contenido derecha - simulado */}
                                                             <div className="flex-1 p-3 flex flex-col justify-between">
                                                                 <div>
@@ -507,12 +503,12 @@ export default function EventsNew({ categories, venues }: Props) {
                                                                             UBICACIÓN
                                                                         </span>
                                                                     </div>
-                                                                    
+
                                                                     <h3 className="text-sm font-bold text-black uppercase leading-tight line-clamp-2 mb-2">
                                                                         NOMBRE DEL EVENTO
                                                                     </h3>
                                                                 </div>
-                                                                
+
                                                                 <div className="flex gap-4">
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="text-2xl font-bold text-black leading-none">15</span>
@@ -521,7 +517,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                                                             <div className="text-xs font-bold text-black">2024</div>
                                                                         </div>
                                                                     </div>
-                                                                    
+
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="text-2xl font-bold text-black leading-none">20</span>
                                                                         <div className="leading-none">
@@ -541,9 +537,9 @@ export default function EventsNew({ categories, venues }: Props) {
                                                     <div className="bg-white rounded-2xl overflow-hidden shadow-lg" style={{ width: '212px', height: '380px' }}>
                                                         {/* Header section con la imagen - altura fija como en la tarjeta real */}
                                                         <div className="relative overflow-hidden" style={{ height: '260px' }}>
-                                                            <img 
-                                                                src={bannerPreview} 
-                                                                alt="Banner preview desktop" 
+                                                            <img
+                                                                src={bannerPreview}
+                                                                alt="Banner preview desktop"
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         </div>
@@ -601,13 +597,13 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 Hero Banner (Opcional)
                                             </Label>
                                             <p className="text-sm text-muted-foreground">
-                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado. 
+                                                Imagen especial para la página principal. Solo se mostrará si el administrador marca el evento como destacado.
                                                 Recomendado: 1920x600px
                                             </p>
-                                            <Input 
-                                                className='bg-background border-border text-foreground' 
-                                                id="hero_banner" 
-                                                type="file" 
+                                            <Input
+                                                className='bg-background border-border text-foreground'
+                                                id="hero_banner"
+                                                type="file"
                                                 onChange={handleHeroBannerChange}
                                                 accept="image/*"
                                             />
@@ -616,9 +612,9 @@ export default function EventsNew({ categories, venues }: Props) {
                                         {heroBannerPreview && (
                                             <div className='space-y-2'>
                                                 <Label className="text-card-foreground">Vista Previa - Hero Banner</Label>
-                                                <img 
-                                                    src={heroBannerPreview} 
-                                                    alt="Hero banner preview" 
+                                                <img
+                                                    src={heroBannerPreview}
+                                                    alt="Hero banner preview"
                                                     className="w-full h-24 object-cover rounded-lg border border-border"
                                                 />
                                                 <p className="text-xs text-muted-foreground">Se mostrará en el banner principal del home</p>
@@ -637,7 +633,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                             <div>
                                                 <h4 className="text-sm font-medium text-blue-800">Eventos Destacados</h4>
                                                 <p className="text-sm text-blue-700">
-                                                    Solo los administradores pueden marcar eventos como destacados. 
+                                                    Solo los administradores pueden marcar eventos como destacados.
                                                     Si subes un hero banner, estará listo para cuando tu evento sea destacado.
                                                 </p>
                                             </div>
@@ -661,10 +657,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 {editingFunction ? 'Editar Función' : 'Agregar Función'}
                                             </h4>
                                             {editingFunction && (
-                                                <Button 
-                                                    type="button" 
+                                                <Button
+                                                    type="button"
                                                     onClick={cancelEdit}
-                                                    variant="outline" 
+                                                    variant="outline"
                                                     size="sm"
                                                 >
                                                     Cancelar
@@ -675,8 +671,8 @@ export default function EventsNew({ categories, venues }: Props) {
                                         <div className="space-y-4 border border-border rounded-lg p-4">
                                             <div>
                                                 <Label className="text-card-foreground">Nombre de la Función *</Label>
-                                                <Input 
-                                                    value={functionForm.name} 
+                                                <Input
+                                                    value={functionForm.name}
                                                     onChange={(e) => setFunctionForm(prev => ({ ...prev, name: e.target.value }))}
                                                     className="bg-background border-border text-foreground"
                                                     placeholder="Ej: Función 1, Matinée, Noche"
@@ -686,8 +682,8 @@ export default function EventsNew({ categories, venues }: Props) {
 
                                             <div>
                                                 <Label className="text-card-foreground">Descripción</Label>
-                                                <Textarea 
-                                                    value={functionForm.description} 
+                                                <Textarea
+                                                    value={functionForm.description}
                                                     onChange={(e) => setFunctionForm(prev => ({ ...prev, description: e.target.value }))}
                                                     className="bg-background border-border text-foreground"
                                                     placeholder="Descripción opcional de la función"
@@ -698,13 +694,13 @@ export default function EventsNew({ categories, venues }: Props) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <Label className="text-card-foreground">Fecha de Inicio *</Label>
-                                                    <Input 
+                                                    <Input
                                                         type="date"
-                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[0] : ''} 
+                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[0] : ''}
                                                         onChange={(e) => {
                                                             const currentTime = functionForm.start_time ? functionForm.start_time.split('T')[1] || '09:00' : '09:00';
-                                                            setFunctionForm(prev => ({ 
-                                                                ...prev, 
+                                                            setFunctionForm(prev => ({
+                                                                ...prev,
                                                                 start_time: e.target.value ? `${e.target.value}T${currentTime}` : ''
                                                             }));
                                                         }}
@@ -714,13 +710,13 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 </div>
                                                 <div>
                                                     <Label className="text-card-foreground">Hora de Inicio *</Label>
-                                                    <Select 
-                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[1] || '' : ''} 
+                                                    <Select
+                                                        value={functionForm.start_time ? functionForm.start_time.split('T')[1] || '' : ''}
                                                         onValueChange={(value) => {
                                                             const currentDate = functionForm.start_time ? functionForm.start_time.split('T')[0] : '';
                                                             if (currentDate && value) {
-                                                                setFunctionForm(prev => ({ 
-                                                                    ...prev, 
+                                                                setFunctionForm(prev => ({
+                                                                    ...prev,
                                                                     start_time: `${currentDate}T${value}`
                                                                 }));
                                                             }
@@ -749,17 +745,17 @@ export default function EventsNew({ categories, venues }: Props) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <Label className="text-card-foreground">Fecha de Fin (Opcional)</Label>
-                                                    <Input 
+                                                    <Input
                                                         type="date"
-                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[0] : ''} 
+                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[0] : ''}
                                                         onChange={(e) => {
                                                             if (!e.target.value) {
                                                                 setFunctionForm(prev => ({ ...prev, end_time: '' }));
                                                                 return;
                                                             }
                                                             const currentTime = functionForm.end_time ? functionForm.end_time.split('T')[1] || '21:00' : '21:00';
-                                                            setFunctionForm(prev => ({ 
-                                                                ...prev, 
+                                                            setFunctionForm(prev => ({
+                                                                ...prev,
                                                                 end_time: `${e.target.value}T${currentTime}`
                                                             }));
                                                         }}
@@ -768,13 +764,13 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 </div>
                                                 <div>
                                                     <Label className="text-card-foreground">Hora de Fin (Opcional)</Label>
-                                                    <Select 
-                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[1] || '' : ''} 
+                                                    <Select
+                                                        value={functionForm.end_time ? functionForm.end_time.split('T')[1] || '' : ''}
                                                         onValueChange={(value) => {
                                                             const currentDate = functionForm.end_time ? functionForm.end_time.split('T')[0] : '';
                                                             if (currentDate && value) {
-                                                                setFunctionForm(prev => ({ 
-                                                                    ...prev, 
+                                                                setFunctionForm(prev => ({
+                                                                    ...prev,
                                                                     end_time: `${currentDate}T${value}`
                                                                 }));
                                                             }
@@ -801,8 +797,8 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 </div>
                                             </div>
 
-                                            <Button 
-                                                type="button" 
+                                            <Button
+                                                type="button"
                                                 onClick={addFunction}
                                                 className="w-full bg-primary text-primary-foreground hover:bg-primary-hover"
                                             >
@@ -817,7 +813,7 @@ export default function EventsNew({ categories, venues }: Props) {
                                         <h4 className="text-md font-medium text-card-foreground">
                                             Funciones Agregadas ({functions.length})
                                         </h4>
-                                        
+
                                         {functions.length > 0 ? (
                                             <div className="border border-border rounded-lg overflow-hidden">
                                                 <div className="bg-muted/50 px-4 py-2 border-b border-border">
@@ -830,11 +826,10 @@ export default function EventsNew({ categories, venues }: Props) {
                                                 </div>
                                                 <div className="max-h-80 overflow-y-auto">
                                                     {functions.map((func, index) => (
-                                                        <div 
-                                                            key={func.id} 
-                                                            className={`px-4 py-3 border-b border-border last:border-b-0 ${
-                                                                editingFunction?.id === func.id ? 'bg-primary/10' : 'hover:bg-muted/30'
-                                                            }`}
+                                                        <div
+                                                            key={func.id}
+                                                            className={`px-4 py-3 border-b border-border last:border-b-0 ${editingFunction?.id === func.id ? 'bg-primary/10' : 'hover:bg-muted/30'
+                                                                }`}
                                                         >
                                                             <div className="grid grid-cols-12 gap-2 items-center text-sm">
                                                                 <div className="col-span-3">
@@ -872,19 +867,19 @@ export default function EventsNew({ categories, venues }: Props) {
                                                                     )}
                                                                 </div>
                                                                 <div className="col-span-3 flex gap-1">
-                                                                    <Button 
-                                                                        type="button" 
+                                                                    <Button
+                                                                        type="button"
                                                                         onClick={() => editFunction(func)}
-                                                                        variant="outline" 
+                                                                        variant="outline"
                                                                         size="sm"
                                                                         className="h-7 px-2"
                                                                     >
                                                                         Editar
                                                                     </Button>
-                                                                    <Button 
-                                                                        type="button" 
+                                                                    <Button
+                                                                        type="button"
                                                                         onClick={() => removeFunction(func.id)}
-                                                                        variant="destructive" 
+                                                                        variant="destructive"
                                                                         size="sm"
                                                                         className="h-7 px-2"
                                                                     >

@@ -3,11 +3,11 @@ import { router } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/currencyHelpers';
 import { calculateSalesPercentage } from '@/lib/ticketHelpers';
 import { getVenueCompleteAddress } from '@/lib/venueHelpers';
-import { 
+import {
     ArrowLeft,
-    Calendar, 
-    MapPin, 
-    Users, 
+    Calendar,
+    MapPin,
+    Users,
     DollarSign,
     Clock,
     Star,
@@ -51,6 +51,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/dateHelpers';
 import BackButton from '@/components/Backbutton';
+import HtmlContent from '@/components/ui/rich-text/HtmlContent';
 
 // Interfaces
 interface EventFunction {
@@ -86,7 +87,7 @@ interface EventData {
     id: number;
     name: string;
     description: string;
-    image_url: string; 
+    image_url: string;
     hero_image_url: string;
     featured: boolean;
     total_revenue: number;
@@ -108,7 +109,7 @@ interface EventData {
         address: string;
         city: string;
         province?: string;
-        full_address?: string; 
+        full_address?: string;
     };
     functions: EventFunction[];
     created_at: string;
@@ -126,11 +127,11 @@ export default function Show({ auth }: any) {
     const [activeTab, setActiveTab] = useState('overview');
 
     // Calcular estadísticas del evento
-    const totalTickets = event.functions.reduce((sum, func) => 
+    const totalTickets = event.functions.reduce((sum, func) =>
         sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + ticket.quantity, 0), 0
     );
 
-    const soldTickets = event.functions.reduce((sum, func) => 
+    const soldTickets = event.functions.reduce((sum, func) =>
         sum + func.ticket_types.reduce((funcSum, ticket) => funcSum + ticket.quantity_sold, 0), 0
     );
 
@@ -141,11 +142,11 @@ export default function Show({ auth }: any) {
     // Determinar estado del evento basado en prioridad de funciones
     const getEventStatus = () => {
         if (event.functions.length === 0) {
-            return { 
-                label: 'Borrador', 
-                color: 'bg-gray-500', 
+            return {
+                label: 'Borrador',
+                color: 'bg-gray-500',
                 icon: AlertTriangle,
-                isActive: false 
+                isActive: false
             };
         }
 
@@ -162,7 +163,7 @@ export default function Show({ auth }: any) {
 
         // Primero buscar funciones activas
         const activeFunctions = event.functions.filter(f => f.is_active);
-        
+
         let primaryFunction;
         if (activeFunctions.length > 0) {
             // Ordenar funciones activas por prioridad
@@ -261,13 +262,13 @@ export default function Show({ auth }: any) {
     return (
         <>
             <Head title={`Evento: ${event.name}`} />
-            
+
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-8">
                     {/* Header con navegación */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center space-x-4">
-                            <BackButton 
+                            <BackButton
                                 href={route('admin.events.index')}
                             />
                             <div>
@@ -277,14 +278,14 @@ export default function Show({ auth }: any) {
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
-                            <Button 
+                            <Button
                                 onClick={handleToggleFeatured}
                                 variant={event.featured ? "default" : "outline"}
                                 size="sm"
-                                className={event.featured 
-                                    ? "bg-primary text-white" 
+                                className={event.featured
+                                    ? "bg-primary text-white"
                                     : "border-gray-300"
                                 }
                             >
@@ -314,7 +315,7 @@ export default function Show({ auth }: any) {
                             <div className='col-span-3'>
                                 <h3 className="text-sm font-medium text-gray-600 mb-2">Hero Banner</h3>
                                 <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                                    <img 
+                                    <img
                                         src={event.hero_image_url}
                                         alt={`${event.name} - Hero Banner`}
                                         className="w-full h-full object-cover"
@@ -326,12 +327,12 @@ export default function Show({ auth }: any) {
                                 </div>
                             </div>
                         )}
-                        
+
                         {event.image_url && (
                             <div className='col-span-1'>
                                 <h3 className="text-sm font-medium text-gray-600 mb-2">Banner Principal</h3>
                                 <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                                    <img 
+                                    <img
                                         src={event.image_url}
                                         alt={`${event.name} - Banner`}
                                         className="w-full h-full object-cover"
@@ -457,9 +458,9 @@ export default function Show({ auth }: any) {
                                             <div className="grid grid-cols-2 gap-4 pt-4">
                                                 <div>
                                                     <h3 className="font-medium text-sm text-gray-600 mb-1">Descripción</h3>
-                                                    <p className="text-black leading-relaxed">
-                                                        {event.description || 'Sin descripción disponible'}
-                                                    </p>
+                                                    <div className="text-black leading-relaxed">
+                                                        <HtmlContent content={event.description || 'Sin descripción disponible'} />
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-start space-x-2">
                                                     <div>
@@ -467,9 +468,9 @@ export default function Show({ auth }: any) {
                                                         {event.functions.length > 0 ? (
                                                             (() => {
                                                                 const now = new Date();
-                                                                const upcomingFunctions = event.functions.filter(func => 
+                                                                const upcomingFunctions = event.functions.filter(func =>
                                                                     new Date(func.start_time) > now
-                                                                ).sort((a, b) => 
+                                                                ).sort((a, b) =>
                                                                     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
                                                                 );
 
@@ -488,7 +489,7 @@ export default function Show({ auth }: any) {
                                                                 } else {
                                                                     const lastFunction = event.functions
                                                                         .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())[0];
-                                                                    
+
                                                                     return (
                                                                         <>
                                                                             <p className="font-medium text-black">
@@ -537,8 +538,8 @@ export default function Show({ auth }: any) {
                                                     <span className="text-gray-600">Tickets vendidos</span>
                                                     <span className="font-semibold text-black">{soldTickets} de {totalTickets}</span>
                                                 </div>
-                                                <Progress 
-                                                    value={salesProgress} 
+                                                <Progress
+                                                    value={salesProgress}
                                                     className="h-3 [&>div]:bg-primary"
                                                 />
                                                 <div className="grid grid-cols-3 gap-4 text-center pt-2">
@@ -590,7 +591,7 @@ export default function Show({ auth }: any) {
                                             <CardTitle className="text-black">Acciones</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-3">
-                                            <Button 
+                                            <Button
                                                 onClick={handleToggleFeatured}
                                                 variant={event.featured ? "default" : "outline"}
                                                 className={`w-full ${event.featured ? 'bg-primary text-white' : 'border-gray-300'}`}
@@ -598,7 +599,7 @@ export default function Show({ auth }: any) {
                                                 <Star className="w-4 h-4 mr-2" />
                                                 {event.featured ? 'Quitar destacado' : 'Marcar destacado'}
                                             </Button>
-                                            
+
                                             <Button variant="outline" className="w-full border-gray-300" onClick={handleViewPublic}>
                                                 <Eye className="w-4 h-4 mr-2" />
                                                 Ver como público
@@ -639,7 +640,7 @@ export default function Show({ auth }: any) {
                                                             </Button>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                                         <div className="flex items-center space-x-2">
                                                             <Calendar className="w-4 h-4 text-primary" />
@@ -714,7 +715,7 @@ export default function Show({ auth }: any) {
                                                                                 ${ticket.price.toLocaleString()}
                                                                             </span>
                                                                         </div>
-                                                                        
+
                                                                         <div className="space-y-2 text-sm">
                                                                             <div className="flex justify-between">
                                                                                 <span className="text-gray-600">Vendidos:</span>
@@ -729,14 +730,14 @@ export default function Show({ auth }: any) {
                                                                                 <span className="font-medium text-black">{ticket.quantity}</span>
                                                                             </div>
                                                                         </div>
-                                                                        
+
                                                                         <div className="mt-3">
                                                                             <div className="flex justify-between text-xs text-gray-600 mb-1">
                                                                                 <span>Progreso</span>
                                                                                 <span>{Math.round((ticket.quantity_sold / ticket.quantity) * 100)}%</span>
                                                                             </div>
-                                                                            <Progress 
-                                                                                value={(ticket.quantity_sold / ticket.quantity) * 100} 
+                                                                            <Progress
+                                                                                value={(ticket.quantity_sold / ticket.quantity) * 100}
                                                                                 className="h-2 [&>div]:bg-primary"
                                                                             />
                                                                         </div>
@@ -774,11 +775,11 @@ export default function Show({ auth }: any) {
                                                     <p className="text-sm text-gray-600">Tickets Vendidos</p>
                                                 </div>
                                                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                                <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</p>
+                                                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</p>
                                                     <p className="text-sm text-gray-600">Ingresos Totales</p>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="text-center p-4 bg-purple-50 rounded-lg">
                                                 <p className="text-2xl font-bold text-purple-600">{formatCurrency(netRevenue)}</p>
                                                 <p className="text-sm text-gray-600">Ingresos Netos</p>
@@ -795,7 +796,7 @@ export default function Show({ auth }: any) {
                                         <div className="space-y-3">
                                             {event.functions.map((func) => {
                                                 const funcTickets = func.ticket_types.reduce((sum, t) => sum + t.quantity_sold, 0);
-                                                
+
                                                 return (
                                                     <div key={func.id} className="p-3 bg-gray-50 rounded-lg">
                                                         <div className="flex justify-between items-center mb-2">

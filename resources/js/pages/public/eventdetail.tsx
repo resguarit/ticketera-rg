@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import Header from '@/components/header';
 import { Head, Link, router } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/currencyHelpers';
+import HtmlContent from '@/components/ui/rich-text/HtmlContent';
 
 import {
     Event,
@@ -63,16 +64,16 @@ interface EventDetailProps {
 }
 
 // Crear un componente mejorado para el mapa de Google
-const GoogleMapEmbed = ({ 
-    coordinates, 
-    googleMapsUrl, 
-    venueName, 
-    venueAddress 
-}: { 
-    coordinates?: string | null, 
+const GoogleMapEmbed = ({
+    coordinates,
+    googleMapsUrl,
+    venueName,
+    venueAddress
+}: {
+    coordinates?: string | null,
     googleMapsUrl?: string | null,
-    venueName: string, 
-    venueAddress: string 
+    venueName: string,
+    venueAddress: string
 }) => {
     // PRIORIDAD 1: Si existe google_maps_url, extraer coordenadas o usar directamente
     if (googleMapsUrl) {
@@ -499,7 +500,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                     <CardTitle className="text-foreground text-lg sm:text-xl lg:text-2xl">Información del Evento</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3 sm:space-y-4">
-                                    <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
+                                    <HtmlContent content={eventData.description || ''} className="text-foreground/80 leading-relaxed text-sm sm:text-base" />
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
@@ -888,7 +889,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                             <CardTitle className="text-foreground text-lg sm:text-xl">Información del Evento</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-3 sm:space-y-4">
-                                            <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
+                                            <HtmlContent content={eventData.description || ''} className="text-foreground/80 leading-relaxed text-sm sm:text-base" />
 
                                             <div className="grid grid-cols-1 gap-3 sm:gap-4">
                                                 <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">

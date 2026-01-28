@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
+import RichTextEditor from '@/components/ui/rich-text/RichTextEditor';
 
 interface TicketType {
     id: string;
@@ -21,7 +22,7 @@ interface TicketType {
 
 export default function CreateEvent({ auth }: any) {
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Formulario básico
     const [eventData, setEventData] = useState({
         title: '',
@@ -55,8 +56,8 @@ export default function CreateEvent({ auth }: any) {
     };
 
     const handleTicketChange = (id: string, field: string, value: string) => {
-        setTicketTypes(prev => 
-            prev.map(ticket => 
+        setTicketTypes(prev =>
+            prev.map(ticket =>
                 ticket.id === id ? { ...ticket, [field]: value } : ticket
             )
         );
@@ -82,7 +83,7 @@ export default function CreateEvent({ auth }: any) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        
+
         // Simular envío al backend
         setTimeout(() => {
             setIsLoading(false);
@@ -99,7 +100,7 @@ export default function CreateEvent({ auth }: any) {
     return (
         <>
             <Head title="Crear Evento" />
-            
+
             <div className="min-h-screen bg-white">
                 <div className="container mx-auto px-4 py-6">
                     {/* Header */}
@@ -116,16 +117,16 @@ export default function CreateEvent({ auth }: any) {
                                 <p className="text-gray-600">Completa la información del evento</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={handleSaveDraft}
                                 className="border-gray-300 text-white hover:bg-gray-50"
                             >
                                 Guardar Borrador
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={handleSubmit}
                                 disabled={isLoading}
                                 className="min-w-[100px] bg-black text-white hover:bg-gray-800"
@@ -172,22 +173,19 @@ export default function CreateEvent({ auth }: any) {
 
                                         <div>
                                             <Label htmlFor="description" className="text-black">Descripción *</Label>
-                                            <Textarea
-                                                id="description"
+                                            <RichTextEditor
                                                 value={eventData.description}
-                                                onChange={(e) => handleInputChange('description', e.target.value)}
+                                                onChange={(value) => handleInputChange('description', value)}
                                                 placeholder="Describe el evento, qué pueden esperar los asistentes..."
-                                                rows={4}
-                                                required
-                                                className="bg-white border-gray-300 text-black placeholder:text-gray-500"
+                                                className="mt-1"
                                             />
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <Label htmlFor="category" className="text-black">Categoría *</Label>
-                                                <Select 
-                                                    value={eventData.category} 
+                                                <Select
+                                                    value={eventData.category}
                                                     onValueChange={(value) => handleInputChange('category', value)}
                                                 >
                                                     <SelectTrigger className="bg-white border-gray-300 text-black">
@@ -270,8 +268,8 @@ export default function CreateEvent({ auth }: any) {
 
                                             <div>
                                                 <Label htmlFor="city" className="text-black">Ciudad *</Label>
-                                                <Select 
-                                                    value={eventData.city} 
+                                                <Select
+                                                    value={eventData.city}
                                                     onValueChange={(value) => handleInputChange('city', value)}
                                                 >
                                                     <SelectTrigger className="bg-white border-gray-300 text-black">
@@ -299,10 +297,10 @@ export default function CreateEvent({ auth }: any) {
                                                 <DollarSign className="w-5 h-5 text-gray-700" />
                                                 <span>Tipos de Tickets</span>
                                             </CardTitle>
-                                            <Button 
-                                                type="button" 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
                                                 onClick={addTicketType}
                                                 className="border-gray-300 text-white hover:bg-gray-50"
                                             >
@@ -391,8 +389,8 @@ export default function CreateEvent({ auth }: any) {
                                     <CardContent className="space-y-4 ">
                                         <div>
                                             <Label className="text-black">Estado</Label>
-                                            <Select 
-                                                value={eventData.status} 
+                                            <Select
+                                                value={eventData.status}
                                                 onValueChange={(value) => handleInputChange('status', value)}
                                             >
                                                 <SelectTrigger className="bg-white border-gray-300 text-black">
@@ -438,9 +436,9 @@ export default function CreateEvent({ auth }: any) {
                                             <p className="text-sm text-gray-600 mb-2">
                                                 Arrastra una imagen aquí o haz clic para seleccionar
                                             </p>
-                                            <Button 
-                                                type="button" 
-                                                variant="outline" 
+                                            <Button
+                                                type="button"
+                                                variant="outline"
                                                 size="sm"
                                                 className="border-gray-300 text-white hover:bg-gray-100"
                                             >

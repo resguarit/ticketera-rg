@@ -17,6 +17,7 @@ import { Event, EventRelations } from '@/types/models/event';
 import { EventFunction } from '@/types/models/eventFunction';
 import { compareDates, isDateAfter } from '@/lib/dateHelpers';
 import { formatCurrency } from '@/lib/currencyHelpers';
+import HtmlContent from '@/components/ui/rich-text/HtmlContent';
 
 interface EventFunctionDetail extends EventFunction {
     date: string;
@@ -108,7 +109,7 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                         </Badge>
                                     )}
                                 </div>
-                                <p className="text-gray-600 mb-4 max-w-3xl line-clamp-3 md:line-clamp-none">{event.description}</p>
+                                <HtmlContent content={event.description || ''} className="text-gray-600 mb-4 max-w-3xl line-clamp-3 md:line-clamp-none" />
 
                                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
