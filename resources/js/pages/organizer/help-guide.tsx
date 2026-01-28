@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { 
@@ -14,6 +14,13 @@ import {
     ChevronDown,
     ChevronUp
 } from 'lucide-react';
+
+interface HelpGuideProps {
+    supportEmail: string;
+    supportPhone: string;
+    businessDays: string;
+    businessHours: string;
+}
 
 const StepList = ({ steps }: { steps: string[] }) => (
     <ol className="space-y-2">
@@ -94,39 +101,39 @@ export default function HelpGuide() {
                     ]
                 },
                 {
-            id: "funciones-crear",
-            title: "Crear una Nueva Función",
-            steps: [
-                "Desde la página de funciones, haz clic en '+ Crear Función'",
-                "Completa la información básica (Los campos marcados con * son obligatorios)",
-                "Marca el switch 'Función Activa' (viene activado por defecto)",
-                "Haz clic en 'Crear Función' para guardar"
-            ]
-        },
-        {
-            id: "funciones-acciones",
-            title: "Acciones sobre Funciones",
-            steps: [
-                "Dentro de cada función en la lista, encontrarás varias acciones disponibles:",
-                "Editar: Haz clic en el ícono de lápiz para modificar nombre, descripción, fechas y estado de la función",
-                "Eliminar: Haz clic en el ícono de papelera (rojo) para eliminar permanentemente la función. No puedes eliminar funciones con entradas vendidas.",
-                "Activar/Desactivar: Haz clic en el ícono de ojo para cambiar el estado de la función entre activa e inactiva.",
-                "Las funciones activas muestran badge azul 'Activa', las inactivas muestran badge gris 'Inactiva'",
-                "Las funciones inactivas no aparecen en la venta pública pero conservan sus datos"
-            ]
-        },
-        {
-            id: "funciones-eliminar",
-            title: "Eliminar una Función",
-            steps: [
-                "Haz clic en el ícono de papelera (rojo) junto a la función",
-                "Aparecerá un modal de confirmación de eliminación",
-                "No se puede eliminar funciones con entradas vendidas",
-                "Confirma la eliminación si estás seguro",
-                "La función y todos sus datos asociados serán eliminados permanentemente",
-                "Esta acción no se puede deshacer"
-            ]
-        },
+                    id: "funciones-crear",
+                    title: "Crear una Nueva Función",
+                    steps: [
+                        "Desde la página de funciones, haz clic en '+ Crear Función'",
+                        "Completa la información básica (Los campos marcados con * son obligatorios)",
+                        "Marca el switch 'Función Activa' (viene activado por defecto)",
+                        "Haz clic en 'Crear Función' para guardar"
+                    ]
+                },
+                {
+                    id: "funciones-acciones",
+                    title: "Acciones sobre Funciones",
+                    steps: [
+                        "Dentro de cada función en la lista, encontrarás varias acciones disponibles:",
+                        "Editar: Haz clic en el ícono de lápiz para modificar nombre, descripción, fechas y estado de la función",
+                        "Eliminar: Haz clic en el ícono de papelera (rojo) para eliminar permanentemente la función. No puedes eliminar funciones con entradas vendidas.",
+                        "Activar/Desactivar: Haz clic en el ícono de ojo para cambiar el estado de la función entre activa e inactiva.",
+                        "Las funciones activas muestran badge azul 'Activa', las inactivas muestran badge gris 'Inactiva'",
+                        "Las funciones inactivas no aparecen en la venta pública pero conservan sus datos"
+                    ]
+                },
+                {
+                    id: "funciones-eliminar",
+                    title: "Eliminar una Función",
+                    steps: [
+                        "Haz clic en el ícono de papelera (rojo) junto a la función",
+                        "Aparecerá un modal de confirmación de eliminación",
+                        "No se puede eliminar funciones con entradas vendidas",
+                        "Confirma la eliminación si estás seguro",
+                        "La función y todos sus datos asociados serán eliminados permanentemente",
+                        "Esta acción no se puede deshacer"
+                    ]
+                },
             ]
         },
         {
@@ -383,6 +390,8 @@ export default function HelpGuide() {
         },
     ];
 
+    const { supportEmail, supportPhone, businessDays, businessHours } = usePage<HelpGuideProps>().props;
+
     return (
         <AppLayout>
             <Head title="Guía de Ayuda - Organizador" />
@@ -495,9 +504,9 @@ export default function HelpGuide() {
                             Si tienes dudas específicas o necesitas soporte técnico, no dudes en contactarnos.
                         </p>
                         <div className="space-y-2 text-sm text-gray-700 mb-6">
-                            <p><strong>Email de soporte:</strong> soporte@tuticketera.com</p>
-                            <p><strong>Teléfono:</strong> +1234567890</p>
-                            <p><strong>Horarios:</strong> Lunes a Viernes, 9:00 AM - 6:00 PM</p>
+                            <p><strong>Email de soporte:</strong> {supportEmail}</p>
+                            <p><strong>Teléfono:</strong> {supportPhone}</p>
+                            <p><strong>Horarios:</strong> {businessDays}, {businessHours}</p>
                         </div>
                         <div className="flex gap-4 justify-center">
                             <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">

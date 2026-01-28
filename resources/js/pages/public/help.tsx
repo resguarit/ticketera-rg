@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Faq, FaqCategory as FaqCategoryModel } from '@/types/models';
 import { toast } from 'sonner';
@@ -67,6 +67,7 @@ export default function Help() {
     const [searchTerm, setSearchTerm] = useState("");
     const [openItems, setOpenItems] = useState<string[]>([]);
     const [emailCopied, setEmailCopied] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [contactForm, setContactForm] = useState({
         name: "",
         email: "",
@@ -91,10 +92,21 @@ export default function Help() {
 
     const handleContactSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission
-        console.log("Contact form submitted:", contactForm);
-        // Reset form
-        setContactForm({ name: "", email: "", subject: "", message: "" });
+        setIsSubmitting(true);
+
+        router.post(route('help.send'), contactForm, {
+            onSuccess: () => {
+                toast.success('Mensaje enviado correctamente. Nos pondremos en contacto pronto.');
+                // Reset form
+                setContactForm({ name: "", email: "", subject: "", message: "" });
+            },
+            onError: () => {
+                toast.error('Hubo un error al enviar el mensaje. Por favor intenta más tarde.');
+            },
+            onFinish: () => {
+                setIsSubmitting(false);
+            },
+        });
     };
 
     // Función para copiar el email al portapapeles
@@ -343,9 +355,10 @@ export default function Help() {
                                         </div>
                                         <Button
                                             type="submit"
+                                            disabled={isSubmitting}
                                             className="w-full bg-primary hover:bg-primary-hover text-white h-9 sm:h-10 text-sm sm:text-base"
                                         >
-                                            Enviar Mensaje
+                                            {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
                                         </Button>
                                     </form>
                                 </CardContent>
@@ -363,14 +376,12 @@ export default function Help() {
                                     <Link href="/privacy" className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1">
                                         Política de Privacidad
                                     </Link>
-                                    <a 
-                                        href={`https://wa.me/${whatsappNumber}?text=Hola,%20necesito%20información%20sobre%20el%20botón%20de%20arrepentimiento`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <Link 
+                                        href={route('arrepentimiento')}
                                         className="block text-foreground/80 hover:text-primary transition-colors text-sm sm:text-base py-1"
                                     >
                                         Botón de Arrepentimiento
-                                    </a>
+                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>

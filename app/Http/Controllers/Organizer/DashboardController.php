@@ -7,6 +7,7 @@ use App\Services\RevenueService;
 use App\Enums\EventFunctionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
@@ -22,13 +23,13 @@ class DashboardController extends Controller
         $organizer = Auth::user()->organizer;
         $organizer->load(['events.functions.ticketTypes', 'events.venue', 'events.category']);
 
-        // Obtener período del request, por defecto último año
-        $period = $request->input('period', 'year');
+        // Obtener período del request, por defecto último mes
+        $period = $request->input('period', 'month');
         $dates = $this->getPeriodDates($period);
 
         // --- Estadísticas Generales (con filtro de período) ---
-        $totalRevenue = $this->revenueService->forOrganizer($organizer, $dates['start'], $dates['end']);
-        
+        $netRevenue = $this->revenueService->netRevenueForOrganizer($organizer, $dates['start'], $dates['end']);
+
         // CORREGIDO: Calcular entradas vendidas y tickets emitidos por separado
         $totalEntradasVendidas = 0; // lotes + entradas individuales (sin multiplicar)
         $totalTicketsEmitidos = 0;  // tickets físicos reales emitidos
@@ -185,7 +186,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
-                    'revenue' => $this->revenueService->forEvent($event, $dates['start'], $dates['end']),
+                    'revenue' => $this->revenueService->netRevenueForEvent($event, $dates['start'], $dates['end']),
                     'tickets_sold' => $ticketsEmitidos,
                     'status' => $statusInfo['value'],
                     'status_label' => $statusInfo['label'],
@@ -201,15 +202,11 @@ class DashboardController extends Controller
         $chartDays = $this->getChartDays($period);
         $revenueChartData = $this->revenueService->getOrganizerRevenueOverTime($organizer, $chartDays);
 
-        $netRevenue = $this->revenueService->netRevenueForOrganizer($organizer, $dates['start'], $dates['end']);
-        $serviceFee = $this->revenueService->serviceFeeForOrganizer($organizer, $dates['start'], $dates['end']);
 
         return Inertia::render('organizer/dashboard', [
             'organizer' => $organizer,
             'stats' => [
-                'totalRevenue' => $totalRevenue,
                 'netRevenue' => $netRevenue,
-                'serviceFee' => $serviceFee,
                 'totalEntradasVendidas' => $totalEntradasVendidas,
                 'totalTicketsSold' => $totalTicketsEmitidos,
                 'activeEventsCount' => $activeEventsCount,
@@ -312,6 +309,11 @@ class DashboardController extends Controller
     
     public function helpGuide(): Response
     {
-        return Inertia::render('organizer/help-guide');
+        return Inertia::render('organizer/help-guide', [
+            'supportEmail' => Setting::get('support_email', 'soporte@rgentradas.com'),
+            'supportPhone' => Setting::get('support_phone', '+54 9 11 1234-5678'),
+            'businessDays' => Setting::get('business_days', 'Lunes a Viernes'),
+            'businessHours' => Setting::get('business_hours', '9:00 - 18:00'),
+        ]);
     }
 }

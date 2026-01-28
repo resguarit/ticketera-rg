@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Organizer;
 
 use App\Enums\OrderStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\DiscountCode;
 use App\Models\Event;
@@ -16,7 +17,9 @@ class PromoterController extends Controller
 {
     public function index(Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 
@@ -84,7 +87,9 @@ class PromoterController extends Controller
 
     public function store(Request $request, Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 
@@ -134,7 +139,9 @@ class PromoterController extends Controller
 
     public function destroy(Event $event, Promoter $promoter)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 
@@ -155,7 +162,9 @@ class PromoterController extends Controller
 
     public function destroyCode(Event $event, Promoter $promoter, DiscountCode $code)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 
@@ -170,7 +179,9 @@ class PromoterController extends Controller
 
     public function restore(Event $event, $promoter_id)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 
@@ -188,7 +199,9 @@ class PromoterController extends Controller
 
     public function restoreCode(Event $event, $promoter_id, $code_id)
     {
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
+            // Permitido
+        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
             abort(403);
         }
 

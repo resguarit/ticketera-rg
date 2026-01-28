@@ -33,9 +33,7 @@ interface EventFunctionDetail extends EventFunction {
 
 interface EventWithDetails extends Event, EventRelations {
     functions: EventFunctionDetail[];
-    total_revenue: number;
     net_revenue: number;
-    service_fee_revenue: number;
     entradas_vendidas: number;
     tickets_emitidos: number;
 }
@@ -191,18 +189,8 @@ export default function EventManage({ auth, event, currentDateTime }: EventManag
                                 </div>
                                 <div>
                                     <p className="text-2xl font-bold text-gray-900 mb-1" title="Ingresos Totales">
-                                        {formatCurrency(event.total_revenue)}
+                                        {formatCurrency(event.net_revenue)}
                                     </p>
-                                    <div className="space-y-1 pt-2 border-t border-yellow-200/60 mt-2">
-                                        <div className="flex justify-between items-center text-xs" title="Ingresos Netos (Sin cargo por servicio)">
-                                            <span className="text-gray-600">Neto:</span>
-                                            <span className="font-medium text-gray-800">{formatCurrency(event.net_revenue)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs" title="Ingresos por Cargo de Servicio (Incluye devueltos)">
-                                            <span className="text-gray-600">Cargo por Servicio:</span>
-                                            <span className="font-medium text-gray-800">{formatCurrency(event.service_fee_revenue)}</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </Card>

@@ -1,18 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { formatDate } from '@/lib/dateHelpers';
-import { 
-    Plus, 
-    MoreVertical, 
-    Eye, 
-    Edit, 
-    Trash2, 
-    Building, 
-    Mail, 
-    Calendar, 
+import {
+    Plus,
+    MoreVertical,
+    Eye,
+    Edit,
+    Trash2,
+    Building,
+    Mail,
+    Calendar,
     Users,
     CheckCircle,
-    DollarSign
+    DollarSign,
+    User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,10 +63,10 @@ export default function Index({ auth }: any) {
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
     const [selectedStatus, setSelectedStatus] = useState("all"); // Este está bien
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at"); // Este está bien
-    
+
     // Ref para controlar si es la primera carga
     const isInitialLoad = useRef(true);
-    
+
     // Ref para controlar timeouts de debounce
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -105,7 +106,7 @@ export default function Index({ auth }: any) {
             isInitialLoad.current = false;
             return;
         }
-        
+
         applyFilters(true); // Resetear página cuando cambian los filtros
     }, [sortBy, applyFilters]); // Agregar applyFilters a las dependencias
 
@@ -150,7 +151,7 @@ export default function Index({ auth }: any) {
     // Función para manejar la paginación
     const handlePagination = (url: string) => {
         if (!url) return;
-        
+
         router.get(url, {}, {
             preserveState: true,
             replace: true,
@@ -195,7 +196,7 @@ export default function Index({ auth }: any) {
         setSearchTerm("");
         setSelectedStatus("all");
         setSortBy("created_at");
-        
+
         router.get(route('admin.organizers.index'), {}, {
             preserveState: true,
             replace: true,
@@ -232,7 +233,7 @@ export default function Index({ auth }: any) {
     return (
         <>
             <Head title="Gestión de Organizadores" />
-            
+
             <AdminDashboardLayout
                 title="Gestión de Organizadores"
                 description="Administra todos los organizadores de eventos"
@@ -289,7 +290,7 @@ export default function Index({ auth }: any) {
                             <div className="flex items-center space-x-4 sm:space-x-6">
                                 <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                                     {organizer.image_url ? (
-                                        <img 
+                                        <img
                                             src={organizer.image_url}
                                             alt={`Logo de ${organizer.name}`}
                                             className="w-full h-full object-cover"
@@ -312,14 +313,14 @@ export default function Index({ auth }: any) {
                                             </h3>
                                             <p className="text-gray-600 text-sm flex items-center space-x-4">
                                                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-3 mb-3'>
-                                                <span className="flex items-center space-x-1">
-                                                    <Users className="w-4 h-4" />
-                                                    <span>{organizer.referring}</span>
-                                                </span>
-                                                <span className="flex items-center space-x-1">
-                                                    <Mail className="w-4 h-4" />
-                                                    <span>{organizer.email}</span>
-                                                </span>
+                                                    <span className="flex items-center space-x-1">
+                                                        <Users className="w-4 h-4" />
+                                                        <span>{organizer.referring}</span>
+                                                    </span>
+                                                    <span className="flex items-center space-x-1">
+                                                        <Mail className="w-4 h-4" />
+                                                        <span>{organizer.email}</span>
+                                                    </span>
                                                 </div>
                                             </p>
                                         </div>
@@ -343,38 +344,47 @@ export default function Index({ auth }: any) {
                                         </div>
                                         <div className='flex items-center space-x-2'>
                                             <Link href={route('admin.organizers.show', organizer.id)} >
-                                            <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50" >Ver perfil</Button>
+                                                <Button variant="outline" size="sm" className="border-gray-300 text-black hover:bg-gray-50" >Ver perfil</Button>
                                             </Link>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-56 bg-white border-gray-300">
-                                                <DropdownMenuItem 
-                                                    className="text-gray-700 hover:bg-gray-50"
-                                                    onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
-                                                >
-                                                    <Edit className="w-4 h-4 mr-2" />
-                                                    Editar organizador
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator className="bg-gray-200" />
-                                                <DropdownMenuItem 
-                                                    className="text-red-600 focus:text-red-600 hover:bg-red-50"
-                                                    onClick={() => {
-                                                        setOrganizerToDelete(organizer);
-                                                        setIsConfirmModalOpen(true);
-                                                    }}
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-2" />
-                                                    Eliminar organizador
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black hover:bg-gray-200">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="w-56 bg-white border-gray-300">
+                                                    <DropdownMenuItem
+                                                        className="text-gray-700 hover:bg-gray-50"
+                                                        onClick={() => router.get(route('admin.organizers.edit', organizer.id))}
+                                                    >
+                                                        <Edit className="w-4 h-4 mr-2" />
+                                                        Editar organizador
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator className="bg-gray-200" />
+                                                    <DropdownMenuItem
+                                                        className="text-red-600 focus:text-red-600 hover:bg-red-50"
+                                                        onClick={() => {
+                                                            setOrganizerToDelete(organizer);
+                                                            setIsConfirmModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                        Eliminar organizador
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div className="flex items-center justify-center">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.post(route('admin.impersonate.start', organizer.id))}
+                                >
+                                    <User className="w-4 h-4 mr-2" />
+                                    Gestionar como este organizador
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -384,7 +394,7 @@ export default function Index({ auth }: any) {
                             <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-xl font-semibold text-black mb-2">No se encontraron organizadores</h3>
                             <p className="text-gray-600 mb-6">
-                                {searchTerm 
+                                {searchTerm
                                     ? "Prueba ajustando los filtros de búsqueda"
                                     : "Aún no hay organizadores registrados"}
                             </p>
@@ -401,13 +411,12 @@ export default function Index({ auth }: any) {
                                     key={index}
                                     onClick={() => handlePagination(link.url)}
                                     disabled={!link.url}
-                                    className={`px-3 py-2 text-sm rounded-md transition-colors ${
-                                        link.active
-                                            ? 'bg-black text-white'
-                                            : link.url
+                                    className={`px-3 py-2 text-sm rounded-md transition-colors ${link.active
+                                        ? 'bg-black text-white'
+                                        : link.url
                                             ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    }`}
+                                        }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}

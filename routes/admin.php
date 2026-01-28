@@ -15,8 +15,22 @@ use App\Http\Controllers\Admin\FaqCategoryController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\WelcomePopupController;
+use Illuminate\Http\Request;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::post('/impersonate/stop', function (Request $request) {
+        $request->session()->pull('impersonated_organizer_id');
+        return redirect()->route('admin.organizers.index')
+            ->with('success', 'Has vuelto a tu panel de administrador.');
+    })->name('impersonate.stop');
+
+    Route::post('/impersonate/{organizer}', function (Request $request, $organizerId) {
+        $request->session()->put('impersonated_organizer_id', $organizerId);
+        return redirect()->route('organizer.dashboard')
+            ->with('success', 'Ahora estas gestionando como este organizador.');
+    })->name('impersonate.start');
 
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
 
@@ -98,5 +112,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('faqs', [FaqCategoryController::class, 'index'])->name('faqs.index');
 
     // Gestión de banners
-    Route::resource('banners', \App\Http\Controllers\Admin\BannerController::class)->except(['create', 'edit', 'show']);
+    Route::resource('banners', \App\Http\Controllers\Admin\BannerController::class)->except(['create', 'show']);
+    Route::post('banners/update-order', [\App\Http\Controllers\Admin\BannerController::class, 'updateOrder'])
+        ->name('banners.update-order');
+
+    // Rutas de Admin
+        Route::resource('popups', WelcomePopupController::class);
+        Route::post('popups/{popup}/toggle-active', [WelcomePopupController::class, 'toggleActive'])
+            ->name('popups.toggle-active');
 });

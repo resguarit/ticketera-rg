@@ -19,6 +19,7 @@ import {
     EventFunction,
     TicketType
 } from '@/types/'
+import Footer from '@/components/footer';
 
 interface TicketTypeData extends TicketType {
     available: number;
@@ -438,21 +439,21 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         {/* DESKTOP LAYOUT - Izquierda (lg y superior) */}
                         <div className="hidden lg:block lg:col-span-2 space-y-4 sm:space-y-6">
                             {/* Hero Image - Usar hero_image_url primero, luego image_url */}
-                            <div className="relative h-48 sm:h-64 lg:h-72 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
-                                <img
-                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
-                                    alt={eventData.name}
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                <div className="absolute bottom-3 sm:bottom-4 lg:bottom-6 left-3 sm:left-4 lg:left-6">
-
-                                    <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-1 sm:mb-2 leading-tight">
-                                        {eventData.name}
+                            <div>
+                                <div className="mb-2 relative h-48 sm:h-64 lg:h-72 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-md sm:shadow-lg">
+                                    <img
+                                        src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
+                                        alt={eventData.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                
+                                </div>
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-black  leading-tight">
+                                            {eventData.name}
                                     </h1>
                                 </div>
                             </div>
-
                             {/* Functions List (if multiple) - MOVIDO ANTES DE EVENT INFO */}
                             {eventData.functions.length > 1 && (
                                 <Card className=" bg-white border-gray-200 shadow-md sm:shadow-lg">
@@ -501,14 +502,13 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 </CardHeader>
                                 <CardContent className="space-y-3 sm:space-y-4">
                                     <HtmlContent content={eventData.description || ''} className="text-foreground/80 leading-relaxed text-sm sm:text-base" />
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 ">
                                         <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
                                             <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                                             <div>
-                                                <p className="font-semibold text-foreground text-sm sm:text-base">Fecha y Hora</p>
+                                                <p className="text-xs sm:text-sm">Fecha y Hora</p>
                                                 {selectedFunction ? (
-                                                    <p className="text-xs sm:text-sm">{selectedFunction.date} • {selectedFunction.time}</p>
+                                                    <p className=" font-semibold text-foreground text-sm ">{selectedFunction.date} • {selectedFunction.time}</p>
                                                 ) : (
                                                     <p className="text-xs sm:text-sm">Selecciona una función</p>
                                                 )}
@@ -518,11 +518,14 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                         <div className="flex items-center space-x-2 sm:space-x-3 text-foreground/80">
                                             <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-secondary flex-shrink-0" />
                                             <div>
-                                                <p className="font-semibold text-foreground text-sm sm:text-base">Ubicación</p>
-                                                <p className="text-xs sm:text-sm">{eventData.location}, {eventData.city}</p>
+                                                <p className="text-xs sm:text-sm">Ubicación</p>
+                                                <p className="font-semibold text-foreground text-sm ">{eventData.location}, {eventData.city}</p>
                                             </div>
                                         </div>
                                     </div>
+                                    <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
+
+
                                 </CardContent>
                             </Card>
 
@@ -545,19 +548,21 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         {/* MOBILE LAYOUT - Completo (menor a lg) */}
                         <div className="lg:hidden space-y-4 sm:space-y-6">
                             {/* Hero Image Mobile - Usar hero_image_url primero, luego image_url */}
-                            <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg">
-                                <img
-                                    src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
-                                    alt={eventData.name}
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4">
-                                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2 leading-tight">
-                                        {eventData.name}
-                                    </h1>
-                                </div>
-                            </div>
+                            <div>
+    <div className="relative h-48 sm:h-64 rounded-lg sm:rounded-xl overflow-hidden shadow-md sm:shadow-lg mb-2">
+        <img
+            src={eventData.hero_image_url || eventData.image_url || '/placeholder.jpg'}
+            alt={eventData.name}
+            className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+    </div>
+    <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight">
+            {eventData.name}
+        </h1>
+    </div>
+</div>
 
                             {/* 1. Functions List Mobile (if multiple) */}
                             {eventData.functions.length > 1 && (
@@ -912,6 +917,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     </div>
                                                 </div>
                                             </div>
+                                            <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
                                         </CardContent>
                                     </Card>
                                 </CollapsibleContent>
@@ -1241,6 +1247,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                         </div>
                     </div>
                 </div>
+                <Footer />
             </div>
         </>
     );

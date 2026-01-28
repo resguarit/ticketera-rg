@@ -202,7 +202,7 @@ class RevenueService
         $endDate = Carbon::now()->endOfDay();
 
         $revenueData = Order::query()
-            ->select(DB::raw('DATE(order_date) as date'), DB::raw('SUM(total_amount) as revenue'))
+            ->select(DB::raw('DATE(order_date) as date'), DB::raw('SUM(subtotal) as revenue'))
             ->where('status', OrderStatus::PAID)
             ->whereBetween('order_date', [$startDate, $endDate])
             ->whereHas('issuedTickets.ticketType.eventFunction.event', function ($q) use ($organizer) {
@@ -326,5 +326,58 @@ class RevenueService
         $refundedFees = (float) ($refundedQuery->sum('service_fee') ?? 0);
 
         return $paidFees + $refundedFees;
+    }
+
+    /**
+     * Calcula los ingresos netos para una función (sin cargo por servicio)
+     */
+    public function netRevenueForFunction(EventFunction $function, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        $query = Order::query()
+            ->where('status', OrderStatus::PAID)
+            ->whereHas('issuedTickets.ticketType', function ($q) use ($function) {
+                $q->where('event_function_id', $function->id);
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_date', [$startDate, $endDate]);
+        }
+
+        return (float) ($query->sum('subtotal') ?? 0);
+    }
+
+    /**
+     * Calcula los ingresos netos para un tipo de ticket (sin cargo por servicio)
+     */
+    public function netRevenueForTicketType(TicketType $ticketType, ?Carbon $startDate = null, ?Carbon $endDate = null): float
+    {
+        if ($ticketType->is_bundle) {
+            // Para bundles: contar órdenes únicas y multiplicar por el precio del lote
+            $lotesVendidos = Order::query()
+                ->where('status', OrderStatus::PAID)
+                ->whereHas('issuedTickets', function ($q) use ($ticketType) {
+                    $q->where('ticket_type_id', $ticketType->id);
+                });
+
+            if ($startDate && $endDate) {
+                $lotesVendidos->whereBetween('order_date', [$startDate, $endDate]);
+            }
+
+            $countLotes = $lotesVendidos->count();
+            return (float) ($countLotes * $ticketType->price);
+        } else {
+            // Para individuales: contar tickets vendidos y multiplicar por precio
+            $vendidos = IssuedTicket::query()
+                ->where('ticket_type_id', $ticketType->id)
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                    $q->where('status', OrderStatus::PAID);
+                    if ($startDate && $endDate) {
+                        $q->whereBetween('order_date', [$startDate, $endDate]);
+                    }
+                })
+                ->count();
+
+            return (float) ($vendidos * $ticketType->price);
+        }
     }
 }

@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff, TrendingUp, Percent } from 'lucide-react';
+import { DollarSign, Ticket, Calendar, Activity, ArrowRight, Plus, Eye, EyeOff, TrendingUp, Percent, LogOut } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import { Event } from '@/types';
 import { Progress } from '@/components/ui/progress';
@@ -13,9 +13,7 @@ import ChangePasswordDialog from '@/components/change-password-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Stat {
-    totalRevenue: number;
     netRevenue: number;
-    serviceFee: number;
     totalEntradasVendidas: number;
     totalTicketsSold: number;
     activeEventsCount: number;
@@ -65,8 +63,7 @@ interface DashboardProps {
 
 export default function Dashboard({ auth, organizer, stats, recentEvents, topEvents, revenueChartData, currentPeriod }: DashboardProps) {
     const statCards = [
-        { title: 'Ingresos Totales', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-chart-1', description: 'Total facturado' },
-        { title: 'Ingresos Netos', value: formatCurrency(stats.netRevenue), icon: TrendingUp, color: 'text-chart-2', description: 'Lo que recibes' },
+        { title: 'Ingresos Totales', value: formatCurrency(stats.netRevenue), icon: DollarSign, color: 'text-chart-1', description: 'Entradas vendidas x precio' },
         { title: 'Entradas Vendidas', value: formatNumber(stats.totalEntradasVendidas), icon: Ticket, color: 'text-chart-3', description: 'lotes + individuales' },
         { title: 'Tickets Emitidos', value: formatNumber(stats.totalTicketsSold), icon: Activity, color: 'text-chart-4', description: 'entradas físicas' },
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
@@ -138,6 +135,29 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
             <Head title="Mi Dashboard" />
 
             <div className="container mx-auto p-6 space-y-6">
+                {auth.is_impersonating && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                                <Eye className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-yellow-800">Modo Organizador Activo</p>
+                                <p className="text-sm text-yellow-700">
+                                    Estás gestionando el panel de: <strong>{organizer.name}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => router.post(route('admin.impersonate.stop'))}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600"
+                        >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Volver a Admin
+                        </Button>
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard de Organizador</h1>
@@ -166,7 +186,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
                     {statCards.map((card, index) => (
                         <Card key={index} className={`p-4 border-l-4 border-l-chart-3`}>
                             <div className="space-y-2">
