@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import {MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle} from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Calendar, Ticket, HelpCircle, Shield, FileText, House, MessageCircle } from 'lucide-react';
 import logoResguarit from '../../../public/favicon.ico'
 import { PageProps } from '@/types';
 import { useState } from 'react';
@@ -12,7 +12,7 @@ export default function Footer({ className = '' }: FooterProps) {
     const currentYear = new Date().getFullYear();
     const { supportEmail, supportPhone, facebookUrl, instagramUrl } = usePage<PageProps>().props;
     const [emailCopied, setEmailCopied] = useState(false);
-    
+
     // Formatear el número de teléfono para WhatsApp (remover caracteres no numéricos)
     const whatsappNumber = supportPhone?.replace(/\D/g, '') || '5492216914649';
 
@@ -32,7 +32,7 @@ export default function Footer({ className = '' }: FooterProps) {
             {/* Main Footer Content */}
             <div className="px-6 sm:px-16 py-8 sm:py-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-                    
+
                     {/* Company Info */}
                     <div className="space-y-4">
                         <div>
@@ -43,14 +43,14 @@ export default function Footer({ className = '' }: FooterProps) {
                                 Tu plataforma de confianza para los mejores eventos de música, teatro, deportes y entretenimiento en Argentina.
                             </p>
                         </div>
-                        
+
                         {/* Contact Info */}
                         <div className="space-y-2">
                             <div className="flex items-center space-x-2 text-gray-300">
                                 <MapPin className="w-4 h-4 text-secondary flex-shrink-0" />
                                 <span className="text-sm">La Plata, Buenos Aires</span>
                             </div>
-                            <a 
+                            <a
                                 href={`https://wa.me/${whatsappNumber}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -75,22 +75,22 @@ export default function Footer({ className = '' }: FooterProps) {
                     <div className="space-y-4">
                         <h4 className="text-lg font-medium text-white">Enlaces Rápidos</h4>
                         <nav className="space-y-2">
-                            <Link 
-                                href={route('home')} 
+                            <Link
+                                href={route('home')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <House className="w-4 h-4" />
                                 <span>Inicio</span>
                             </Link>
-                            <Link 
-                                href={route('events')} 
+                            <Link
+                                href={route('events')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <Calendar className="w-4 h-4" />
                                 <span>Eventos</span>
                             </Link>
-                            <Link 
-                                href={route('help')} 
+                            <Link
+                                href={route('help')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <HelpCircle className="w-4 h-4" />
@@ -103,21 +103,21 @@ export default function Footer({ className = '' }: FooterProps) {
                     <div className="space-y-4">
                         <h4 className="text-lg font-medium text-white">Legal y Soporte</h4>
                         <nav className="space-y-2">
-                            <Link 
+                            <Link
                                 href={route('terms')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <FileText className="w-4 h-4" />
                                 <span>Términos y Condiciones</span>
                             </Link>
-                            <Link 
+                            <Link
                                 href={route('privacy')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
                                 <Shield className="w-4 h-4" />
                                 <span>Política de Privacidad</span>
                             </Link>
-                            <a 
+                            <a
                                 href={route('arrepentimiento')}
                                 className="flex items-center space-x-2 text-gray-300 hover:text-secondary transition-colors text-sm"
                             >
@@ -125,40 +125,46 @@ export default function Footer({ className = '' }: FooterProps) {
                                 <span>Botón de Arrepentimiento</span>
                             </a>
                         </nav>
+
+                        <div className="pt-2">
+                            <a href="https://qr.afip.gob.ar/?qr=D4lVyGLHkVdR4Z_REjN4sQ,," target="_F960AFIPInfo" rel="noreferrer">
+                                <img src="https://www.afip.gob.ar/images/f960/DATAWEB.jpg" className="w-16" style={{ border: 0 }} alt="Data Fiscal" />
+                            </a>
+                        </div>
                     </div>
 
                     {/* Social Media & Newsletter */}
                     <div className="space-y-4">
                         <h4 className="text-lg font-medium text-white">Síguenos</h4>
-                        
+
                         {/* Social Links */}
                         <div className="flex space-x-3">
-                            <a 
-                                href={facebookUrl} 
-                                target="_blank" 
+                            <a
+                                href={facebookUrl}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
                                 aria-label="Facebook"
                             >
                                 <Facebook className="w-4 h-4" />
                             </a>
-                            <a 
-                                href={instagramUrl} 
-                                target="_blank" 
+                            <a
+                                href={instagramUrl}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110 rounded-full flex items-center justify-center transition-colors"
                                 aria-label="Instagram"
                             >
                                 <Instagram className="w-4 h-4" />
                             </a>
-                            <a 
+                            <a
                                 href={`https://wa.me/${whatsappNumber}`}
-                                target="_blank" 
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 bg-gray-700 hover:bg-primary hover:scale-110  rounded-full flex items-center justify-center transition-colors"
                                 aria-label="WhatsApp"
                             >
-                                <MessageCircle  className="w-4 h-4" />
+                                <MessageCircle className="w-4 h-4" />
                             </a>
                         </div>
 
@@ -181,10 +187,10 @@ export default function Footer({ className = '' }: FooterProps) {
                             © {currentYear} RG ENTRADAS. Todos los derechos reservados.
                         </div>
                         <a href="https://resguarit.com.ar/" target="_blank" rel="noopener noreferrer">
-                        <div className="flex items-center text-gray-400 text-sm gap-2">
-                            <img src={logoResguarit} width={20} height={20} />
-                            <span className='hover:underline'>Desarrollado por Resguar IT</span>
-                        </div>
+                            <div className="flex items-center text-gray-400 text-sm gap-2">
+                                <img src={logoResguarit} width={20} height={20} />
+                                <span className='hover:underline'>Desarrollado por Resguar IT</span>
+                            </div>
                         </a>
                     </div>
                 </div>
