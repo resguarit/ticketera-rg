@@ -12,7 +12,7 @@ export default function HtmlContent({ content, className }: HtmlContentProps) {
     return (
         <div
             className={cn(
-                'prose prose-sm max-w-none dark:prose-invert',
+                'prose prose-sm max-w-none dark:prose-invert break-words w-full',
                 'prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5',
                 className
             )}

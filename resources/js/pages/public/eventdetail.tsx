@@ -917,7 +917,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-foreground/80 leading-relaxed text-sm sm:text-base">{eventData.description}</p>
+
                                         </CardContent>
                                     </Card>
                                 </CollapsibleContent>
