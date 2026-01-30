@@ -20,9 +20,23 @@ class EnsureUserIsNotViewer
         $user = Auth::user();
 
         if ($user && $user->role === UserRole::VIEWER) {
-             // Si intenta usar cualquier método que no sea de lectura seguro
+            // Bloquear métodos de escritura
             if (!in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'])) {
                 abort(403, 'No tienes permisos para realizar cambios.');
+            }
+
+            // Bloquear rutas GET de formularios
+            $route = $request->route();
+            if ($route) {
+                $routeName = $route->getName();
+                
+                $forbiddenPatterns = ['.create', '.edit', '.invite'];
+                
+                foreach ($forbiddenPatterns as $pattern) {
+                    if ($routeName && str_contains($routeName, $pattern)) {
+                        abort(403, 'No tienes permisos para acceder a esta sección.');
+                    }
+                }
             }
         }
 
