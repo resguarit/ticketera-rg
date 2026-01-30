@@ -40,6 +40,14 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
             Route::post('/', [AssistantController::class, 'store'])->name('store');
             Route::patch('/{assistant}/resend-invitation', [AssistantController::class, 'resendInvitation'])->name('resendInvitation');
             Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
+            Route::get('/export', [AssistantController::class, 'export'])->name('export');
+        });
+
+        // Rutas para Entradas Físicas
+        Route::prefix('{event}/physical-tickets')->name('physical-tickets.')->group(function () {
+            Route::get('/new', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'store'])->name('store');
+            Route::get('/print', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'print'])->name('print');
         });
 
         // Funciones (Create, Edit, Delete)

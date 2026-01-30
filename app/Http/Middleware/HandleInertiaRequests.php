@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
+                'print_url' => fn() => $request->session()->get('print_url'),
             ],
             'credentials' => fn() => $request->session()->get('credentials'),
             'supportEmail' => Setting::get('support_email', 'contacto@rgentradas.com'),

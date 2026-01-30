@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use App\Enums\OrderStatus;
 use App\Enums\IssuedTicketStatus;
 use App\Enums\UserRole;
+use App\Exports\AttendeesExport;
 use App\Models\EventFunction;
 use Carbon\Carbon;
 use App\Models\IssuedTicket;
@@ -20,6 +21,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Response;
 use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AssistantController extends Controller
 {
@@ -565,5 +567,22 @@ class AssistantController extends Controller
                 'total_courtesy_value' => round($totalCourtesyValue, 2),
             ],
         ]);
+    }
+
+    public function export(Request $request, Event $event)
+    {
+        $this->checkOwnership($event);
+
+        $filters = [
+            'function_id' => $request->input('function_id'),
+            'search' => $request->input('search'),
+        ];
+
+        // 'tickets' o 'service_fee'
+        $type = $request->input('export_type', 'tickets');
+
+        $fileName = 'asistentes-' . $event->slug . '-' . $type . '-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new AttendeesExport($event, $filters, $type), $fileName);
     }
 }
