@@ -18,6 +18,7 @@ interface UserData {
     status: 'active' | 'pending';
     email_verified_at: string | null;
     created_at: string;
+    role: string;
 }
 
 interface UserFormData {
@@ -28,6 +29,7 @@ interface UserFormData {
     dni: string;
     password: string;
     password_confirmation: string;
+    role: string;
     [key: string]: any;
 }
 
@@ -50,6 +52,7 @@ export default function EditUser() {
         dni: user.dni,
         password: '',
         password_confirmation: '',
+        role: user.role || 'organizer', // <-- IMPORTANTE: Cargar valor existente
     });
 
     // Manejar mensajes flash de Laravel

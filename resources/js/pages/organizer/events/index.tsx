@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useUserRole } from '@/hooks/useUserRole'; // <--- IMPORTAR
 
 interface EventFunctionDetail extends EventFunction {
     date: string;       
@@ -70,6 +71,7 @@ export default function EventsIndex({
     filters 
 }: EventsIndexProps) {
     const { user } = auth;
+    const { canEdit } = useUserRole(); // <--- USAR EL HOOK
 
     // Estados para filtros locales - con valores por defecto seguros
     const [searchTerm, setSearchTerm] = useState(filters?.search || "");
@@ -197,12 +199,16 @@ export default function EventsIndex({
                             Gestiona y supervisa todos tus eventos
                         </p>
                     </div>
-                    <Link href={route('organizer.events.create')}>
-                        <Button className="bg-primary hover:bg-primary-hover text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Crear Evento
-                        </Button>
-                    </Link>
+                    
+                    {/* OCULTAR BOTÓN DE CREAR EVENTO SI ES VIEWER */}
+                    {canEdit && (
+                        <Link href={route('organizer.events.create')}>
+                            <Button className="bg-primary hover:bg-primary-hover text-white">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Crear Evento
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Search and Filters */}
@@ -371,7 +377,9 @@ export default function EventsIndex({
                                     ? "No hay eventos que coincidan con los filtros aplicados. Intenta modificar o limpiar los filtros."
                                     : includeArchived 
                                         ? "No tienes ningún evento, ni siquiera archivado."
-                                        : "No tienes eventos activos. Intenta crear uno nuevo o revisa tus eventos archivados."
+                                        : canEdit 
+                                            ? "No tienes eventos activos. Intenta crear uno nuevo o revisa tus eventos archivados."
+                                            : "No hay eventos disponibles para visualizar."
                                 }
                             </p>
                             {activeFiltersCount > 0 ? (
@@ -379,12 +387,15 @@ export default function EventsIndex({
                                     Limpiar filtros
                                 </Button>
                             ) : (
-                                <Link href={route('organizer.events.create')}>
-                                    <Button className="bg-primary hover:bg-primary-hover text-white">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Crear tu primer evento
-                                    </Button>
-                                </Link>
+                                /* OCULTAR BOTÓN EN ESTADO VACÍO */
+                                canEdit && (
+                                    <Link href={route('organizer.events.create')}>
+                                        <Button className="bg-primary hover:bg-primary-hover text-white">
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Crear tu primer evento
+                                        </Button>
+                                    </Link>
+                                )
                             )}
                         </div>
                     </div>

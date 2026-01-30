@@ -28,6 +28,7 @@ class RedirectUserAfterLogin
         $redirectPath = match ($user->role) {
             UserRole::ADMIN => '/admin/dashboard',
             UserRole::ORGANIZER => '/organizer/dashboard',
+            UserRole::VIEWER => '/organizer/dashboard', // <--- AGREGAR ESTA LÍNEA
             default => '/', // Los clientes van al Home.
         };
 

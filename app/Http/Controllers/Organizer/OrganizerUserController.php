@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,9 +28,11 @@ class OrganizerUserController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
+        // Muestra usuarios del organizador, tanto ADMIN como ORGANIZER como VIEWER
+        // Excluimos ADMIN global si no pertenece a la org, pero aquí filtramos por organizer_id
         $query = User::with(['person'])
             ->where('organizer_id', $organizer->id)
-            ->where('role', UserRole::ORGANIZER);
+            ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER]); // Permitir ambos roles
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -76,6 +79,7 @@ class OrganizerUserController extends Controller
                 'phone' => $user->person->phone ?? 'Sin teléfono',
                 'dni' => $user->person->dni ?? 'Sin DNI',
                 'status' => $user->email_verified_at ? 'active' : 'pending',
+                'role' => $user->role, // Enviamos el rol al frontend
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at->format('Y-m-d'),
             ];
@@ -84,9 +88,9 @@ class OrganizerUserController extends Controller
         $users->setCollection($usersData);
 
         $stats = [
-            'total' => User::where('organizer_id', $organizer->id)->where('role', UserRole::ORGANIZER)->count(),
-            'active' => User::where('organizer_id', $organizer->id)->where('role', UserRole::ORGANIZER)->whereNotNull('email_verified_at')->count(),
-            'pending' => User::where('organizer_id', $organizer->id)->where('role', UserRole::ORGANIZER)->whereNull('email_verified_at')->count(),
+            'total' => User::where('organizer_id', $organizer->id)->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])->count(),
+            'active' => User::where('organizer_id', $organizer->id)->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])->whereNotNull('email_verified_at')->count(),
+            'pending' => User::where('organizer_id', $organizer->id)->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])->whereNull('email_verified_at')->count(),
         ];
 
         return Inertia::render('organizer/users/index', [
@@ -117,6 +121,7 @@ class OrganizerUserController extends Controller
             'phone' => 'nullable|string|max:20',
             'dni' => 'nullable|string|max:20|unique:person,dni',
             'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', Rule::in([UserRole::ORGANIZER->value, UserRole::VIEWER->value])], // Validación del rol
         ]);
 
         DB::transaction(function() use ($validated, $organizer) {
@@ -129,11 +134,11 @@ class OrganizerUserController extends Controller
 
             User::create([
                 'person_id' => $person->id,
-                'organizer_id' => $organizer->id,
+                'organizer_id' => $organizer->id, // <--- ESTO YA ESTABA, ESTÁ BIEN
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => UserRole::ORGANIZER,
-                'email_verified_at' => null,
+                'role' => $validated['role'], // <--- USAR EL ROL VALIDADO
+                'email_verified_at' => now(), // <--- OPCIONAL: Activarlo inmediatamente o dejarlo en null
             ]);
         });
 
@@ -146,7 +151,7 @@ class OrganizerUserController extends Controller
         $organizer = Auth::user()->organizer;
         
         $user = User::where('organizer_id', $organizer->id)
-            ->where('role', UserRole::ORGANIZER)
+            ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])
             ->findOrFail($userId);
 
         $user->update([
@@ -165,7 +170,7 @@ class OrganizerUserController extends Controller
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)
-            ->where('role', UserRole::ORGANIZER)
+            ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])
             ->findOrFail($userId);
 
         DB::transaction(function() use ($user) {
@@ -186,7 +191,7 @@ class OrganizerUserController extends Controller
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)
-            ->where('role', UserRole::ORGANIZER)
+            ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])
             ->findOrFail($userId);
 
         return Inertia::render('organizer/users/edit', [
@@ -197,6 +202,7 @@ class OrganizerUserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->person->phone ?? '',
                 'dni' => $user->person->dni ?? '',
+                'role' => $user->role, // Enviamos el rol actual
                 'status' => $user->email_verified_at ? 'active' : 'pending',
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
@@ -210,7 +216,7 @@ class OrganizerUserController extends Controller
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)
-            ->where('role', UserRole::ORGANIZER)
+            ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])
             ->findOrFail($userId);
 
         $validated = $request->validate([
@@ -220,6 +226,7 @@ class OrganizerUserController extends Controller
             'phone' => 'nullable|string|max:20',
             'dni' => 'nullable|string|max:20|unique:person,dni,' . $user->person_id,
             'password' => ['nullable', 'confirmed', Password::defaults()],
+            'role' => ['required', Rule::in([UserRole::ORGANIZER->value, UserRole::VIEWER->value])], // Validación
         ]);
 
         DB::transaction(function() use ($validated, $user) {
@@ -234,6 +241,7 @@ class OrganizerUserController extends Controller
             // Preparar datos del usuario
             $userData = [
                 'email' => $validated['email'],
+                'role' => $validated['role'], // Actualizar rol
             ];
 
             // Solo actualizar contraseña si se proporciona

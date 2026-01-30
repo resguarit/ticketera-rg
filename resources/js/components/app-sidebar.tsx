@@ -93,6 +93,7 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
             ];
 
         case 'organizer':
+        case 'viewer': // <--- AGREGAR ESTA LÍNEA para que viewer use las mismas rutas
             return [
                 {
                     title: 'Mi Dashboard',
@@ -143,6 +144,7 @@ const getDashboardUrl = (userRole: string): string => {
         case 'admin':
             return '/admin/dashboard';
         case 'organizer':
+        case 'viewer': // <--- AGREGAR ESTA LÍNEA
             return '/organizer/dashboard';
         default:
             return '/';
@@ -153,6 +155,7 @@ const getDashboardUrl = (userRole: string): string => {
 const getFooterNavItemsByRole = (userRole: string): NavItem[] => {
     switch (userRole) {
         case 'organizer':
+        case 'viewer': // <--- AGREGAR ESTA LÍNEA
             return [
                 {
                     title: 'Guía de Ayuda',
@@ -204,6 +207,7 @@ export function AppSidebar() {
                     logoUrl: '/images/logo_sin_texto.png'
                 };
             case 'organizer':
+            case 'viewer': // <--- AGREGAR ESTA LÍNEA
                 return {
                     title: auth.user?.organizer?.name || 'Organizador',
                     logoUrl: auth.user?.organizer?.image_url

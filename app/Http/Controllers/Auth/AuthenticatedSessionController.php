@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Enums\UserRole; // <--- Asegúrate de importar el Enum
+
 
 class AuthenticatedSessionController extends Controller
 {
@@ -30,10 +32,39 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
+        
+        $user = $request->user();
 
-        // Esta linea debe encargarse de redirigir segun el rol del usuario
+        // 🔍 DEBUG TEMPORAL - Bórralo después
+        \Log::info('Login attempt', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'role_raw' => $user->getAttributes()['role'], // Valor crudo de la DB
+            'role_property' => $user->role, // Propiedad después del cast
+            'role_is_enum' => $user->role instanceof UserRole,
+            'role_value' => $user->role instanceof UserRole ? $user->role->value : $user->role,
+        ]);
+
+        // Asegurar conversión robusta
+        $userRole = $user->role;
+        
+        // Si es string, convertir a Enum
+        if (is_string($userRole)) {
+            $userRole = UserRole::tryFrom($userRole);
+        }
+
+        // Redirigir según rol
+        if ($userRole === UserRole::ORGANIZER || $userRole === UserRole::VIEWER) {
+            \Log::info('Redirecting to organizer dashboard');
+            return redirect()->intended(route('organizer.dashboard'));
+        }
+        
+        if ($userRole === UserRole::ADMIN) {
+            return redirect()->intended(route('admin.dashboard')); 
+        }
+
+        \Log::info('Redirecting to home (default)');
         return redirect()->intended(route('home', absolute: false));
     }
 

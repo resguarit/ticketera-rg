@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, Search, Filter, X } from 'lucide-react';
+import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, Search, Filter, X, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ interface UserData {
     phone: string;
     dni: string;
     status: 'active' | 'pending';
+    role: 'organizer' | 'viewer'; // <--- AGREGAR ESTO
     email_verified_at: string | null;
     created_at: string;
 }
@@ -204,6 +205,9 @@ export default function UsersIndex() {
                                             onClick={() => handleSort('name')}>
                                             Nombre
                                         </th>
+                                        <th className="text-left py-2 px-4 font-medium">
+                                            Rol
+                                        </th> 
                                         <th className="text-left py-2 px-4 font-medium cursor-pointer hover:bg-gray-50"
                                             onClick={() => handleSort('email')}>
                                             Email
@@ -231,6 +235,17 @@ export default function UsersIndex() {
                                                         <div className="text-sm text-gray-500">{user.phone}</div>
                                                     </div>
                                                 </div>
+                                            </td>
+                                                                                        <td className="py-3 px-4">
+                                                {user.role === 'viewer' ? (
+                                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                                        <Eye className="w-3 h-3 mr-1" /> Visualizador
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-200">
+                                                        <Shield className="w-3 h-3 mr-1" /> Organizador
+                                                    </Badge>
+                                                )}
                                             </td>
                                             <td className="py-3 px-4 text-sm">{user.email}</td>
                                             <td className="py-3 px-4 text-sm">{user.dni}</td>

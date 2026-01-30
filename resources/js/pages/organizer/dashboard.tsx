@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import ChangePasswordDialog from '@/components/change-password-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUserRole } from '@/hooks/useUserRole'; // Importar el hook si lo creaste, o usar usePage directamente
 
 interface Stat {
     netRevenue: number;
@@ -130,6 +131,11 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         return periodOptions.find(opt => opt.value === currentPeriod)?.label || 'Último año';
     };
 
+    const { isViewer } = useUserRole();
+    
+    // O si prefieres hacerlo directo:
+    // const isViewer = auth.user.role === 'viewer';
+
     return (
         <>
             <Head title="Mi Dashboard" />
@@ -176,12 +182,15 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Link href={route('organizer.events.create')} className="w-full md:w-auto">
-                            <Button className="bg-primary hover:bg-primary-hover text-white w-full md:w-auto">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Crear Evento
-                            </Button>
-                        </Link>
+                        
+                        {!isViewer && (
+                            <Link href={route('organizer.events.create')} className="w-full md:w-auto">
+                                <Button className="bg-primary hover:bg-primary-hover text-white w-full md:w-auto">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Crear Evento
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -288,17 +297,23 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <h3 className="mt-4 text-lg font-semibold">No has creado eventos</h3>
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    Crea tu primer evento para empezar a ver tus estadísticas.
+                                    {isViewer 
+                                        ? 'No hay eventos disponibles para visualizar.' 
+                                        : 'Crea tu primer evento para empezar a ver tus estadísticas.'
+                                    }
                                 </p>
-                                <Link href={route('organizer.events.create')} className="mt-4 inline-block">
-                                    <Button>Crear Evento</Button>
-                                </Link>
+                                
+                                {!isViewer && (
+                                    <Link href={route('organizer.events.create')} className="mt-4 inline-block">
+                                        <Button>Crear Evento</Button>
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </div>
-
+            
             <ChangePasswordDialog
                 open={isModalOpen}
                 onOpenChange={handleModalOpenChange}
