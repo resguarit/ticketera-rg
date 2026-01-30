@@ -40,6 +40,7 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
             Route::delete('/{assistant}', [AssistantController::class, 'destroy'])->name('destroy');
             Route::get('/order/{order}/details', [AssistantController::class, 'showOrderDetails'])->name('order.details');
             Route::get('/assistant/{assistant}/details', [AssistantController::class, 'showAssistantDetails'])->name('assistant.details');
+            Route::get('/export', [AssistantController::class, 'export'])->name('export');
         });
 
         // Rutas para Entradas Físicas

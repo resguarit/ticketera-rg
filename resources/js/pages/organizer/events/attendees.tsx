@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import ExportModal from '@/components/organizers/modals/ExportModal';
+import { FileDown } from 'lucide-react';
 
 interface EventAttendeeFunction {
     id: number;
@@ -104,6 +106,24 @@ export default function EventAttendees({
     const [refundModalOpen, setRefundModalOpen] = useState(false);
     const [orderToRefund, setOrderToRefund] = useState<AttendeeForTable | null>(null);
     const [refundType, setRefundType] = useState<'subtotal' | 'total'>('subtotal');
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+
+    const handleExport = (type: 'tickets' | 'service_fee') => {
+        // Construir URL con los filtros actuales
+        const params = new URLSearchParams();
+
+        if (filterFunction && filterFunction !== 'all') {
+            params.append('function_id', filterFunction);
+        }
+        if (searchQuery) {
+            params.append('search', searchQuery);
+        }
+
+        params.append('export_type', type);
+
+        // Redirigir a la URL de descarga
+        window.open(route('organizer.events.attendees.export', event.id) + '?' + params.toString(), '_blank');
+    };
 
     // --- REFACTORIZAR MANEJO DE FILTROS ---
     const applyFilters = (
@@ -546,6 +566,14 @@ export default function EventAttendees({
                                 <Search className="h-4 w-4 mr-2" />
                                 Buscar
                             </Button>
+                            <Button onClick={() => setExportModalOpen(true)}
+                                variant="outline"
+                                className="w-full md:w-auto border-green-200 hover:bg-green-50 text-green-700"
+                            >
+                                <FileDown className="h-4 w-4 mr-2" />
+                                Exportar Excel
+                            </Button>
+
                         </div>
                     </CardHeader>
                     {/* --- FIN BARRA DE BÚSQUEDA --- */}
@@ -800,6 +828,12 @@ export default function EventAttendees({
                 nombreElemento={eliminatedAttendee?.full_name}
                 advertencia="Todos los datos asociados a este asistente también serán eliminados."
                 confirmVariant='destructive'
+            />
+
+            <ExportModal
+                isOpen={exportModalOpen}
+                onClose={() => setExportModalOpen(false)}
+                onExport={handleExport}
             />
 
             {
