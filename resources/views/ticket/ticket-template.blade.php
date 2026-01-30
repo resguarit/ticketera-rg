@@ -5,19 +5,6 @@
         <meta charset="UTF-8">
         <title>Impresión de Entradas - A4 (2x5)</title>
         <style>
-            /* --- Configuración de Impresión --- */
-            @media print {
-                @page {
-                    size: A4;
-                    margin: 0px;
-                }
-
-                body {
-                    margin: 0;
-                    -webkit-print-color-adjust: exact;
-                }
-            }
-
             /* --- Estilos Generales del Papel --- */
             body {
                 font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;

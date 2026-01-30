@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? $request->user()->load(['person', 'organizer']) : null,
             ],
-            'ziggy' => fn (): array => [
+            'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
+                'print_url' => fn() => $request->session()->get('print_url'),
             ],
             'credentials' => fn() => $request->session()->get('credentials'),
             'supportEmail' => Setting::get('support_email', 'contacto@rgentradas.com'),

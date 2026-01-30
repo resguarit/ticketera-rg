@@ -42,6 +42,13 @@ Route::middleware(['auth', 'organizer', 'password.changed'])->prefix('organizer'
             Route::get('/assistant/{assistant}/details', [AssistantController::class, 'showAssistantDetails'])->name('assistant.details');
         });
 
+        // Rutas para Entradas Físicas
+        Route::prefix('{event}/physical-tickets')->name('physical-tickets.')->group(function () {
+            Route::get('/new', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'store'])->name('store');
+            Route::get('/print', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'print'])->name('print');
+        });
+
         // Rutas para Funciones (EventFunction) anidadas
         Route::get('/functions/{event}', [EventController::class, 'functions'])->name('functions');
         Route::resource('{event}/functions', EventFunctionController::class)
