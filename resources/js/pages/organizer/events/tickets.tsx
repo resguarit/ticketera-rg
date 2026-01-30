@@ -12,6 +12,8 @@ import { EventFunction, EventFunctionRelations } from '@/types/models/eventFunct
 import { TicketType } from '@/types/models/ticketType';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { useUserRole } from '@/hooks/useUserRole';
+
 
 interface EventFunctionDetail extends EventFunction, EventFunctionRelations {
     date: string;
@@ -36,6 +38,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
     const [selectedFunction, setSelectedFunction] = useState<string>(
         event.functions?.[0]?.id.toString() || '1'
     );
+
+    const { canEdit } = useUserRole();
 
     // Estados para el modal de confirmación
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -161,6 +165,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
 
                                 </CardDescription>
                             </div>
+                            {canEdit && (
                             <Button
                                 onClick={() => handleCreateTicket(Number(selectedFunction))}
                                 className="flex items-center gap-2 shrink-0 hover:bg-primary-hover"
@@ -169,6 +174,7 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                 <Plus className="w-4 h-4" />
                                 Crear Entrada
                             </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             {/* Contenido con tabs por función */}
@@ -308,6 +314,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                                     <h4 className="text-lg font-medium text-foreground mb-2">
                                                                         No hay tipos de entradas configurados
                                                                     </h4>
+                                                                    {canEdit && (
+                                                                        <>
                                                                     <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
                                                                         Crea el primer tipo de entrada para <strong>{func.name}</strong> y comienza a vender tickets para tu evento
                                                                     </p>
@@ -319,6 +327,8 @@ export default function EventTicketsDashboard({ auth, event }: EventTicketsDashb
                                                                         <Plus className="w-4 h-4" />
                                                                         Crear Primera Entrada
                                                                     </Button>
+                                                                    </>
+                                                                    )}
                                                                 </CardContent>
                                                             </Card>
                                                         </div>

@@ -15,6 +15,7 @@ import {
 import ModalQR from '@/components/qr-code-modal';
 import { PaginatedResponse } from '@/types/ui/ui';
 import { Event, EventRelations } from '@/types/models/event';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ScanLog {
     result: string;
@@ -147,7 +148,7 @@ export default function EventAccess({
         setQrCodeForModal(ticket.unique_code);
     };
 
-
+    const { canEdit } = useUserRole();
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -349,7 +350,8 @@ export default function EventAccess({
                                                     >
                                                         <History className="h-4 w-4 text-gray-500" />
                                                     </Button>
-
+                                                    { canEdit &&   (
+                                                        <>
                                                     {ticket.status !== 'cancelled' && (
                                                         <Button
                                                             size="sm"
@@ -372,6 +374,8 @@ export default function EventAccess({
                                                                 </>
                                                             )}
                                                         </Button>
+                                                    )}
+                                                    </>
                                                     )}
                                                 </div>
                                             </TableCell>

@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useUserRole } from "@/hooks/useUserRole";
+
 
 interface EventAttendeeFunction {
     id: number;
@@ -76,6 +78,9 @@ export default function EventAttendees({
     const [filterFunction, setFilterFunction] = useState<string>(
         selectedFunctionId?.toString() || 'all'
     );
+
+    const { canEdit } = useUserRole();
+
 
     // Estados para el modal de detalles
     const [ticketDetailsModal, setTicketDetailsModal] = useState({
@@ -475,11 +480,12 @@ export default function EventAttendees({
                                         ))}
                                     </SelectContent>
                                 </Select>
-
+                                { canEdit && (
                                 <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
                                     <UserPlus className="h-4 w-4 mr-2" />
                                     Invitar asistente
                                 </Button>
+                                )}
                             </div>
                         </div>
                     </CardHeader>
@@ -523,12 +529,16 @@ export default function EventAttendees({
                                             ? "Intenta con otros términos de búsqueda o limpia los filtros."
                                             : "Comienza invitando a tu primer asistente al evento."}
                                     </p>
+                                    {canEdit && (
+                                        <>
                                     {!initialSearch && (
                                         <Button onClick={handleInviteAssistant}>
                                             <UserPlus className="h-4 w-4 mr-2" />
                                             Invitar asistente
                                         </Button>
                                     )}
+                                    </>
+                                )}
                                 </div>
                             ) : (
                                 <div className="min-w-[800px]">
@@ -556,7 +566,9 @@ export default function EventAttendees({
                                                     </Button>
                                                 </TableHead>
                                                 {/* --- FIN MODIFICAR --- */}
+                                                {canEdit && (
                                                 <TableHead className="text-right">Acciones</TableHead>
+                                                )}
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -630,6 +642,8 @@ export default function EventAttendees({
                                                                     <Eye className="mr-2 h-4 w-4" />
                                                                     Ver tickets
                                                                 </DropdownMenuItem>
+                                                                {canEdit && (
+                                                                    <>
                                                                 {attendee.type === 'invited' && (
                                                                     <>
                                                                         <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
@@ -660,6 +674,8 @@ export default function EventAttendees({
                                                                             Reenviar tickets
                                                                         </DropdownMenuItem>
                                                                     </>
+                                                                )}
+                                                                </>
                                                                 )}
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
