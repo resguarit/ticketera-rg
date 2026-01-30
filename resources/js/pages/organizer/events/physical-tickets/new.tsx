@@ -1,0 +1,406 @@
+
+import { useState, useEffect } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
+import EventManagementLayout from '@/layouts/event-management-layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+    Printer,
+    Minus,
+    Plus,
+    Trash2,
+    Calendar,
+    Clock,
+} from 'lucide-react';
+import { Event, EventRelations } from '@/types/models/event';
+import { EventFunction } from '@/types/models/eventFunction';
+import { TicketType } from '@/types/models/ticketType';
+import { formatCurrency } from '@/lib/currencyHelpers';
+import BackButton from '@/components/Backbutton';
+
+interface TicketTypeWithAvailability extends TicketType {
+    available: number;
+    sold: number;
+}
+
+interface EventFunctionWithTickets extends EventFunction {
+    ticketTypes: TicketTypeWithAvailability[];
+    date: string;
+    time: string;
+    formatted_date: string;
+    day_name: string;
+}
+
+interface EventWithDetails extends Event, EventRelations {
+    functions: EventFunctionWithTickets[];
+}
+
+interface PersonData {
+    name: string;
+    last_name: string;
+    dni: string;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+interface TicketRequest {
+    event_function_id: number;
+    ticket_type_id: number;
+    quantity: number;
+}
+
+interface GeneratePhysicalTicketsProps {
+    auth: any;
+    event: EventWithDetails;
+    eventFunctions: EventFunctionWithTickets[];
+}
+
+export default function GeneratePhysicalTickets({ auth, event, eventFunctions }: GeneratePhysicalTicketsProps) {
+    const { flash } = usePage().props as any;
+    const [tickets, setTickets] = useState<TicketRequest[]>([]);
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<any>({});
+
+    // Default person data - Name/Lastname required, others optional for physical tickets if we want to be flexible,
+    // but controller validation requires name/lastname.
+    const [personData, setPersonData] = useState<PersonData>({
+        name: '',
+        last_name: '',
+        dni: '',
+        email: '',
+        phone: '',
+        address: '',
+    });
+
+    // Handle flash messages and print_url redirection
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success('Entradas generadas exitosamente', {
+                description: flash.success
+            });
+        }
+
+        if (flash?.print_url) {
+            // Open print URL in new window
+            window.open(flash.print_url, '_blank');
+        }
+
+        if (flash?.error) {
+            toast.error('Error al generar entradas', {
+                description: flash.error
+            });
+        }
+    }, [flash]);
+
+    // Update total amount
+    useEffect(() => {
+        let total = 0;
+        tickets.forEach(ticket => {
+            const eventFunction = eventFunctions?.find(f => f.id === ticket.event_function_id);
+            const ticketType = eventFunction?.ticketTypes?.find(t => t.id === ticket.ticket_type_id);
+            if (ticketType) {
+                total += ticketType.price * ticket.quantity;
+            }
+        });
+        setTotalAmount(total);
+    }, [tickets, eventFunctions]);
+
+    const getTicketTypesForFunction = (functionId: number): TicketTypeWithAvailability[] => {
+        const selectedFunction = eventFunctions?.find(f => f.id === functionId);
+        return selectedFunction?.ticketTypes?.filter(t => !t.is_bundle) || [];
+    };
+
+    const addTicket = () => {
+        setTickets([...tickets, {
+            event_function_id: 0,
+            ticket_type_id: 0,
+            quantity: 1,
+        }]);
+    };
+
+    const removeTicket = (index: number) => {
+        const newTickets = tickets.filter((_, i) => i !== index);
+        setTickets(newTickets);
+    };
+
+    const updateTicket = (index: number, field: keyof TicketRequest, value: number) => {
+        const newTickets = [...tickets];
+        newTickets[index] = { ...newTickets[index], [field]: value };
+
+        if (field === 'event_function_id') {
+            newTickets[index].ticket_type_id = 0;
+        }
+
+        setTickets(newTickets);
+    };
+
+    const validateForm = (): boolean => {
+        if (!personData.name.trim()) {
+            toast.error('Nombre requerido');
+            return false;
+        }
+
+        if (!personData.last_name.trim()) {
+            toast.error('Apellido requerido');
+            return false;
+        }
+
+        // Email optional for physical tickets
+
+        if (tickets.length === 0) {
+            toast.error('Debe agregar al menos una entrada');
+            return false;
+        }
+
+        for (let i = 0; i < tickets.length; i++) {
+            const ticket = tickets[i];
+            if (!ticket.event_function_id || !ticket.ticket_type_id || !ticket.quantity || ticket.quantity < 1) {
+                toast.error(`Verifique los datos de la entrada #${i + 1}`);
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        setProcessing(true);
+        setErrors({});
+
+        router.post(route('organizer.events.physical-tickets.store', event.id), {
+            person: personData,
+            tickets: tickets,
+        } as any, {
+            preserveScroll: true,
+            onStart: () => {
+                toast.loading('Generando entradas...', { id: 'generate-physical' });
+            },
+            onSuccess: () => {
+                toast.success('Entradas generadas correctamente', {
+                    id: 'generate-physical',
+                    description: 'Se abrirá la ventana de impresión en breve.'
+                });
+
+                // Clear form
+                setPersonData({
+                    name: '',
+                    last_name: '',
+                    dni: '',
+                    email: '',
+                    phone: '',
+                    address: '',
+                });
+                setTickets([]);
+                setProcessing(false);
+            },
+            onError: (errors: any) => {
+                toast.error('Error al generar entradas', { id: 'generate-physical' });
+                setErrors(errors);
+                setProcessing(false);
+            }
+        });
+    };
+
+    return (
+        <EventManagementLayout event={event} activeTab="attendees">
+            <Head title={`Generar Entradas Físicas - ${event.name}`} />
+
+            <div className="space-y-6">
+                <div className="flex items-center mb-6 gap-2">
+                    <BackButton href={route('organizer.events.attendees', event.id)} />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Generar Entradas Físicas</h1>
+                        <p className="text-gray-600 mt-1">
+                            Genere entradas para imprimir y entregar en mano. No se enviarán por correo electrónico.
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Datos del Asistente */}
+                        <Card>
+                            <CardHeader className='pb-0'>
+                                <CardTitle className="text-lg">Datos del Asistente</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="name">Nombre <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            id="name"
+                                            value={personData.name}
+                                            onChange={(e) => setPersonData({ ...personData, name: e.target.value })}
+                                            className={errors['person.name'] ? 'border-red-500' : ''}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="last_name">Apellido <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            id="last_name"
+                                            value={personData.last_name}
+                                            onChange={(e) => setPersonData({ ...personData, last_name: e.target.value })}
+                                            className={errors['person.last_name'] ? 'border-red-500' : ''}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="email">Email (Opcional)</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={personData.email}
+                                        onChange={(e) => setPersonData({ ...personData, email: e.target.value })}
+                                        placeholder="Solo para registro, no se enviará invitación"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="dni">DNI</Label>
+                                    <Input
+                                        id="dni"
+                                        value={personData.dni}
+                                        onChange={(e) => setPersonData({ ...personData, dni: e.target.value })}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Selección de Tickets */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Entradas a Generar</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {tickets.map((ticket, index) => (
+                                    <div key={index} className="p-4 border rounded-lg space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-medium">Entrada #{index + 1}</h4>
+                                            {tickets.length > 1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => removeTicket(index)}
+                                                    className="text-red-600 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <Label>Función <span className="text-red-500">*</span></Label>
+                                            <Select
+                                                value={ticket.event_function_id.toString()}
+                                                onValueChange={(value) => updateTicket(index, 'event_function_id', parseInt(value))}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona una función" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {(eventFunctions || []).map((func) => (
+                                                        <SelectItem key={func.id} value={func.id.toString()}>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{func.name}</span>
+                                                                <span className="text-xs text-gray-500">{func.formatted_date} - {func.time}</span>
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {ticket.event_function_id > 0 && (
+                                            <div>
+                                                <Label>Tipo de Entrada <span className="text-red-500">*</span></Label>
+                                                <Select
+                                                    value={ticket.ticket_type_id.toString()}
+                                                    onValueChange={(value) => updateTicket(index, 'ticket_type_id', parseInt(value))}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona un tipo de entrada" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {getTicketTypesForFunction(ticket.event_function_id).map((ticketType) => (
+                                                            <SelectItem key={ticketType.id} value={ticketType.id.toString()}>
+                                                                <div className="flex justify-between w-full min-w-[200px]">
+                                                                    <span>{ticketType.name}</span>
+                                                                    <span className="font-semibold">{formatCurrency(ticketType.price)}</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
+
+                                        {ticket.ticket_type_id > 0 && (
+                                            <div>
+                                                <Label>Cantidad <span className="text-red-500">*</span></Label>
+                                                <div className="flex items-center gap-2">
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateTicket(index, 'quantity', Math.max(1, ticket.quantity - 1))} disabled={ticket.quantity <= 1}>
+                                                        <Minus className="w-4 h-4" />
+                                                    </Button>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={ticket.quantity}
+                                                        onChange={(e) => updateTicket(index, 'quantity', parseInt(e.target.value) || 1)}
+                                                        className="w-20 text-center"
+                                                    />
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateTicket(index, 'quantity', ticket.quantity + 1)}>
+                                                        <Plus className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                <Button type="button" variant="outline" onClick={addTicket} className="w-full">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Agregar Entrada
+                                </Button>
+
+                                {totalAmount > 0 && (
+                                    <>
+                                        <Separator />
+                                        <div className="flex items-center justify-between font-semibold text-lg">
+                                            <span>Total:</span>
+                                            <span>{formatCurrency(totalAmount)}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-4">
+                        <Button type="button" variant="outline" onClick={() => router.visit(route('organizer.events.attendees', event.id))}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={processing || tickets.length === 0} className="flex items-center gap-2">
+                            <Printer className="w-4 h-4" />
+                            {processing ? 'Generando...' : 'Generar e Imprimir'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </EventManagementLayout>
+    );
+}

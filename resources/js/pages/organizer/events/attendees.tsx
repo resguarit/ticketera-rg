@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router, Head, Link, usePage } from '@inertiajs/react'; // Importar usePage
 import { toast } from 'sonner';
 import EventManagementLayout from '@/layouts/event-management-layout';
@@ -19,7 +19,7 @@ import ConfirmDeleteModal from '@/components/ConfirmationModal';
 import {
     UserPlus, MoreHorizontal, Eye, Mail, Trash2, Users, Ticket, CheckCircle, Clock,
     ShoppingCart, UserCheck, DollarSign, RefreshCw,
-    Search, ArrowDown, ArrowUp, ArrowUpDown
+    Search, ArrowDown, ArrowUp, ArrowUpDown, Printer
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,6 +76,17 @@ export default function EventAttendees({
     const [filterFunction, setFilterFunction] = useState<string>(
         selectedFunctionId?.toString() || 'all'
     );
+
+    // --- AGREGAR EFECTO PARA FLASH ---
+    const { flash } = usePage().props as any;
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (flash?.print_url) {
+            window.open(flash.print_url, '_blank');
+        }
+    }, [flash]);
+    // --- FIN EFECTO ---
 
     // Estados para el modal de detalles
     const [ticketDetailsModal, setTicketDetailsModal] = useState({
@@ -165,6 +176,31 @@ export default function EventAttendees({
 
     const handleInviteAssistant = () => {
         router.visit(route('organizer.events.attendees.invite', event.id));
+    };
+
+    const handleGeneratePhysicalTickets = () => {
+        router.visit(route('organizer.events.physical-tickets.create', event.id));
+    };
+
+    const handlePrintPhysicalTickets = (attendee: AttendeeForTable) => {
+        const id = attendee.type === 'invited' ? attendee.assistant_id : attendee.order_id;
+
+        // Construct the URL manually or via route if helper available on client side perfectly
+        // We use window.open for "new window" requirement
+
+        let url = '';
+        if (attendee.type === 'invited') {
+            url = route('organizer.events.physical-tickets.print', { event: event.id, assistant: attendee.assistant_id });
+        } else {
+            // For buyers it's a bit different, but let's assume we might want to print them in the physical layout?
+            // The requirement says "para a las entradas de ese invitado poder generarlas como entradas fisicas".
+            // Strictly speaking "invitado" refers to invited attendees. Can we do it for buyers too? 
+            // The code handles both if we pass ticket IDs, but here we pass assistant ID.
+            // Let's stick to invited attendees as per request ("opcion que sea para a las entradas de ese invitado").
+            return;
+        }
+
+        window.open(url, '_blank');
     };
 
     const handleViewTickets = async (attendee: AttendeeForTable) => {
@@ -480,6 +516,11 @@ export default function EventAttendees({
                                     <UserPlus className="h-4 w-4 mr-2" />
                                     Invitar asistente
                                 </Button>
+
+                                <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white">
+                                    <Printer className="h-4 w-4 mr-2" />
+                                    Generar entradas físicas
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>
@@ -524,10 +565,17 @@ export default function EventAttendees({
                                             : "Comienza invitando a tu primer asistente al evento."}
                                     </p>
                                     {!initialSearch && (
-                                        <Button onClick={handleInviteAssistant}>
-                                            <UserPlus className="h-4 w-4 mr-2" />
-                                            Invitar asistente
-                                        </Button>
+                                        <div className="flex flex-col md:flex-row justify-center gap-4 mt-4">
+                                            <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
+                                                <UserPlus className="h-4 w-4 mr-2" />
+                                                Invitar asistente
+                                            </Button>
+
+                                            <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600">
+                                                <Printer className="h-4 w-4 mr-2" />
+                                                Generar entradas físicas
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             ) : (
@@ -632,6 +680,12 @@ export default function EventAttendees({
                                                                 </DropdownMenuItem>
                                                                 {attendee.type === 'invited' && (
                                                                     <>
+                                                                        {!attendee.is_cancelled && (
+                                                                            <DropdownMenuItem onClick={() => handlePrintPhysicalTickets(attendee)}>
+                                                                                <Printer className="mr-2 h-4 w-4" />
+                                                                                Generar entradas físicas
+                                                                            </DropdownMenuItem>
+                                                                        )}
                                                                         <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
                                                                             <Mail className="mr-2 h-4 w-4" />
                                                                             Reenviar invitación
@@ -699,11 +753,11 @@ export default function EventAttendees({
                             </div>
                         )}
                     </CardContent>
-                </Card>
-            </div>
+                </Card >
+            </div >
 
             {/* Modal de detalles de tickets */}
-            <TicketDetailsModal
+            < TicketDetailsModal
                 key={ticketDetailsModal.isOpen ? 'open' : 'closed'}
                 isOpen={ticketDetailsModal.isOpen}
                 onClose={closeTicketDetailsModal}
@@ -748,80 +802,82 @@ export default function EventAttendees({
                 confirmVariant='destructive'
             />
 
-            {refundModalOpen && (
-                <>
-                    {/* Overlay */}
-                    <div
-                        className="fixed inset-0 bg-black/50 z-50 transition-opacity"
-                        onClick={() => setRefundModalOpen(false)}
-                    />
-
-                    {/* Modal */}
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            {
+                refundModalOpen && (
+                    <>
+                        {/* Overlay */}
                         <div
-                            className="bg-white rounded-md shadow-xl max-w-md w-full p-6 pointer-events-auto"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex flex-col gap-2 text-center sm:text-left mb-4">
-                                <h3 className="text-lg leading-none font-semibold">Devolución Administrativa</h3>
-                                <p className="text-muted-foreground text-sm">
-                                    Esta acción marcará la orden como devuelta y liberará los tickets asociados.
-                                    Los fondos no se reembolsan automáticamente a través de la pasarela de pago, esto es solo un registro administrativo.
-                                </p>
-                            </div>
+                            className="fixed inset-0 bg-black/50 z-50 transition-opacity"
+                            onClick={() => setRefundModalOpen(false)}
+                        />
 
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-4">
-                                    <Label>Selecciona el monto a devolver</Label>
+                        {/* Modal */}
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                            <div
+                                className="bg-white rounded-md shadow-xl max-w-md w-full p-6 pointer-events-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex flex-col gap-2 text-center sm:text-left mb-4">
+                                    <h3 className="text-lg leading-none font-semibold">Devolución Administrativa</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        Esta acción marcará la orden como devuelta y liberará los tickets asociados.
+                                        Los fondos no se reembolsan automáticamente a través de la pasarela de pago, esto es solo un registro administrativo.
+                                    </p>
+                                </div>
 
-                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('subtotal')}>
-                                        <Checkbox
-                                            id="refund-subtotal"
-                                            checked={refundType === 'subtotal'}
-                                            onCheckedChange={() => setRefundType('subtotal')}
-                                        />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <label
-                                                htmlFor="refund-subtotal"
-                                                className="text-sm font-medium leading-none cursor-pointer"
-                                            >
-                                                Solo Entradas (Subtotal)
-                                            </label>
-                                            <p className="text-sm text-muted-foreground">
-                                                {formatCurrency(orderToRefund?.subtotal || 0)}
-                                            </p>
+                                <div className="grid gap-4 py-4">
+                                    <div className="space-y-4">
+                                        <Label>Selecciona el monto a devolver</Label>
+
+                                        <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('subtotal')}>
+                                            <Checkbox
+                                                id="refund-subtotal"
+                                                checked={refundType === 'subtotal'}
+                                                onCheckedChange={() => setRefundType('subtotal')}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <label
+                                                    htmlFor="refund-subtotal"
+                                                    className="text-sm font-medium leading-none cursor-pointer"
+                                                >
+                                                    Solo Entradas (Subtotal)
+                                                </label>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {formatCurrency(orderToRefund?.subtotal || 0)}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('total')}>
-                                        <Checkbox
-                                            id="refund-total"
-                                            checked={refundType === 'total'}
-                                            onCheckedChange={() => setRefundType('total')}
-                                        />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <label
-                                                htmlFor="refund-total"
-                                                className="text-sm font-medium leading-none cursor-pointer"
-                                            >
-                                                Total (con cargos de servicio)
-                                            </label>
-                                            <p className="text-sm text-muted-foreground">
-                                                {formatCurrency(orderToRefund?.total_amount || 0)}
-                                            </p>
+                                        <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-gray-50 bg-white" onClick={() => setRefundType('total')}>
+                                            <Checkbox
+                                                id="refund-total"
+                                                checked={refundType === 'total'}
+                                                onCheckedChange={() => setRefundType('total')}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <label
+                                                    htmlFor="refund-total"
+                                                    className="text-sm font-medium leading-none cursor-pointer"
+                                                >
+                                                    Total (con cargos de servicio)
+                                                </label>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {formatCurrency(orderToRefund?.total_amount || 0)}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-4">
-                                <Button variant="outline" onClick={() => setRefundModalOpen(false)}>Cancelar</Button>
-                                <Button variant="destructive" onClick={handleRefundSubmit}>Confirmar Devolución</Button>
+                                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-4">
+                                    <Button variant="outline" onClick={() => setRefundModalOpen(false)}>Cancelar</Button>
+                                    <Button variant="destructive" onClick={handleRefundSubmit}>Confirmar Devolución</Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </>
-            )}
-        </EventManagementLayout>
+                    </>
+                )
+            }
+        </EventManagementLayout >
     );
 }
