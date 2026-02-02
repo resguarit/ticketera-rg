@@ -542,11 +542,12 @@ export default function EventAttendees({
                                     Invitar asistente
                                 </Button>
                                 )}
-
+                                {canEdit && (
                                 <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white">
                                     <Printer className="h-4 w-4 mr-2" />
                                     Generar entradas físicas
                                 </Button>
+                                )}
                             </div>
                         </div>
                     </CardHeader>
