@@ -14,6 +14,7 @@ import {
     Clock
 } from 'lucide-react';
 import { formatDate, formatDateReadable, formatRelativeTime, formatDateForCard } from '@/lib/dateHelpers';
+import { useUserRole } from '@/hooks/useUserRole'; // <--- IMPORTAR
 
 import { Event, Category, Venue, Organizer, EventFunction } from '@/types';
 
@@ -33,6 +34,7 @@ interface EventDetail extends Event {
 
 export default function OrganizerEventCard({ event }: { event: EventDetail }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const { canEdit } = useUserRole(); // <--- USAR EL HOOK
 
     // Obtener la próxima función
     const nextFunction = event.functions && event.functions.length > 0
@@ -161,50 +163,58 @@ export default function OrganizerEventCard({ event }: { event: EventDetail }) {
 
                 {/* Botones de acción - Siempre en el fondo */}
                 <div className="flex gap-2 mt-auto pt-4" onClick={preventCardClick}>
-                    <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={route('organizer.events.edit', event.id)}>
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
-                        </Link>
-                    </Button>
+                    {/* OCULTAR BOTÓN DE EDITAR SI ES VIEWER */}
+                    {canEdit && (
+                        <Button variant="outline" size="sm" className="flex-1" asChild>
+                            <Link href={route('organizer.events.edit', event.id)}>
+                                <Edit className="w-4 h-4 mr-1" />
+                                Editar
+                            </Link>
+                        </Button>
+                    )}
+                    
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                         <Link href={route('organizer.events.manage', event.id)}>
                             <Settings className="w-4 h-4 mr-1" />
                             Gestionar
                         </Link>
                     </Button>
-                    <div className="relative">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                                preventCardClick(e);
-                                setDropdownOpen(!dropdownOpen);
-                            }}
-                        >
-                            <MoreVertical className="w-4 h-4" />
-                        </Button>
+                    
+                    {/* OCULTAR MENÚ DROPDOWN SI ES VIEWER (ya que solo tiene opciones de edición) */}
+                    {canEdit && (
+                        <div className="relative">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                    preventCardClick(e);
+                                    setDropdownOpen(!dropdownOpen);
+                                }}
+                            >
+                                <MoreVertical className="w-4 h-4" />
+                            </Button>
 
-                        {dropdownOpen && (
-                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10" onClick={preventCardClick}>
-                                <div className="py-1">
-                                    <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
-                                        Ver como público
-                                    </button>
-                                    <hr className="my-1" />
-                                    {event.is_archived ? (
-                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={handleArchive}>
-                                            Desarchivar evento
+                            {dropdownOpen && (
+                                <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10" onClick={preventCardClick}>
+                                    <div className="py-1">
+                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50" onClick={handleViewPublic}>
+                                            Ver como público
                                         </button>
-                                    ) : (
-                                        <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
-                                            Archivar evento
-                                        </button>
-                                    )}
+                                        <hr className="my-1" />
+                                        {event.is_archived ? (
+                                            <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-green-600 hover:bg-gray-50" onClick={handleArchive}>
+                                                Desarchivar evento
+                                            </button>
+                                        ) : (
+                                            <button className="w-full hover:cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50" onClick={handleArchive}>
+                                                Archivar evento
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </Card>

@@ -8,6 +8,7 @@ import { Event, EventFunction } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface EventFunctionWithStatus extends EventFunction {
     status: string;
@@ -24,6 +25,7 @@ interface FunctionsPageProps {
 }
 
 export default function FunctionsPage({ event }: FunctionsPageProps) {
+    const { canEdit } = useUserRole();
     const { flash } = usePage().props as any;
     const [functionToDelete, setFunctionToDelete] = useState<EventFunctionWithStatus | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -149,15 +151,17 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                             <div>
                                 <CardTitle className='text-xl'>Gestión de Funciones</CardTitle>
                                 <CardDescription>
-                                    Añade, edita o elimina las funciones de tu evento.
+                                    {canEdit ? 'Añade, edita o elimina las funciones de tu evento.' : 'Visualiza las funciones de tu evento.'}
                                 </CardDescription>
                             </div>
-                            <Link href={route('organizer.events.functions.create', event.id)}>
-                                <Button>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Crear Función
-                                </Button>
-                            </Link>
+                            {canEdit && (
+                                <Link href={route('organizer.events.functions.create', event.id)}>
+                                    <Button>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Crear Función
+                                    </Button>
+                                </Link>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="border rounded-lg overflow-x-auto">
@@ -182,6 +186,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {canEdit && (
                                                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                                                     <Button
                                                         variant={func.is_active ? "default" : "secondary"}
@@ -191,7 +196,9 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         title={func.is_active ? 'Ocultar función' : 'Mostrar función'}
                                                         className={func.is_active ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-gray-300 text-gray-600 hover:bg-gray-400"}
                                                     >
-                                                        {func.is_active ? (
+                                                        {isTogglingVisibility === func.id ? (
+                                                            <Clock className="h-4 w-4 animate-spin" />
+                                                        ) : func.is_active ? (
                                                             <Eye className="h-4 w-4" />
                                                         ) : (
                                                             <EyeOff className="h-4 w-4" />
@@ -210,6 +217,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
@@ -218,7 +226,7 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                                         <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
                                         <h3 className="mt-4 text-lg font-semibold">No hay funciones creadas</h3>
                                         <p className="mt-2 text-sm text-muted-foreground">
-                                            Crea la primera función para empezar a vender entradas.
+                                            {canEdit ? 'Crea la primera función para empezar a vender entradas.' : 'Aún no se han creado funciones para este evento.'}
                                         </p>
                                     </div>
                                 )}
@@ -227,22 +235,23 @@ export default function FunctionsPage({ event }: FunctionsPageProps) {
                     </Card>
                 </div>
             </EventManagementLayout>
-
-            {/* Modal de confirmación para eliminar función */}
-            <ConfirmationModal
-                isOpen={!!functionToDelete}
-                onClose={() => setFunctionToDelete(null)}
-                onConfirm={handleDeleteFunction}
-                accionTitulo="Eliminación"
-                accion="Eliminar"
-                pronombre="la"
-                entidad="función"
-                accionando="Eliminando"
-                nombreElemento={functionToDelete?.name}
-                advertencia="Esta acción no se puede deshacer. Si hay entradas vendidas para esta función, no se podrá eliminar."
-                confirmVariant="destructive"
-                isLoading={isDeleting}
-            />
+            {/* Modal solo visible si canEdit */}
+            {canEdit && (
+                <ConfirmationModal
+                    isOpen={!!functionToDelete}
+                    onClose={() => setFunctionToDelete(null)}
+                    onConfirm={handleDeleteFunction}
+                    accionTitulo="Eliminación"
+                    accion="Eliminar"
+                    pronombre="la"
+                    entidad="función"
+                    accionando="Eliminando"
+                    nombreElemento={functionToDelete?.name}
+                    advertencia="Esta acción no se puede deshacer. Si hay entradas vendidas para esta función, no se podrá eliminar."
+                    confirmVariant="destructive"
+                    isLoading={isDeleting}
+                />
+            )}
         </>
     );
 }

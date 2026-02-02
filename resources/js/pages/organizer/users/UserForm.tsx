@@ -1,13 +1,18 @@
 import { useState, FormEventHandler } from 'react';
-import { Link } from '@inertiajs/react';
-import { User, Mail, Phone, CreditCard, Lock, Eye, EyeOff, Save } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
+import { User, Mail, Phone, CreditCard, Lock, Eye, EyeOff, Save, Info, Shield } from 'lucide-react';
+import { Link } from '@inertiajs/react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 interface UserFormData {
     firstName: string;
@@ -17,6 +22,7 @@ interface UserFormData {
     dni: string | null;
     password: string;
     password_confirmation: string;
+    role: 'organizer' | 'viewer'; // Nuevo campo
     [key: string]: any;
 }
 
@@ -26,7 +32,7 @@ interface UserFormProps {
     errors: Partial<Record<keyof UserFormData, string>>;
     processing: boolean;
     onSubmit: FormEventHandler;
-    submitText: string;
+    submitText?: string;
     isEditing?: boolean;
 }
 
@@ -80,6 +86,32 @@ export default function UserForm({
                     />
                     <InputError message={errors.lastName} />
                 </div>
+            </div>
+
+            {/* SECCIÓN DE ROL */}
+            <div className="space-y-2">
+                <Label htmlFor="role">
+                    <Shield className="w-4 h-4 inline mr-2" />
+                    Rol <span className="text-red-500">*</span>
+                </Label>
+                <Select 
+                    value={data.role} 
+                    onValueChange={(value) => setData('role', value)}
+                >
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona un rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="organizer">Organizador (Acceso total)</SelectItem>
+                        <SelectItem value="viewer">Visualizador (Solo lectura)</SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.role} />
+                <p className="text-xs text-muted-foreground mt-1">
+                    {data.role === 'organizer' 
+                        ? 'Puede gestionar eventos, ventas y usuarios.' 
+                        : 'Solo puede ver información, no puede crear ni editar nada.'}
+                </p>
             </div>
 
             <div className="space-y-2">
@@ -233,7 +265,6 @@ export default function UserForm({
                 >
                     {processing ? (
                         <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                             {isEditing ? 'Actualizando...' : 'Guardando...'}
                         </>
                     ) : (

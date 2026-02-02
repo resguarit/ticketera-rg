@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => App\Http\Middleware\IsAdmin::class,
             'organizer' => App\Http\Middleware\IsOrganizer::class,
             'password.changed' => App\Http\Middleware\EnsurePasswordIsChanged::class,
+            'not.viewer' => App\Http\Middleware\EnsureUserIsNotViewer::class, // Agrega esta línea
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

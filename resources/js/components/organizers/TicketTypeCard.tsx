@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { TicketType } from "@/types/models/ticketType";
 import { formatPrice, formatCurrency } from "@/lib/currencyHelpers";
 import { DuplicateTicketTypeModal } from "./modals/DuplicateTicketTypeModal";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface TicketTypeCardProps {
   ticket: TicketType;
@@ -32,6 +33,8 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
       onToggleVisibility(ticket.id);
     }
   };
+
+  const { canEdit } = useUserRole();
 
   // Estado para el modal de duplicar
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -109,7 +112,9 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
               </div>
             )}
           </span>
+
           {/* Submenú de tres puntitos */}
+          {canEdit && (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="absolute top-0.5 -right-0.5">
@@ -127,6 +132,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
       </CardHeader>
 
@@ -215,7 +221,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
           </div>
         </div>
       </CardContent>
-
+      {canEdit && (
       <CardFooter className="flex gap-2">
         <Button
           variant={ticket.is_hidden ? 'destructive' : 'outline'}
@@ -244,7 +250,7 @@ export const TicketTypeCard: React.FC<TicketTypeCardProps> = ({ ticket, onToggle
           Eliminar
         </Button>
       </CardFooter>
-
+      )}
       {/* Modal de duplicar */}
       <DuplicateTicketTypeModal
         open={showDuplicateModal}

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Setting;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -10,43 +11,37 @@ use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        
+        $user = $request->user();
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user() ? $request->user()->load(['person', 'organizer']) : null,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->person ? ($user->person->name . ' ' . $user->person->last_name) : $user->email,
+                    'email' => $user->email,
+                    'role' => $user->role instanceof UserRole ? $user->role->value : $user->role,
+                    'organizer_id' => $user->organizer_id,
+                    'person' => $user->person,
+                    'organizer' => $user->organizer,
+                ] : null,
                 'is_impersonating' => $request->session()->has('impersonated_organizer_id'),
+                'is_viewer' => $user && ($user->role === UserRole::VIEWER || $user->role === 'viewer'),
+                'is_organizer' => $user && ($user->role === UserRole::ORGANIZER || $user->role === 'organizer'),
+                'is_admin' => $user && ($user->role === UserRole::ADMIN || $user->role === 'admin'),
             ],
             'ziggy' => fn(): array => [
                 ...(new Ziggy)->toArray(),
@@ -63,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             'supportPhone' => Setting::get('support_phone', '+54 9 2216 91-4649'),
             'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas/'),
             'facebookUrl' => Setting::get('facebook_url', 'https://www.facebook.com/profile.php?id=61581574912784'),
+            'must_change_password' => $user?->password_changed_at === null,
         ];
     }
 }

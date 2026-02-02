@@ -17,6 +17,7 @@ interface UserFormData {
     dni: string;
     password: string;
     password_confirmation: string;
+    role: string;
     [key: string]: any;
 }
 
@@ -30,6 +31,7 @@ export default function CreateUser() {
         dni: '',
         password: '',
         password_confirmation: '',
+        role: 'organizer', // <-- IMPORTANTE: Inicializar
     });
 
     // Manejar mensajes flash de Laravel

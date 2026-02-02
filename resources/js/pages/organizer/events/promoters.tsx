@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 // Importamos el nuevo modal
 import ArchivedPromotersModal from '@/components/organizers/modals/ArchivedPromotersModal';
+import { useUserRole } from '@/hooks/useUserRole';
+
 
 interface CodeDetail {
     id: number;
@@ -46,6 +48,8 @@ interface Props {
 export default function PromotersIndex({ event, promoters, archived_promoters }: Props) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isArchivedOpen, setIsArchivedOpen] = useState(false); // Estado para modal archivados
+
+    const { canEdit } = useUserRole();
 
     const [promoterToDelete, setPromoterToDelete] = useState<Promoter | null>(null);
     const [codeToDelete, setCodeToDelete] = useState<{ promoterId: number, codeId: number } | null>(null);
@@ -139,7 +143,7 @@ export default function PromotersIndex({ event, promoters, archived_promoters }:
                         <Archive className="w-4 h-4 text-gray-500" />
                         Archivados ({archived_promoters.length})
                     </Button>
-
+                    { canEdit && (
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
                             <Button className="bg-blue-600 hover:bg-blue-700">
@@ -234,6 +238,7 @@ export default function PromotersIndex({ event, promoters, archived_promoters }:
                             </form>
                         </DialogContent>
                     </Dialog>
+                    )}
                 </div>
             </div>
 
@@ -371,7 +376,8 @@ export default function PromotersIndex({ event, promoters, archived_promoters }:
                 </CardContent>
             </Card>
 
-
+            { canEdit && (
+                <>
             {/* MODALES DE ELIMINACION */}
             <AlertDialog open={!!promoterToDelete} onOpenChange={(open) => !open && setPromoterToDelete(null)}>
                 <AlertDialogContent>
@@ -398,6 +404,8 @@ export default function PromotersIndex({ event, promoters, archived_promoters }:
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            </>
+            )}
 
             {/* NUEVO MODAL DE ARCHIVADOS */}
             <ArchivedPromotersModal

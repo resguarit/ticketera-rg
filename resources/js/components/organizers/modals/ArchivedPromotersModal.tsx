@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, ArchiveX } from "lucide-react";
 import { router } from "@inertiajs/react";
 import { formatCurrency } from "@/lib/currencyHelpers";
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ArchivedPromotersModalProps {
     isOpen: boolean;
@@ -32,6 +33,9 @@ export default function ArchivedPromotersModal({
         });
     };
 
+        const { canEdit } = useUserRole();
+
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[700px]">
@@ -52,7 +56,9 @@ export default function ArchivedPromotersModal({
                                 <TableHead>Vendedor</TableHead>
                                 <TableHead>Ventas Históricas</TableHead>
                                 <TableHead>Recaudado</TableHead>
+                                { canEdit &&(
                                 <TableHead className="text-right">Acción</TableHead>
+                                )}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -74,6 +80,7 @@ export default function ArchivedPromotersModal({
                                         </TableCell>
                                         <TableCell>{promoter.total_sales}</TableCell>
                                         <TableCell>{formatCurrency(promoter.total_revenue)}</TableCell>
+                                        { canEdit &&(
                                         <TableCell className="text-right">
                                             <Button
                                                 size="sm"
@@ -85,6 +92,7 @@ export default function ArchivedPromotersModal({
                                                 Reactivar
                                             </Button>
                                         </TableCell>
+                                        )}
                                     </TableRow>
                                 ))
                             )}
