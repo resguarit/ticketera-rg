@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu, LogOut } from 'lucide-react';
+import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu, LogOut, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -30,7 +30,7 @@ interface EventWithDetails extends Event, EventRelations {
 }
 
 interface EventManagementLayoutProps {
-    event: EventWithDetails;
+    event: EventWithDetails | (Event & EventRelations);
     activeTab?: string;
     children: React.ReactNode;
 }
@@ -73,6 +73,12 @@ export default function EventManagementLayout({
             id: 'access',
             icon: QrCode,
             href: route('organizer.events.access', event.id)
+        },
+        {
+            name: 'Liquidaciones',
+            id: 'settlements',
+            icon: DollarSign,
+            href: route('organizer.events.settlements.index', event.id)
         },
         {
             name: 'Vendedores',
