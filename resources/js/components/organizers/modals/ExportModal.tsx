@@ -11,6 +11,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FileSpreadsheet } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
+
 
 interface ExportModalProps {
     isOpen: boolean;
@@ -25,6 +27,9 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
         onExport(exportType);
         onClose();
     };
+
+    const { canEdit } = useUserRole();
+    
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -50,6 +55,7 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                                 <span className="text-sm text-muted-foreground">Exporta el valor neto de los tickets (Subtotal).</span>
                             </div>
                         </div>
+                        {canEdit && (
                         <div className="flex items-center space-x-2 border p-4 rounded-md cursor-pointer hover:bg-gray-50">
                             <RadioGroupItem value="service_fee" id="opt-fee" />
                             <div className="grid gap-1.5 cursor-pointer flex-1" onClick={() => setExportType('service_fee')}>
@@ -57,6 +63,7 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                                 <span className="text-sm text-muted-foreground">Exporta únicamente el valor del Service Fee.</span>
                             </div>
                         </div>
+                        )}
                     </RadioGroup>
                 </div>
 
