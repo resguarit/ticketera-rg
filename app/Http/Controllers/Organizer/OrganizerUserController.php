@@ -19,9 +19,22 @@ use Inertia\Response;
 
 class OrganizerUserController extends Controller
 {
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): Organizer
+    {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
     public function index(Request $request): Response
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
         
         $search = $request->get('search', '');
         $status = $request->get('status', 'all');
@@ -79,7 +92,7 @@ class OrganizerUserController extends Controller
                 'phone' => $user->person->phone ?? 'Sin teléfono',
                 'dni' => $user->person->dni ?? 'Sin DNI',
                 'status' => $user->email_verified_at ? 'active' : 'pending',
-                'role' => $user->role, // Enviamos el rol al frontend
+                'role' => $user->role instanceof UserRole ? $user->role->value : $user->role, // 🔧 CORREGIDO
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at->format('Y-m-d'),
             ];
@@ -112,7 +125,8 @@ class OrganizerUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
 
         $validated = $request->validate([
             'firstName' => 'required|string|max:255',
@@ -134,11 +148,11 @@ class OrganizerUserController extends Controller
 
             User::create([
                 'person_id' => $person->id,
-                'organizer_id' => $organizer->id, // <--- ESTO YA ESTABA, ESTÁ BIEN
+                'organizer_id' => $organizer->id,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => $validated['role'], // <--- USAR EL ROL VALIDADO
-                'email_verified_at' => now(), // <--- OPCIONAL: Activarlo inmediatamente o dejarlo en null
+                'role' => $validated['role'],
+                'email_verified_at' => now(),
             ]);
         });
 
@@ -146,9 +160,10 @@ class OrganizerUserController extends Controller
             ->with('success', 'Usuario creado correctamente');
     }
 
-    public function toggleStatus(int $userId): RedirectResponse
+    public function toggleStatus(Request $request, int $userId): RedirectResponse
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
         
         $user = User::where('organizer_id', $organizer->id)
             ->whereIn('role', [UserRole::ORGANIZER, UserRole::VIEWER])
@@ -164,9 +179,10 @@ class OrganizerUserController extends Controller
             ->with('success', "Usuario {$status} correctamente");
     }
 
-    public function destroy(int $userId): RedirectResponse
+    public function destroy(Request $request, int $userId): RedirectResponse
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)
@@ -185,9 +201,10 @@ class OrganizerUserController extends Controller
             ->with('success', 'Usuario eliminado correctamente');
     }
 
-    public function edit(int $userId): Response
+    public function edit(Request $request, int $userId): Response
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)
@@ -202,7 +219,7 @@ class OrganizerUserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->person->phone ?? '',
                 'dni' => $user->person->dni ?? '',
-                'role' => $user->role, // Enviamos el rol actual
+                'role' => $user->role instanceof UserRole ? $user->role->value : $user->role, // 🔧 CORREGIDO
                 'status' => $user->email_verified_at ? 'active' : 'pending',
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
@@ -212,7 +229,8 @@ class OrganizerUserController extends Controller
 
     public function update(Request $request, int $userId): RedirectResponse
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
         
         $user = User::with(['person'])
             ->where('organizer_id', $organizer->id)

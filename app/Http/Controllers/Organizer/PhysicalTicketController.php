@@ -29,11 +29,26 @@ class PhysicalTicketController extends Controller
     }
 
     /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
+    {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
+    /**
      * Show the form to generate physical tickets
      */
-    public function create(Event $event)
+    public function create(Request $request, Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer->id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
@@ -82,7 +97,10 @@ class PhysicalTicketController extends Controller
      */
     public function store(Request $request, Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer->id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
@@ -90,7 +108,7 @@ class PhysicalTicketController extends Controller
             'person.name' => 'required|string|max:100',
             'person.last_name' => 'required|string|max:100',
             'person.dni' => 'nullable|string|max:20',
-            'person.email' => 'nullable|email|max:255', // Email optional for physical tickets
+            'person.email' => 'nullable|email|max:255',
             'person.phone' => 'nullable|string|max:20',
             'person.address' => 'nullable|string|max:500',
             'tickets' => 'required|array|min:1',
@@ -106,7 +124,6 @@ class PhysicalTicketController extends Controller
         try {
             DB::beginTransaction();
 
-            // Similar validation logic as AttendeeInvitationController...
             $functionIds = collect($request->tickets)->pluck('event_function_id')->unique();
             $validFunctions = $event->functions()->whereIn('id', $functionIds)->pluck('id');
 
@@ -133,8 +150,6 @@ class PhysicalTicketController extends Controller
             }
 
             if (!$person) {
-                // If no name provided (e.g. generic physical ticket), use placeholder? 
-                // Validator requires name/lastname so we assume we have them.
                 $person = Person::create([
                     'name' => $personData['name'],
                     'last_name' => $personData['last_name'],
@@ -157,15 +172,9 @@ class PhysicalTicketController extends Controller
                 $eventFunction = EventFunction::find($ticketRequest['event_function_id']);
                 $ticketType = TicketType::find($ticketRequest['ticket_type_id']);
 
-                // Create or find Assistant
-                // Note: For physical tickets, we might want to differentiate them?
-                // For now, using 'invited' logic but without email sending is fine.
-                // We'll treat them as "Assistant" with 'sended_at' potentially null or a specific flag/status if needed.
-                // But the user just said "same logic as invited but without email".
-
                 $assistant = Assistant::where('event_function_id', $eventFunction->id)
                     ->where('person_id', $person->id)
-                    ->where('email', $personData['email']) // Email might be null
+                    ->where('email', $personData['email'])
                     ->first();
 
                 if (!$assistant) {
@@ -174,11 +183,7 @@ class PhysicalTicketController extends Controller
                         'person_id' => $person->id,
                         'email' => $personData['email'],
                         'quantity' => $ticketRequest['quantity'],
-                        'sended_at' => now(), // Mark as "sent" (issued) immediately? Or null? 
-                        // If null, it shows as "Pendiente" in badge. 
-                        // User request: "generar las entradas emitidas". 
-                        // Let's set it to now() so it looks "Valid/Invitado" or maybe we need a new way to distinguish.
-                        // For now keep it consistent with "Invite" flow.
+                        'sended_at' => now(),
                     ]);
                 } else {
                     $assistant->increment('quantity', $ticketRequest['quantity']);
@@ -190,11 +195,11 @@ class PhysicalTicketController extends Controller
                         'order_id' => null,
                         'assistant_id' => $assistant->id,
                         'client_id' => null,
-                        'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'FIS'), // FIS for Fisico
+                        'unique_code' => $this->orderService->generateUniqueTicketCode($ticketType, 'FIS'),
                         'bundle_reference' => null,
                         'status' => IssuedTicketStatus::AVAILABLE,
                         'issued_at' => now(),
-                        'email_sent_at' => null, // Explicitly null as we don't send email
+                        'email_sent_at' => null,
                     ]);
                     $issuedTicketIds[] = $ticket->id;
                 }
@@ -202,7 +207,6 @@ class PhysicalTicketController extends Controller
 
             DB::commit();
 
-            // Return the print URL for the generated tickets
             return redirect()->route('organizer.events.attendees', $event)
                 ->with('success', 'Entradas físicas generadas correctamente.')
                 ->with('print_url', route('organizer.events.physical-tickets.print', [
@@ -222,7 +226,10 @@ class PhysicalTicketController extends Controller
      */
     public function print(Request $request, Event $event)
     {
-        if ($event->organizer_id !== Auth::user()->organizer->id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -258,7 +265,6 @@ class PhysicalTicketController extends Controller
             abort(404, 'No se encontraron tickets.');
         }
 
-        // return view directly
         return view('ticket.ticket-template', compact('tickets'));
     }
 }

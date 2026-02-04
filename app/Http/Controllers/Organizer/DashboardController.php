@@ -20,7 +20,14 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): Response
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 NUEVO: Obtener el organizador correcto
+        $user = Auth::user();
+        if ($request->session()->has('impersonated_organizer_id')) {
+            $organizer = \App\Models\Organizer::find($request->session()->get('impersonated_organizer_id'));
+        } else {
+            $organizer = $user->organizer;
+        }
+        
         $organizer->load(['events.functions.ticketTypes', 'events.venue', 'events.category']);
 
         // Obtener período del request, por defecto último mes

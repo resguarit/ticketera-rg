@@ -16,13 +16,24 @@ use Illuminate\Http\RedirectResponse;
 
 class EventFunctionController extends Controller
 {
-    private function checkOwnership(Event $event)
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
     {
-        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            return;
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
+        
+        return Auth::user()->organizer;
+    }
 
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+    private function checkOwnership(Request $request, Event $event)
+    {
+        // 🔧 CORREGIDO: Usar getOrganizer para obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
     }
@@ -30,9 +41,9 @@ class EventFunctionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Event $event): Response
+    public function index(Request $request, Event $event): Response
     {
-        $this->authorize('view', $event);
+        $this->checkOwnership($request, $event);
 
         $event->load(['functions' => function ($query) {
             $query->orderBy('start_time', 'asc');
@@ -46,9 +57,9 @@ class EventFunctionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Event $event): Response
+    public function create(Request $request, Event $event): Response
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         // Estados disponibles del enum
         $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
@@ -68,7 +79,7 @@ class EventFunctionController extends Controller
      */
     public function store(Request $request, Event $event): RedirectResponse
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -99,9 +110,9 @@ class EventFunctionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Event $event, EventFunction $function): Response
+    public function edit(Request $request, Event $event, EventFunction $function): Response
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         // Estados disponibles del enum
         $statuses = collect(EventFunctionStatus::cases())->map(fn($status) => [
@@ -132,7 +143,7 @@ class EventFunctionController extends Controller
      */
     public function update(Request $request, Event $event, EventFunction $function): RedirectResponse
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -163,9 +174,9 @@ class EventFunctionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Event $event, EventFunction $function): RedirectResponse
+    public function destroy(Request $request, Event $event, EventFunction $function): RedirectResponse
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         try {
             // Add logic to check if tickets are sold before deleting
@@ -193,7 +204,7 @@ class EventFunctionController extends Controller
      */
     public function updateStatus(Request $request, Event $event, EventFunction $function): RedirectResponse
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', array_column(EventFunctionStatus::cases(), 'value')),
@@ -224,7 +235,7 @@ class EventFunctionController extends Controller
      */
     public function toggleActive(Request $request, Event $event, EventFunction $function): RedirectResponse
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         try {
             DB::beginTransaction();
