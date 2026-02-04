@@ -134,10 +134,10 @@ class EventController extends Controller
                     'ticketTypes' => $shouldShowTickets
                         ? $function->ticketTypes
                         ->filter(function ($ticket) {
-                            // NUEVO: Filtrar por fechas de venta además de is_hidden
+                            // ACTUALIZADO: Filtrar por fechas de venta y is_hidden, PERO INCLUIR AGOTADOS
                             $now = now();
 
-                            // No mostrar tickets ocultos
+                            // No mostrar tickets ocultos manualmente
                             if ($ticket->is_hidden) {
                                 return false;
                             }
@@ -152,6 +152,7 @@ class EventController extends Controller
                                 return false;
                             }
 
+                            // INCLUIR tickets agotados (sin filtrar por available)
                             return true;
                         })
                         ->map(function ($ticket) {
@@ -173,14 +174,15 @@ class EventController extends Controller
                                 'is_hidden' => $ticket->is_hidden,
                                 'is_bundle' => $ticket->is_bundle,
                                 'bundle_quantity' => $ticket->bundle_quantity,
+                                'is_sold_out' => $realAvailable <= 0, // NUEVO: Flag para agotado
                                 'color' => 'from-blue-500 to-cyan-500',
                             ];
                         })
                         ->values()
                         : [], // Array vacío si no se deben mostrar tickets
-                ];
-            })
-            ->values();
+            ];
+        })
+        ->values();
 
         $eventData = [
             'id' => $event->id,
@@ -190,8 +192,8 @@ class EventController extends Controller
             'hero_image_url' => $event->hero_image_url,
             'location' => $event->venue->name,
             'city' => $event->venue->ciudad ? $event->venue->ciudad->name : 'Sin ciudad',
-            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia ?
-                $event->venue->ciudad->provincia->name : null,
+            'province' => $event->venue->ciudad && $event->venue->ciudad->provincia
+                ? $event->venue->ciudad->provincia->name : null,
             'full_address' => $event->venue->getFullAddressAttribute(),
             'category' => strtolower($event->category->name),
             'reviews' => 1247,
@@ -231,7 +233,7 @@ class EventController extends Controller
 
         $ticketTypes = $function->ticketTypes
             ->filter(function ($ticket) use ($now) {
-                // NUEVO: Aplicar el mismo filtro de fechas de venta
+                // ACTUALIZADO: Aplicar el mismo filtro, INCLUIR AGOTADOS
                 if ($ticket->is_hidden) {
                     return false;
                 }
@@ -246,6 +248,7 @@ class EventController extends Controller
                     return false;
                 }
 
+                // INCLUIR tickets agotados
                 return true;
             })
             ->map(function ($ticket) {
@@ -256,6 +259,7 @@ class EventController extends Controller
                     'id' => $ticket->id,
                     'available' => $realAvailable,
                     'locked_quantity' => $lockedQuantity,
+                    'is_sold_out' => $realAvailable <= 0, // NUEVO
                 ];
             })
             ->values();
