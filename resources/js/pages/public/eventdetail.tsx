@@ -23,7 +23,8 @@ import Footer from '@/components/footer';
 
 interface TicketTypeData extends TicketType {
     available: number;
-    locked_quantity?: number; // NUEVO
+    locked_quantity?: number;
+    is_sold_out?: boolean; // NUEVO
     color: string;
 }
 
@@ -265,6 +266,11 @@ export default function EventDetail({ eventData }: EventDetailProps) {
         return realTimeAvailability[ticket.id] !== undefined
             ? realTimeAvailability[ticket.id]
             : ticket.available;
+    };
+
+    // NUEVO: Función para verificar si un ticket está agotado
+    const isTicketSoldOut = (ticket: TicketTypeData): boolean => {
+        return getRealAvailability(ticket) <= 0;
     };
 
     // ACTUALIZAR: Función handleQuantityChange para usar disponibilidad real
@@ -634,7 +640,6 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 {/* MOBILE - Sección de selección de tickets */}
                                 <CardContent className="space-y-3 sm:space-y-4">
                                     {selectedFunction ? (
-                                        // NUEVO: Verificar si se deben mostrar tickets basándose en el estado
                                         selectedFunction.should_show_tickets ? (
                                             currentTicketTypes.length > 0 ? (
                                                 <>
@@ -648,46 +653,74 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         </p>
                                                     </div>
 
+                                                    {/* ACTUALIZADO: Mostrar TODOS los tickets, incluidos agotados */}
                                                     {currentTicketTypes
-                                                        .filter(ticket => !ticket.is_hidden && ticket.available > 0)
+                                                        .filter(ticket => !ticket.is_hidden)
                                                         .map((ticket) => {
                                                             const selectedQuantity = selectedTickets[ticket.id] || 0;
                                                             const isBundle = ticket.is_bundle || false;
                                                             const bundleQuantity = ticket.bundle_quantity || 1;
 
-                                                            // Obtener disponibilidad y estado en tiempo real
                                                             const availabilityStatus = getAvailabilityStatus(ticket);
                                                             const realAvailable = availabilityStatus.realAvailable;
                                                             const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
                                                             const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                            const isSoldOut = isTicketSoldOut(ticket);
 
                                                             return (
                                                                 <div
                                                                     key={ticket.id}
-                                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                                    className={`relative p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-colors overflow-hidden ${
+                                                                        isSoldOut
+                                                                            ? 'bg-gray-100 border-gray-300 opacity-60'
+                                                                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                                                    }`}
                                                                 >
+                                                                    {/* Banner diagonal "AGOTADO" */}
+                                                                    {isSoldOut && (
+                                                                        <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden pointer-events-none z-10">
+                                                                            <div className="absolute top-4 -right-8 bg-red-600 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 shadow-lg">
+                                                                                AGOTADO
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+
                                                                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                         <div className="min-w-0 flex-1 mr-2">
                                                                             <div className="flex items-center space-x-2 mb-1">
-                                                                                <h4 className="font-bold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                                                {isRefreshingAvailability && (
+                                                                                <h4 className={`font-semibold text-sm sm:text-base lg:text-lg ${
+                                                                                    isSoldOut ? 'text-gray-500' : 'text-foreground'
+                                                                                }`}>
+                                                                                    {ticket.name}
+                                                                                </h4>
+                                                                                {isRefreshingAvailability && !isSoldOut && (
                                                                                     <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
                                                                                 )}
                                                                             </div>
-                                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                            <div className="flex flex-col space-y-1 mt-1">
-                                                                                {realAvailable <= 5 && realAvailable > 0 && (
-                                                                                    <p className="text-red-600 text-xs font-medium">
-                                                                                        ¡Solo quedan {realAvailable} disponibles!
-                                                                                    </p>
-                                                                                )}
-                                                                            </div>
+                                                                            <p className={`text-xs sm:text-sm ${
+                                                                                isSoldOut ? 'text-gray-500' : 'text-foreground/80'
+                                                                            }`}>
+                                                                                {ticket.description}
+                                                                            </p>
+                                                                            {!isSoldOut && realAvailable <= 5 && realAvailable > 0 && (
+                                                                                <p className="text-red-600 text-xs font-medium mt-1">
+                                                                                    ¡Solo quedan {realAvailable} disponibles!
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                         <div className="text-right flex-shrink-0">
-                                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                                {formatCurrency(ticket.price)}
-                                                                            </p>
-                                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                            {!isSoldOut ? (
+                                                                                <>
+                                                                                    <p className={`text-lg sm:text-xl lg:text-2xl font-bold text-foreground`}>
+                                                                                        {formatPrice(ticket.price)}
+                                                                                    </p>
+                                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                                </>
+                                                                            ) : (
+                                                                                <div className="text-sm text-gray-500 font-medium">
+                                                                                    No disponible
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     </div>
 
@@ -697,20 +730,26 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 size="sm"
                                                                                 variant="outline"
                                                                                 onClick={() => handleQuantityChange(ticket.id, -1)}
-                                                                                disabled={selectedQuantity === 0}
-                                                                                className="w-8 h-8 p-0"
+                                                                                disabled={selectedQuantity === 0 || isSoldOut}
+                                                                                className={`w-8 h-8 p-0 ${isSoldOut ? 'cursor-not-allowed' : ''}`}
                                                                             >
                                                                                 <Minus className="w-4 h-4" />
                                                                             </Button>
-                                                                            <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                            <span className={`w-8 text-center font-semibold ${
+                                                                                isSoldOut ? 'text-gray-500' : ''
+                                                                            }`}>
+                                                                                {selectedQuantity}
+                                                                            </span>
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="outline"
                                                                                 onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                                disabled={selectedQuantity >= maxAllowed}
-                                                                                className="w-8 h-8 p-0"
+                                                                                disabled={selectedQuantity >= maxAllowed || isSoldOut}
+                                                                                className={`w-8 h-8 p-0 ${isSoldOut ? 'cursor-not-allowed' : ''}`}
                                                                                 title={
-                                                                                    selectedQuantity >= maxAllowed
+                                                                                    isSoldOut
+                                                                                        ? 'Agotado'
+                                                                                        : selectedQuantity >= maxAllowed
                                                                                         ? `Límite alcanzado (${maxAllowed})`
                                                                                         : `Agregar (máx. ${maxAllowed})`
                                                                                 }
@@ -718,7 +757,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 <Plus className="w-4 h-4" />
                                                                             </Button>
                                                                         </div>
-                                                                        {selectedQuantity > 0 && (
+                                                                        {selectedQuantity > 0 && !isSoldOut && (
                                                                             <div className="text-sm text-foreground/60 mt-1">
                                                                                 {isBundle ? (
                                                                                     <div>
@@ -738,7 +777,6 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         })}
                                                 </>
                                             ) : (
-                                                // No hay tickets disponibles pero el estado permite mostrar tickets
                                                 <div className="text-center py-6 sm:py-8">
                                                     {selectedFunction.status === 'sold_out' ? (
                                                         <>
@@ -749,13 +787,49 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                 Agotado
                                                             </Badge>
                                                         </>
+                                                    ) : selectedFunction.status === 'upcoming' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Las entradas para esta función estarán disponibles próximamente
+                                                            </p>
+                                                            <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs sm:text-sm">
+                                                                Próximamente
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'finished' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ya ha finalizado
+                                                            </p>
+                                                            <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                                Finalizada
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'cancelled' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función ha sido cancelada
+                                                            </p>
+                                                            <Badge variant="outline" className="border-red-300 text-red-600 text-xs sm:text-sm">
+                                                                Cancelada
+                                                            </Badge>
+                                                        </>
                                                     ) : selectedFunction.status === 'reprogrammed' ? (
                                                         <>
                                                             <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
-                                                                Esta función ha sido reprogramada. Las entradas estarán disponibles próximamente
+                                                                Esta función ha sido reprogramada
                                                             </p>
                                                             <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs sm:text-sm">
                                                                 Reprogramada
+                                                            </Badge>
+                                                        </>
+                                                    ) : selectedFunction.status === 'inactive' ? (
+                                                        <>
+                                                            <p className="text-foreground/60 mb-3 sm:mb-4 text-sm sm:text-base">
+                                                                Esta función no está disponible
+                                                            </p>
+                                                            <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs sm:text-sm">
+                                                                No disponible
                                                             </Badge>
                                                         </>
                                                     ) : (
@@ -968,11 +1042,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                 </CardHeader>
                                 <CardContent className="space-y-3 sm:space-y-4">
                                     {selectedFunction ? (
-                                        // NUEVO: Verificar si se deben mostrar tickets basándose en el estado
                                         selectedFunction.should_show_tickets ? (
                                             currentTicketTypes.length > 0 ? (
                                                 <>
-                                                    {/* Información de la función seleccionada */}
                                                     <div className="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
                                                         <h4 className="font-semibold text-foreground text-xs sm:text-sm mb-1">
                                                             {selectedFunction.name}
@@ -982,8 +1054,9 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                         </p>
                                                     </div>
 
+                                                    {/* ACTUALIZADO: Mostrar TODOS los tickets, incluidos agotados */}
                                                     {currentTicketTypes
-                                                        .filter(ticket => !ticket.is_hidden && ticket.available > 0)
+                                                        .filter(ticket => !ticket.is_hidden)
                                                         .map((ticket) => {
                                                             const selectedQuantity = selectedTickets[ticket.id] || 0;
                                                             const isBundle = ticket.is_bundle || false;
@@ -993,42 +1066,62 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                             const realAvailable = availabilityStatus.realAvailable;
                                                             const maxPurchaseQuantity = ticket.max_purchase_quantity || 10;
                                                             const maxAllowed = Math.min(realAvailable, maxPurchaseQuantity);
+                                                            const isSoldOut = isTicketSoldOut(ticket);
 
                                                             return (
                                                                 <div
                                                                     key={ticket.id}
-                                                                    className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                                                    className={`relative p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-colors overflow-hidden ${
+                                                                        isSoldOut
+                                                                            ? 'bg-gray-100 border-gray-300 opacity-60'
+                                                                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                                                    }`}
                                                                 >
+                                                                    {/* Banner diagonal "AGOTADO" */}
+                                                                    {isSoldOut && (
+                                                                        <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden pointer-events-none z-10">
+                                                                            <div className="absolute top-4 -right-8 bg-red-600 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 shadow-lg">
+                                                                                AGOTADO
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+
                                                                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                                                                         <div className="min-w-0 flex-1 mr-2">
                                                                             <div className="flex items-center space-x-2 mb-1">
-                                                                                <h4 className="font-semibold text-foreground text-sm sm:text-base lg:text-lg">{ticket.name}</h4>
-                                                                                {/* NUEVO: Indicador de disponibilidad en tiempo real */}
-                                                                                {isRefreshingAvailability && (
+                                                                                <h4 className={`font-semibold text-sm sm:text-base lg:text-lg ${
+                                                                                    isSoldOut ? 'text-gray-500' : 'text-foreground'
+                                                                                }`}>
+                                                                                    {ticket.name}
+                                                                                </h4>
+                                                                                {isRefreshingAvailability && !isSoldOut && (
                                                                                     <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
                                                                                 )}
                                                                             </div>
-                                                                            <p className="text-foreground/80 text-xs sm:text-sm">{ticket.description}</p>
-                                                                            <div className="flex flex-col space-y-1 mt-1">
-                                                                                <div className="flex items-center space-x-2">
-
-                                                                                </div>
-
-
-
-                                                                                {/* Mostrar advertencia cuando queda poco stock */}
-                                                                                {realAvailable <= 5 && realAvailable > 0 && (
-                                                                                    <p className="text-red-600 text-xs font-medium">
-                                                                                        ¡Solo quedan {realAvailable} disponibles!
-                                                                                    </p>
-                                                                                )}
-                                                                            </div>
+                                                                            <p className={`text-xs sm:text-sm ${
+                                                                                isSoldOut ? 'text-gray-500' : 'text-foreground/80'
+                                                                            }`}>
+                                                                                {ticket.description}
+                                                                            </p>
+                                                                            {!isSoldOut && realAvailable <= 5 && realAvailable > 0 && (
+                                                                                <p className="text-red-600 text-xs font-medium mt-1">
+                                                                                    ¡Solo quedan {realAvailable} disponibles!
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                         <div className="text-right flex-shrink-0">
-                                                                            <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
-                                                                                {formatPrice(ticket.price)}
-                                                                            </p>
-                                                                            <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                            {!isSoldOut ? (
+                                                                                <>
+                                                                                    <p className={`text-lg sm:text-xl lg:text-2xl font-bold text-foreground`}>
+                                                                                        {formatPrice(ticket.price)}
+                                                                                    </p>
+                                                                                    <p className="text-foreground/60 text-xs sm:text-sm">ARS</p>
+                                                                                </>
+                                                                            ) : (
+                                                                                <div className="text-sm text-gray-500 font-medium">
+                                                                                    No disponible
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     </div>
 
@@ -1038,20 +1131,26 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 size="sm"
                                                                                 variant="outline"
                                                                                 onClick={() => handleQuantityChange(ticket.id, -1)}
-                                                                                disabled={selectedQuantity === 0}
-                                                                                className="w-8 h-8 p-0"
+                                                                                disabled={selectedQuantity === 0 || isSoldOut}
+                                                                                className={`w-8 h-8 p-0 ${isSoldOut ? 'cursor-not-allowed' : ''}`}
                                                                             >
                                                                                 <Minus className="w-4 h-4" />
                                                                             </Button>
-                                                                            <span className="w-8 text-center font-semibold">{selectedQuantity}</span>
+                                                                            <span className={`w-8 text-center font-semibold ${
+                                                                                isSoldOut ? 'text-gray-500' : ''
+                                                                            }`}>
+                                                                                {selectedQuantity}
+                                                                            </span>
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="outline"
                                                                                 onClick={() => handleQuantityChange(ticket.id, 1)}
-                                                                                disabled={selectedQuantity >= maxAllowed}
-                                                                                className="w-8 h-8 p-0"
+                                                                                disabled={selectedQuantity >= maxAllowed || isSoldOut}
+                                                                                className={`w-8 h-8 p-0 ${isSoldOut ? 'cursor-not-allowed' : ''}`}
                                                                                 title={
-                                                                                    selectedQuantity >= maxAllowed
+                                                                                    isSoldOut
+                                                                                        ? 'Agotado'
+                                                                                        : selectedQuantity >= maxAllowed
                                                                                         ? `Límite alcanzado (${maxAllowed})`
                                                                                         : `Agregar (máx. ${maxAllowed})`
                                                                                 }
@@ -1059,7 +1158,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                                                 <Plus className="w-4 h-4" />
                                                                             </Button>
                                                                         </div>
-                                                                        {selectedQuantity > 0 && (
+                                                                        {selectedQuantity > 0 && !isSoldOut && (
                                                                             <div className="text-sm text-foreground/60 mt-1">
                                                                                 {isBundle ? (
                                                                                     <div>
@@ -1218,7 +1317,7 @@ export default function EventDetail({ eventData }: EventDetailProps) {
                                                 </div>
                                                 <div className="flex justify-between text-foreground text-lg sm:text-xl font-bold">
                                                     <span>Total:</span>
-                                                    <span>${getTotalPrice().toLocaleString()} ARS</span>
+                                                    <span>{formatCurrency(getTotalPrice())}</span>
                                                 </div>
                                                 <Button
                                                     onClick={handlePurchase}
