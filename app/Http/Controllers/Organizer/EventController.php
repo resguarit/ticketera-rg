@@ -434,7 +434,7 @@ class EventController extends Controller
             }
         }
 
-        // Formatear los datos del evento (tu código existente de mapeo)
+        // Formatear los datos del evento CON LAS FUNCIONES COMPLETAS
         $eventData = [
             'id' => $event->id,
             'name' => $event->name,
@@ -450,6 +450,52 @@ class EventController extends Controller
             'net_revenue' => $this->revenueService->netRevenueForEvent($event),
             'entradas_vendidas' => $totalEntradasVendidas,
             'tickets_emitidos' => $totalTicketsEmitidos,
+            'functions' => $event->functions->map(function ($function) {
+                // Calcular estadísticas por función
+                $entradasVendidas = 0;
+                $ticketsEmitidos = 0;
+                
+                foreach ($function->ticketTypes as $ticketType) {
+                    if ($ticketType->is_bundle) {
+                        $lotesVendidos = $ticketType->issuedTickets()
+                            ->whereHas('order', function($q) {
+                                $q->where('status', \App\Enums\OrderStatus::PAID);
+                            })
+                            ->distinct('order_id')
+                            ->count('order_id');
+                        
+                        $entradasVendidas += $lotesVendidos;
+                        $ticketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
+                    } else {
+                        $vendidos = $ticketType->issuedTickets()
+                            ->whereHas('order', function($q) {
+                                $q->where('status', \App\Enums\OrderStatus::PAID);
+                            })
+                            ->count();
+                        
+                        $entradasVendidas += $vendidos;
+                        $ticketsEmitidos += $vendidos;
+                    }
+                }
+                
+                return [
+                    'id' => $function->id,
+                    'name' => $function->name,
+                    'description' => $function->description,
+                    'start_time' => $function->start_time,
+                    'end_time' => $function->end_time,
+                    'date' => $function->start_time?->format('d M Y'),
+                    'time' => $function->start_time?->format('H:i'),
+                    'formatted_date' => $function->start_time?->format('Y-m-d'),
+                    'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
+                    'is_active' => $function->is_active,
+                    'status' => $function->status->value,
+                    'status_label' => $function->status->label(),
+                    'status_color' => $function->status->color(),
+                    'entradas_vendidas' => $entradasVendidas,
+                    'tickets_emitidos' => $ticketsEmitidos,
+                ];
+            }),
         ];
 
         return Inertia::render('organizer/events/manage', [
