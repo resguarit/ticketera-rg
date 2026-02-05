@@ -100,14 +100,6 @@ export default function Index({ auth, events, functions, settlements, selectedEv
         }
     };
 
-    const handleExportTickets = () => {
-        if (selectedFunctionId) {
-            window.location.href = route('admin.settlements.export-tickets', {
-                function_id: selectedFunctionId,
-            });
-        }
-    };
-
     return (
         <>
             <Head title="Liquidaciones" />
@@ -179,10 +171,6 @@ export default function Index({ auth, events, functions, settlements, selectedEv
                                     </Button>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <Button variant="outline" onClick={handleExportTickets}>
-                                        <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                        Exportar Entradas Vendidas
-                                    </Button>
                                     <Button variant="outline" onClick={handleExportSettlements}>
                                         <Download className="w-4 h-4 mr-2" />
                                         Exportar Liquidaciones

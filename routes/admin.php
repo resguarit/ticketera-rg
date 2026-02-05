@@ -124,7 +124,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{settlement}', [SettlementController::class, 'update'])->name('update');
         Route::delete('/{settlement}', [SettlementController::class, 'destroy'])->name('destroy');
         Route::get('/export-settlements', [SettlementController::class, 'exportSettlements'])->name('export-settlements');
-        Route::get('/export-tickets', [SettlementController::class, 'exportTickets'])->name('export-tickets');
     });
 
     // Rutas de Admin

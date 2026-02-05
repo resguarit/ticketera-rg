@@ -90,7 +90,6 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
         Route::prefix('{event}/settlements')->name('settlements.')->group(function () {
             Route::get('/', [SettlementController::class, 'index'])->name('index');
             Route::get('/export-settlements', [SettlementController::class, 'exportSettlements'])->name('export-settlements');
-            Route::get('/export-tickets', [SettlementController::class, 'exportTickets'])->name('export-tickets');
         });
 
         // ✅ RUTAS DE SOLO LECTURA PARA DETALLES

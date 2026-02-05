@@ -52,14 +52,6 @@ export default function Index({ auth, event, functions, settlements, selectedFun
         }
     };
 
-    const handleExportTickets = () => {
-        if (selectedFunctionId) {
-            window.location.href = route('organizer.events.settlements.export-tickets', {
-                event: event.id,
-                function_id: selectedFunctionId,
-            });
-        }
-    };
 
     return (
         <>
@@ -105,10 +97,6 @@ export default function Index({ auth, event, functions, settlements, selectedFun
                     {selectedFunctionId && (
                         <>
                             <div className="flex flex-wrap items-center justify-end gap-2">
-                                <Button variant="outline" onClick={handleExportTickets}>
-                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                    Exportar Entradas Vendidas
-                                </Button>
                                 <Button variant="outline" onClick={handleExportSettlements}>
                                     <Download className="w-4 h-4 mr-2" />
                                     Exportar Liquidaciones

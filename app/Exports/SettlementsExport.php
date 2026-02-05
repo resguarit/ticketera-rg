@@ -41,7 +41,7 @@ class SettlementsExport implements FromCollection, WithHeadings, WithMapping
     public function map($settlement): array
     {
         return [
-            $settlement->transfer_date->format('d/m/Y'),
+            $settlement->transfer_date->format('d/m/Y H:i'),
             $settlement->quantity,
             (float) $settlement->amount_unit_gross,
             (float) $settlement->amount_total_gross,

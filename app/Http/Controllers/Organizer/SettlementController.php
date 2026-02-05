@@ -109,20 +109,5 @@ class SettlementController extends Controller
         return Excel::download(new SettlementsExport($functionId), $fileName);
     }
 
-    public function exportTickets(Request $request, Event $event)
-    {
-        $this->checkOwnership($event);
-
-        $functionId = $request->input('function_id');
-
-        if (!$functionId) {
-            return redirect()->back()->withErrors(['error' => 'Debe seleccionar una función.']);
-        }
-
-        // Verificar que la función pertenece al evento
-        $function = $event->functions()->findOrFail($functionId);
-        $fileName = 'entradas-vendidas-' . $event->slug . '-' . now()->format('Y-m-d') . '.xlsx';
-
-        return Excel::download(new SettlementTicketsExport($functionId), $fileName);
-    }
+    public function exportTickets(Request $request, Event $event) {}
 }
