@@ -70,14 +70,15 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
         { title: 'Eventos Activos', value: formatNumber(stats.activeEventsCount), icon: Calendar, color: 'text-chart-5' },
     ];
 
-    const { must_change_password } = usePage().props as any;
+    const { must_change_password, is_impersonating } = usePage().props as any;
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        if (must_change_password) {
+        // 🔧 NUEVO: No abrir el modal si está impersonando
+        if (must_change_password && !is_impersonating) {
             setIsModalOpen(true);
         }
-    }, [must_change_password]);
+    }, [must_change_password, is_impersonating]);
 
     const handleModalOpenChange = (open: boolean) => {
         setIsModalOpen(open);

@@ -17,9 +17,13 @@ class EnsurePasswordIsChanged
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::user()->password_changed_at === null) {
+        // 🔧 NUEVO: No mostrar el modal si es un admin impersonando
+        $isImpersonating = $request->session()->has('impersonated_organizer_id');
+        
+        if (!$isImpersonating && Auth::user()->password_changed_at === null) {
             Inertia::share('must_change_password', true);
         }
+        
         return $next($request);
     }
 }

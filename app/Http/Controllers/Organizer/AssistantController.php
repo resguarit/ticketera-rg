@@ -34,19 +34,33 @@ class AssistantController extends Controller
         $this->emailService = $emailService;
     }
 
-    private function checkOwnership(Event $event)
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
     {
-        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            return;
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
+        
+        return Auth::user()->organizer;
+    }
 
-        if ($event->organizer_id !== Auth::user()->organizer_id) {
+    private function checkOwnership(Request $request, Event $event)
+    {
+        // 🔧 CORREGIDO: Usar getOrganizer para obtener el organizador correcto
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
     }
+
     public function index(Request $request, Event $event)
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para ver esta página.');
         }
@@ -54,11 +68,10 @@ class AssistantController extends Controller
         // --- Obtener filtros de la request ---
         $selectedFunctionId = $request->input('function_id');
         $searchTerm = $request->input('search');
-        $sortDirection = $request->input('sort_direction', 'desc'); // default 'desc'
+        $sortDirection = $request->input('sort_direction', 'desc');
         if (!in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
-        // --- Fin filtros ---
 
         // 1. Query para Asistentes Invitados (Modelo Assistant)
         $invitedQuery = Assistant::query()
@@ -77,11 +90,11 @@ class AssistantController extends Controller
                 DB::raw('0 as total_amount'),
                 DB::raw('0 as subtotal'),
                 DB::raw('null as order_status'),
-                'assistants.deleted_at as is_cancelled_at', // Usar soft delete
+                'assistants.deleted_at as is_cancelled_at',
                 'assistants.created_at as invited_at',
                 'assistants.sended_at',
                 DB::raw('null as purchased_at'),
-                'assistants.created_at as sort_date' // Columna para ordenar
+                'assistants.created_at as sort_date'
             )
             ->withCount('issuedTickets as tickets_count')
             ->withCount(['issuedTickets as tickets_used' => function ($query) {
@@ -92,13 +105,11 @@ class AssistantController extends Controller
         $buyersQuery = Order::query()
             ->join('users', 'orders.client_id', '=', 'users.id')
             ->join('person', 'users.person_id', '=', 'person.id')
-            // Join para obtener la función (tomamos la del primer ticket)
             ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
             ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
             ->leftJoin('discount_codes', 'orders.discount_code_id', '=', 'discount_codes.id')
             ->where('event_functions.event_id', $event->id)
-            // No filtramos por status 'completed' para poder mostrar cancelados
             ->select(
                 DB::raw('null as assistant_id'),
                 'orders.id as order_id',
@@ -115,19 +126,18 @@ class AssistantController extends Controller
                 DB::raw('null as invited_at'),
                 DB::raw('null as sended_at'),
                 'orders.order_date as purchased_at',
-                'orders.order_date as sort_date' // Columna para ordenar
+                'orders.order_date as sort_date'
             )
-            ->withCount('issuedTickets as tickets_count') // Total tickets en la orden
+            ->withCount('issuedTickets as tickets_count')
             ->withCount(['issuedTickets as tickets_used' => function ($query) {
                 $query->where('status', IssuedTicketStatus::USED);
             }])
-            ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date'); // Agrupar por orden
+            ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date');
 
         // 3. Aplicar Filtro de Función
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
             $invitedQuery->where('assistants.event_function_id', $selectedFunctionId);
 
-            // Filtra órdenes que tengan al menos un ticket para esa función
             $buyersQuery->whereIn('orders.id', function ($query) use ($selectedFunctionId) {
                 $query->select('order_id')
                     ->from('issued_tickets')
@@ -136,7 +146,7 @@ class AssistantController extends Controller
             });
         }
 
-        // 4. Aplicar Filtro de Búsqueda (NUEVO)
+        // 4. Aplicar Filtro de Búsqueda
         if ($searchTerm) {
             $invitedQuery->where(function ($q) use ($searchTerm) {
                 $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
@@ -156,8 +166,7 @@ class AssistantController extends Controller
         // 5. Combinar Queries
         $combinedQuery = $invitedQuery->unionAll($buyersQuery);
 
-        // 6. Aplicar Ordenamiento (NUEVO)
-        // Se debe hacer sobre la query combinada (UNION)
+        // 6. Aplicar Ordenamiento
         $finalQuery = DB::query()->fromSub($combinedQuery, 'attendees')
             ->orderBy('sort_date', $sortDirection);
 
@@ -166,7 +175,7 @@ class AssistantController extends Controller
 
         // 8. Formatear datos para la vista
         $attendees->getCollection()->transform(function ($attendee) {
-            $attendee = (array) $attendee; // Convertir stdClass a array
+            $attendee = (array) $attendee;
 
             $functionDate = new Carbon($attendee['function_date_time']);
             return [
@@ -181,7 +190,6 @@ class AssistantController extends Controller
                 'total_amount' => (float) $attendee['total_amount'],
                 'subtotal' => (float) $attendee['subtotal'],
                 'order_status' => $attendee['order_status'],
-                // 'is_cancelled' para invitados (soft delete) o compradores (status orden)
                 'is_cancelled' => !empty($attendee['is_cancelled_at']) || $attendee['order_status'] === OrderStatus::CANCELLED->value,
                 'invited_at' => $attendee['invited_at'] ? (new Carbon($attendee['invited_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
                 'sended_at' => $attendee['sended_at'] ? (new Carbon($attendee['sended_at']))->isoFormat('D MMM YYYY, HH:mm') : null,
@@ -201,9 +209,8 @@ class AssistantController extends Controller
                 ];
             });
 
-        // Stats (Ejemplo simple, puedes hacerlo más complejo si lo necesitas)
         $stats = [
-            'total_attendees' => $finalQuery->count(), // Stat simple
+            'total_attendees' => $finalQuery->count(),
         ];
 
         return Inertia::render('organizer/events/attendees', [
@@ -212,18 +219,14 @@ class AssistantController extends Controller
             'functions' => $functions,
             'selectedFunctionId' => $selectedFunctionId ? (int) $selectedFunctionId : null,
             'stats' => $stats,
-            // --- Devolver props de filtros a la vista ---
             'search' => $searchTerm,
             'sort_direction' => $sortDirection
-            // --- Fin ---
         ]);
     }
 
-
-
     public function store(Event $event, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $request->validate([
             'function_id' => 'required|exists:event_functions,id',
@@ -246,9 +249,9 @@ class AssistantController extends Controller
         return redirect()->back()->with('success', 'Asistente invitado correctamente.');
     }
 
-    public function destroy(Event $event, Assistant $assistant)
+    public function destroy(Event $event, Assistant $assistant, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404);
@@ -257,7 +260,6 @@ class AssistantController extends Controller
         try {
             DB::beginTransaction();
 
-            // Cancelar solo los tickets de esta invitación específica
             IssuedTicket::where('assistant_id', $assistant->id)
                 ->whereHas('ticketType', function ($query) use ($assistant) {
                     $query->where('event_function_id', $assistant->event_function_id);
@@ -267,12 +269,10 @@ class AssistantController extends Controller
                     'status' => \App\Enums\IssuedTicketStatus::CANCELLED
                 ]);
 
-            // Eliminar el asistente (soft delete)
             $assistant->delete();
 
             DB::commit();
 
-            // CAMBIADO: No redirigir, sino recargar solo los datos necesarios
             return redirect()->back()
                 ->with('success', 'Asistente cancelado correctamente y sus tickets han sido marcados como cancelados.');
         } catch (\Exception $e) {
@@ -284,7 +284,7 @@ class AssistantController extends Controller
 
     public function resendInvitation(Event $event, Assistant $assistant, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404);
@@ -329,11 +329,10 @@ class AssistantController extends Controller
         return redirect()->back()->with('success', 'Invitación reenviada correctamente para ' . $tickets->count() . ' tickets.');
     }
 
-    public function resendPurchase(Event $event, Order $order)
+    public function resendPurchase(Event $event, Order $order, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
-        // Verificar que la orden pertenezca al evento
         $orderBelongsToEvent = $order->issuedTickets()
             ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
                 $query->where('event_id', $event->id);
@@ -344,7 +343,6 @@ class AssistantController extends Controller
             abort(404, 'Esta orden no pertenece al evento especificado.');
         }
 
-        // Reenviar los tickets de la orden usando el EmailDispatcherService
         $this->emailService->resendTicketPurchaseConfirmation($order);
 
         return redirect()->back()->with('success', 'Tickets de compra reenviados correctamente.');
@@ -352,9 +350,8 @@ class AssistantController extends Controller
 
     public function refund(Event $event, Order $order, Request $request, OrderService $orderService)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
-        // Verificar que la orden pertenezca al evento
         $orderBelongsToEvent = $order->issuedTickets()
             ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
                 $query->where('event_id', $event->id);
@@ -377,9 +374,9 @@ class AssistantController extends Controller
         }
     }
 
-    public function showOrderDetails(Event $event, Order $order)
+    public function showOrderDetails(Event $event, Order $order, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $orderBelongsToEvent = $order->issuedTickets()
             ->whereHas('ticketType.eventFunction', function ($query) use ($event) {
@@ -405,36 +402,34 @@ class AssistantController extends Controller
         $perType = $ticketsByType->map(function ($tickets) {
             $firstTicket = $tickets->first();
             $ticketType = $firstTicket->ticketType;
-            $ticketsEmitidos = $tickets->count(); // Cantidad de tickets físicos emitidos
+            $ticketsEmitidos = $tickets->count();
             $price = $ticketType->price;
 
-            // CORREGIDO: Para bundles, calcular lotes vendidos y subtotal correctamente
             if ($ticketType->is_bundle) {
                 $bundleQuantity = $ticketType->bundle_quantity ?? 1;
-                $lotesVendidos = intval($ticketsEmitidos / $bundleQuantity); // Lotes vendidos
-                $subtotal = $lotesVendidos * $price; // Precio por lote × cantidad de lotes
+                $lotesVendidos = intval($ticketsEmitidos / $bundleQuantity);
+                $subtotal = $lotesVendidos * $price;
 
                 return [
                     'ticket_type_id' => $ticketType->id,
                     'ticket_type_name' => $ticketType->name . ($ticketType->sector ? ' - ' . $ticketType->sector->name : ''),
-                    'price' => round($price, 2), // Precio por lote
-                    'quantity' => $lotesVendidos, // CORREGIDO: Mostrar lotes vendidos
+                    'price' => round($price, 2),
+                    'quantity' => $lotesVendidos,
                     'bundle_quantity' => $bundleQuantity,
-                    'tickets_emitidos' => $ticketsEmitidos, // NUEVO: Tickets físicos emitidos
-                    'subtotal' => round($subtotal, 2), // CORREGIDO: Subtotal basado en lotes
+                    'tickets_emitidos' => $ticketsEmitidos,
+                    'subtotal' => round($subtotal, 2),
                     'tickets_used' => $tickets->where('status', 'used')->count(),
                     'tickets_available' => $tickets->where('status', 'available')->count(),
                     'is_bundle' => true,
                 ];
             } else {
-                // Para tickets individuales: mantener lógica original
                 $subtotal = $ticketsEmitidos * $price;
 
                 return [
                     'ticket_type_id' => $ticketType->id,
                     'ticket_type_name' => $ticketType->name,
                     'price' => round($price, 2),
-                    'quantity' => $ticketsEmitidos, // Para individuales: cantidad = tickets emitidos
+                    'quantity' => $ticketsEmitidos,
                     'bundle_quantity' => 1,
                     'tickets_emitidos' => $ticketsEmitidos,
                     'subtotal' => round($subtotal, 2),
@@ -487,9 +482,9 @@ class AssistantController extends Controller
         ]);
     }
 
-    public function showAssistantDetails(Event $event, Assistant $assistant)
+    public function showAssistantDetails(Event $event, Assistant $assistant, Request $request)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         if ($assistant->eventFunction->event_id !== $event->id) {
             abort(404, 'Este asistente no pertenece al evento especificado.');
@@ -528,7 +523,7 @@ class AssistantController extends Controller
                     'total_courtesy_value' => round($quantity * $courtesyValue, 2),
                     'tickets_used' => $tickets->where('status', 'used')->count(),
                     'tickets_available' => $tickets->where('status', 'available')->count(),
-                    'ticket_ids' => $tickets->pluck('id')->toArray(), // Agregamos los IDs específicos de los tickets
+                    'ticket_ids' => $tickets->pluck('id')->toArray(),
                 ];
             })
                 ->filter()
@@ -571,14 +566,13 @@ class AssistantController extends Controller
 
     public function export(Request $request, Event $event)
     {
-        $this->checkOwnership($event);
+        $this->checkOwnership($request, $event);
 
         $filters = [
             'function_id' => $request->input('function_id'),
             'search' => $request->input('search'),
         ];
 
-        // 'tickets' o 'service_fee'
         $type = $request->input('export_type', 'tickets');
 
         $fileName = 'asistentes-' . $event->slug . '-' . $type . '-' . now()->format('Y-m-d') . '.xlsx';

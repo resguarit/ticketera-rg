@@ -18,9 +18,22 @@ class EventController extends Controller
 {
     public function __construct(private RevenueService $revenueService) {}
 
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
+    {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
     public function index(Request $request): Response
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 Usar el método helper
+        $organizer = $this->getOrganizer($request);
 
         // Obtener filtros del request
         $filters = [
@@ -163,9 +176,10 @@ class EventController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 Usar el método helper
+        $organizer = $this->getOrganizer($request);
 
         // Get categories for select
         $categories = \App\Models\Category::select('id', 'name')
@@ -211,7 +225,8 @@ class EventController extends Controller
         try {
             DB::beginTransaction();
 
-            $organizer = Auth::user()->organizer;
+            // 🔧 Usar el método helper
+            $organizer = $this->getOrganizer($request);
 
             // Handle banner upload
             $bannerPath = null;
@@ -227,26 +242,23 @@ class EventController extends Controller
 
             // Create event
             $event = Event::create([
-                'organizer_id' => $organizer->id,
-                'category_id' => $validated['category_id'],
-                'venue_id' => $validated['venue_id'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
                 'hero_banner_url' => $heroBannerPath,
-                'featured' => false,
+                'category_id' => $validated['category_id'],
+                'venue_id' => $validated['venue_id'],
+                'organizer_id' => $organizer->id,
                 'tax' => $organizer->tax,
             ]);
 
             // Create functions with status
             foreach ($validated['functions'] as $functionData) {
-                EventFunction::create([
-                    'event_id' => $event->id,
+                $event->functions()->create([
                     'name' => $functionData['name'],
-                    'description' => $functionData['description'],
+                    'description' => $functionData['description'] ?? null,
                     'start_time' => $functionData['start_time'],
-                    'end_time' => $functionData['end_time'],
-                    'is_active' => true,
+                    'end_time' => $functionData['end_time'] ?? null,
                     'status' => $functionData['status'] ?? EventFunctionStatus::UPCOMING->value,
                 ]);
             }
@@ -270,10 +282,11 @@ class EventController extends Controller
         }
     }
 
-    public function edit(Event $event): Response
+    public function edit(Request $request, Event $event): Response
     {
-        // Verificar que el evento pertenezca al organizador autenticado
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para editar este evento');
         }
@@ -300,8 +313,9 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
-        // Verificar que el evento pertenezca al organizador autenticado
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para actualizar este evento');
         }
@@ -324,27 +338,27 @@ class EventController extends Controller
 
             // Handle normal banner
             if ($request->hasFile('banner_url')) {
-                if ($bannerPath) {
-                    Storage::disk('public')->delete($bannerPath);
+                if ($event->banner_url) {
+                    Storage::disk('public')->delete($event->banner_url);
                 }
                 $bannerPath = $request->file('banner_url')->store('events/banners', 'public');
             }
 
             // Handle hero banner
             if ($request->hasFile('hero_banner_url')) {
-                if ($heroBannerPath) {
-                    Storage::disk('public')->delete($heroBannerPath);
+                if ($event->hero_banner_url) {
+                    Storage::disk('public')->delete($event->hero_banner_url);
                 }
                 $heroBannerPath = $request->file('hero_banner_url')->store('events/hero-banners', 'public');
             }
 
             // Update event
             $event->update([
-                'category_id' => $validated['category_id'],
-                'venue_id' => $validated['venue_id'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'banner_url' => $bannerPath,
+                'category_id' => $validated['category_id'],
+                'venue_id' => $validated['venue_id'],
                 'hero_banner_url' => $heroBannerPath,
             ]);
 
@@ -360,9 +374,11 @@ class EventController extends Controller
         }
     }
 
-    public function toggleArchive(Event $event)
+    public function toggleArchive(Request $request, Event $event)
     {
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para archivar este evento');
         }
@@ -372,10 +388,10 @@ class EventController extends Controller
         return redirect()->back()->with('success', 'El estado del evento ha sido actualizado.');
     }
 
-    public function manage(Event $event): Response
+    public function manage(Request $request, Event $event): Response
     {
-        // Verificar que el evento pertenezca al organizador autenticado
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
 
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');
@@ -395,25 +411,37 @@ class EventController extends Controller
 
         foreach ($event->functions as $function) {
             foreach ($function->ticketTypes as $ticketType) {
-                $vendidos = (int) $ticketType->quantity_sold;
-
-                $totalEntradasVendidas += $vendidos;
-
                 if ($ticketType->is_bundle) {
-                    $totalTicketsEmitidos += $vendidos * ($ticketType->bundle_quantity ?? 1);
+                    $lotesVendidos = $ticketType->issuedTickets()
+                        ->whereHas('order', function($q) {
+                            $q->where('status', \App\Enums\OrderStatus::PAID);
+                        })
+                        ->distinct('order_id')
+                        ->count('order_id');
+                    
+                    $totalEntradasVendidas += $lotesVendidos;
+                    $totalTicketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                 } else {
+                    $vendidos = $ticketType->issuedTickets()
+                        ->whereHas('order', function($q) {
+                            $q->where('status', \App\Enums\OrderStatus::PAID);
+                        })
+                        ->count();
+                    
+                    $totalEntradasVendidas += $vendidos;
                     $totalTicketsEmitidos += $vendidos;
                 }
             }
         }
 
-        // Formatear los datos del evento
+        // Formatear los datos del evento (tu código existente de mapeo)
         $eventData = [
             'id' => $event->id,
             'name' => $event->name,
             'description' => $event->description,
             'image_url' => $event->image_url,
             'featured' => $event->featured,
+            'is_archived' => $event->is_archived,
             'category' => $event->category,
             'venue' => $event->venue,
             'organizer' => $event->organizer,
@@ -422,40 +450,6 @@ class EventController extends Controller
             'net_revenue' => $this->revenueService->netRevenueForEvent($event),
             'entradas_vendidas' => $totalEntradasVendidas,
             'tickets_emitidos' => $totalTicketsEmitidos,
-            'functions' => $event->functions->map(function ($function) {
-                $entradasVendidasFunc = 0;
-                $ticketsEmitidosFunc = 0;
-
-                foreach ($function->ticketTypes as $ticketType) {
-                    $vendidos = (int) $ticketType->quantity_sold;
-
-                    $entradasVendidasFunc += $vendidos;
-
-                    if ($ticketType->is_bundle) {
-                        $ticketsEmitidosFunc += $vendidos * ($ticketType->bundle_quantity ?? 1);
-                    } else {
-                        $ticketsEmitidosFunc += $vendidos;
-                    }
-                }
-
-                return [
-                    'id' => $function->id,
-                    'name' => $function->name,
-                    'description' => $function->description,
-                    'start_time' => $function->start_time,
-                    'end_time' => $function->end_time,
-                    'date' => $function->start_time?->format('d M Y'),
-                    'time' => $function->start_time?->format('H:i'),
-                    'formatted_date' => $function->start_time?->format('Y-m-d'),
-                    'day_name' => $function->start_time?->locale('es')->isoFormat('dddd'),
-                    'is_active' => $function->is_active,
-                    'status' => $function->status->value,
-                    'status_label' => $function->status->label(),
-                    'status_color' => $function->status->color(),
-                    'entradas_vendidas' => $entradasVendidasFunc,
-                    'tickets_emitidos' => $ticketsEmitidosFunc,
-                ];
-            }),
         ];
 
         return Inertia::render('organizer/events/manage', [
@@ -464,10 +458,10 @@ class EventController extends Controller
         ]);
     }
 
-    public function tickets(Event $event): Response
+    public function tickets(Request $request, Event $event): Response
     {
-        // Verificar que el evento pertenezca al organizador autenticado
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
 
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');
@@ -476,17 +470,10 @@ class EventController extends Controller
         // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
         // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
         $event->load([
+            'functions.ticketTypes.issuedTickets.order',
             'category',
             'venue',
-            'organizer',
-            'functions' => function ($q) {
-                $q->with(['ticketTypes' => function ($q2) {
-                    $q2->with('sector')
-                        ->withCount(['issuedTickets as invited_count' => function ($q3) {
-                            $q3->whereNotNull('assistant_id');
-                        }]);
-                }]);
-            }
+            'organizer'
         ]);
 
         // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
@@ -595,10 +582,10 @@ class EventController extends Controller
     /**
      * Show the functions management page for an event.
      */
-    public function functions(Event $event): Response
+    public function functions(Request $request, Event $event): Response
     {
-        // Verificar que el evento pertenezca al organizador autenticado
-        $organizer = Auth::user()->organizer;
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
 
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento');

@@ -19,6 +19,19 @@ class IsOrganizer
             return redirect()->route('login');
         }
 
+        // 🔧 NUEVO: Permitir acceso si es un administrador impersonando
+        if ($request->session()->has('impersonated_organizer_id')) {
+            $userRole = is_string($user->role) ? UserRole::tryFrom($user->role) : $user->role;
+            
+            if ($userRole === UserRole::ADMIN) {
+                \Log::info('IsOrganizer: Admin impersonating, access GRANTED', [
+                    'admin_id' => $user->id,
+                    'impersonated_organizer_id' => $request->session()->get('impersonated_organizer_id'),
+                ]);
+                return $next($request);
+            }
+        }
+
         // 🔍 DEBUG: Log del usuario y rol
         \Log::info('IsOrganizer middleware check', [
             'user_id' => $user->id,

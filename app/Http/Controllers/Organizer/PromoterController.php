@@ -15,11 +15,24 @@ use Inertia\Inertia;
 
 class PromoterController extends Controller
 {
-    public function index(Event $event)
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
     {
-        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
+    public function index(Request $request, Event $event)
+    {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -63,7 +76,7 @@ class PromoterController extends Controller
                         return [
                             'id' => $code->id,
                             'code' => $code->code,
-                            'is_deleted' => $code->trashed(), // Saber si el código está borrado
+                            'is_deleted' => $code->trashed(),
                             'sales_count' => (int) ($stats->count ?? 0),
                             'revenue' => (float) ($stats->total ?? 0),
                             'link' => route('event.detail', ['event' => $event->id, 'ref' => $code->code]),
@@ -80,16 +93,17 @@ class PromoterController extends Controller
                     'codes' => $codesDetails,
                     'total_sales' => $codesDetails->sum('sales_count'),
                     'total_revenue' => $codesDetails->sum('revenue'),
-                    'deleted_at' => $promoter->deleted_at, // Para saber cuándo se borró
+                    'deleted_at' => $promoter->deleted_at,
                 ];
             });
     }
 
     public function store(Request $request, Event $event)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -99,7 +113,6 @@ class PromoterController extends Controller
             'phone' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:1000',
             'code' => 'required|string|max:20|unique:discount_codes,code',
-            //'discount_value' => 'nullable|numeric|min:0', // 'value' en tu DB
         ]);
 
         DB::transaction(function () use ($data, $event) {
@@ -130,18 +143,19 @@ class PromoterController extends Controller
                 'promoter_id' => $promoter->id,
                 'name' => $data['name'] . ' (Vendedor)',
                 'code' => strtoupper($data['code']),
-                'value' => 0 //$data['discount_value'] ?? 0,
+                'value' => 0
             ]);
         });
 
         return back()->with('success', 'Vendedor y codigo asignados correctamente.');
     }
 
-    public function destroy(Event $event, Promoter $promoter)
+    public function destroy(Request $request, Event $event, Promoter $promoter)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -160,11 +174,12 @@ class PromoterController extends Controller
         return back()->with('success', 'Vendedor y sus códigos eliminados correctamente.');
     }
 
-    public function destroyCode(Event $event, Promoter $promoter, DiscountCode $code)
+    public function destroyCode(Request $request, Event $event, Promoter $promoter, DiscountCode $code)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -177,11 +192,12 @@ class PromoterController extends Controller
         return back()->with('success', 'Código eliminado correctamente.');
     }
 
-    public function restore(Event $event, $promoter_id)
+    public function restore(Request $request, Event $event, $promoter_id)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -197,11 +213,12 @@ class PromoterController extends Controller
         return back()->with('success', 'Vendedor reactivado correctamente.');
     }
 
-    public function restoreCode(Event $event, $promoter_id, $code_id)
+    public function restoreCode(Request $request, Event $event, $promoter_id, $code_id)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 

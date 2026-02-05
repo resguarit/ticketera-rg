@@ -15,11 +15,24 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
+    /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
+    {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
     public function index(Request $request, Event $event)
     {
-        if (Auth::user()->role === UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
 
@@ -125,7 +138,7 @@ class TicketController extends Controller
             'tickets' => $tickets,
             'functions' => $functions,
             'filters' => $request->all(['search', 'status', 'function_id']),
-            'stats' => [ // Enviamos las stats al front
+            'stats' => [
                 'entered' => (int) $stats->entered,
                 'pending' => (int) $stats->pending,
             ]
@@ -134,19 +147,26 @@ class TicketController extends Controller
 
     public function toggleStatus(Request $request, Event $event, IssuedTicket $ticket)
     {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
+            abort(403);
+        }
+
         $newStatus = $request->input('status');
 
         $ticket->update([
             'status' => $newStatus,
             'validated_at' => $newStatus === 'used' ? now() : null,
-            'device_used' => $newStatus === 'used' ? 'Panel Organizador (' . Auth::user()->name() . ')' : null
+            'device_used' => $newStatus === 'used' ? 'Panel Organizador (' . Auth::user()->name . ')' : null
         ]);
 
         ScanLog::create([
             'issued_ticket_id' => $ticket->id,
             'event_function_id' => $ticket->ticketType->event_function_id,
             'device_uuid' => 'web-panel',
-            'device_name' => 'Panel Web (' . Auth::user()->name() . ')',
+            'device_name' => 'Panel Web (' . Auth::user()->name . ')',
             'result' => 'manual_override_' . $newStatus,
             'scanned_code' => $ticket->unique_code,
             'scanned_at' => now(),

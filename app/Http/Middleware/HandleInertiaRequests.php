@@ -24,6 +24,18 @@ class HandleInertiaRequests extends Middleware
         
         $user = $request->user();
 
+        // 🔧 NUEVO: Obtener el organizador correcto si hay impersonación
+        $organizer = null;
+        $isImpersonating = $request->session()->has('impersonated_organizer_id');
+        
+        if ($user) {
+            if ($isImpersonating) {
+                $organizer = \App\Models\Organizer::find($request->session()->get('impersonated_organizer_id'));
+            } else {
+                $organizer = $user->organizer;
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -34,11 +46,11 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->person ? ($user->person->name . ' ' . $user->person->last_name) : $user->email,
                     'email' => $user->email,
                     'role' => $user->role instanceof UserRole ? $user->role->value : $user->role,
-                    'organizer_id' => $user->organizer_id,
+                    'organizer_id' => $organizer?->id ?? $user->organizer_id,
                     'person' => $user->person,
-                    'organizer' => $user->organizer,
+                    'organizer' => $organizer,
                 ] : null,
-                'is_impersonating' => $request->session()->has('impersonated_organizer_id'),
+                'is_impersonating' => $isImpersonating,
                 'is_viewer' => $user && ($user->role === UserRole::VIEWER || $user->role === 'viewer'),
                 'is_organizer' => $user && ($user->role === UserRole::ORGANIZER || $user->role === 'organizer'),
                 'is_admin' => $user && ($user->role === UserRole::ADMIN || $user->role === 'admin'),
@@ -58,7 +70,8 @@ class HandleInertiaRequests extends Middleware
             'supportPhone' => Setting::get('support_phone', '+54 9 2216 91-4649'),
             'instagramUrl' => Setting::get('instagram_url', 'https://www.instagram.com/rgentradas/'),
             'facebookUrl' => Setting::get('facebook_url', 'https://www.facebook.com/profile.php?id=61581574912784'),
-            'must_change_password' => $user?->password_changed_at === null,
+            // 🔧 CORREGIDO: No mostrar must_change_password si está impersonando
+            'must_change_password' => !$isImpersonating && $user?->password_changed_at === null,
         ];
     }
 }

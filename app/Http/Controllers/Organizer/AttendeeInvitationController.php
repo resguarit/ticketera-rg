@@ -32,13 +32,26 @@ class AttendeeInvitationController extends Controller
     }
 
     /**
+     * Obtiene el organizador correcto considerando impersonación
+     */
+    private function getOrganizer(Request $request): \App\Models\Organizer
+    {
+        if ($request->session()->has('impersonated_organizer_id')) {
+            return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
+        }
+        
+        return Auth::user()->organizer;
+    }
+
+    /**
      * Mostrar el formulario para invitar asistentes
      */
-    public function create(Event $event)
+    public function create(Request $request, Event $event)
     {
-        if (Auth::user()->role === \App\Enums\UserRole::ADMIN && session('impersonated_organizer_id') == $event->organizer_id) {
-            // Permitido
-        } elseif ($event->organizer_id !== Auth::user()->organizer_id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
@@ -92,8 +105,10 @@ class AttendeeInvitationController extends Controller
      */
     public function store(Request $request, Event $event)
     {
-        // Verificar que el evento pertenezca al organizador actual
-        if ($event->organizer_id !== Auth::user()->organizer->id) {
+        // 🔧 CORREGIDO: Usar el método helper
+        $organizer = $this->getOrganizer($request);
+        
+        if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
 
