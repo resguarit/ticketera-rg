@@ -56,6 +56,7 @@ interface EventAttendeesProps {
     // --- AGREGAR PROPS ---
     search?: string;
     sort_direction?: 'asc' | 'desc' | null;
+    date_filter?: string;
     // --- FIN AGREGAR PROPS ---
 }
 
@@ -68,13 +69,15 @@ export default function EventAttendees({
     stats,
     // --- AGREGAR PROPS ---
     search: initialSearch = '',
-    sort_direction: initialSort = null
+    sort_direction: initialSort = null,
+    date_filter: initialDateFilter = 'all'
     // --- FIN AGREGAR PROPS ---
 }: EventAttendeesProps) {
 
     // --- AGREGAR ESTADOS ---
     const [searchQuery, setSearchQuery] = useState(initialSearch);
     const [dateSort, setDateSort] = useState<'asc' | 'desc' | null>(initialSort);
+    const [dateFilter, setDateFilter] = useState<string>(initialDateFilter);
     // --- FIN AGREGAR ESTADOS ---
 
     const [filterFunction, setFilterFunction] = useState<string>(
@@ -123,6 +126,9 @@ export default function EventAttendees({
         if (searchQuery) {
             params.append('search', searchQuery);
         }
+        if (dateFilter && dateFilter !== 'all') {
+            params.append('date_filter', dateFilter);
+        }
 
         params.append('export_type', type);
 
@@ -136,6 +142,7 @@ export default function EventAttendees({
             function_id?: string;
             search?: string;
             sort_direction?: 'asc' | 'desc' | null;
+            date_filter?: string;
             page?: number;
         }
     ) => {
@@ -147,6 +154,7 @@ export default function EventAttendees({
             function_id: filterFunction !== 'all' ? filterFunction : undefined,
             search: searchQuery || undefined,
             sort_direction: dateSort || undefined,
+            date_filter: dateFilter !== 'all' ? dateFilter : undefined,
             ...newFilters,
         };
 
@@ -169,7 +177,7 @@ export default function EventAttendees({
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction']
+                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction', 'date_filter']
             }
         );
     };
@@ -536,17 +544,34 @@ export default function EventAttendees({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                { canEdit && (
-                                <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
-                                    <UserPlus className="h-4 w-4 mr-2" />
-                                    Invitar asistente
-                                </Button>
+
+                                {/* Filtro por fecha */}
+                                <Select value={dateFilter} onValueChange={(value) => {
+                                    setDateFilter(value);
+                                    applyFilters({ date_filter: value !== 'all' ? value : undefined });
+                                }}>
+                                    <SelectTrigger className="w-full md:w-[200px]">
+                                        <SelectValue placeholder="Filtrar por fecha" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Histórico</SelectItem>
+                                        <SelectItem value="today">Hoy</SelectItem>
+                                        <SelectItem value="week">Últimos 7 días</SelectItem>
+                                        <SelectItem value="month">Último mes</SelectItem>
+                                        <SelectItem value="quarter">Últimos 3 meses</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {canEdit && (
+                                    <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
+                                        <UserPlus className="h-4 w-4 mr-2" />
+                                        Invitar asistente
+                                    </Button>
                                 )}
                                 {canEdit && (
-                                <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white">
-                                    <Printer className="h-4 w-4 mr-2" />
-                                    Generar entradas físicas
-                                </Button>
+                                    <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white">
+                                        <Printer className="h-4 w-4 mr-2" />
+                                        Generar entradas físicas
+                                    </Button>
                                 )}
                             </div>
                         </div>
@@ -601,21 +626,21 @@ export default function EventAttendees({
                                     </p>
                                     {canEdit && (
                                         <>
-                                    {!initialSearch && (
-                                        <div className="flex flex-col md:flex-row justify-center gap-4 mt-4">
-                                            <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
-                                                <UserPlus className="h-4 w-4 mr-2" />
-                                                Invitar asistente
-                                            </Button>
+                                            {!initialSearch && (
+                                                <div className="flex flex-col md:flex-row justify-center gap-4 mt-4">
+                                                    <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
+                                                        <UserPlus className="h-4 w-4 mr-2" />
+                                                        Invitar asistente
+                                                    </Button>
 
-                                            <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600">
-                                                <Printer className="h-4 w-4 mr-2" />
-                                                Generar entradas físicas
-                                            </Button>
-                                        </div>
+                                                    <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600">
+                                                        <Printer className="h-4 w-4 mr-2" />
+                                                        Generar entradas físicas
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
-                                    </>
-                                )}
                                 </div>
                             ) : (
                                 <div className="min-w-[800px]">
@@ -644,7 +669,7 @@ export default function EventAttendees({
                                                 </TableHead>
                                                 {/* --- FIN MODIFICAR --- */}
                                                 {canEdit && (
-                                                <TableHead className="text-right">Acciones</TableHead>
+                                                    <TableHead className="text-right">Acciones</TableHead>
                                                 )}
                                             </TableRow>
                                         </TableHeader>
@@ -721,44 +746,44 @@ export default function EventAttendees({
                                                                 </DropdownMenuItem>
                                                                 {canEdit && (
                                                                     <>
-                                                                {attendee.type === 'invited' && (
-                                                                    <>
-                                                                        {!attendee.is_cancelled && (
-                                                                            <DropdownMenuItem onClick={() => handlePrintPhysicalTickets(attendee)}>
-                                                                                <Printer className="mr-2 h-4 w-4" />
-                                                                                Generar entradas físicas
-                                                                            </DropdownMenuItem>
+                                                                        {attendee.type === 'invited' && (
+                                                                            <>
+                                                                                {!attendee.is_cancelled && (
+                                                                                    <DropdownMenuItem onClick={() => handlePrintPhysicalTickets(attendee)}>
+                                                                                        <Printer className="mr-2 h-4 w-4" />
+                                                                                        Generar entradas físicas
+                                                                                    </DropdownMenuItem>
+                                                                                )}
+                                                                                <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
+                                                                                    <Mail className="mr-2 h-4 w-4" />
+                                                                                    Reenviar invitación
+                                                                                </DropdownMenuItem>
+                                                                                {!attendee.is_cancelled && (
+                                                                                    <DropdownMenuItem
+                                                                                        onClick={() => handleConfirmDeleteAttendee(attendee)}
+                                                                                        className="text-red-600"
+                                                                                    >
+                                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                                        Eliminar
+                                                                                    </DropdownMenuItem>
+                                                                                )}
+                                                                            </>
                                                                         )}
-                                                                        <DropdownMenuItem onClick={() => confirmResendInvitation(attendee)}>
-                                                                            <Mail className="mr-2 h-4 w-4" />
-                                                                            Reenviar invitación
-                                                                        </DropdownMenuItem>
-                                                                        {!attendee.is_cancelled && (
-                                                                            <DropdownMenuItem
-                                                                                onClick={() => handleConfirmDeleteAttendee(attendee)}
-                                                                                className="text-red-600"
-                                                                            >
-                                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                                Eliminar
-                                                                            </DropdownMenuItem>
+                                                                        {attendee.type === 'buyer' && (
+                                                                            <>
+                                                                                {attendee.order_status === 'paid' && (
+                                                                                    <DropdownMenuItem onClick={() => handleOpenRefundModal(attendee)}>
+                                                                                        <DollarSign className="mr-2 h-4 w-4" />
+                                                                                        Devolver
+                                                                                    </DropdownMenuItem>
+                                                                                )}
+                                                                                <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
+                                                                                    <Mail className="mr-2 h-4 w-4" />
+                                                                                    Reenviar tickets
+                                                                                </DropdownMenuItem>
+                                                                            </>
                                                                         )}
                                                                     </>
-                                                                )}
-                                                                {attendee.type === 'buyer' && (
-                                                                    <>
-                                                                        {attendee.order_status === 'paid' && (
-                                                                            <DropdownMenuItem onClick={() => handleOpenRefundModal(attendee)}>
-                                                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                                                Devolver
-                                                                            </DropdownMenuItem>
-                                                                        )}
-                                                                        <DropdownMenuItem onClick={() => handleResendInvitation(attendee.order_id, attendee.type)}>
-                                                                            <Mail className="mr-2 h-4 w-4" />
-                                                                            Reenviar tickets
-                                                                        </DropdownMenuItem>
-                                                                    </>
-                                                                )}
-                                                                </>
                                                                 )}
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -791,7 +816,7 @@ export default function EventAttendees({
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                             preserveState
                                             preserveScroll
-                                            only={['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction']}
+                                            only={['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction', 'date_filter']}
                                         />
                                     ))}
                                 </div>

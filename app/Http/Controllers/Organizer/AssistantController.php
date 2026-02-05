@@ -42,7 +42,7 @@ class AssistantController extends Controller
         if ($request->session()->has('impersonated_organizer_id')) {
             return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
-        
+
         return Auth::user()->organizer;
     }
 
@@ -50,7 +50,7 @@ class AssistantController extends Controller
     {
         // 🔧 CORREGIDO: Usar getOrganizer para obtener el organizador correcto
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
@@ -60,7 +60,7 @@ class AssistantController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para ver esta página.');
         }
@@ -72,6 +72,10 @@ class AssistantController extends Controller
         if (!in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
+
+        // Filtro de fecha
+        $dateFilter = $request->input('date_filter', 'all');
+        $dateRange = $this->getDateRange($dateFilter);
 
         // 1. Query para Asistentes Invitados (Modelo Assistant)
         $invitedQuery = Assistant::query()
@@ -100,6 +104,11 @@ class AssistantController extends Controller
             ->withCount(['issuedTickets as tickets_used' => function ($query) {
                 $query->where('status', IssuedTicketStatus::USED);
             }]);
+
+        // Aplicar filtro de fecha a invitados
+        if ($dateFilter !== 'all') {
+            $invitedQuery->whereBetween('assistants.created_at', [$dateRange['start'], $dateRange['end']]);
+        }
 
         // 2. Query para Compradores (Modelo Order)
         $buyersQuery = Order::query()
@@ -133,6 +142,11 @@ class AssistantController extends Controller
                 $query->where('status', IssuedTicketStatus::USED);
             }])
             ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date');
+
+        // Aplicar filtro de fecha a compradores
+        if ($dateFilter !== 'all') {
+            $buyersQuery->whereBetween('orders.order_date', [$dateRange['start'], $dateRange['end']]);
+        }
 
         // 3. Aplicar Filtro de Función
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
@@ -220,7 +234,8 @@ class AssistantController extends Controller
             'selectedFunctionId' => $selectedFunctionId ? (int) $selectedFunctionId : null,
             'stats' => $stats,
             'search' => $searchTerm,
-            'sort_direction' => $sortDirection
+            'sort_direction' => $sortDirection,
+            'date_filter' => $dateFilter
         ]);
     }
 
@@ -571,6 +586,7 @@ class AssistantController extends Controller
         $filters = [
             'function_id' => $request->input('function_id'),
             'search' => $request->input('search'),
+            'date_filter' => $request->input('date_filter'),
         ];
 
         $type = $request->input('export_type', 'tickets');
@@ -578,5 +594,24 @@ class AssistantController extends Controller
         $fileName = 'asistentes-' . $event->slug . '-' . $type . '-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new AttendeesExport($event, $filters, $type), $fileName);
+    }
+
+    /**
+     * Obtiene el rango de fechas según el filtro seleccionado
+     */
+    private function getDateRange(string $filter): array
+    {
+        $end = Carbon::now()->endOfDay();
+
+        $start = match ($filter) {
+            'today' => Carbon::now()->startOfDay(),
+            'week' => Carbon::now()->subDays(7)->startOfDay(),
+            'month' => Carbon::now()->subMonth()->startOfDay(),
+            'quarter' => Carbon::now()->subMonths(3)->startOfDay(),
+            'all' => Carbon::create(1970, 1, 1)->startOfDay(),
+            default => Carbon::create(1970, 1, 1)->startOfDay(),
+        };
+
+        return ['start' => $start, 'end' => $end];
     }
 }
