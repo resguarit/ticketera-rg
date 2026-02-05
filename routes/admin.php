@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Organizer\SectorController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\WelcomePopupController;
+use App\Http\Controllers\Admin\SettlementController;
 use Illuminate\Http\Request;
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -116,8 +117,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('banners/update-order', [\App\Http\Controllers\Admin\BannerController::class, 'updateOrder'])
         ->name('banners.update-order');
 
+    // Gestión de liquidaciones
+    Route::prefix('settlements')->name('settlements.')->group(function () {
+        Route::get('/', [SettlementController::class, 'index'])->name('index');
+        Route::post('/', [SettlementController::class, 'store'])->name('store');
+        Route::put('/{settlement}', [SettlementController::class, 'update'])->name('update');
+        Route::delete('/{settlement}', [SettlementController::class, 'destroy'])->name('destroy');
+        Route::get('/export-settlements', [SettlementController::class, 'exportSettlements'])->name('export-settlements');
+    });
+
     // Rutas de Admin
-        Route::resource('popups', WelcomePopupController::class);
-        Route::post('popups/{popup}/toggle-active', [WelcomePopupController::class, 'toggleActive'])
-            ->name('popups.toggle-active');
+    Route::resource('popups', WelcomePopupController::class);
+    Route::post('popups/{popup}/toggle-active', [WelcomePopupController::class, 'toggleActive'])
+        ->name('popups.toggle-active');
 });

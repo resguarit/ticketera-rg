@@ -13,6 +13,7 @@ use App\Http\Controllers\Organizer\OrganizerUserController;
 use App\Http\Controllers\Organizer\PromoterController;
 use App\Http\Controllers\User\TicketController;
 use App\Http\Controllers\Organizer\TicketController as OrganizerTicketController;
+use App\Http\Controllers\Organizer\SettlementController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->prefix('organizer')->name('organizer.')->group(function () {
@@ -25,7 +26,7 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
         Route::get('/tickets/{event}', [EventController::class, 'tickets'])->name('tickets');
         Route::get('/attendees/{event}', [AssistantController::class, 'index'])->name('attendees');
         Route::get('/functions/{event}', [EventController::class, 'functions'])->name('functions');
-        
+
         // Crear/Editar/Archivar eventos
         Route::get('/create', [EventController::class, 'create'])->name('create');
         Route::post('/', [EventController::class, 'store'])->name('store');
@@ -84,6 +85,12 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
 
         // Control de acceso (toggle status)
         Route::post('{event}/access/{ticket}/toggle', [OrganizerTicketController::class, 'toggleStatus'])->name('access.toggle');
+
+        // Liquidaciones
+        Route::prefix('{event}/settlements')->name('settlements.')->group(function () {
+            Route::get('/', [SettlementController::class, 'index'])->name('index');
+            Route::get('/export-settlements', [SettlementController::class, 'exportSettlements'])->name('export-settlements');
+        });
 
         // ✅ RUTAS DE SOLO LECTURA PARA DETALLES
         Route::get('{event}/attendees/order/{order}/details', [AssistantController::class, 'showOrderDetails'])->name('attendees.order.details');

@@ -21,7 +21,8 @@ import {
     HelpCircle,
     HandCoins,
     Image,
-    MessageSquare
+    MessageSquare,
+    DollarSign
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -79,6 +80,11 @@ const getNavItemsByRole = (userRole: string): NavItem[] => {
                     title: 'Cuotas',
                     href: '/admin/cuotas',
                     icon: HandCoins,
+                },
+                {
+                    title: 'Liquidaciones',
+                    href: '/admin/settlements',
+                    icon: DollarSign,
                 },
                 {
                     title: 'Reportes',
