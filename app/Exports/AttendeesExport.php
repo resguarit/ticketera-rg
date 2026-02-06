@@ -69,10 +69,35 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
             });
         }
 
+        // Aplicar filtro de fecha
+        if (isset($this->filters['date_filter']) && $this->filters['date_filter'] !== 'all') {
+            $dateRange = $this->getDateRange($this->filters['date_filter']);
+            $buyersQuery->whereBetween('orders.order_date', [$dateRange['start'], $dateRange['end']]);
+        }
+
         // Solo traemos las pagadas si es para facturar
         $buyersQuery->where('orders.status', 'paid');
 
         return $buyersQuery->get();
+    }
+
+    /**
+     * Obtiene el rango de fechas según el filtro seleccionado
+     */
+    private function getDateRange(string $filter): array
+    {
+        $end = Carbon::now()->endOfDay();
+
+        $start = match ($filter) {
+            'today' => Carbon::now()->startOfDay(),
+            'week' => Carbon::now()->subDays(7)->startOfDay(),
+            'month' => Carbon::now()->subMonth()->startOfDay(),
+            'quarter' => Carbon::now()->subMonths(3)->startOfDay(),
+            'all' => Carbon::create(1970, 1, 1)->startOfDay(),
+            default => Carbon::create(1970, 1, 1)->startOfDay(),
+        };
+
+        return ['start' => $start, 'end' => $end];
     }
 
     public function headings(): array
