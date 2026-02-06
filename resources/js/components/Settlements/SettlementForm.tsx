@@ -19,6 +19,7 @@ interface Settlement {
     discount_observation: string | null;
     total_transfer: number;
     attachment_path?: string | null;
+    invoice_path?: string | null;
 }
 
 interface SettlementFormProps {
@@ -43,9 +44,11 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
         discount_observation: '',
         total_transfer: 0,
         attachment: null as File | null,
+        invoice: null as File | null,
     });
 
     const [fileName, setFileName] = useState<string | null>(null);
+    const [invoiceFileName, setInvoiceFileName] = useState<string | null>(null);
 
     // Reset form when modal opens or settlement changes
     useEffect(() => {
@@ -70,6 +73,7 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
                     discount_observation: settlement.discount_observation || '',
                     total_transfer: settlement.total_transfer,
                     attachment: null,
+                    invoice: null,
                 });
             } else {
                 // Creating mode - reset to empty
@@ -85,9 +89,11 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
                     discount_observation: '',
                     total_transfer: 0,
                     attachment: null,
+                    invoice: null,
                 });
             }
             setFileName(null);
+            setInvoiceFileName(null);
         }
     }, [isOpen, settlement]);
 
@@ -136,9 +142,22 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
         }
     };
 
+    const handleInvoiceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('invoice', file);
+            setInvoiceFileName(file.name);
+        }
+    };
+
     const removeFile = () => {
         setData('attachment', null);
         setFileName(null);
+    };
+
+    const removeInvoice = () => {
+        setData('invoice', null);
+        setInvoiceFileName(null);
     };
 
     return (
@@ -276,9 +295,9 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
                         {errors.discount_observation && <p className="text-sm text-red-600 mt-1">{errors.discount_observation}</p>}
                     </div>
 
-                    {/* Archivo Adjunto */}
+                    {/* Archivo Adjunto - Transferencia */}
                     <div>
-                        <Label htmlFor="attachment">Archivo Adjunto</Label>
+                        <Label htmlFor="attachment">Archivo de Transferencia</Label>
                         <div className="mt-2">
                             {fileName ? (
                                 <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
@@ -308,6 +327,40 @@ export default function SettlementForm({ isOpen, onClose, settlement, functionId
                             )}
                         </div>
                         {errors.attachment && <p className="text-sm text-red-600 mt-1">{errors.attachment}</p>}
+                    </div>
+
+                    {/* Archivo Adjunto - Factura */}
+                    <div>
+                        <Label htmlFor="invoice">Archivo de Factura</Label>
+                        <div className="mt-2">
+                            {invoiceFileName ? (
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                    <span className="flex-1 text-sm text-gray-700 truncate">{invoiceFileName}</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={removeInvoice}
+                                        className="text-red-600 hover:text-red-700"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors">
+                                    <Upload className="w-5 h-5 text-gray-400" />
+                                    <span className="text-sm text-gray-600">Seleccionar archivo (PDF, JPG, PNG, DOC)</span>
+                                    <input
+                                        id="invoice"
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                        onChange={handleInvoiceChange}
+                                        className="hidden"
+                                    />
+                                </label>
+                            )}
+                        </div>
+                        {errors.invoice && <p className="text-sm text-red-600 mt-1">{errors.invoice}</p>}
                     </div>
 
                     <DialogFooter>

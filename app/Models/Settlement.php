@@ -23,6 +23,7 @@ class Settlement extends Model
         'discount_observation',
         'total_transfer',
         'attachment_path',
+        'invoice_path',
     ];
 
     protected $casts = [

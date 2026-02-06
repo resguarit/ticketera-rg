@@ -6,10 +6,13 @@ use App\Models\Settlement;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class SettlementsExport implements FromCollection, WithHeadings, WithMapping
+class SettlementsExport implements FromCollection, WithHeadings, WithMapping, WithEvents
 {
     protected $functionId;
+    protected $settlements;
 
     public function __construct($functionId)
     {
@@ -18,9 +21,11 @@ class SettlementsExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-        return Settlement::where('event_function_id', $this->functionId)
+        $this->settlements = Settlement::where('event_function_id', $this->functionId)
             ->orderBy('transfer_date', 'desc')
             ->get();
+
+        return $this->settlements;
     }
 
     public function headings(): array
@@ -50,6 +55,49 @@ class SettlementsExport implements FromCollection, WithHeadings, WithMapping
             (float) $settlement->discounts,
             $settlement->discount_observation ?? '',
             (float) $settlement->total_transfer,
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                // Calculate totals
+                $totalQuantity = $this->settlements->sum('quantity');
+                $totalAmountGross = $this->settlements->sum('amount_total_gross');
+                $totalAmountNet = $this->settlements->sum('amount_total_net');
+                $totalDiscounts = $this->settlements->sum('discounts');
+                $totalTransfer = $this->settlements->sum('total_transfer');
+
+                // Get the last row number (header + data rows + 1 for totals)
+                $lastRow = $this->settlements->count() + 2;
+
+                // Add totals row
+                $event->sheet->appendRows([
+                    [
+                        'TOTALES',
+                        $totalQuantity,
+                        '-',
+                        (float) $totalAmountGross,
+                        '-',
+                        (float) $totalAmountNet,
+                        (float) $totalDiscounts,
+                        '-',
+                        (float) $totalTransfer,
+                    ]
+                ], $event);
+
+                // Style the totals row
+                $event->sheet->getStyle("A{$lastRow}:I{$lastRow}")->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                    ],
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F3F4F6'], // bg-gray-100
+                    ],
+                ]);
+            },
         ];
     }
 }

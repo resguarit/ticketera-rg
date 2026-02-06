@@ -70,6 +70,10 @@ class SettlementController extends Controller
                             'attachment_url' => $settlement->attachment_path
                                 ? Storage::url($settlement->attachment_path)
                                 : null,
+                            'invoice_path' => $settlement->invoice_path,
+                            'invoice_url' => $settlement->invoice_path
+                                ? Storage::url($settlement->invoice_path)
+                                : null,
                         ];
                     });
             }
@@ -98,12 +102,19 @@ class SettlementController extends Controller
             'discount_observation' => 'nullable|string|max:255',
             'total_transfer' => 'required|numeric|min:0',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // 10MB max
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // 10MB max
         ]);
 
-        // Manejar archivo adjunto
+        // Manejar archivo adjunto (transferencia)
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
             $attachmentPath = $request->file('attachment')->store('settlements', 'public');
+        }
+
+        // Manejar archivo de factura
+        $invoicePath = null;
+        if ($request->hasFile('invoice')) {
+            $invoicePath = $request->file('invoice')->store('settlements', 'public');
         }
 
         Settlement::create([
@@ -118,6 +129,7 @@ class SettlementController extends Controller
             'discount_observation' => $validated['discount_observation'],
             'total_transfer' => $validated['total_transfer'],
             'attachment_path' => $attachmentPath,
+            'invoice_path' => $invoicePath,
         ]);
 
         return redirect()->back()->with('success', 'Liquidación creada correctamente.');
@@ -136,15 +148,25 @@ class SettlementController extends Controller
             'discount_observation' => 'nullable|string|max:255',
             'total_transfer' => 'required|numeric|min:0',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
-        // Manejar archivo adjunto
+        // Manejar archivo adjunto (transferencia)
         if ($request->hasFile('attachment')) {
             // Eliminar archivo anterior si existe
             if ($settlement->attachment_path) {
                 Storage::disk('public')->delete($settlement->attachment_path);
             }
             $validated['attachment_path'] = $request->file('attachment')->store('settlements', 'public');
+        }
+
+        // Manejar archivo de factura
+        if ($request->hasFile('invoice')) {
+            // Eliminar archivo anterior si existe
+            if ($settlement->invoice_path) {
+                Storage::disk('public')->delete($settlement->invoice_path);
+            }
+            $validated['invoice_path'] = $request->file('invoice')->store('settlements', 'public');
         }
 
         $settlement->update([
@@ -158,6 +180,7 @@ class SettlementController extends Controller
             'discount_observation' => $validated['discount_observation'],
             'total_transfer' => $validated['total_transfer'],
             'attachment_path' => $validated['attachment_path'] ?? $settlement->attachment_path,
+            'invoice_path' => $validated['invoice_path'] ?? $settlement->invoice_path,
         ]);
 
         return redirect()->back()->with('success', 'Liquidación actualizada correctamente.');
@@ -168,6 +191,11 @@ class SettlementController extends Controller
         // Eliminar archivo adjunto si existe
         if ($settlement->attachment_path) {
             Storage::disk('public')->delete($settlement->attachment_path);
+        }
+
+        // Eliminar factura si existe
+        if ($settlement->invoice_path) {
+            Storage::disk('public')->delete($settlement->invoice_path);
         }
 
         $settlement->delete();

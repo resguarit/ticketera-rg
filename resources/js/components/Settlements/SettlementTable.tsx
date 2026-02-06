@@ -18,6 +18,8 @@ interface Settlement {
     total_transfer: number;
     attachment_path: string | null;
     attachment_url: string | null;
+    invoice_path: string | null;
+    invoice_url: string | null;
 }
 
 interface SettlementTableProps {
@@ -92,7 +94,8 @@ export default function SettlementTable({
                             <TableHead className="font-semibold text-gray-900 text-right">Descuentos</TableHead>
                             <TableHead className="font-semibold text-gray-900">Observaciones</TableHead>
                             <TableHead className="font-semibold text-gray-900 text-right">Total Transferencia</TableHead>
-                            <TableHead className="font-semibold text-gray-900 text-center">Archivo</TableHead>
+                            <TableHead className="font-semibold text-gray-900 text-center">Transferencia</TableHead>
+                            <TableHead className="font-semibold text-gray-900 text-center">Factura</TableHead>
                             {!isReadOnly && <TableHead className="font-semibold text-gray-900 text-center">Acciones</TableHead>}
                         </TableRow>
                     </TableHeader>
@@ -116,6 +119,20 @@ export default function SettlementTable({
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => window.open(settlement.attachment_url!, '_blank')}
+                                            className="text-blue-600 hover:text-blue-700"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                    ) : (
+                                        <span className="text-gray-400">-</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    {settlement.invoice_url ? (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => window.open(settlement.invoice_url!, '_blank')}
                                             className="text-blue-600 hover:text-blue-700"
                                         >
                                             <Eye className="w-4 h-4" />
@@ -159,6 +176,7 @@ export default function SettlementTable({
                             <TableCell className="text-right font-bold">{formatCurrency(totals.discounts)}</TableCell>
                             <TableCell>-</TableCell>
                             <TableCell className="text-right font-bold text-green-700">{formatCurrency(totals.total_transfer)}</TableCell>
+                            <TableCell>-</TableCell>
                             <TableCell>-</TableCell>
                             {!isReadOnly && <TableCell>-</TableCell>}
                         </TableRow>

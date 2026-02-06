@@ -80,6 +80,10 @@ class SettlementController extends Controller
                         'attachment_url' => $settlement->attachment_path
                             ? Storage::url($settlement->attachment_path)
                             : null,
+                        'invoice_path' => $settlement->invoice_path,
+                        'invoice_url' => $settlement->invoice_path
+                            ? Storage::url($settlement->invoice_path)
+                            : null,
                     ];
                 });
         }
