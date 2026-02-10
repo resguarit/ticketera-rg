@@ -26,7 +26,7 @@ class EventController extends Controller
         if ($request->session()->has('impersonated_organizer_id')) {
             return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
-        
+
         return Auth::user()->organizer;
     }
 
@@ -286,7 +286,7 @@ class EventController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para editar este evento');
         }
@@ -315,7 +315,7 @@ class EventController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para actualizar este evento');
         }
@@ -378,7 +378,7 @@ class EventController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para archivar este evento');
         }
@@ -413,21 +413,21 @@ class EventController extends Controller
             foreach ($function->ticketTypes as $ticketType) {
                 if ($ticketType->is_bundle) {
                     $lotesVendidos = $ticketType->issuedTickets()
-                        ->whereHas('order', function($q) {
+                        ->whereHas('order', function ($q) {
                             $q->where('status', \App\Enums\OrderStatus::PAID);
                         })
                         ->distinct('order_id')
                         ->count('order_id');
-                    
+
                     $totalEntradasVendidas += $lotesVendidos;
                     $totalTicketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                 } else {
                     $vendidos = $ticketType->issuedTickets()
-                        ->whereHas('order', function($q) {
+                        ->whereHas('order', function ($q) {
                             $q->where('status', \App\Enums\OrderStatus::PAID);
                         })
                         ->count();
-                    
+
                     $totalEntradasVendidas += $vendidos;
                     $totalTicketsEmitidos += $vendidos;
                 }
@@ -454,30 +454,30 @@ class EventController extends Controller
                 // Calcular estadísticas por función
                 $entradasVendidas = 0;
                 $ticketsEmitidos = 0;
-                
+
                 foreach ($function->ticketTypes as $ticketType) {
                     if ($ticketType->is_bundle) {
                         $lotesVendidos = $ticketType->issuedTickets()
-                            ->whereHas('order', function($q) {
+                            ->whereHas('order', function ($q) {
                                 $q->where('status', \App\Enums\OrderStatus::PAID);
                             })
                             ->distinct('order_id')
                             ->count('order_id');
-                        
+
                         $entradasVendidas += $lotesVendidos;
                         $ticketsEmitidos += $lotesVendidos * ($ticketType->bundle_quantity ?? 1);
                     } else {
                         $vendidos = $ticketType->issuedTickets()
-                            ->whereHas('order', function($q) {
+                            ->whereHas('order', function ($q) {
                                 $q->where('status', \App\Enums\OrderStatus::PAID);
                             })
                             ->count();
-                        
+
                         $entradasVendidas += $vendidos;
                         $ticketsEmitidos += $vendidos;
                     }
                 }
-                
+
                 return [
                     'id' => $function->id,
                     'name' => $function->name,
@@ -514,12 +514,23 @@ class EventController extends Controller
         }
 
         // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
-        // Cargar el evento con todas sus relaciones incluyendo tipos de entradas
         $event->load([
-            'functions.ticketTypes.issuedTickets.order',
             'category',
             'venue',
-            'organizer'
+            'organizer',
+            'functions' => function ($q) {
+                $q->with(['ticketTypes' => function ($q2) {
+                    $q2->with('sector')
+                        ->withCount(['issuedTickets as invited_count' => function ($q3) {
+                            $q3->whereNotNull('assistant_id');
+                        }])
+                        ->withCount(['issuedTickets as quantity_sold' => function ($q3) {
+                            $q3->whereHas('order', function ($q4) {
+                                $q4->where('status', \App\Enums\OrderStatus::PAID);
+                            });
+                        }]);
+                }]);
+            }
         ]);
 
         // ACTUALIZAR ESTADOS DE TODAS LAS FUNCIONES
