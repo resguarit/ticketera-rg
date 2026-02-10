@@ -5,7 +5,9 @@ import EventManagementLayout from '@/layouts/event-management-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AttendeeForTable, AttendeeStats, TicketDetails } from '@/types/models/assistant';
@@ -57,7 +59,12 @@ interface EventAttendeesProps {
     search?: string;
     sort_direction?: 'asc' | 'desc' | null;
     date_filter?: string;
+    filters?: {
+        type: 'all' | 'invited' | 'buyer';
+        hide_cancelled: boolean;
+    };
     // --- FIN AGREGAR PROPS ---
+
 }
 
 export default function EventAttendees({
@@ -70,15 +77,20 @@ export default function EventAttendees({
     // --- AGREGAR PROPS ---
     search: initialSearch = '',
     sort_direction: initialSort = null,
-    date_filter: initialDateFilter = 'all'
+    date_filter: initialDateFilter = 'all',
+    filters = { type: 'all', hide_cancelled: false }
     // --- FIN AGREGAR PROPS ---
+
 }: EventAttendeesProps) {
 
     // --- AGREGAR ESTADOS ---
     const [searchQuery, setSearchQuery] = useState(initialSearch);
     const [dateSort, setDateSort] = useState<'asc' | 'desc' | null>(initialSort);
     const [dateFilter, setDateFilter] = useState<string>(initialDateFilter);
+    const [filterType, setFilterType] = useState<'all' | 'invited' | 'buyer'>(filters.type as any);
+    const [hideCancelled, setHideCancelled] = useState<boolean>(filters.hide_cancelled);
     // --- FIN AGREGAR ESTADOS ---
+
 
     const [filterFunction, setFilterFunction] = useState<string>(
         selectedFunctionId?.toString() || 'all'
@@ -139,10 +151,12 @@ export default function EventAttendees({
     // --- REFACTORIZAR MANEJO DE FILTROS ---
     const applyFilters = (
         newFilters: {
-            function_id?: string;
             search?: string;
             sort_direction?: 'asc' | 'desc' | null;
             date_filter?: string;
+            type?: 'all' | 'invited' | 'buyer';
+            hide_cancelled?: boolean;
+            function_id?: string;
             page?: number;
         }
     ) => {
@@ -155,6 +169,8 @@ export default function EventAttendees({
             search: searchQuery || undefined,
             sort_direction: dateSort || undefined,
             date_filter: dateFilter !== 'all' ? dateFilter : undefined,
+            type: filterType !== 'all' ? filterType : undefined,
+            hide_cancelled: hideCancelled ? '1' : undefined,
             ...newFilters,
         };
 
@@ -177,7 +193,7 @@ export default function EventAttendees({
             {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction', 'date_filter']
+                only: ['attendees', 'stats', 'search', 'selectedFunctionId', 'sort_direction', 'date_filter', 'filters']
             }
         );
     };
@@ -205,6 +221,18 @@ export default function EventAttendees({
         applyFilters({}); // Aplicar filtros actuales
     };
     // --- FIN REFACTORIZAR ---
+
+    const handleTypeChange = (value: string) => {
+        const newType = value as 'all' | 'invited' | 'buyer';
+        setFilterType(newType);
+        applyFilters({ type: newType, page: 1 });
+    };
+
+    const handleHideCancelledChange = (checked: boolean) => {
+        setHideCancelled(checked);
+        applyFilters({ hide_cancelled: checked, page: 1 });
+    };
+
 
 
     const handleInviteAssistant = () => {
@@ -510,76 +538,110 @@ export default function EventAttendees({
 
                 {/* Tabla de asistentes */}
                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div className='flex flex-col'>
-                                <CardTitle className='text-xl'>Gestión de Asistentes</CardTitle>
-                                <CardDescription>
-                                    Administra y controla los asistentes de tu evento, tanto invitados como compradores
-                                </CardDescription>
-                            </div>
-                            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-                                {/* Botón de actualización */}
-                                <Button
-                                    variant="outline"
-                                    onClick={handleRefresh}
-                                    title="Actualizar lista"
-                                    className="w-full md:w-auto"
-                                >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Actualizar
-                                </Button>
-
-                                {/* Filtro por función */}
-                                <Select value={filterFunction} onValueChange={handleFunctionFilter}>
-                                    <SelectTrigger className="w-full md:w-[200px]">
-                                        <SelectValue placeholder="Filtrar por función" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todas las funciones</SelectItem>
-                                        {functions.map((func) => (
-                                            <SelectItem key={func.id} value={func.id.toString()}>
-                                                {func.name} - {func.start_time}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                {/* Filtro por fecha */}
-                                <Select value={dateFilter} onValueChange={(value) => {
-                                    setDateFilter(value);
-                                    applyFilters({ date_filter: value !== 'all' ? value : undefined });
-                                }}>
-                                    <SelectTrigger className="w-full md:w-[200px]">
-                                        <SelectValue placeholder="Filtrar por fecha" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Histórico</SelectItem>
-                                        <SelectItem value="today">Hoy</SelectItem>
-                                        <SelectItem value="week">Últimos 7 días</SelectItem>
-                                        <SelectItem value="month">Último mes</SelectItem>
-                                        <SelectItem value="quarter">Últimos 3 meses</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {canEdit && (
-                                    <Button onClick={handleInviteAssistant} className="w-full md:w-auto">
-                                        <UserPlus className="h-4 w-4 mr-2" />
-                                        Invitar asistente
+                    <CardHeader className="pb-3">
+                        <div className="flex flex-col space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className='text-xl'>Gestión de Asistentes</CardTitle>
+                                    <CardDescription>
+                                        Administra y controla los asistentes de tu evento
+                                    </CardDescription>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleRefresh}
+                                        title="Actualizar lista"
+                                    >
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Actualizar
                                     </Button>
-                                )}
-                                {canEdit && (
-                                    <Button onClick={handleGeneratePhysicalTickets} className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white">
-                                        <Printer className="h-4 w-4 mr-2" />
-                                        Generar entradas físicas
+                                    <Button variant="outline" size="sm" onClick={() => setExportModalOpen(true)} className="border-green-200 hover:bg-green-50 text-green-700">
+                                        <FileDown className="h-4 w-4 mr-2" />
+                                        Exportar
                                     </Button>
-                                )}
+                                    {canEdit && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button size="sm">
+                                                    Acciones <ArrowDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={handleInviteAssistant}>
+                                                    <UserPlus className="mr-2 h-4 w-4" /> Invitar asistente
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={handleGeneratePhysicalTickets}>
+                                                    <Printer className="mr-2 h-4 w-4" /> Generar entradas físicas
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </CardHeader>
 
-                    {/* --- AGREGAR BARRA DE BÚSQUEDA --- */}
-                    <CardHeader className="pt-0 border-t mt-4">
-                        <div className="flex items-center gap-2 pt-4">
+                            {/* Filtros principales */}
+                            <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between border-t pt-4">
+                                <Tabs defaultValue="all" value={filterType} onValueChange={handleTypeChange} className="w-full md:w-auto">
+                                    <TabsList>
+                                        <TabsTrigger value="all">Todos</TabsTrigger>
+                                        <TabsTrigger value="buyer">Compradores</TabsTrigger>
+                                        <TabsTrigger value="invited">Invitados</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+
+                                <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+
+                                    <div className="flex items-center space-x-2 mr-2">
+                                        <Checkbox
+                                            id="hide-cancelled"
+                                            checked={hideCancelled}
+                                            onCheckedChange={handleHideCancelledChange}
+                                        />
+                                        <label
+                                            htmlFor="hide-cancelled"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            Ocultar cancelados
+                                        </label>
+                                    </div>
+
+                                    {/* Filtro por fecha */}
+                                    <Select value={dateFilter} onValueChange={(value) => {
+                                        setDateFilter(value);
+                                        applyFilters({ date_filter: value !== 'all' ? value : undefined });
+                                    }}>
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Fecha" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Histórico</SelectItem>
+                                            <SelectItem value="today">Hoy</SelectItem>
+                                            <SelectItem value="week">Últimos 7 días</SelectItem>
+                                            <SelectItem value="month">Último mes</SelectItem>
+                                            <SelectItem value="quarter">Últimos 3 meses</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    {/* Filtro por función */}
+                                    <Select value={filterFunction} onValueChange={handleFunctionFilter}>
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Función" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todas las funciones</SelectItem>
+                                            {functions.map((func) => (
+                                                <SelectItem key={func.id} value={func.id.toString()}>
+                                                    {func.name} - {func.start_time}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Barra de búsqueda */}
                             <div className="relative w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -594,21 +656,9 @@ export default function EventAttendees({
                                     }}
                                 />
                             </div>
-                            <Button onClick={handleSearch}>
-                                <Search className="h-4 w-4 mr-2" />
-                                Buscar
-                            </Button>
-                            <Button onClick={() => setExportModalOpen(true)}
-                                variant="outline"
-                                className="w-full md:w-auto border-green-200 hover:bg-green-50 text-green-700"
-                            >
-                                <FileDown className="h-4 w-4 mr-2" />
-                                Exportar Excel
-                            </Button>
-
                         </div>
                     </CardHeader>
-                    {/* --- FIN BARRA DE BÚSQUEDA --- */}
+
 
                     <CardContent>
                         <div className="overflow-x-auto">
