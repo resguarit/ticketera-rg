@@ -77,9 +77,15 @@ class AssistantController extends Controller
         $dateFilter = $request->input('date_filter', 'all');
         $dateRange = $this->getDateRange($dateFilter);
 
+        // --- Nuevos Filtros ---
+        $filterType = $request->input('type', 'all'); // all, invited, buyer
+        $hideCancelled = $request->boolean('hide_cancelled');
+
         // 1. Query para Asistentes Invitados (Modelo Assistant)
         $invitedQuery = Assistant::query()
+            ->withTrashed() // Incluir eliminados para poder filtrarlos después si es necesario
             ->join('person', 'assistants.person_id', '=', 'person.id')
+
             ->join('event_functions', 'assistants.event_function_id', '=', 'event_functions.id')
             ->where('event_functions.event_id', $event->id)
             ->select(
@@ -110,7 +116,13 @@ class AssistantController extends Controller
             $invitedQuery->whereBetween('assistants.created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
+        // Aplicar filtro de cancelados a invitados
+        if ($hideCancelled) {
+            $invitedQuery->whereNull('assistants.deleted_at');
+        }
+
         // 2. Query para Compradores (Modelo Order)
+
         $buyersQuery = Order::query()
             ->join('users', 'orders.client_id', '=', 'users.id')
             ->join('person', 'users.person_id', '=', 'person.id')
@@ -148,7 +160,13 @@ class AssistantController extends Controller
             $buyersQuery->whereBetween('orders.order_date', [$dateRange['start'], $dateRange['end']]);
         }
 
+        // Aplicar filtro de cancelados a compradores
+        if ($hideCancelled) {
+            $buyersQuery->where('orders.status', '!=', OrderStatus::CANCELLED->value);
+        }
+
         // 3. Aplicar Filtro de Función
+
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
             $invitedQuery->where('assistants.event_function_id', $selectedFunctionId);
 
@@ -177,8 +195,15 @@ class AssistantController extends Controller
             });
         }
 
-        // 5. Combinar Queries
-        $combinedQuery = $invitedQuery->unionAll($buyersQuery);
+        // 5. Combinar Queries según el tipo seleccionado
+        if ($filterType === 'invited') {
+            $combinedQuery = $invitedQuery;
+        } elseif ($filterType === 'buyer') {
+            $combinedQuery = $buyersQuery;
+        } else {
+            $combinedQuery = $invitedQuery->unionAll($buyersQuery);
+        }
+
 
         // 6. Aplicar Ordenamiento
         $finalQuery = DB::query()->fromSub($combinedQuery, 'attendees')
@@ -235,7 +260,12 @@ class AssistantController extends Controller
             'stats' => $stats,
             'search' => $searchTerm,
             'sort_direction' => $sortDirection,
-            'date_filter' => $dateFilter
+            'date_filter' => $dateFilter,
+            'filters' => [
+                'type' => $filterType,
+                'hide_cancelled' => $hideCancelled,
+            ]
+
         ]);
     }
 
