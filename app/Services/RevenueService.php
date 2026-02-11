@@ -212,13 +212,41 @@ class RevenueService
             ->orderBy('date', 'asc')
             ->pluck('revenue', 'date');
 
+        // Contar tickets vendidos (incluyendo bundles expandidos si corresponde)
+        // Para simplificar, asumimos que se genera un IssuedTicket por cada asistente real.
+        // Si los bundles se contabilizan como 1 row en issued_tickets, este count sería de "items vendidos", 
+        // no de "asistentes".
+        // Vamos a hacer un query más robusto que considere bundles.
+        
+        $ticketsData = IssuedTicket::query()
+            ->select(
+                DB::raw('DATE(orders.order_date) as date'), 
+                // Si es bundle, multiplicamos por la cantidad del bundle. Si no, es 1.
+                // Como issued_tickets puede tener 1 row por bundle, necesitamos verificar ticket_types.bundle_quantity
+                // Pero si issued_tickets YA tiene N rows por bundle, entonces COUNT(id) es correcto.
+                // La lógica en DashboardController sugiere que issued_tickets PUEDE tener 1 row por bundle.
+                // Asumamos el peor caso: 1 row por bundle.
+                DB::raw('SUM(CASE WHEN ticket_types.is_bundle = 1 THEN ticket_types.bundle_quantity ELSE 1 END) as tickets_count')
+            )
+            ->join('orders', 'issued_tickets.order_id', '=', 'orders.id')
+            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+            ->join('events', 'event_functions.event_id', '=', 'events.id')
+            ->where('events.organizer_id', $organizer->id)
+            ->where('orders.status', OrderStatus::PAID)
+            ->whereBetween('orders.order_date', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('tickets_count', 'date');
+
+
         // Rellenar los días sin ingresos
         $chartData = [];
         for ($i = 0; $i < $days; $i++) {
             $date = $startDate->copy()->addDays($i)->format('Y-m-d');
             $chartData[] = [
                 'date' => Carbon::parse($date)->format('d M'),
-                'revenue' => $revenueData[$date] ?? 0,
+                'revenue' => (float) ($revenueData[$date] ?? 0),
+                'tickets_sold' => (int) ($ticketsData[$date] ?? 0),
             ];
         }
 
