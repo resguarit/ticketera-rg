@@ -50,6 +50,7 @@ interface TopEvent {
 interface ChartData {
     date: string;
     revenue: number;
+    tickets_sold: number;
 }
 
 interface DashboardProps {
@@ -133,7 +134,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
     };
 
     const { isViewer } = useUserRole();
-    
+
     // O si prefieres hacerlo directo:
     // const isViewer = auth.user.role === 'viewer';
 
@@ -183,7 +184,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 ))}
                             </SelectContent>
                         </Select>
-                        
+
                         {!isViewer && (
                             <Link href={route('organizer.events.create')} className="w-full md:w-auto">
                                 <Button className="bg-primary hover:bg-primary-hover text-white w-full md:w-auto">
@@ -223,9 +224,18 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={revenueChartData}>
                                     <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${formatNumber(value as number)}`} />
-                                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                                    <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                                    <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${formatNumber(value as number)}`} />
+                                    <YAxis yAxisId="right" orientation="right" hide />
+                                    <Tooltip
+                                        formatter={(value: number, name: string) => {
+                                            if (name === 'revenue') return [formatCurrency(value), 'Ingresos'];
+                                            if (name === 'tickets_sold') return [value, 'Tickets Vendidos'];
+                                            return [value, name];
+                                        }}
+                                        labelStyle={{ color: '#000' }}
+                                    />
+                                    <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} name="revenue" />
+                                    <Line yAxisId="right" type="monotone" dataKey="tickets_sold" stroke="#8b5cf6" strokeWidth={0} dot={false} activeDot={false} name="tickets_sold" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -298,12 +308,12 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                                 <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <h3 className="mt-4 text-lg font-semibold">No has creado eventos</h3>
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    {isViewer 
-                                        ? 'No hay eventos disponibles para visualizar.' 
+                                    {isViewer
+                                        ? 'No hay eventos disponibles para visualizar.'
                                         : 'Crea tu primer evento para empezar a ver tus estadísticas.'
                                     }
                                 </p>
-                                
+
                                 {!isViewer && (
                                     <Link href={route('organizer.events.create')} className="mt-4 inline-block">
                                         <Button>Crear Evento</Button>
@@ -314,7 +324,7 @@ export default function Dashboard({ auth, organizer, stats, recentEvents, topEve
                     </CardContent>
                 </Card>
             </div>
-            
+
             <ChangePasswordDialog
                 open={isModalOpen}
                 onOpenChange={handleModalOpenChange}
