@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/currencyHelpers';
-import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, UsersIcon, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Eye, Edit, Trash2, User, CheckCircle, Clock, XCircle, UserPlus, UsersIcon, ShoppingCart, TrendingUp, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import UserDetailsModal from '../../components/admin/modals/UserDetailsModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import UserExportModal from '@/components/admin/modals/UserExportModal';
 
 interface UserData {
     id: number;
@@ -59,10 +60,10 @@ export default function Users({ auth }: any) {
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all");
     const [sortBy, setSortBy] = useState(filters.sort_by || "created_at");
-    
+
     // Ref para controlar si es la primera carga
     const isInitialLoad = useRef(true);
-    
+
     // Ref para controlar timeouts de debounce
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -71,6 +72,7 @@ export default function Users({ auth }: any) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     // Función para aplicar filtros automáticamente
     const applyFilters = useCallback((resetPage = true) => {
@@ -82,6 +84,7 @@ export default function Users({ auth }: any) {
 
         // Solo resetear página si resetPage es true
         if (!resetPage) {
+            // @ts-ignore
             params.page = filters.page || 1;
         }
 
@@ -103,7 +106,7 @@ export default function Users({ auth }: any) {
             isInitialLoad.current = false;
             return;
         }
-        
+
         applyFilters(true); // Resetear página cuando cambian los filtros
     }, [selectedStatus, sortBy]);
 
@@ -148,7 +151,7 @@ export default function Users({ auth }: any) {
     // Función para manejar la paginación
     const handlePagination = (url: string) => {
         if (!url) return;
-        
+
         router.get(url, {}, {
             preserveState: true,
             replace: true,
@@ -176,7 +179,7 @@ export default function Users({ auth }: any) {
             variant: "primary",
         },
         {
-            title: "Usuarios Activos", 
+            title: "Usuarios Activos",
             value: stats.active,
             icon: CheckCircle,
             variant: "success",
@@ -211,7 +214,7 @@ export default function Users({ auth }: any) {
         setSearchTerm("");
         setSelectedStatus("all");
         setSortBy("created_at");
-        
+
         // Redirigir sin parámetros
         router.get(route('admin.users.index'), {}, {
             preserveState: true,
@@ -248,9 +251,9 @@ export default function Users({ auth }: any) {
             active: { label: "Activo", color: "bg-green-500" },
             pending: { label: "Pendiente", color: "bg-yellow-500" }
         };
-        
+
         const statusConfig = config[status as keyof typeof config] || config.pending;
-        
+
         return (
             <Badge className={`${statusConfig.color} text-white border-0 text-xs`}>
                 {statusConfig.label}
@@ -266,10 +269,15 @@ export default function Users({ auth }: any) {
         }
     };
 
+    const handleExport = (type: 'all' | 'buyers' | 'non_buyers') => {
+        const url = route('admin.users.export', { type });
+        window.open(url, '_blank');
+    };
+
     return (
         <>
             <Head title="Gestión de Usuarios" />
-            
+
             <AdminDashboardLayout
                 title="Gestión de Usuarios"
                 description="Administra todos los clientes de la plataforma"
@@ -280,6 +288,13 @@ export default function Users({ auth }: any) {
                     icon: UserPlus,
                     onClick: () => router.visit(route('admin.users.create')),
                 }}
+                secondaryActions={[
+                    {
+                        label: "Exportar",
+                        icon: FileSpreadsheet,
+                        onClick: () => setIsExportModalOpen(true),
+                    }
+                ]}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 selectedStatus={selectedStatus}
@@ -318,13 +333,13 @@ export default function Users({ auth }: any) {
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         {/* Actions */}
                                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
-                                            <Button 
+                                            <Button
                                                 onClick={() => handleToggleStatus(user.id)}
-                                                variant="outline" 
-                                                size="sm" 
+                                                variant="outline"
+                                                size="sm"
                                                 className="border-gray-300 text-black hover:bg-gray-50"
                                             >
                                                 {getStatusIcon(user.status)}
@@ -332,10 +347,10 @@ export default function Users({ auth }: any) {
                                                     {user.status === 'active' ? 'Desactivar' : 'Activar'}
                                                 </span>
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 onClick={() => handleViewUser(user)}
-                                                variant="outline" 
-                                                size="sm" 
+                                                variant="outline"
+                                                size="sm"
                                                 className="border-gray-300 text-black hover:bg-gray-50"
                                             >
                                                 <Eye className="w-4 h-4 lg:mr-1" />
@@ -343,13 +358,13 @@ export default function Users({ auth }: any) {
                                                     Ver
                                                 </span>
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 onClick={() => {
                                                     setUserToDelete(user);
                                                     setIsConfirmModalOpen(true);
                                                 }}
-                                                variant="outline" 
-                                                size="sm" 
+                                                variant="outline"
+                                                size="sm"
                                                 className="border-red-300 text-red-600 hover:bg-red-50"
                                             >
                                                 <Trash2 className="w-4 h-4 lg:mr-2" />
@@ -382,15 +397,14 @@ export default function Users({ auth }: any) {
                                     {users.links.map((link, index) => (
                                         <button
                                             key={index}
-                                            onClick={() => handlePagination(link.url)}
+                                            onClick={() => handlePagination(link.url!)}
                                             disabled={!link.url}
-                                            className={`px-3 py-2 text-sm rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-black text-white'
-                                                    : link.url
+                                            className={`px-3 py-2 text-sm rounded-md transition-colors ${link.active
+                                                ? 'bg-black text-white'
+                                                : link.url
                                                     ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            }`}
+                                                }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}
@@ -402,10 +416,10 @@ export default function Users({ auth }: any) {
 
                 {/* User Details Modal */}
                 {selectedUser && (
-                    <UserDetailsModal 
-                        isOpen={isModalOpen} 
-                        onClose={handleCloseModal} 
-                        user={selectedUser} 
+                    <UserDetailsModal
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModal}
+                        user={selectedUser}
                         onUserUpdated={(updatedUser) => {
                             // Actualizar el usuario en la lista sin recargar
                             const updatedUsers = users.data.map((user) =>
@@ -440,6 +454,12 @@ export default function Users({ auth }: any) {
                 advertencia="Todos los datos asociados al usuario también serán eliminados."
                 confirmVariant='destructive'
                 isLoading={false}
+            />
+
+            <UserExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExport={handleExport}
             />
         </>
     );

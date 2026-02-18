@@ -45,6 +45,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/export', [UserController::class, 'export'])->name('export');
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');

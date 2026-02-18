@@ -19,6 +19,20 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
+    public function export(Request $request)
+    {
+        $type = $request->input('type', 'all');
+        $validTypes = ['all', 'buyers', 'non_buyers'];
+
+        if (!in_array($type, $validTypes)) {
+            abort(400, 'Invalid export type');
+        }
+
+        $fileName = 'usuarios-' . $type . '-' . now()->format('Y-m-d') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\UsersExport($type), $fileName);
+    }
+
     public function index(Request $request): Response
     {
         // Filtros
@@ -33,13 +47,13 @@ class UserController extends Controller
 
         // Aplicar filtros de búsqueda
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
-                  ->orWhereHas('person', function($pq) use ($search) {
-                      $pq->where('name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('dni', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('person', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('dni', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -69,11 +83,12 @@ class UserController extends Controller
         switch ($sortBy) {
             case 'name':
                 $query->leftJoin('person', 'users.person_id', '=', 'person.id')
-                      ->orderBy('person.name', $sortDirection)
-                      ->select('users.*', 
+                    ->orderBy('person.name', $sortDirection)
+                    ->select(
+                        'users.*',
                         DB::raw('(SELECT COUNT(*) FROM orders WHERE orders.client_id = users.id AND orders.status = "PAID") as paid_orders_count'),
                         DB::raw('(SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE orders.client_id = users.id AND orders.status = "PAID") as paid_orders_sum')
-                      );
+                    );
                 break;
             case 'email':
                 $query->orderBy('email', $sortDirection);
@@ -110,7 +125,7 @@ class UserController extends Controller
                 'created_at' => $user->created_at->format('Y-m-d'),
                 'last_login' => $user->updated_at->format('Y-m-d'),
                 'total_purchases' => $user->paid_orders_count ?? 0,
-                'total_spent' => (float) ($user->paid_orders_sum ?? 0),                
+                'total_spent' => (float) ($user->paid_orders_sum ?? 0),
                 \Log::debug('User ID: ' . $user->id . ' - Paid Orders Sum: ' . ($user->paid_orders_sum ?? 0)),
                 'last_purchase' => $lastOrder ? $lastOrder->created_at->format('Y-m-d') : null,
             ];
@@ -148,7 +163,7 @@ class UserController extends Controller
             ->with(['items.ticketType.eventFunction.event'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function($order) {
+            ->map(function ($order) {
                 return [
                     'id' => $order->id,
                     'order_date' => $order->order_date->format('Y-m-d H:i'),
@@ -156,7 +171,7 @@ class UserController extends Controller
                     'status' => $order->status->value,
                     'payment_method' => $order->payment_method,
                     'items_count' => $order->items->count(),
-                    'events' => $order->items->map(function($item) {
+                    'events' => $order->items->map(function ($item) {
                         return $item->ticketType->eventFunction->event->name;
                     })->unique()->values(),
                 ];
@@ -207,7 +222,7 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        DB::transaction(function() use ($validated) {
+        DB::transaction(function () use ($validated) {
             // Crear persona
             $person = Person::create([
                 'name' => $validated['firstName'],
@@ -274,7 +289,7 @@ class UserController extends Controller
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ]);
 
-        DB::transaction(function() use ($user, $validated) {
+        DB::transaction(function () use ($user, $validated) {
             // Actualizar persona
             $user->person->update([
                 'name' => $validated['firstName'],
@@ -312,13 +327,13 @@ class UserController extends Controller
 
         // Verificar si tiene órdenes
         $hasOrders = Order::where('client_id', $user->id)->exists();
-        
+
         if ($hasOrders) {
             return redirect()->back()
                 ->with('error', 'No se puede eliminar un usuario que tiene órdenes asociadas');
         }
 
-        DB::transaction(function() use ($user) {
+        DB::transaction(function () use ($user) {
             $person = $user->person;
             $user->delete();
             if ($person) {
@@ -344,7 +359,7 @@ class UserController extends Controller
         ]);
 
         $status = $user->email_verified_at ? 'activado' : 'desactivado';
-        
+
         return redirect()->back()
             ->with('success', "Usuario {$status} correctamente");
     }

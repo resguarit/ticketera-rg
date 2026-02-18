@@ -51,7 +51,7 @@ export interface AdminDashboardLayoutProps {
   primaryAction?: ActionButton;
   secondaryActions?: ActionButton[];
   children: ReactNode;
-  
+
   // Props para manejo de filtros
   searchTerm?: string;
   onSearchChange?: (value: string) => void;
@@ -63,12 +63,13 @@ export interface AdminDashboardLayoutProps {
   onCityChange?: (value: string) => void;
   customFilterValues?: Record<string, string>;
   onCustomFilterChange?: (key: string, value: string) => void;
-  
+
   // Funciones de filtros
   onApplyFilters?: () => void;
   onClearFilters?: () => void;
   onKeyPress?: (e: React.KeyboardEvent) => void;
   hasPendingFilters?: boolean;
+  searchDebounceMs?: number;
 }
 
 // Mapa de variantes de colores para las tarjetas
