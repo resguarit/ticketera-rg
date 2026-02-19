@@ -244,6 +244,12 @@ export default function TicketDetailsModal({
                                     {data.order.card_bin ? `${data.order.card_bin}XXXXXX` : '****'}
                                 </span>
                             </div>
+                            {data.order.installments > 1 && (
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-600">Cuotas:</span>
+                                    <span className="font-medium text-gray-900">{data.order.installments}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

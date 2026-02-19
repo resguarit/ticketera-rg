@@ -503,6 +503,7 @@ class AssistantController extends Controller
                 'transaction_id' => $order->transaction_id,
                 'card_brand' => $order->card_brand,
                 'card_bin' => $order->card_bin,
+                'installments' => $order->cuotas,
             ],
             'person' => [
                 'full_name' => trim($person->name . ' ' . $person->last_name),

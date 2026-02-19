@@ -141,6 +141,7 @@ export interface OrderDetails {
         transaction_id: string | null;
         card_brand: string | null;
         card_bin: string | null;
+        installments: number;
     };
     person: PersonInfo;
     per_type: OrderTicketType[];
