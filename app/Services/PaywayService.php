@@ -37,7 +37,7 @@ class PaywayService implements PaymentGatewayInterface
             "fraud_detection" => [
                 "send_to_cs" => false,
                 "channel" => "Web",
-                "device_unique_identifier" => "12345"
+                "device_unique_identifier" => "12346"
             ],
             "customer" => [
                 "id" => $context->customerId,

@@ -139,6 +139,8 @@ export interface OrderDetails {
         status: string;
         payment_method: string | null;
         transaction_id: string | null;
+        card_brand: string | null;
+        card_bin: string | null;
     };
     person: PersonInfo;
     per_type: OrderTicketType[];

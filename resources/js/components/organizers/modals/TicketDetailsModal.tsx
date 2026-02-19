@@ -232,10 +232,23 @@ export default function TicketDetailsModal({
                                 )}
                             </p>
                         </div>
+
+                        <div className="bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">Medio de pago:</span>
+                                <span className="font-medium text-gray-900">{data.order.card_brand || 'Tarjeta'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">Tarjeta:</span>
+                                <span className="font-mono text-gray-900">
+                                    {data.order.card_bin ? `${data.order.card_bin}XXXXXX` : '****'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 
     const renderInvitedSummary = (data: AssistantDetails) => (
