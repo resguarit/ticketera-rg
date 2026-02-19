@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { PaymentInfo, BillingInfo } from "@/pages/public/newcheckoutconfirm"
 import { formatCreditCardExpiry } from "@/lib/creditCardHelpers"
 import { toast } from "sonner"
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 interface PaymentInfoStepProps {
   paymentInfo: PaymentInfo
@@ -73,16 +72,6 @@ export default function PaymentInfoStep({
   const [availableCuotas, setAvailableCuotas] = useState<number[]>([])
 
   const [deviceId, setDeviceId] = useState<string>("");
-
-  useEffect(() => {
-    // Obtenemos el identificador único del dispositivo
-    const setFp = async () => {
-      const fp = await FingerprintJS.load();
-      const result = await fp.get();
-      setDeviceId(result.visitorId);
-    };
-    setFp();
-  }, []);
 
   useEffect(() => {
     const currentBin = paymentInfo.cardNumber.replace(/\s+/g, "").slice(0, 6)
