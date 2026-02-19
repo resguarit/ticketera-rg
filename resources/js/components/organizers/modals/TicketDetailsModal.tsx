@@ -236,7 +236,17 @@ export default function TicketDetailsModal({
                         <div className="bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
                             <div className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600">Medio de pago:</span>
-                                <span className="font-medium text-gray-900">{data.order.card_brand || 'Tarjeta'}</span>
+                                <span className="font-medium text-gray-900">
+                                    {data.order.card_brand || (data.order.payment_method ? (
+                                        {
+                                            '1': 'Visa Crédito',
+                                            '31': 'Visa Débito',
+                                            '104': 'Mastercard Crédito',
+                                            '105': 'Mastercard Débito',
+                                            '111': 'Amex'
+                                        }[data.order.payment_method] || 'Tarjeta'
+                                    ) : 'Tarjeta')}
+                                </span>
                             </div>
                             <div className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600">Tarjeta:</span>
