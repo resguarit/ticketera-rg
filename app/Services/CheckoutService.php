@@ -31,9 +31,9 @@ class CheckoutService
 
             $event = Event::findOrFail($checkoutData->eventId);
             $eventTax = $event->tax ? ($event->tax / 100) : 0;
-            
+
             Log::info('Buscando payment method', ['method_name' => $checkoutData->paymentMethod]);
-            
+
             $paymentMethodId = DB::table('payment_method')
                 ->where('name', $checkoutData->paymentMethod)
                 ->value('payway_id');
@@ -92,7 +92,24 @@ class CheckoutService
                 customerName: $checkoutData->billingInfo['firstName'] . ' ' . $checkoutData->billingInfo['lastName'],
                 customerDocument: $checkoutData->billingInfo['documentNumber'] ?? '',
                 customerIp: request()->ip(),
-                deviceFingerprint: null,
+                deviceFingerprint: $checkoutData->deviceFingerprint,
+                billingAddress: $checkoutData->billingInfo['address'] ?? null,
+                billingCity: $checkoutData->billingInfo['city'] ?? null,
+                billingPostalCode: $checkoutData->billingInfo['postalCode'] ?? null,
+                billingState: $checkoutData->billingInfo['state'] ?? 'B', // Default to Buenos Aires (B) if missing or map appropriately
+                billingPhone: $checkoutData->billingInfo['phone'] ?? null,
+                billingFirstName: $checkoutData->billingInfo['firstName'] ?? null,
+                billingLastName: $checkoutData->billingInfo['lastName'] ?? null,
+                items: $order->items->map(function ($item) {
+                    return [
+                        'code' => $item->ticket_type_id,
+                        'name' => $item->ticketType->name,
+                        'description' => $item->ticketType->description ?? 'Ticket',
+                        'quantity' => 1, // Order items are individual tickets usually
+                        'unit_price' => $item->unit_price,
+                        'total_amount' => $item->total_amount,
+                    ];
+                })->toArray(),
             );
 
             Log::info('Llamando al gateway de pagos');

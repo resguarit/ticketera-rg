@@ -184,7 +184,7 @@ class CheckoutController extends Controller
                 'has_session_id' => !empty($sessionId),
                 'has_locked_tickets' => !empty($lockedTickets),
             ]);
-            
+
             return $this->redirectToError([
                 'title' => 'Sesión Expirada',
                 'message' => 'Tu sesión de compra ha expirado. Por favor, inicia el proceso nuevamente.',
@@ -203,7 +203,7 @@ class CheckoutController extends Controller
 
         if (!$lockVerification['all_valid']) {
             Log::warning('Locks inválidos', ['verification' => $lockVerification]);
-            
+
             $this->ticketLockService->releaseTickets($sessionId);
 
             return $this->redirectToError([
@@ -233,10 +233,15 @@ class CheckoutController extends Controller
                 'billing_info.phone' => 'required|string|max:20',
                 'billing_info.documentType' => 'required|string|in:DNI,Pasaporte,Cedula',
                 'billing_info.documentNumber' => 'required|string|max:20',
+                'billing_info.address' => 'required|string|max:255',
+                'billing_info.city' => 'required|string|max:255',
+                'billing_info.postalCode' => 'required|string|max:20',
+                'billing_info.state' => 'required|string|max:2', // Codes are 1 char but validation max:2 is safe
                 'billing_info.discountCode' => 'nullable|string',
                 'payment_info' => 'required|array',
                 'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
                 'payment_info.installments' => 'required|integer|min:1',
+                'payment_info.device_unique_identifier' => 'nullable|string',
                 'token' => 'required|string',
                 'bin' => 'nullable|string',
                 'selected_tickets' => 'required|array|min:1',
@@ -246,7 +251,6 @@ class CheckoutController extends Controller
             ]);
 
             Log::info('Validación exitosa, procesando checkout');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
 
             return redirect()->back()->withInput()->withErrors($e->errors());
@@ -261,6 +265,7 @@ class CheckoutController extends Controller
                 'has_token' => !empty($validated['token']),
                 'payment_method' => $validated['payment_info']['method'],
                 'installments' => $validated['payment_info']['installments'],
+                'device_fingerprint' => $validated['payment_info']['device_unique_identifier'] ?? 'not_provided',
             ]);
 
             $checkoutData = new CheckoutData(
@@ -272,6 +277,7 @@ class CheckoutController extends Controller
                 billingInfo: $validated['billing_info'] ?? null,
                 paymentToken: $validated['token'],
                 bin: $validated['bin'] ?? null,
+                deviceFingerprint: $validated['payment_info']['device_unique_identifier'] ?? null,
             );
 
             Log::info('Procesando pago con CheckoutService');

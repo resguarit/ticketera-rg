@@ -35,9 +35,49 @@ class PaywayService implements PaymentGatewayInterface
             "payment_type" => "single",
             "sub_payments" => [],
             "fraud_detection" => [
-                "send_to_cs" => false,
+                "send_to_cs" => true,
                 "channel" => "Web",
-                "device_unique_identifier" => "12346"
+                "device_unique_identifier" => $context->deviceFingerprint,
+                "bill_to" => [
+                    "city" => $context->billingCity,
+                    "country" => "AR",
+                    "customer_id" => (string)$context->customerId,
+                    "email" => $context->customerEmail,
+                    "first_name" => $context->billingFirstName,
+                    "last_name" => $context->billingLastName,
+                    "phone_number" => $context->billingPhone,
+                    "postal_code" => $context->billingPostalCode,
+                    "state" => $context->billingState,
+                    "street1" => $context->billingAddress,
+                ],
+                "purchase_totals" => [
+                    "currency" => "ARS",
+                    "amount" => (int) ($context->amount * 100),
+                ],
+                "retail_transaction_data" => [
+                    "ship_to" => [
+                        "city" => $context->billingCity,
+                        "country" => "AR",
+                        "email" => $context->customerEmail,
+                        "first_name" => $context->billingFirstName,
+                        "last_name" => $context->billingLastName,
+                        "phone_number" => $context->billingPhone,
+                        "postal_code" => $context->billingPostalCode,
+                        "state" => $context->billingState,
+                        "street1" => $context->billingAddress,
+                    ],
+                    "items" => array_map(function ($item) {
+                        return [
+                            "code" => (string)$item['code'],
+                            "description" => substr($item['description'], 0, 20), // Limit description length if needed
+                            "name" => $item['name'],
+                            "quantity" => $item['quantity'],
+                            "sku" => (string)$item['code'],
+                            "total_amount" => (int)($item['total_amount'] * 100),
+                            "unit_price" => (int)($item['unit_price'] * 100),
+                        ];
+                    }, $context->items)
+                ]
             ],
             "customer" => [
                 "id" => $context->customerId,

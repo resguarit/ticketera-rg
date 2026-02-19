@@ -13,5 +13,6 @@ class CheckoutData
         public readonly string $paymentMethod,
         public readonly int $installments = 1,
         public readonly ?array $billingInfo = null,
+        public readonly ?string $deviceFingerprint = null,
     ) {}
 }

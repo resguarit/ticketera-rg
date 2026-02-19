@@ -43,6 +43,22 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
       newErrors.documentNumber = "El número de documento es obligatorio."
     }
 
+    if (!billingInfo.address.trim()) {
+      newErrors.address = "La dirección es obligatoria."
+    }
+
+    if (!billingInfo.city.trim()) {
+      newErrors.city = "La ciudad es obligatoria."
+    }
+
+    if (!billingInfo.state) {
+      newErrors.state = "La provincia es obligatoria."
+    }
+
+    if (!billingInfo.postalCode.trim()) {
+      newErrors.postalCode = "El código postal es obligatorio."
+    }
+
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length > 0) {
@@ -161,6 +177,98 @@ export default function BillingInfoStep({ billingInfo, setBillingInfo, onNext, d
                 disabled={disabled}
               />
               {errors.documentNumber && <p className="text-red-500 text-xs mt-1">{errors.documentNumber}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="address" className="text-foreground">
+              Dirección *
+            </Label>
+            <Input
+              id="address"
+              value={billingInfo.address}
+              onChange={(e) => handleInputChange("address", e.target.value)}
+              className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.address ? "border-red-500 focus-visible:ring-red-500" : ""
+                }`}
+              placeholder="Av. Siempre Viva 123"
+              disabled={disabled}
+            />
+            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city" className="text-foreground">
+                Ciudad *
+              </Label>
+              <Input
+                id="city"
+                value={billingInfo.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.city ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
+                placeholder="Ciudad"
+                disabled={disabled}
+              />
+              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="state" className="text-foreground">
+                Provincia *
+              </Label>
+              <Select
+                value={billingInfo.state}
+                onValueChange={(value) => handleInputChange("state", value)}
+                disabled={disabled}
+              >
+                <SelectTrigger className={`bg-white border-gray-300 text-foreground ${errors.state ? "border-red-500 focus:ring-red-500" : ""}`}>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="C">Ciudad Autónoma de Buenos Aires</SelectItem>
+                  <SelectItem value="B">Buenos Aires</SelectItem>
+                  <SelectItem value="K">Catamarca</SelectItem>
+                  <SelectItem value="H">Chaco</SelectItem>
+                  <SelectItem value="U">Chubut</SelectItem>
+                  <SelectItem value="X">Córdoba</SelectItem>
+                  <SelectItem value="W">Corrientes</SelectItem>
+                  <SelectItem value="E">Entre Ríos</SelectItem>
+                  <SelectItem value="P">Formosa</SelectItem>
+                  <SelectItem value="Y">Jujuy</SelectItem>
+                  <SelectItem value="L">La Pampa</SelectItem>
+                  <SelectItem value="F">La Rioja</SelectItem>
+                  <SelectItem value="M">Mendoza</SelectItem>
+                  <SelectItem value="N">Misiones</SelectItem>
+                  <SelectItem value="Q">Neuquén</SelectItem>
+                  <SelectItem value="R">Río Negro</SelectItem>
+                  <SelectItem value="A">Salta</SelectItem>
+                  <SelectItem value="J">San Juan</SelectItem>
+                  <SelectItem value="D">San Luis</SelectItem>
+                  <SelectItem value="Z">Santa Cruz</SelectItem>
+                  <SelectItem value="S">Santa Fe</SelectItem>
+                  <SelectItem value="G">Santiago del Estero</SelectItem>
+                  <SelectItem value="V">Tierra del Fuego</SelectItem>
+                  <SelectItem value="T">Tucumán</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="postalCode" className="text-foreground">
+                Código Postal *
+              </Label>
+              <Input
+                id="postalCode"
+                value={billingInfo.postalCode}
+                onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                className={`bg-white border-gray-300 text-foreground placeholder:text-gray-400 ${errors.postalCode ? "border-red-500 focus-visible:ring-red-500" : ""
+                  }`}
+                placeholder="CP"
+                disabled={disabled}
+              />
+              {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode}</p>}
             </div>
           </div>
         </form>

@@ -60,6 +60,7 @@ export interface BillingInfo {
   city: string
   postalCode: string
   country: string
+  state: string
   discountCode: string
 }
 
@@ -72,6 +73,7 @@ export interface PaymentInfo {
   installments: number
   token?: string
   bin?: string
+  device_unique_identifier?: string
 }
 
 export interface Agreements {
@@ -124,6 +126,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
     city: "",
     postalCode: "",
     country: "Argentina",
+    state: "",
     discountCode: "",
   })
 
@@ -151,6 +154,10 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
         email: billingInfo.email?.trim(),
         phone: billingInfo.phone?.trim(),
         documentNumber: billingInfo.documentNumber?.trim(),
+        address: billingInfo.address?.trim(),
+        city: billingInfo.city?.trim(),
+        postalCode: billingInfo.postalCode?.trim(),
+        state: billingInfo.state?.trim(),
       }
 
       const missingFields = Object.entries(requiredFields)
@@ -161,7 +168,11 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
             lastName: 'Apellido',
             email: 'Email',
             phone: 'Teléfono',
-            documentNumber: 'Número de Documento'
+            documentNumber: 'Número de Documento',
+            address: 'Dirección',
+            city: 'Ciudad',
+            postalCode: 'Código Postal',
+            state: 'Provincia',
           }
           return fieldNames[key]
         })
@@ -229,6 +240,7 @@ export default function CheckoutConfirm({ eventData, eventId, sessionId, lockExp
       payment_info: {
         method: paymentInfo.paymentMethodId,
         installments: paymentInfo.installments,
+        device_unique_identifier: paymentInfo.device_unique_identifier,
       },
       token: paymentInfo.token,
       bin: paymentInfo.bin,
