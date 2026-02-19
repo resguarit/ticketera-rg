@@ -35,9 +35,9 @@ class PaywayService implements PaymentGatewayInterface
             "payment_type" => "single",
             "sub_payments" => [],
             "fraud_detection" => [
-                "send_to_cs" => true,
+                "send_to_cs" => false,
                 "channel" => "Web",
-                "device_unique_identifier" => $context->deviceFingerprint
+                "device_unique_identifier" => '12345'
             ],
             "customer" => [
                 "id" => $context->customerId,
