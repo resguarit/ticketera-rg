@@ -23,7 +23,7 @@ class TicketController extends Controller
         if ($request->session()->has('impersonated_organizer_id')) {
             return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
-
+        
         return Auth::user()->organizer;
     }
 
@@ -31,7 +31,7 @@ class TicketController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
@@ -149,7 +149,7 @@ class TicketController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-
+        
         if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
@@ -159,14 +159,14 @@ class TicketController extends Controller
         $ticket->update([
             'status' => $newStatus,
             'validated_at' => $newStatus === 'used' ? now() : null,
-            'device_used' => $newStatus === 'used' ? 'Panel Organizador (' . Auth::user()->name() . ')' : null
+            'device_used' => $newStatus === 'used' ? 'Panel Organizador (' . Auth::user()->name . ')' : null
         ]);
 
         ScanLog::create([
             'issued_ticket_id' => $ticket->id,
             'event_function_id' => $ticket->ticketType->event_function_id,
             'device_uuid' => 'web-panel',
-            'device_name' => 'Panel Web (' . Auth::user()->name() . ')',
+            'device_name' => 'Panel Web (' . Auth::user()->name . ')',
             'result' => 'manual_override_' . $newStatus,
             'scanned_code' => $ticket->unique_code,
             'scanned_at' => now(),

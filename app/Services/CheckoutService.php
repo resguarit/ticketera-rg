@@ -31,9 +31,9 @@ class CheckoutService
 
             $event = Event::findOrFail($checkoutData->eventId);
             $eventTax = $event->tax ? ($event->tax / 100) : 0;
-            
+
             Log::info('Buscando payment method', ['method_name' => $checkoutData->paymentMethod]);
-            
+
             $paymentMethodId = DB::table('payment_method')
                 ->where('name', $checkoutData->paymentMethod)
                 ->value('payway_id');

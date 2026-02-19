@@ -184,7 +184,7 @@ class CheckoutController extends Controller
                 'has_session_id' => !empty($sessionId),
                 'has_locked_tickets' => !empty($lockedTickets),
             ]);
-            
+
             return $this->redirectToError([
                 'title' => 'Sesión Expirada',
                 'message' => 'Tu sesión de compra ha expirado. Por favor, inicia el proceso nuevamente.',
@@ -203,7 +203,7 @@ class CheckoutController extends Controller
 
         if (!$lockVerification['all_valid']) {
             Log::warning('Locks inválidos', ['verification' => $lockVerification]);
-            
+
             $this->ticketLockService->releaseTickets($sessionId);
 
             return $this->redirectToError([
@@ -246,7 +246,6 @@ class CheckoutController extends Controller
             ]);
 
             Log::info('Validación exitosa, procesando checkout');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
 
             return redirect()->back()->withInput()->withErrors($e->errors());

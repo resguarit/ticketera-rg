@@ -18,5 +18,5 @@ class PaymentContext
         public readonly string $customerDocument,
         public readonly string $customerIp,
         public readonly ?string $deviceFingerprint
-    )   {}
+    ) {}
 }
