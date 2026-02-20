@@ -220,7 +220,17 @@
                         <div class="qr-info">
                             <strong>Nº:</strong> {{ $ticket->unique_code }}<br>
                             Prod: {{ Str::limit($event->organizer->name, 20) }}<br>
-                            Valido x 1 ingreso.
+                            Valido x 1 ingreso.<br>
+                            @php
+                            if ($ticket->assistant_id && $ticket->assistant?->person) {
+                            $nombreTicket = $ticket->assistant->person->name . ' ' . $ticket->assistant->person->last_name;
+                            } elseif ($ticket->client_id && $ticket->client?->person) {
+                            $nombreTicket = $ticket->client->person->name . ' ' . $ticket->client->person->last_name;
+                            } else {
+                            $nombreTicket = '—';
+                            }
+                            @endphp
+                            <strong>{{ Str::limit($nombreTicket, 30) }}</strong>
                         </div>
                     </div>
                 </div>

@@ -36,7 +36,7 @@ class PhysicalTicketController extends Controller
         if ($request->session()->has('impersonated_organizer_id')) {
             return \App\Models\Organizer::findOrFail($request->session()->get('impersonated_organizer_id'));
         }
-        
+
         return Auth::user()->organizer;
     }
 
@@ -47,7 +47,7 @@ class PhysicalTicketController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
@@ -99,7 +99,7 @@ class PhysicalTicketController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403, 'No tienes permisos para gestionar este evento.');
         }
@@ -228,7 +228,7 @@ class PhysicalTicketController extends Controller
     {
         // 🔧 CORREGIDO: Usar el método helper
         $organizer = $this->getOrganizer($request);
-        
+
         if ($event->organizer_id !== $organizer->id) {
             abort(403);
         }
@@ -241,7 +241,8 @@ class PhysicalTicketController extends Controller
                 'ticketType.eventFunction.event.venue.ciudad.provincia',
                 'ticketType.eventFunction.event.organizer',
                 'ticketType.sector',
-                'assistant.person'
+                'assistant.person',
+                'client.person',
             ]);
 
         if ($ticketIds) {
