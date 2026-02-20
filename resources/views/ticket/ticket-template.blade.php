@@ -202,6 +202,10 @@
                             <span><span class="data-label">HORA:</span>{{ $date->format('H:i') }}</span>
                         </div>
                         <div class="data-row">
+                            <span class="data-label">TIPO:</span>
+                            <span class="data-value">{{ Str::limit($ticket->ticketType->name, 20) }}</span>
+                        </div>
+                        <div class="data-row">
                             <span class="data-label">SECTOR:</span>
                             <span class="data-value big">{{ Str::limit($ticket->ticketType->sector->name ?? 'GENERAL', 15) }}</span>
                         </div>
@@ -226,7 +230,8 @@
 
                     <div class="stub-data">F: <span>{{ $date->format('d/m') }}</span></div>
                     <div class="stub-data">H: <span>{{ $date->format('H:i') }}</span></div>
-                    <div class="stub-data">Sec: <span>{{ Str::limit($ticket->ticketType->sector->name ?? 'GRAL', 15) }}</span></div>
+                    <div class="stub-data">Tipo: <span>{{ Str::limit($ticket->ticketType->name, 12) }}</span></div>
+                    <div class="stub-data">Sec: <span>{{ Str::limit($ticket->ticketType->sector->name ?? 'GRAL', 12) }}</span></div>
                     <div class="stub-data">Val: <span>${{ number_format($price, 2 , ',', '.') }}</span></div>
 
                     <div class="stub-id">
