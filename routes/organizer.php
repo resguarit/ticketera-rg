@@ -14,6 +14,7 @@ use App\Http\Controllers\Organizer\PromoterController;
 use App\Http\Controllers\User\TicketController;
 use App\Http\Controllers\Organizer\TicketController as OrganizerTicketController;
 use App\Http\Controllers\Organizer\SettlementController;
+use App\Http\Controllers\Organizer\EventWrappedController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->prefix('organizer')->name('organizer.')->group(function () {
@@ -97,6 +98,7 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
         Route::get('{event}/attendees/assistant/{assistant}/details', [AssistantController::class, 'showAssistantDetails'])->name('attendees.assistant.details');
         Route::get('{event}/promoters', [PromoterController::class, 'index'])->name('promoters.index');
         Route::get('{event}/access', [OrganizerTicketController::class, 'index'])->name('access');
+        Route::get('{event}/wrapped', [EventWrappedController::class, 'show'])->name('wrapped');
     });
 
     // Usuarios del organizador
