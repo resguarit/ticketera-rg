@@ -44,6 +44,11 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('event.detail');
 Route::get('/{event}/availability', [PublicEventController::class, 'getAvailability'])->name('availability');
 
+// Shared Event Wrapped (Signed Route)
+Route::get('/shared/wrapped/{event}', [App\Http\Controllers\Organizer\EventWrappedController::class, 'showShared'])
+    ->name('shared.wrapped')
+    ->middleware('signed');
+
 require __DIR__ . '/checkout.php';
 
 Route::get('/help', [HelpController::class, 'index'])->name('help');
