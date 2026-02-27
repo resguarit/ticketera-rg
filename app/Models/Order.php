@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\OrderStatus;
+use App\Enums\SalesChannel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
@@ -19,6 +20,7 @@ class Order extends Model
         'client_id',
         'order_date',
         'status',
+        'sales_channel',
         'cuotas',
         'cuota_id',
         'payment_method',
@@ -48,6 +50,7 @@ class Order extends Model
         'refunded_amount' => 'decimal:2',
         'refunded_at' => 'datetime',
         'order_details' => 'json',
+        'sales_channel' => SalesChannel::class,
     ];
 
     public function client()
