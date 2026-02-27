@@ -28,8 +28,8 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
     public function collection()
     {
         $buyersQuery = Order::query()
-            ->join('users', 'orders.client_id', '=', 'users.id')
-            ->join('person', 'users.person_id', '=', 'person.id')
+            ->leftJoin('users', 'orders.client_id', '=', 'users.id')
+            ->leftJoin('person', 'users.person_id', '=', 'person.id')
             ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
             ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
             ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
@@ -42,13 +42,14 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
                 'person.last_name',
                 'person.dni',
                 'users.email',
-                'orders.subtotal',     // Monto entradas
-                'orders.service_fee',  // Monto cargo servicio
+                'orders.subtotal',
+                'orders.service_fee',
                 'orders.total_amount',
-                'orders.status'
+                'orders.status',
+                'orders.sales_channel',
             )
             ->withCount('issuedTickets as quantity')
-            ->groupBy('orders.id', 'orders.order_date', 'person.name', 'person.last_name', 'person.dni', 'users.email', 'orders.subtotal', 'orders.service_fee', 'orders.total_amount', 'orders.status');
+            ->groupBy('orders.id', 'orders.order_date', 'person.name', 'person.last_name', 'person.dni', 'users.email', 'orders.subtotal', 'orders.service_fee', 'orders.total_amount', 'orders.status', 'orders.sales_channel');
 
         // Aplicar filtros
         if (isset($this->filters['function_id']) && $this->filters['function_id'] !== 'all') {
@@ -63,7 +64,7 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
         if (isset($this->filters['search'])) {
             $searchTerm = $this->filters['search'];
             $buyersQuery->where(function ($q) use ($searchTerm) {
-                $q->where(DB::raw("CONCAT(person.name, ' ', person.last_name)"), 'like', "%{$searchTerm}%")
+                $q->where(DB::raw("CONCAT(COALESCE(person.name,''), ' ', COALESCE(person.last_name,''))"), 'like', "%{$searchTerm}%")
                     ->orWhere('person.dni', 'like', "%{$searchTerm}%")
                     ->orWhere('users.email', 'like', "%{$searchTerm}%");
             });
@@ -100,6 +101,17 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
         return ['start' => $start, 'end' => $end];
     }
 
+    private function salesChannelLabel(\App\Enums\SalesChannel|string|null $channel): string
+    {
+        $value = $channel instanceof \App\Enums\SalesChannel ? $channel->value : $channel;
+        return match ($value) {
+            'online'      => 'Online',
+            'box_office'  => 'Taquilla / Boletería',
+            'sales_point' => 'Punto de Venta',
+            default       => '—',
+        };
+    }
+
     public function headings(): array
     {
         return [
@@ -110,24 +122,25 @@ class AttendeesExport implements FromCollection, WithHeadings, WithMapping
             'Email',
             'Cantidad',
             'Monto (' . ($this->type === 'service_fee' ? 'Cargos Servicio' : 'Entradas') . ')',
+            'Canal de Venta',
         ];
     }
 
     public function map($row): array
     {
-        // Decidir qué monto mostrar según la selección del usuario
         $monto = ($this->type === 'service_fee')
             ? ($row->service_fee ?? 0)
             : ($row->subtotal ?? 0);
 
         return [
             Carbon::parse($row->date)->format('d/m/Y H:i'),
-            $row->name,
-            $row->last_name,
-            $row->dni,
-            $row->email,
+            $row->name      ?? 'N/A',
+            $row->last_name ?? 'N/A',
+            $row->dni       ?? 'N/A',
+            $row->email     ?? 'N/A',
             $row->quantity,
-            $monto, // Formato numérico crudo para que Excel lo sume bien
+            $monto,
+            $this->salesChannelLabel($row->sales_channel),
         ];
     }
 }

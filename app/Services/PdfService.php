@@ -20,22 +20,19 @@ class PdfService
         $ticket->load([
             'ticketType.eventFunction.event.venue.ciudad.provincia',
             'ticketType.eventFunction.event.organizer',
-            'ticketType.sector'
+            'ticketType.sector',
         ]);
 
-        // Detectar el tipo de ticket y cargar relaciones específicas
+        // Cargar relaciones según el tipo de emisión (nullsafe para ventas físicas anónimas)
         if ($ticket->order_id) {
-            // Ticket de compra - cargar relaciones de orden
             $ticket->load(['order.client.person']);
-            $user = $ticket->order->client;
-            $person = $ticket->order->client->person;
-            $orderNumber = $ticket->order->transaction_id ?? $ticket->order->id;
-        } else {
-            // Ticket de invitación - cargar relaciones de assistant
+            $orderNumber = $ticket->order?->transaction_id ?? $ticket->order?->id ?? $ticket->unique_code;
+        } elseif ($ticket->assistant_id) {
             $ticket->load(['assistant.person']);
-            $user = null; // No hay usuario para invitaciones
-            $person = $ticket->assistant->person ?? null;
-            $orderNumber = $ticket->unique_code; // Usar parte del código único
+            $orderNumber = $ticket->unique_code;
+        } else {
+            // Venta física anónima: sin usuario ni asistente
+            $orderNumber = $ticket->unique_code;
         }
 
         $qrCode = base64_encode(
@@ -46,13 +43,11 @@ class PdfService
         $eventFunction = $ticket->ticketType->eventFunction;
 
         return [
-            'ticket' => $ticket,
-            'event' => $event,
-            'function' => $eventFunction,
-            'user' => $user,
-            'person' => $person,
-            'qrCode' => $qrCode,
-            'orderNumber' => $orderNumber, // Nuevo campo para el template
+            'ticket'      => $ticket,      // $ticket->owner_name disponible en la vista
+            'event'       => $event,
+            'function'    => $eventFunction,
+            'qrCode'      => $qrCode,
+            'orderNumber' => $orderNumber,
         ];
     }
 
