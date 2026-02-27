@@ -52,6 +52,12 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
             Route::get('/print', [App\Http\Controllers\Organizer\PhysicalTicketController::class, 'print'])->name('print');
         });
 
+        // Boletería (Punto de Venta Presencial)
+        Route::prefix('{event}/box-office')->name('box-office.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Organizer\BoxOfficeController::class, 'index'])->name('index');
+            Route::post('/', [App\Http\Controllers\Organizer\BoxOfficeController::class, 'store'])->name('store');
+        });
+
         // Funciones (Create, Edit, Delete)
         Route::resource('{event}/functions', EventFunctionController::class)
             ->except(['show', 'index'])

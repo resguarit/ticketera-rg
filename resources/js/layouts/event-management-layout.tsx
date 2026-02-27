@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu, LogOut, DollarSign } from 'lucide-react';
+import { ArrowLeft, Settings, Users, BarChart3, Calendar, Ticket, ExternalLink, Eye, QrCode, Megaphone, Menu, LogOut, DollarSign, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EventFunction } from '@/types/models/eventFunction';
@@ -85,6 +85,12 @@ export default function EventManagementLayout({
             id: 'promoters',
             icon: Megaphone,
             href: route('organizer.events.promoters.index', event.id)
+        },
+        {
+            name: 'Boletería',
+            id: 'box-office',
+            icon: ShoppingCart,
+            href: route('organizer.events.box-office.index', event.id)
         }
     ];
 
