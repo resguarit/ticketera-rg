@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class BoxOfficeController extends Controller
@@ -88,8 +89,91 @@ class BoxOfficeController extends Controller
         return Inertia::render('organizer/events/box-office', [
             'event'          => $event->load(['category', 'venue']),
             'eventFunctions' => $eventFunctions,
-            'platform_fee'   => (float) $event->tax,   // e.g. 0.10 → 10%
+            'platform_fee'   => (float) $event->tax,
+            'stats'          => $this->getStats($event),
         ]);
+    }
+
+    /**
+     * Calcula las estadísticas de boletería para el evento.
+     */
+    private function getStats(Event $event): array
+    {
+        $today = now()->toDateString();
+
+        // Query base: todas las órdenes de boletería de este evento
+        $baseQuery = \App\Models\Order::query()
+            ->whereHas('items.ticketType.eventFunction', fn($q) => $q->where('event_id', $event->id))
+            ->where('sales_channel', SalesChannel::BOX_OFFICE)
+            ->where('status', OrderStatus::PAID);
+
+        // ── Totales del día ────────────────────────────────────────────────────
+        $todayOrders = (clone $baseQuery)
+            ->whereDate('order_date', $today)
+            ->with('items')
+            ->get();
+
+        $todayRevenue = $todayOrders->sum('total_amount');
+        $todayTickets = $todayOrders->sum(fn($o) => $o->items->count());
+
+        // Breakdown por método de pago (hoy)
+        $todayByMethod = $todayOrders
+            ->groupBy('payment_method')
+            ->map(fn($orders) => [
+                'revenue' => $orders->sum('total_amount'),
+                'tickets' => $orders->sum(fn($o) => $o->items->count()),
+                'count'   => $orders->count(),
+            ]);
+
+        // ── Totales acumulados del evento ──────────────────────────────────────
+        $allOrders     = (clone $baseQuery)->with('items')->get();
+        $totalRevenue  = $allOrders->sum('total_amount');
+        $totalTickets  = $allOrders->sum(fn($o) => $o->items->count());
+
+        // Breakdown por método de pago (acumulado)
+        $totalByMethod = $allOrders
+            ->groupBy('payment_method')
+            ->map(fn($orders) => [
+                'revenue' => $orders->sum('total_amount'),
+                'tickets' => $orders->sum(fn($o) => $o->items->count()),
+                'count'   => $orders->count(),
+            ]);
+
+        // ── Últimas ventas ─────────────────────────────────────────────────────
+        $recentSales = (clone $baseQuery)
+            ->with(['items.ticketType'])
+            ->orderByDesc('order_date')
+            ->limit(15)
+            ->get()
+            ->map(fn($order) => [
+                'id'             => $order->id,
+                'transaction_id' => $order->transaction_id,
+                'order_date'     => $order->order_date->format('H:i'),
+                'order_full_date'=> $order->order_date->format('d/m/Y H:i'),
+                'payment_method' => $order->payment_method,
+                'total_amount'   => (float) $order->total_amount,
+                'ticket_count'   => $order->items->count(),
+                'ticket_types'   => $order->items
+                    ->groupBy('ticket_type_id')
+                    ->map(fn($items) => [
+                        'name'     => $items->first()->ticketType->name ?? '?',
+                        'quantity' => $items->count(),
+                    ])->values(),
+            ]);
+
+        return [
+            'today' => [
+                'revenue'   => (float) $todayRevenue,
+                'tickets'   => $todayTickets,
+                'by_method' => $todayByMethod,
+            ],
+            'total' => [
+                'revenue'   => (float) $totalRevenue,
+                'tickets'   => $totalTickets,
+                'by_method' => $totalByMethod,
+            ],
+            'recent_sales' => $recentSales,
+        ];
     }
 
     /**
@@ -156,6 +240,7 @@ class BoxOfficeController extends Controller
                 'status'         => OrderStatus::PAID,
                 'sales_channel'  => SalesChannel::BOX_OFFICE,
                 'payment_method' => $validated['payment_method'],
+                'transaction_id' => 'BOX-' . $event->id . '-' . substr(Str::uuid()->toString(), 0, 23),
                 'subtotal'       => $subtotal,
                 'tax'            => $feeRate,
                 'service_fee'    => $serviceFee,
