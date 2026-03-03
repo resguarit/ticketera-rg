@@ -10,6 +10,7 @@ use App\Models\TicketType;
 use App\Enums\EmissionType;
 use App\Enums\IssuedTicketStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\SalesChannel;
 use App\Jobs\SendOrderTicketJob;
 use App\Services\OrderService;
@@ -106,7 +107,10 @@ class BoxOfficeController extends Controller
         $validated = $request->validate([
             'ticket_type_id' => ['required', 'integer', 'exists:ticket_types,id'],
             'quantity'        => ['required', 'integer', 'min:1', 'max:200'],
-            'payment_method'  => ['required', 'string', 'in:cash,pos,qr'],
+            'payment_method'  => ['required', 'string', 'in:' . implode(',', array_map(
+                fn($m) => $m->value,
+                array_filter(PaymentMethod::cases(), fn($m) => !$m->isPayway())
+            ))],
             'contact_email'   => ['nullable', 'email', 'max:255'],
             'apply_fee'       => ['boolean'],
         ]);
