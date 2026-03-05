@@ -121,8 +121,7 @@ class AssistantController extends Controller
             $invitedQuery->whereNull('assistants.deleted_at');
         }
 
-        // 2. Query para Compradores (Modelo Order)
-
+        // 2. Query para Compradores registrados (Modelo Order con client)
         $buyersQuery = Order::query()
             ->join('users', 'orders.client_id', '=', 'users.id')
             ->join('person', 'users.person_id', '=', 'person.id')
@@ -155,27 +154,61 @@ class AssistantController extends Controller
             }])
             ->groupBy('orders.id', 'full_name', 'person.dni', 'users.email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date');
 
-        // Aplicar filtro de fecha a compradores
+        // 2b. Query para Boletería (órdenes anónimas sin client_id)
+        $boxOfficeQuery = Order::query()
+            ->whereNull('orders.client_id')
+            ->join('issued_tickets', 'orders.id', '=', 'issued_tickets.order_id')
+            ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
+            ->join('event_functions', 'ticket_types.event_function_id', '=', 'event_functions.id')
+            ->where('event_functions.event_id', $event->id)
+            ->select(
+                DB::raw('null as assistant_id'),
+                'orders.id as order_id',
+                DB::raw('"buyer" as type'),
+                DB::raw('"Consumidor Final" as full_name'),
+                DB::raw('null as dni'),
+                DB::raw('COALESCE(orders.contact_email, "-") as email'),
+                DB::raw('MIN(event_functions.name) as function_name'),
+                DB::raw('MIN(event_functions.start_time) as function_date_time'),
+                'orders.total_amount',
+                'orders.subtotal',
+                'orders.status as order_status',
+                DB::raw('null as is_cancelled_at'),
+                DB::raw('null as invited_at'),
+                DB::raw('null as sended_at'),
+                'orders.order_date as purchased_at',
+                'orders.order_date as sort_date'
+            )
+            ->withCount('issuedTickets as tickets_count')
+            ->withCount(['issuedTickets as tickets_used' => function ($query) {
+                $query->where('status', IssuedTicketStatus::USED);
+            }])
+            ->groupBy('orders.id', 'orders.contact_email', 'orders.total_amount', 'orders.subtotal', 'orders.status', 'orders.order_date');
+
+        // Aplicar filtro de fecha a compradores (ambos)
         if ($dateFilter !== 'all') {
             $buyersQuery->whereBetween('orders.order_date', [$dateRange['start'], $dateRange['end']]);
+            $boxOfficeQuery->whereBetween('orders.order_date', [$dateRange['start'], $dateRange['end']]);
         }
 
-        // Aplicar filtro de cancelados a compradores
+        // Aplicar filtro de cancelados a compradores (ambos)
         if ($hideCancelled) {
             $buyersQuery->where('orders.status', '!=', OrderStatus::CANCELLED->value);
+            $boxOfficeQuery->where('orders.status', '!=', OrderStatus::CANCELLED->value);
         }
 
         // 3. Aplicar Filtro de Función
-
         if ($selectedFunctionId && $selectedFunctionId !== 'all') {
             $invitedQuery->where('assistants.event_function_id', $selectedFunctionId);
 
-            $buyersQuery->whereIn('orders.id', function ($query) use ($selectedFunctionId) {
+            $subFilter = function ($query) use ($selectedFunctionId) {
                 $query->select('order_id')
                     ->from('issued_tickets')
                     ->join('ticket_types', 'issued_tickets.ticket_type_id', '=', 'ticket_types.id')
                     ->where('ticket_types.event_function_id', $selectedFunctionId);
-            });
+            };
+            $buyersQuery->whereIn('orders.id', $subFilter);
+            $boxOfficeQuery->whereIn('orders.id', $subFilter);
         }
 
         // 4. Aplicar Filtro de Búsqueda
@@ -193,15 +226,20 @@ class AssistantController extends Controller
                     ->orWhere('orders.transaction_id', 'like', "%{$searchTerm}%")
                     ->orWhere('discount_codes.code', 'like', "%{$searchTerm}%");
             });
+
+            $boxOfficeQuery->where(function ($q) use ($searchTerm) {
+                $q->where('orders.contact_email', 'like', "%{$searchTerm}%")
+                    ->orWhere('orders.transaction_id', 'like', "%{$searchTerm}%");
+            });
         }
 
         // 5. Combinar Queries según el tipo seleccionado
         if ($filterType === 'invited') {
             $combinedQuery = $invitedQuery;
         } elseif ($filterType === 'buyer') {
-            $combinedQuery = $buyersQuery;
+            $combinedQuery = $buyersQuery->unionAll($boxOfficeQuery);
         } else {
-            $combinedQuery = $invitedQuery->unionAll($buyersQuery);
+            $combinedQuery = $invitedQuery->unionAll($buyersQuery)->unionAll($boxOfficeQuery);
         }
 
 
@@ -439,7 +477,19 @@ class AssistantController extends Controller
             'discountCode'
         ]);
 
-        $person = $order->client->person;
+        // Box office orders have no registered client
+        $person = $order->client?->person;
+        $personData = $person ? [
+            'full_name' => trim($person->name . ' ' . $person->last_name),
+            'dni'       => $person->dni,
+            'email'     => $order->client->email,
+            'phone'     => $person->phone,
+        ] : [
+            'full_name' => 'Consumidor Final',
+            'dni'       => null,
+            'email'     => $order->contact_email ?? null,
+            'phone'     => null,
+        ];
 
         $ticketsByType = $order->issuedTickets
             ->groupBy('ticket_type_id');
@@ -496,21 +546,17 @@ class AssistantController extends Controller
         return response()->json([
             'type' => 'buyer',
             'order' => [
-                'id' => $order->id,
-                'order_date' => $order->created_at->format('d/m/Y H:i'),
-                'status' => $order->status->value,
+                'id'             => $order->id,
+                'order_date'     => $order->order_date->format('d/m/Y H:i'),
+                'status'         => $order->status->value,
                 'payment_method' => $order->payment_method,
                 'transaction_id' => $order->transaction_id,
-                'card_brand' => $order->card_brand,
-                'card_bin' => $order->card_bin,
-                'installments' => $order->cuotas,
+                'sales_channel'  => $order->sales_channel?->value,
+                'card_brand'     => $order->card_brand,
+                'card_bin'       => $order->card_bin,
+                'installments'   => $order->cuotas,
             ],
-            'person' => [
-                'full_name' => trim($person->name . ' ' . $person->last_name),
-                'dni' => $person->dni,
-                'email' => $order->client->email,
-                'phone' => $person->phone,
-            ],
+            'person' => $personData,
             'per_type' => $perType,
             'totals' => [
                 'subtotal' => round($orderSubtotal, 2),

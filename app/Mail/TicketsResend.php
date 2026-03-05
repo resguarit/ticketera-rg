@@ -23,7 +23,7 @@ class TicketsResend extends Mailable
     public function __construct(
         public Order $order,
         array $pdfAttachmentsData = []
-    ){
+    ) {
         $this->pdfAttachmentsData = $pdfAttachmentsData;
     }
 
@@ -33,9 +33,9 @@ class TicketsResend extends Mailable
     public function envelope(): Envelope
     {
         $eventName = $this->order->items->first()?->ticketType?->eventFunction?->event?->name ?? 'Evento';
-        
+
         return new Envelope(
-            subject: 'Reenviamos tus entradas para ' . $eventName,
+            subject: 'Enviamos tus entradas para ' . $eventName,
         );
     }
 
@@ -59,7 +59,7 @@ class TicketsResend extends Mailable
         $attachments = [];
         foreach ($this->pdfAttachmentsData as $attachmentData) {
             $attachments[] = Attachment::fromData(
-                fn () => $attachmentData['content'],
+                fn() => $attachmentData['content'],
                 $attachmentData['name']
             )->withMime($attachmentData['mime']);
         }

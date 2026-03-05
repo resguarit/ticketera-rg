@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentMethod;
 use App\Services\Interface\PaymentGatewayInterface;
 use Illuminate\Support\Facades\Log;
 use App\DTO\CheckoutData;
@@ -10,7 +11,6 @@ use App\DTO\PaymentContext;
 use App\DTO\PaymentResult;
 use App\Models\Cuota;
 use App\Models\Event;
-use Illuminate\Support\Facades\DB;
 
 class CheckoutService
 {
@@ -32,16 +32,16 @@ class CheckoutService
             $event = Event::findOrFail($checkoutData->eventId);
             $eventTax = $event->tax ? ($event->tax / 100) : 0;
 
-            Log::info('Buscando payment method', ['method_name' => $checkoutData->paymentMethod]);
+            Log::info('Resolviendo payment method', ['method_name' => $checkoutData->paymentMethod]);
 
-            $paymentMethodId = DB::table('payment_method')
-                ->where('name', $checkoutData->paymentMethod)
-                ->value('payway_id');
+            $paymentMethod = PaymentMethod::tryFrom($checkoutData->paymentMethod);
 
-            if (!$paymentMethodId) {
-                Log::error('Payment method no encontrado', ['method' => $checkoutData->paymentMethod]);
+            if (!$paymentMethod || !$paymentMethod->isPayway()) {
+                Log::error('Payment method no válido para Payway', ['method' => $checkoutData->paymentMethod]);
                 throw new \Exception('Método de pago no válido');
             }
+
+            $paymentMethodId = $paymentMethod->paywayId();
 
             $requestedInstallments = $checkoutData->installments;
             $validInstallments = null;
@@ -68,7 +68,7 @@ class CheckoutService
                 'event_id' => $checkoutData->eventId,
                 'function_id' => $checkoutData->functionId,
                 'selected_tickets' => $checkoutData->selected_tickets,
-                'payment_method' => $paymentMethodId,
+                'payment_method' => $paymentMethod->value,
                 'cuotas' => $requestedInstallments,
                 'cuota_id' => $validInstallments ? $validInstallments->id : null,
                 'billing_info' => $checkoutData->billingInfo,

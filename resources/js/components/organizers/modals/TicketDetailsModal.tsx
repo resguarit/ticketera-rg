@@ -14,6 +14,48 @@ interface TicketDetailsModalProps {
     loading?: boolean;
 }
 
+const PaymentInfo = ({ order }: { order: any }) => {
+    const isCardPayment = ['1', '31', '104', '105', '111'].includes(String(order.payment_method));
+    
+    const methodNames: Record<string, string> = {
+        'cash': 'Efectivo',
+        'pos': 'Posnet',
+        'qr': 'Código QR',
+        '1': 'Visa Crédito',
+        '31': 'Visa Débito',
+        '104': 'Mastercard Crédito',
+        '105': 'Mastercard Débito',
+        '111': 'Amex'
+    };
+
+    const methodName = methodNames[String(order.payment_method)] || order.payment_method || 'Tarjeta';
+
+    return (
+        <div className="bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
+            <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-600">Medio de pago:</span>
+                <span className="font-medium text-gray-900">
+                    {order.card_brand || methodName}
+                </span>
+            </div>
+            {isCardPayment && (
+                <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-600">Tarjeta:</span>
+                    <span className="font-mono text-gray-900">
+                        {order.card_bin ? `${order.card_bin}XXXXXX` : '****'}
+                    </span>
+                </div>
+            )}
+            {order.installments > 1 && (
+                <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-600">Cuotas:</span>
+                    <span className="font-medium text-gray-900">{order.installments}</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function TicketDetailsModal({
     isOpen,
     onClose,
@@ -209,58 +251,28 @@ export default function TicketDetailsModal({
                             </div>
                         )}
 
+                        {/* Estado */}
                         <div
                             className={`rounded p-2 border ${data.order.status === 'cancelled'
-                                ? 'border-red-400 bg-red-50'
+                                ? 'border-red-300 bg-red-50'
                                 : 'border-gray-200 bg-gray-50'
                                 }`}
                         >
-                            <p className="text-xs">
-                                <strong>Estado:</strong>{' '}
-                                <span
-                                    className={
-                                        data.order.status === 'cancelled' ? 'text-red-600 font-semibold' : ''
-                                    }
-                                >
-                                    {data.order.status}
-                                </span>
-                                {data.order.transaction_id && (
-                                    <>
-                                        <br />
-                                        <strong>ID:</strong> {data.order.transaction_id}
-                                    </>
-                                )}
-                            </p>
-                        </div>
-
-                        <div className="bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
                             <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">Medio de pago:</span>
-                                <span className="font-medium text-gray-900">
-                                    {data.order.card_brand || (data.order.payment_method ? (
-                                        {
-                                            '1': 'Visa Crédito',
-                                            '31': 'Visa Débito',
-                                            '104': 'Mastercard Crédito',
-                                            '105': 'Mastercard Débito',
-                                            '111': 'Amex'
-                                        }[data.order.payment_method] || 'Tarjeta'
-                                    ) : 'Tarjeta')}
+                                <span className="text-gray-600 font-medium">Estado:</span>
+                                <span className={`font-semibold ${data.order.status === 'cancelled' ? 'text-red-600' : 'text-green-700'}`}>
+                                    {data.order.status === 'cancelled' ? 'Cancelada' :
+                                     data.order.status === 'paid'      ? 'Pagada' :
+                                     data.order.status === 'pending'   ? 'Pendiente' : data.order.status}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">Tarjeta:</span>
-                                <span className="font-mono text-gray-900">
-                                    {data.order.card_bin ? `${data.order.card_bin}XXXXXX` : '****'}
-                                </span>
-                            </div>
-                            {data.order.installments > 1 && (
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-gray-600">Cuotas:</span>
-                                    <span className="font-medium text-gray-900">{data.order.installments}</span>
-                                </div>
+                            {data.order.transaction_id && (
+                                <p className="text-xs text-gray-400 mt-0.5 truncate">ID: {data.order.transaction_id}</p>
                             )}
                         </div>
+
+                        {/* Medio de pago */}
+                        <PaymentInfo order={data.order} />
                     </div>
                 </div>
             </div>

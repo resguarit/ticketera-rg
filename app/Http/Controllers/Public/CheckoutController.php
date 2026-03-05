@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\EventFunction;
 use App\Models\Order;
 use App\Models\User;
+use App\Enums\PaymentMethod;
 use App\Services\EmailDispatcherService;
 use App\Services\OrderService;
 use App\Services\CheckoutService;
@@ -235,7 +236,10 @@ class CheckoutController extends Controller
                 'billing_info.documentNumber' => 'required|string|max:20',
                 'billing_info.discountCode' => 'nullable|string',
                 'payment_info' => 'required|array',
-                'payment_info.method' => 'required|string|in:visa_debito,visa_credito,mastercard_debito,mastercard_credito,amex,visa_prepaga,mastercard_prepaga',
+                'payment_info.method' => ['required', 'string', 'in:' . implode(',', array_map(
+                    fn($m) => $m->value,
+                    array_filter(PaymentMethod::cases(), fn($m) => $m->isPayway())
+                ))],
                 'payment_info.installments' => 'required|integer|min:1',
                 'token' => 'required|string',
                 'bin' => 'nullable|string',

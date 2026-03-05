@@ -11,7 +11,6 @@ use App\Models\Cuota;
 use App\Services\Interface\PaymentGatewayInterface;
 use App\DTO\PaymentResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Mockery;
 
@@ -22,19 +21,6 @@ class StageTicketFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Crear métodos de pago necesarios
-        $this->seedPaymentMethods();
-    }
-
-    protected function seedPaymentMethods(): void
-    {
-        DB::table('payment_method')->insert([
-            [
-                'name' => 'visa_credito',
-                'payway_id' => 12,
-            ],
-        ]);
     }
 
     public function test_it_activates_next_stage_when_current_sells_out()

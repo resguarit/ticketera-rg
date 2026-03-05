@@ -220,6 +220,10 @@
                         <div class="detail-value">${{ number_format($ticket->ticketType->price, 2, ',', '.') }}</div>
                     </div>
                     <div class="detail-row">
+                        <div class="detail-label">Nombre:</div>
+                        <div class="detail-value">{{ $ticket->owner_name }}</div>
+                    </div>
+                    <div class="detail-row">
                         <div class="detail-label">Organizador:</div>
                         <div class="detail-value">{{ $event->organizer->name }}</div>
                     </div>

@@ -10,7 +10,6 @@ use App\Models\TicketType;
 use App\Models\Sector;
 use App\Models\Cuota;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Mockery;
 use App\Services\Interface\PaymentGatewayInterface;
 use App\DTO\PaymentResult;
@@ -24,32 +23,8 @@ class TicketPurchaseFlowTest extends TestCase
     {
         parent::setUp();
         
-        // Crear datos maestros necesarios para todos los tests
-        $this->seedPaymentMethods();
-        
         // Mock del gateway de pago para todos los tests
         $this->mockPaymentGateway();
-    }
-
-    /**
-     * Crear métodos de pago en la base de datos de testing
-     */
-    protected function seedPaymentMethods(): void
-    {
-        DB::table('payment_method')->insert([
-            [
-                'name' => 'visa_credito',
-                'payway_id' => 12,
-            ],
-            [
-                'name' => 'visa_debito',
-                'payway_id' => 31,
-            ],
-            [
-                'name' => 'mastercard_credito',
-                'payway_id' => 104,
-            ],
-        ]);
     }
 
     protected function mockPaymentGateway($success = true, $message = null)

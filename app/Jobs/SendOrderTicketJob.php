@@ -21,16 +21,21 @@ class SendOrderTicketJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Order $order)
-    {
-        
-    }
+    public function __construct(public Order $order) {}
 
     /**
      * Execute the job.
      */
     public function handle(PdfService $pdfService): void
     {
+        // Determinar el destinatario: cliente registrado o email de contacto (ventas de boletería)
+        $recipient = $this->order->client?->email ?? $this->order->contact_email;
+
+        // Si no hay destinatario, no hay nada que enviar
+        if (!$recipient) {
+            return;
+        }
+
         $attachments = [];
 
         foreach ($this->order->items as $item) {
@@ -44,7 +49,7 @@ class SendOrderTicketJob implements ShouldQueue
         }
 
         $email = new TicketsResend($this->order, $attachments);
-        Mail::to($this->order->client->email)->send($email);
+        Mail::to($recipient)->send($email);
 
         // Actualizar la fecha de envío de email de todos los tickets de la orden
         $this->order->items()->update(['email_sent_at' => now()]);
