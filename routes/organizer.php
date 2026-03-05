@@ -15,6 +15,7 @@ use App\Http\Controllers\User\TicketController;
 use App\Http\Controllers\Organizer\TicketController as OrganizerTicketController;
 use App\Http\Controllers\Organizer\SettlementController;
 use App\Http\Controllers\Organizer\EventWrappedController;
+use App\Http\Controllers\Organizer\TicketBatchController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->prefix('organizer')->name('organizer.')->group(function () {
@@ -105,6 +106,18 @@ Route::middleware(['auth', 'organizer', 'password.changed', 'not.viewer'])->pref
         Route::get('{event}/promoters', [PromoterController::class, 'index'])->name('promoters.index');
         Route::get('{event}/access', [OrganizerTicketController::class, 'index'])->name('access');
         Route::get('{event}/wrapped', [EventWrappedController::class, 'show'])->name('wrapped');
+
+        // Lotes de Entradas (Batches)
+        Route::prefix('{event}/batches')->name('batches.')->group(function () {
+            Route::get('/', [TicketBatchController::class, 'index'])->name('index');
+            Route::post('/', [TicketBatchController::class, 'store'])->name('store');
+            Route::get('/activation', [TicketBatchController::class, 'activationView'])->name('activation');
+            Route::post('/activate', [TicketBatchController::class, 'activate'])->name('activate');
+            Route::get('/{batch}/download-pdf', [TicketBatchController::class, 'downloadPdf'])->name('download-pdf');
+            Route::get('/{batch}/tickets', [TicketBatchController::class, 'tickets'])->name('tickets');
+            Route::post('/{batch}/reconcile', [TicketBatchController::class, 'reconcile'])->name('reconcile');
+            Route::patch('/{batch}/void', [TicketBatchController::class, 'void'])->name('void');
+        });
     });
 
     // Usuarios del organizador

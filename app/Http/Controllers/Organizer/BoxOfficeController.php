@@ -57,8 +57,8 @@ class BoxOfficeController extends Controller
         $eventFunctions = $event->functions()
             ->with(['ticketTypes' => function ($query) {
                 $query->where('is_bundle', false)
-                    ->where('is_hidden', false)
-                    ->with('sector');
+                    ->with('sector')
+                    ->orderBy('price', 'desc');
             }])
             ->where('is_active', true)
             ->get()
