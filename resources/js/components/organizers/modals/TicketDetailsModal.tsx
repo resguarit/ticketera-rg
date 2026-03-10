@@ -15,7 +15,7 @@ interface TicketDetailsModalProps {
 }
 
 const PaymentInfo = ({ order }: { order: any }) => {
-    const isCardPayment = ['1', '31', '104', '105', '111'].includes(String(order.payment_method));
+    const isCardPayment = ['1', '31', '104', '105', '111', 'visa_credito', 'visa_debito', 'mastercard_credito', 'mastercard_debito', 'amex'].includes(String(order.payment_method));
     
     const methodNames: Record<string, string> = {
         'cash': 'Efectivo',
@@ -25,7 +25,12 @@ const PaymentInfo = ({ order }: { order: any }) => {
         '31': 'Visa Débito',
         '104': 'Mastercard Crédito',
         '105': 'Mastercard Débito',
-        '111': 'Amex'
+        '111': 'Amex',
+        'visa_credito': 'Visa Crédito',
+        'visa_debito': 'Visa Débito',
+        'mastercard_credito': 'Mastercard Crédito',
+        'mastercard_debito': 'Mastercard Débito',
+        'amex': 'Amex'
     };
 
     const methodName = methodNames[String(order.payment_method)] || order.payment_method || 'Tarjeta';
@@ -42,7 +47,7 @@ const PaymentInfo = ({ order }: { order: any }) => {
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-600">Tarjeta:</span>
                     <span className="font-mono text-gray-900">
-                        {order.card_bin ? `${order.card_bin}XXXXXX` : '****'}
+                        {order.card_bin ? `${order.card_bin}XXXXX` : '****'}
                     </span>
                 </div>
             )}

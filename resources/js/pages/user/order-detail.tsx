@@ -214,7 +214,7 @@ export default function OrderDetail({ order, event, tickets, order_items, paymen
                                         <div className="flex justify-between py-3 bg-gray-50/50 -mx-2 px-2 rounded">
                                             <span className="text-sm text-gray-600">Tarjeta</span>
                                             <span className="text-sm text-gray-900 font-mono">
-                                                {payment.card_bin ? `${payment.card_bin}XXXXXX` : '****'}
+                                                {payment.card_bin ? `${payment.card_bin}XXXXX` : '****'}
                                             </span>
                                         </div>
 
